@@ -1,0 +1,6363 @@
+# -*- coding: utf-8 -*-
+#
+# GNU General Public License (GPL)
+#
+
+from AccessControl import ClassSecurityInfo
+from AccessControl import Unauthorized
+from collections import OrderedDict
+from collective.behavior.talcondition.utils import _evaluateExpression
+from collective.contact.plonegroup.utils import get_organization
+from collective.contact.plonegroup.utils import get_organizations
+from collective.contact.plonegroup.utils import get_plone_group
+from collective.contact.plonegroup.utils import get_plone_groups
+from collective.contact.plonegroup.utils import get_registry_functions
+from collective.datagridcolumns.MultiSelectColumn import MultiSelectColumn
+from collective.datagridcolumns.SelectColumn import SelectColumn
+from collective.datagridcolumns.TextAreaColumn import TextAreaColumn
+from collective.eeafaceted.collectionwidget.interfaces import IDashboardCollection
+from collective.eeafaceted.collectionwidget.utils import _get_criterion
+from collective.eeafaceted.collectionwidget.utils import _updateDefaultCollectionFor
+from collective.eeafaceted.dashboard.utils import enableFacetedDashboardFor
+from collective.iconifiedcategory.utils import get_category_object
+from collective.z3cform.datagridfield import BlockDataGridFieldFactory
+from collective.z3cform.datagridfield import DictRow
+from copy import deepcopy
+from datetime import datetime
+from DateTime import DateTime
+from eea.facetednavigation.interfaces import ICriteria
+from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
+from ftw.labels.interfaces import ILabeling
+from imio.helpers.cache import get_cachekey_volatile
+from imio.helpers.cache import get_current_user_id
+from imio.helpers.cache import get_plone_groups_for_user
+from imio.helpers.content import get_vocab
+from imio.helpers.content import uuidsToObjects
+from imio.helpers.content import uuidToObject
+from imio.helpers.security import fplog
+from imio.helpers.workflow import get_leading_transitions
+from natsort import humansorted
+from operator import itemgetter
+from persistent.list import PersistentList
+from plone import api
+from plone.app.portlets.portlets import navigation
+from plone.app.textfield import RichText
+from plone.autoform import directives as form
+from plone.dexterity.content import Container
+from plone.dexterity.schema import DexteritySchemaPolicy
+from plone.memoize import ram
+from plone.portlets.interfaces import IPortletAssignmentMapping
+from plone.portlets.interfaces import IPortletManager
+from plone.restapi.deserializer import boolean_value
+from plone.supermodel import model
+from Products.CMFPlone.utils import base_hasattr
+from Products.PloneMeeting.config import ADVICE_TYPES
+from Products.PloneMeeting.config import PMMessageFactory as _
+from Products.PloneMeeting.config import WriteHarmlessConfig
+from Products.PloneMeeting.config import WriteRiskyConfig
+from Products.PloneMeeting.interfaces import IConfigElement
+from Products.PloneMeeting.interfaces import IMeetingAdviceWorkflowActions
+from Products.PloneMeeting.interfaces import IMeetingAdviceWorkflowConditions
+from Products.PloneMeeting.interfaces import IMeetingDashboardBatchActionsMarker
+from Products.PloneMeeting.interfaces import IMeetingItem
+from Products.PloneMeeting.interfaces import IMeetingItemDashboardBatchActionsMarker
+from Products.PloneMeeting.interfaces import IMeetingItemWorkflowActions
+from Products.PloneMeeting.interfaces import IMeetingItemWorkflowConditions
+from Products.PloneMeeting.interfaces import IMeetingWorkflowActions
+from Products.PloneMeeting.interfaces import IMeetingWorkflowConditions
+from Products.PloneMeeting.MeetingConfig import ITEM_WF_STATE_ATTRS
+from Products.PloneMeeting.MeetingConfig import ITEM_WF_TRANSITION_ATTRS
+from Products.PloneMeeting.MeetingConfig import MEETING_WF_STATE_ATTRS
+from Products.PloneMeeting.MeetingConfig import MEETING_WF_TRANSITION_ATTRS
+from Products.PloneMeeting.model.adaptations import _getValidationReturnedStates
+from Products.PloneMeeting.model.adaptations import _performWorkflowAdaptations
+from Products.PloneMeeting.profiles import MeetingConfigDescriptor
+from Products.PloneMeeting.utils import _base_extra_expr_ctx
+from Products.PloneMeeting.utils import computeCertifiedSignatures
+from Products.PloneMeeting.utils import createOrUpdatePloneGroup
+from Products.PloneMeeting.utils import duplicate_workflow
+from Products.PloneMeeting.utils import get_annexes
+from Products.PloneMeeting.utils import get_datagridfield_column_value
+from Products.PloneMeeting.utils import get_dx_attrs
+from Products.PloneMeeting.utils import get_dx_schema
+from Products.PloneMeeting.utils import get_item_validation_wf_suffixes
+from Products.PloneMeeting.utils import getAdvicePortalTypeIds
+from Products.PloneMeeting.utils import getCustomAdapter
+from Products.PloneMeeting.utils import getCustomSchemaFields
+from Products.PloneMeeting.utils import listifySignatures
+from Products.PloneMeeting.utils import reindex_object
+from Products.PloneMeeting.utils import translate_list
+from Products.PloneMeeting.utils import updateAnnexesAccess
+from Products.PloneMeeting.validators import WorkflowInterfacesValidator
+from Products.PloneMeeting.widgets.pm_checkbox import PMCheckBoxFieldWidget
+from Products.PloneMeeting.widgets.pm_orderedselect import PMOrderedSelectFieldWidget
+from Products.PloneMeeting.widgets.pm_richtext import PMRichTextFieldWidget
+from Products.PloneMeeting.widgets.pm_textarea import PMTextAreaFieldWidget
+from Products.ZCatalog.ProgressHandler import ZLogHandler
+from z3c.form.browser.checkbox import CheckBoxFieldWidget
+from z3c.form.browser.radio import RadioFieldWidget
+from z3c.form.i18n import MessageFactory as _z3c_form
+from zope import schema
+from zope.annotation import IAnnotations
+from zope.component import getMultiAdapter
+from zope.component import getUtility
+from zope.container.interfaces import INameChooser
+from zope.event import notify
+from zope.i18n import translate
+from zope.i18nmessageid.message import Message
+from zope.interface import alsoProvides
+from zope.interface import implements
+from zope.interface import Interface
+from zope.schema.interfaces import IVocabularyFactory
+from zope.schema.vocabulary import SimpleVocabulary
+
+import copy
+import html
+import itertools
+import logging
+import os
+
+
+# ---------------------------------------------------------------------------
+# Row schemas for DataGridField fields
+# ---------------------------------------------------------------------------
+
+class ICertifiedSignaturesRowSchema(Interface):
+    """Row schema for the certified_signatures DataGridField."""
+
+    signature_number = schema.Choice(
+        title=_(u'Certified signatures signature number'),
+        description=_(u'Select the signature number, keep signatures ordered by number.'),
+        vocabulary=u'Products.PloneMeeting.vocabularies.numbers_vocabulary',
+        required=False,
+    )
+
+    name = schema.TextLine(
+        title=_(u'Certified signatures signatory name'),
+        description=_(u"Name of the signatory (for example 'Mister John Doe')."),
+        required=False,
+    )
+
+    function = schema.TextLine(
+        title=_(u'Certified signatures signatory function'),
+        description=_(u"Function of the signatory (for example 'Mayor')."),
+        required=False,
+    )
+
+    held_position = schema.Choice(
+        title=_(u'Certified signatures held position'),
+        description=_(u"Select a held position if necessary, 'Name', 'Function' and other data "
+                      u"of this held position will be used if you leave 'Name' and 'Function' columns empty."),
+        vocabulary=u'Products.PloneMeeting.vocabularies.selectable_contacts_vocabulary',
+        required=False,
+    )
+
+    date_from = schema.TextLine(
+        title=_(u'Certified signatures valid from (included)'),
+        description=_(u'Enter valid from date, use following format : YYYY/MM/DD, leave empty so it is always valid.'),
+        required=False,
+    )
+
+    date_to = schema.TextLine(
+        title=_(u'Certified signatures valid to (included)'),
+        description=_(u'Enter valid to date, use following format : YYYY/MM/DD, leave empty so it is always valid.'),
+        required=False,
+    )
+
+
+class IInsertingMethodsOnAddItemRowSchema(Interface):
+    """Row schema for the inserting_methods_on_add_item DataGridField."""
+
+    inserting_method = schema.Choice(
+        title=_(u'Inserting method'),
+        description=_(u'Select the inserting method, methods will be applied in given order, '
+                      u'you can not select twice same inserting method.'),
+        vocabulary=u'Products.PloneMeeting.vocabularies.inserting_methods_vocabulary',
+        required=False,
+    )
+
+    reverse = schema.Choice(
+        title=_(u'Reverse inserting method?'),
+        description=_(u'Reverse order of selected inserting method?'),
+        vocabulary=u'Products.PloneMeeting.vocabularies.boolean_vocabulary',
+        required=False,
+    )
+
+
+class IListTypesRowSchema(Interface):
+    """Row schema for the list_types DataGridField."""
+
+    identifier = schema.TextLine(
+        title=_(u'List type identifier'),
+        description=_(u'Enter an internal identifier, use only lowercase letters.'),
+        required=False,
+    )
+
+    label = schema.TextLine(
+        title=_(u'List type label'),
+        description=_(u'Enter a short label that will be displayed in the application. '
+                      u'This will be translated by the application if possible. If you want to '
+                      u'colorize this new list type on the meeting view, you will need to do this using '
+                      u'CSS like it is the case for late items.'),
+        required=False,
+    )
+
+    used_in_inserting_method = schema.Bool(
+        title=_(u'List type used_in_inserting_method'),
+        description=_(u'If the inserting method "on list types" is used, will this list type be '
+                      u'taken into account while inserting the item in the meeting?'),
+        required=False,
+    )
+
+
+class IMeetingConfigsToCloneToRowSchema(Interface):
+    """Row schema for the meeting_configs_to_clone_to DataGridField."""
+
+    meeting_config = schema.Choice(
+        title=_(u'Meeting config to clone to'),
+        description=_(u'The meeting config the item of this meeting config will be sendable to.'),
+        vocabulary=u'Products.PloneMeeting.vocabularies.meeting_configs_to_clone_to_vocabulary',
+        required=False,
+    )
+
+    trigger_workflow_transitions_until = schema.Choice(
+        title=_(u'Trigger workflow transitions until'),
+        description=_(u'While sent, the new item is in the workflow initial state; if it was sent '
+                      u'automatically, some transitions can be automatically triggered for the new item.'),
+        vocabulary=u'Products.PloneMeeting.vocabularies.transitions_until_presented_vocabulary',
+        required=False,
+    )
+
+
+class ICssTransformsRowSchema(Interface):
+    """Row schema for the css_transforms DataGridField."""
+
+    css_class = schema.TextLine(
+        title=_(u'Css transform css class'),
+        description=_(u'Css transform css class descr'),
+        required=False,
+    )
+
+    action = schema.Choice(
+        title=_(u'Css transform action'),
+        description=_(u'Css transform action descr'),
+        vocabulary=u'ConfigCssTransformsActions',
+        required=False,
+    )
+
+    replace_new_content = schema.TextLine(
+        title=_(u'Css transform replace new content'),
+        description=_(u'Css transform replace new content descr'),
+        required=False,
+    )
+
+    replace_new_css_class = schema.TextLine(
+        title=_(u'Css transform replace new css class'),
+        description=_(u'Css transform replace new css class descr'),
+        required=False,
+    )
+
+    powerobservers = schema.List(
+        title=_(u'Css transform powerobservers'),
+        description=_(u'Css transform powerobservers descr'),
+        value_type=schema.Choice(vocabulary=u'Products.PloneMeeting.vocabularies.power_observers_types_vocabulary'),
+        required=False,
+    )
+
+
+class IItemWFValidationLevelsRowSchema(Interface):
+    """Row schema for the item_wf_validation_levels DataGridField."""
+
+    state = schema.TextLine(
+        title=_(u'Item WF validation levels state'),
+        description=_(u'Item WF validation levels state description.'),
+        required=False,
+    )
+
+    state_title = schema.TextLine(
+        title=_(u'Item WF validation levels state title'),
+        description=_(u'Item WF validation levels state title description.'),
+        required=False,
+    )
+
+    leading_transition = schema.TextLine(
+        title=_(u'Item WF validation levels leading transition'),
+        description=_(u'Item WF validation levels leading transition description.'),
+        required=False,
+    )
+
+    leading_transition_title = schema.TextLine(
+        title=_(u'Item WF validation levels leading transition title'),
+        description=_(u'Item WF validation levels leading transition title description.'),
+        required=False,
+    )
+
+    back_transition = schema.TextLine(
+        title=_(u'Item WF validation levels back transition'),
+        description=_(u'Item WF validation levels back transition description.'),
+        required=False,
+    )
+
+    back_transition_title = schema.TextLine(
+        title=_(u'Item WF validation levels back transition title'),
+        description=_(u'Item WF validation levels back transition title description.'),
+        required=False,
+    )
+
+    suffix = schema.Choice(
+        title=_(u'Item WF validation levels suffix'),
+        description=_(u'Item WF validation levels suffix description.'),
+        vocabulary=u'collective.contact.plonegroup.functions',
+        required=False,
+    )
+
+    extra_suffixes = schema.List(
+        title=_(u'Item WF validation levels extra suffixes'),
+        description=_(u'Item WF validation levels extra suffixes description.'),
+        value_type=schema.Choice(vocabulary=u'collective.contact.plonegroup.functions'),
+        required=False,
+    )
+
+    enabled = schema.Choice(
+        title=_(u'Item WF validation levels enabled'),
+        description=_(u'Item WF validation levels enabled description.'),
+        vocabulary=u'Products.PloneMeeting.vocabularies.boolean_vocabulary',
+        required=False,
+    )
+
+
+class IOnTransitionFieldTransformsRowSchema(Interface):
+    """Row schema for the on_transition_field_transforms DataGridField."""
+
+    transition = schema.Choice(
+        title=_(u'On transition field transform transition'),
+        description=_(u'The transition that will trigger the field transform.'),
+        vocabulary=u'Products.PloneMeeting.vocabularies.item_transitions_vocabulary',
+        required=False,
+    )
+
+    field_name = schema.Choice(
+        title=_(u'On transition field transform field name'),
+        description=_(u'The item field that will be transformed.'),
+        vocabulary=u'Products.PloneMeeting.vocabularies.item_rich_text_fields_vocabulary',
+        required=False,
+    )
+
+    tal_expression = schema.TextLine(
+        title=_(u'On transition field transform TAL expression'),
+        description=_(u'The TAL expression. Element "here" represents the item. '
+                      u'This expression MUST return valid HTML or it will not behave properly on the item.'),
+        required=False,
+    )
+
+
+class IOnMeetingTransitionItemActionRowSchema(Interface):
+    """Row schema for the on_meeting_transition_item_action_to_execute DataGridField."""
+
+    meeting_transition = schema.Choice(
+        title=_(u'On meeting transition item action to execute meeting transition'),
+        description=_(u'The transition triggered on the meeting.'),
+        vocabulary=u'Products.PloneMeeting.vocabularies.meeting_transitions_vocabulary',
+        required=False,
+    )
+
+    item_action = schema.Choice(
+        title=_(u'On meeting transition item action to execute item action'),
+        description=_(u'The action that will be executed on every items of the meeting.'),
+        vocabulary=u'Products.PloneMeeting.vocabularies.executable_item_actions_vocabulary',
+        required=False,
+    )
+
+    tal_expression = schema.TextLine(
+        title=_(u'On meeting transition item action to execute tal expression'),
+        description=_(u'The action to execute when "Execute given action" is selected in column "Item action".'),
+        required=False,
+    )
+
+
+class ICustomAdvisersRowSchema(Interface):
+    """Row schema for the custom_advisers DataGridField."""
+
+    form.omitted('row_id')
+    row_id = schema.TextLine(
+        title=_(u'Custom adviser row id'),
+        required=False,
+    )
+
+    org = schema.Choice(
+        title=_(u'Custom adviser organization'),
+        vocabulary=u'Products.PloneMeeting.vocabularies.active_orgs_for_custom_advisers_vocabulary',
+        required=False,
+    )
+
+    gives_auto_advice_on = schema.TextLine(
+        title=_(u'Custom adviser gives automatic advice on'),
+        description=_(u'gives_auto_advice_on_col_description'),
+        required=False,
+    )
+
+    gives_auto_advice_on_help_message = schema.TextLine(
+        title=_(u'Custom adviser gives automatic advice on help message'),
+        description=_(u'gives_auto_advice_on_help_message_col_description'),
+        required=False,
+    )
+
+    for_item_created_from = schema.TextLine(
+        title=_(u'Rule activated for item created from'),
+        description=_(u'for_item_created_from_col_description'),
+        required=False,
+    )
+
+    for_item_created_until = schema.TextLine(
+        title=_(u'Rule activated for item created until'),
+        description=_(u'for_item_created_until_col_description'),
+        required=False,
+    )
+
+    delay = schema.TextLine(
+        title=_(u'Delay for giving advice'),
+        description=_(u'delay_col_description'),
+        required=False,
+    )
+
+    delay_left_alert = schema.TextLine(
+        title=_(u'Delay left alert'),
+        description=_(u'delay_left_alert_col_description'),
+        required=False,
+    )
+
+    delay_label = schema.TextLine(
+        title=_(u'Custom adviser delay label'),
+        description=_(u'delay_label_col_description'),
+        required=False,
+    )
+
+    is_delay_calendar_days = schema.Choice(
+        title=_(u'Is delay computed in calendar days?'),
+        description=_(u'is_delay_calendar_days_col_description'),
+        vocabulary=u'Products.PloneMeeting.vocabularies.boolean_vocabulary',
+        required=False,
+    )
+
+    available_on = schema.TextLine(
+        title=_(u'Available on'),
+        description=_(u'available_on_col_description'),
+        required=False,
+    )
+
+    is_linked_to_previous_row = schema.Choice(
+        title=_(u'Is linked to previous row?'),
+        description=_(u'Is linked to previous row description'),
+        vocabulary=u'Products.PloneMeeting.vocabularies.boolean_vocabulary',
+        required=False,
+    )
+
+
+class IPowerObserversRowSchema(Interface):
+    """Row schema for the power_observers DataGridField."""
+
+    form.omitted('row_id')
+    row_id = schema.TextLine(
+        title=_(u'Power observer row id'),
+        required=False,
+    )
+
+    label = schema.TextLine(
+        title=_(u'Power observer label'),
+        description=_(u'power_observers_label_col_description'),
+        required=False,
+    )
+
+    item_states = schema.List(
+        title=_(u'Power observer item viewable states'),
+        description=_(u'power_observers_item_states_col_description'),
+        value_type=schema.Choice(vocabulary=u'Products.PloneMeeting.vocabularies.item_states_vocabulary'),
+        required=False,
+    )
+
+    item_access_on = schema.TextLine(
+        title=_(u'Power observer item access TAL expression'),
+        description=_(u'power_observers_item_access_on_col_description'),
+        required=False,
+    )
+
+    meeting_states = schema.List(
+        title=_(u'Power observer meeting viewable states'),
+        description=_(u'power_observers_meeting_states_col_description'),
+        value_type=schema.Choice(vocabulary=u'Products.PloneMeeting.vocabularies.meeting_states_vocabulary'),
+        required=False,
+    )
+
+    meeting_access_on = schema.TextLine(
+        title=_(u'Power observer meeting access TAL expression'),
+        description=_(u'power_observers_meeting_access_on_col_description'),
+        required=False,
+    )
+
+
+class ILabelsConfigRowSchema(Interface):
+    """Row schema for the labels_config DataGridField."""
+
+    label_id = schema.Choice(
+        title=_(u'Labels config label id'),
+        description=_(u'labels_config_label_id_col_description'),
+        vocabulary=u'Products.PloneMeeting.vocabularies.configftwlabelsvocabulary',
+        required=False,
+    )
+
+    view_groups = schema.List(
+        title=_(u'Labels config view groups'),
+        description=_(u'labels_config_view_groups_col_description'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.item_attribute_visible_for_with_meeting_managers_vocabulary'),
+        required=False,
+    )
+
+    view_groups_excluding = schema.Choice(
+        title=_(u'Labels config view groups excluding'),
+        description=_(u'labels_config_view_groups_excluding_col_description'),
+        vocabulary=u'Products.PloneMeeting.vocabularies.boolean_vocabulary',
+        required=False,
+    )
+
+    view_states = schema.List(
+        title=_(u'Labels config view states'),
+        description=_(u'labels_config_view_states_col_description'),
+        value_type=schema.Choice(vocabulary=u'Products.PloneMeeting.vocabularies.item_states_vocabulary'),
+        required=False,
+    )
+
+    view_access_on = schema.TextLine(
+        title=_(u'Labels config view access TAL expression'),
+        description=_(u'labels_config_view_access_on_col_description'),
+        required=False,
+    )
+
+    view_access_on_cache = schema.Choice(
+        title=_(u'Labels config view access TAL expression cache'),
+        description=_(u'labels_config_view_access_on_cache_col_description'),
+        vocabulary=u'Products.PloneMeeting.vocabularies.boolean_vocabulary',
+        required=False,
+    )
+
+    edit_groups = schema.List(
+        title=_(u'Labels config edit groups'),
+        description=_(u'labels_config_edit_groups_col_description'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.item_attribute_visible_for_with_meeting_managers_vocabulary'),
+        required=False,
+    )
+
+    edit_groups_excluding = schema.Choice(
+        title=_(u'Labels config edit groups excluding'),
+        description=_(u'labels_config_edit_groups_excluding_col_description'),
+        vocabulary=u'Products.PloneMeeting.vocabularies.boolean_vocabulary',
+        required=False,
+    )
+
+    edit_states = schema.List(
+        title=_(u'Labels config edit states'),
+        description=_(u'labels_config_edit_states_col_description'),
+        value_type=schema.Choice(vocabulary=u'Products.PloneMeeting.vocabularies.item_states_vocabulary'),
+        required=False,
+    )
+
+    edit_access_on = schema.TextLine(
+        title=_(u'Labels config edit access TAL expression'),
+        description=_(u'labels_config_edit_access_on_col_description'),
+        required=False,
+    )
+
+    edit_access_on_cache = schema.Choice(
+        title=_(u'Labels config edit access TAL expression cache'),
+        description=_(u'labels_config_edit_access_on_cache_col_description'),
+        vocabulary=u'Products.PloneMeeting.vocabularies.boolean_vocabulary',
+        required=False,
+    )
+
+    update_local_roles = schema.Choice(
+        title=_(u'Labels config update local roles?'),
+        description=_(u'labels_config_update_local_roles_col_description'),
+        vocabulary=u'Products.PloneMeeting.vocabularies.boolean_vocabulary',
+        required=False,
+    )
+
+
+class IItemFieldsConfigRowSchema(Interface):
+    """Row schema for the item_fields_config DataGridField."""
+
+    name = schema.Choice(
+        title=_(u'Item fields config name'),
+        description=_(u'item_fields_config_name_description'),
+        vocabulary=u'Products.PloneMeeting.vocabularies.item_fields_config_vocabulary',
+        required=False,
+    )
+
+    view = schema.TextLine(
+        title=_(u'Item fields config view TAL expression'),
+        description=_(u'item_fields_config_view_tal_expr_description'),
+        required=False,
+    )
+
+    edit = schema.TextLine(
+        title=_(u'Item fields config edit TAL expression'),
+        description=_(u'item_fields_config_edit_tal_expr_description'),
+        required=False,
+    )
+
+
+class ICommitteesRowSchema(Interface):
+    """Row schema for the committees DataGridField."""
+
+    form.omitted('row_id')
+    row_id = schema.TextLine(
+        title=_(u'Committee row id'),
+        required=False,
+    )
+
+    label = schema.TextLine(
+        title=_(u'Committee label'),
+        required=False,
+    )
+
+    acronym = schema.TextLine(
+        title=_(u'Committee acronym'),
+        required=False,
+    )
+
+    default_place = schema.TextLine(
+        title=_(u'Committee default place'),
+        description=_(u'committees_default_place_col_description'),
+        required=False,
+    )
+
+    default_assembly = schema.Text(
+        title=_(u'Committee default assembly'),
+        description=_(u'committees_default_assembly_col_description'),
+        required=False,
+    )
+
+    default_signatures = schema.Text(
+        title=_(u'Committee default signatures'),
+        description=_(u'committees_default_signatures_col_description'),
+        required=False,
+    )
+
+    default_attendees = schema.List(
+        title=_(u'Committee default attendees'),
+        description=_(u'committees_default_attendees_col_description'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.selectable_committee_attendees_vocabulary'),
+        required=False,
+    )
+
+    default_signatories = schema.List(
+        title=_(u'Committee default signatories'),
+        description=_(u'committees_default_signatories_col_description'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.selectable_committee_attendees_vocabulary'),
+        required=False,
+    )
+
+    using_groups = schema.List(
+        title=_(u'Committee using groups'),
+        description=_(u'committees_using_groups_col_description'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.selectable_proposing_groups_vocabulary'),
+        required=False,
+        default=defValues.usingGroups,
+    )
+
+    auto_from = schema.List(
+        title=_(u'Committee auto from'),
+        description=_(u'committees_auto_from_col_description'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.selectable_committee_auto_from_vocabulary'),
+        required=False,
+    )
+
+    supplements = schema.Choice(
+        title=_(u'Committee supplements'),
+        description=_(u'committees_supplements_col_description'),
+        vocabulary=u'Products.PloneMeeting.vocabularies.numbers_from_zero_vocabulary',
+        required=False,
+    )
+
+    enable_editors = schema.Choice(
+        title=_(u'Committee editors group enabled?'),
+        description=_(u'committees_enable_editors_col_description'),
+        vocabulary=u'Products.PloneMeeting.vocabularies.boolean_vocabulary',
+        required=False,
+    )
+
+    enabled = schema.Choice(
+        title=_(u'Committee enabled?'),
+        description=_(u'committees_enabled_col_description'),
+        vocabulary=u'Products.PloneMeeting.vocabularies.committees_enabled_vocabulary',
+        required=False,
+    )
+
+
+# ---------------------------------------------------------------------------
+# IMeetingConfig schema interface
+# ---------------------------------------------------------------------------
+
+defValues = MeetingConfigDescriptor.get()
+
+
+class IMeetingConfig(IConfigElement):
+    """Schema for MeetingConfig, migrated from Archetypes OrderedBaseFolder."""
+
+    # ---- default fieldset (no explicit fieldset = appears in default tab) ----
+
+    form.write_permission(folder_title=WriteRiskyConfig)
+    folder_title = schema.TextLine(
+        title=_(u'PloneMeeting_label_folderTitle', default=u'Foldertitle'),
+        description=_(u'folder_title_descr', default=u'FolderTitle'),
+        required=True,
+    )
+
+    form.write_permission(short_name=WriteRiskyConfig)
+    short_name = schema.TextLine(
+        title=_(u'PloneMeeting_label_shortName', default=u'Shortname'),
+        description=_(u'short_name_descr', default=u'ShortName'),
+        required=True,
+    )
+
+    form.write_permission(is_default=WriteRiskyConfig)
+    is_default = schema.Bool(
+        title=_(u'PloneMeeting_label_isDefault', default=u'Isdefault'),
+        description=_(u'config_is_default_descr', default=u'IsDefault'),
+        required=False,
+        default=defValues.isDefault,
+    )
+
+    form.widget('item_icon_color', RadioFieldWidget)
+    form.write_permission(item_icon_color=WriteRiskyConfig)
+    item_icon_color = schema.Choice(
+        title=_(u'PloneMeeting_label_itemIconColor', default=u'Itemiconcolor'),
+        description=_(u'item_icon_color_descr', default=u'ItemIconColor'),
+        vocabulary=u'Products.PloneMeeting.vocabularies.item_icon_colors_vocabulary',
+        required=False,
+        default=defValues.itemIconColor,
+    )
+
+    form.widget('config_group', RadioFieldWidget)
+    form.write_permission(config_group=WriteRiskyConfig)
+    config_group = schema.Choice(
+        title=_(u'PloneMeeting_label_configGroup', default=u'Configgroup'),
+        description=_(u'config_group_descr', default=u'ConfigGroup'),
+        vocabulary=u'Products.PloneMeeting.vocabularies.config_groups_vocabulary',
+        required=False,
+        default=defValues.configGroup,
+    )
+
+    form.widget('places', PMTextAreaFieldWidget)
+    form.write_permission(places=WriteRiskyConfig)
+    places = schema.Text(
+        title=_(u'PloneMeeting_label_places', default=u'Places'),
+        description=_(u'places_descr', default=u'Places'),
+        required=False,
+        default=defValues.places,
+    )
+
+    form.write_permission(last_meeting_number=WriteHarmlessConfig)
+    last_meeting_number = schema.Int(
+        title=_(u'PloneMeeting_label_lastMeetingNumber', default=u'Lastmeetingnumber'),
+        description=_(u'last_meeting_number_descr', default=u'LastMeetingNumber'),
+        required=True,
+        default=defValues.lastMeetingNumber,
+    )
+
+    form.widget('yearly_init_meeting_numbers', CheckBoxFieldWidget)
+    form.write_permission(yearly_init_meeting_numbers=WriteRiskyConfig)
+    yearly_init_meeting_numbers = schema.List(
+        title=_(u'PloneMeeting_label_yearlyInitMeetingNumbers', default=u'Yearlyinitmeetingnumbers'),
+        description=_(u'yearly_init_meeting_numbers_descr', default=u'YearlyInitMeetingNumbers'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.yearlyinitmeetingnumbersvocabulary'),
+        required=False,
+        default=defValues.yearlyInitMeetingNumbers,
+    )
+
+    form.widget('budget_default', PMRichTextFieldWidget)
+    form.write_permission(budget_default=WriteRiskyConfig)
+    budget_default = RichText(
+        title=_(u'PloneMeeting_label_budgetDefault', default=u'Budgetdefault'),
+        description=_(u'config_budget_default_descr', default=u'BudgetDefault'),
+        default_mime_type='text/html',
+        allowed_mime_types=('text/html',),
+        output_mime_type='text/x-html-safe',
+        required=False,
+        default=defValues.budgetDefault,
+    )
+
+    form.write_permission(config_version=WriteRiskyConfig)
+    config_version = schema.TextLine(
+        title=_(u'PloneMeeting_label_configVersion', default=u'Configversion'),
+        description=_(u'config_version_descr', default=u'ConfigVersion'),
+        required=False,
+        default=defValues.configVersion,
+    )
+
+    # ---- assembly_and_signatures fieldset ----
+
+    model.fieldset(
+        'assembly_and_signatures',
+        label=_(u'assembly_and_signatures'),
+        fields=[
+            'assembly', 'assembly_staves', 'signatures',
+            'certified_signatures', 'ordered_contacts',
+            'ordered_item_initiators', 'selectable_redefined_position_types',
+        ],
+    )
+
+    form.widget('assembly', PMTextAreaFieldWidget)
+    form.write_permission(assembly=WriteHarmlessConfig)
+    assembly = schema.Text(
+        title=_(u'title_default_assembly'),
+        description=_(u'assembly_descr', default=u'Assembly'),
+        required=False,
+        default=defValues.certifiedSignatures,
+    )
+
+    form.widget('assembly_staves', PMTextAreaFieldWidget)
+    form.write_permission(assembly_staves=WriteHarmlessConfig)
+    assembly_staves = schema.Text(
+        title=_(u'title_default_assembly_staves'),
+        description=_(u'assembly_staves_descr', default=u'AssemblyStaves'),
+        required=False,
+    )
+
+    form.widget('signatures', PMTextAreaFieldWidget)
+    form.write_permission(signatures=WriteHarmlessConfig)
+    signatures = schema.Text(
+        title=_(u'title_default_signatures'),
+        description=_(u'signatures_descr', default=u'Signatures'),
+        required=False,
+    )
+
+    form.widget('certified_signatures', BlockDataGridFieldFactory)
+    form.write_permission(certified_signatures=WriteHarmlessConfig)
+    certified_signatures = schema.List(
+        title=_(u'PloneMeeting_label_certifiedSignatures', default=u'Certifiedsignatures'),
+        description=_(u'certified_signatures_descr', default=u'CertifiedSignatures'),
+        value_type=DictRow(schema=ICertifiedSignaturesRowSchema),
+        required=False,
+    )
+
+    form.widget('ordered_contacts', PMOrderedSelectFieldWidget)
+    form.write_permission(ordered_contacts=WriteHarmlessConfig)
+    ordered_contacts = schema.List(
+        title=_(u'PloneMeeting_label_orderedContacts', default=u'Orderedcontacts'),
+        description=_(u'ordered_contacts_descr', default=u'OrderedContacts'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.selectableassemblymembersvocabulary'),
+        required=False,
+        default=defValues.orderedContacts,
+    )
+
+    form.widget('ordered_item_initiators', PMOrderedSelectFieldWidget)
+    form.write_permission(ordered_item_initiators=WriteHarmlessConfig)
+    ordered_item_initiators = schema.List(
+        title=_(u'PloneMeeting_label_orderedItemInitiators', default=u'Orderediteminitiators'),
+        description=_(u'ordered_item_initiators_descr', default=u'OrderedItemInitiators'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.selectableiteminitiatorsvocabulary'),
+        required=False,
+        default=defValues.orderedItemInitiators,
+    )
+
+    form.widget('selectable_redefined_position_types', CheckBoxFieldWidget)
+    form.write_permission(selectable_redefined_position_types=WriteHarmlessConfig)
+    selectable_redefined_position_types = schema.List(
+        title=_(u'PloneMeeting_label_selectableRedefinedPositionTypes', default=u'Selectableredefinedpositiontypes'),
+        description=_(u'selectable_redefined_position_types_descr', default=u'SelectableRedefinedPositionTypes'),
+        value_type=schema.Choice(vocabulary=u'PMPositionTypes'),
+        required=False,
+        default=defValues.selectableRedefinedPositionTypes,
+    )
+
+    # ---- data fieldset ----
+
+    model.fieldset(
+        'data',
+        label=_(u'data'),
+        fields=[
+            'used_item_attributes', 'historized_item_attributes', 'record_item_history_states',
+            'used_meeting_attributes', 'ordered_associated_organizations', 'ordered_groups_in_charge',
+            'include_groups_in_charge_defined_on_proposing_group',
+            'include_groups_in_charge_defined_on_category',
+            'to_discuss_set_on_item_insert', 'to_discuss_default', 'to_discuss_late_default',
+            'item_reference_format', 'compute_item_reference_for_items_out_of_meeting',
+            'inserting_methods_on_add_item', 'selectable_privacies', 'all_item_tags',
+            'sort_all_item_tags', 'item_fields_to_keep_config_sorting_for', 'list_types',
+            'xhtml_transform_fields', 'xhtml_transform_types',
+            'validation_deadline_default', 'freeze_deadline_default',
+            'meeting_configs_to_clone_to', 'item_auto_sent_to_other_mc_states',
+            'item_manual_sent_to_other_mc_states', 'contents_kept_on_sent_to_other_mc',
+            'advices_kept_on_sent_to_other_mc', 'enabled_item_actions',
+            'annex_to_print_mode', 'keep_original_to_print_of_cloned_items',
+            'remove_annexes_previews_on_meeting_closure', 'css_transforms',
+        ],
+    )
+
+    form.widget('used_item_attributes', CheckBoxFieldWidget)
+    form.write_permission(used_item_attributes=WriteRiskyConfig)
+    used_item_attributes = schema.List(
+        title=_(u'PloneMeeting_label_usedItemAttributes', default=u'Useditemattributes'),
+        description=_(u'used_item_attributes_descr', default=u'UsedItemAttributes'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.used_item_attributes_vocabulary'),
+        required=False,
+        default=defValues.usedItemAttributes,
+    )
+
+    form.widget('historized_item_attributes', CheckBoxFieldWidget)
+    form.write_permission(historized_item_attributes=WriteRiskyConfig)
+    historized_item_attributes = schema.List(
+        title=_(u'PloneMeeting_label_historizedItemAttributes', default=u'Historizeditemattributes'),
+        description=_(u'historized_item_attrs_descr', default=u'HistorizedItemAttributes'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.item_attributes_vocabulary'),
+        required=False,
+        default=defValues.historizedItemAttributes,
+    )
+
+    form.widget('record_item_history_states', CheckBoxFieldWidget)
+    form.write_permission(record_item_history_states=WriteRiskyConfig)
+    record_item_history_states = schema.List(
+        title=_(u'PloneMeeting_label_recordItemHistoryStates', default=u'Recorditemhistorystates'),
+        description=_(u'record_item_history_states_descr', default=u'RecordItemHistoryStates'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.item_states_vocabulary'),
+        required=False,
+        default=defValues.recordItemHistoryStates,
+    )
+
+    form.widget('used_meeting_attributes', CheckBoxFieldWidget)
+    form.write_permission(used_meeting_attributes=WriteRiskyConfig)
+    used_meeting_attributes = schema.List(
+        title=_(u'PloneMeeting_label_usedMeetingAttributes', default=u'Usedmeetingattributes'),
+        description=_(u'used_meeting_attributes_descr', default=u'UsedMeetingAttributes'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.used_meeting_attributes_vocabulary'),
+        required=False,
+        default=defValues.usedMeetingAttributes,
+    )
+
+    form.widget('ordered_associated_organizations', PMOrderedSelectFieldWidget)
+    form.write_permission(ordered_associated_organizations=WriteRiskyConfig)
+    ordered_associated_organizations = schema.List(
+        title=_(u'PloneMeeting_label_orderedAssociatedOrganizations', default=u'Orderedassociatedorganizations'),
+        description=_(u'ordered_associated_organizations_descr', default=u'OrderedAssociatedOrganizations'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.detailedorganizationsvocabulary'),
+        required=False,
+        default=defValues.orderedAssociatedOrganizations,
+    )
+
+    form.widget('ordered_groups_in_charge', PMOrderedSelectFieldWidget)
+    form.write_permission(ordered_groups_in_charge=WriteRiskyConfig)
+    ordered_groups_in_charge = schema.List(
+        title=_(u'PloneMeeting_label_orderedGroupsInCharge', default=u'Orderedgroupsincharge'),
+        description=_(u'ordered_groups_in_charge_descr', default=u'OrderedGroupsInCharge'),
+        value_type=schema.Choice(
+            vocabulary=u'collective.contact.plonegroup.browser.settings.SortedSelectedOrganizationsElephantVocabulary'),
+        required=False,
+        default=defValues.orderedGroupsInCharge,
+    )
+
+    form.write_permission(include_groups_in_charge_defined_on_proposing_group=WriteRiskyConfig)
+    include_groups_in_charge_defined_on_proposing_group = schema.Bool(
+        title=_(u'PloneMeeting_label_includeGroupsInChargeDefinedOnProposingGroup', default=u'Includegroupsinchargedefinedonproposinggroup'),
+        description=_(u'include_groups_in_charge_defined_on_proposing_group_descr', default=u'IncludeGroupsInChargeDefinedOnProposingGroup'),
+        required=False,
+        default=defValues.includeGroupsInChargeDefinedOnProposingGroup,
+    )
+
+    form.write_permission(include_groups_in_charge_defined_on_category=WriteRiskyConfig)
+    include_groups_in_charge_defined_on_category = schema.Bool(
+        title=_(u'PloneMeeting_label_includeGroupsInChargeDefinedOnCategory', default=u'Includegroupsinchargedefinedoncategory'),
+        description=_(u'include_groups_in_charge_defined_on_category_descr', default=u'IncludeGroupsInChargeDefinedOnCategory'),
+        required=False,
+        default=defValues.includeGroupsInChargeDefinedOnCategory,
+    )
+
+    form.write_permission(to_discuss_set_on_item_insert=WriteRiskyConfig)
+    to_discuss_set_on_item_insert = schema.Bool(
+        title=_(u'PloneMeeting_label_toDiscussSetOnItemInsert', default=u'Todiscusssetoniteminsert'),
+        description=_(u'to_discuss_set_on_item_insert_descr', default=u'ToDiscussSetOnItemInsert'),
+        required=False,
+        default=defValues.toDiscussSetOnItemInsert,
+    )
+
+    form.write_permission(to_discuss_default=WriteRiskyConfig)
+    to_discuss_default = schema.Bool(
+        title=_(u'PloneMeeting_label_toDiscussDefault', default=u'Todiscussdefault'),
+        description=_(u'to_discuss_default_descr', default=u'ToDiscussDefault'),
+        required=False,
+        default=defValues.toDiscussDefault,
+    )
+
+    form.write_permission(to_discuss_late_default=WriteRiskyConfig)
+    to_discuss_late_default = schema.Bool(
+        title=_(u'PloneMeeting_label_toDiscussLateDefault', default=u'Todiscusslatedefault'),
+        description=_(u'to_discuss_late_default_descr', default=u'ToDiscussLateDefault'),
+        required=False,
+        default=defValues.toDiscussLateDefault,
+    )
+
+    form.widget('item_reference_format', PMTextAreaFieldWidget)
+    form.write_permission(item_reference_format=WriteRiskyConfig)
+    item_reference_format = schema.Text(
+        title=_(u'PloneMeeting_label_itemReferenceFormat', default=u'Itemreferenceformat'),
+        description=_(u'item_reference_format_descr', default=u'ItemReferenceFormat'),
+        required=False,
+        default=defValues.itemReferenceFormat,
+    )
+
+    form.write_permission(compute_item_reference_for_items_out_of_meeting=WriteRiskyConfig)
+    compute_item_reference_for_items_out_of_meeting = schema.Bool(
+        title=_(u'PloneMeeting_label_computeItemReferenceForItemsOutOfMeeting', default=u'Computeitemreferenceforitemsoutofmeeting'),
+        description=_(u'compute_item_reference_for_items_out_of_meeting_descr', default=u'ComputeItemReferenceForItemsOutOfMeeting'),
+        required=False,
+        default=defValues.computeItemReferenceForItemsOutOfMeeting,
+    )
+
+    form.widget('inserting_methods_on_add_item', BlockDataGridFieldFactory)
+    form.write_permission(inserting_methods_on_add_item=WriteRiskyConfig)
+    inserting_methods_on_add_item = schema.List(
+        title=_(u'PloneMeeting_label_insertingMethodsOnAddItem', default=u'Insertingmethodsonadditem'),
+        description=_(u'inserting_methods_on_add_item_descr', default=u'insertingMethodsOnAddItem'),
+        value_type=DictRow(schema=IInsertingMethodsOnAddItemRowSchema),
+        required=True,
+        default=defValues.insertingMethodsOnAddItem,
+    )
+
+    form.widget('selectable_privacies', PMOrderedSelectFieldWidget)
+    form.write_permission(selectable_privacies=WriteRiskyConfig)
+    selectable_privacies = schema.List(
+        title=_(u'PloneMeeting_label_selectablePrivacies', default=u'selectableprivacies'),
+        description=_(u'selectable_privacies_descr', default=u'SelectablePrivacies'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.selectableprivaciesvocabulary'),
+        required=False,
+        default=defValues.selectablePrivacies,
+    )
+
+    form.widget('all_item_tags', PMTextAreaFieldWidget)
+    form.write_permission(all_item_tags=WriteRiskyConfig)
+    all_item_tags = schema.Text(
+        title=_(u'PloneMeeting_label_allItemTags', default=u'Allitemtags'),
+        description=_(u'all_item_tags_descr', default=u'AllItemTags'),
+        required=False,
+        default=defValues.allItemTags,
+    )
+
+    form.write_permission(sort_all_item_tags=WriteRiskyConfig)
+    sort_all_item_tags = schema.Bool(
+        title=_(u'PloneMeeting_label_sortAllItemTags', default=u'Sortallitemtags'),
+        description=_(u'sort_all_item_tags_descr', default=u'SortAllItemTags'),
+        required=False,
+        default=defValues.sortAllItemTags,
+    )
+
+    form.widget('item_fields_to_keep_config_sorting_for', CheckBoxFieldWidget)
+    form.write_permission(item_fields_to_keep_config_sorting_for=WriteRiskyConfig)
+    item_fields_to_keep_config_sorting_for = schema.List(
+        title=_(u'PloneMeeting_label_itemFieldsToKeepConfigSortingFor', default=u'Itemfieldstokeepconfigsortingfor'),
+        description=_(u'item_fields_to_keep_config_sorting_for_descr', default=u'ItemFieldsToKeepConfigSortingFor'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.item_fields_to_keep_config_sorting_for_vocabulary'),
+        required=False,
+        default=defValues.itemFieldsToKeepConfigSortingFor,
+    )
+
+    form.widget('list_types', BlockDataGridFieldFactory)
+    form.write_permission(list_types=WriteRiskyConfig)
+    list_types = schema.List(
+        title=_(u'PloneMeeting_label_listTypes', default=u'Listtypes'),
+        description=_(u'list_types_descr', default=u'ListTypes'),
+        value_type=DictRow(schema=IListTypesRowSchema),
+        required=False,
+        default=defValues.listTypes,
+    )
+
+    form.widget('xhtml_transform_fields', CheckBoxFieldWidget)
+    form.write_permission(xhtml_transform_fields=WriteRiskyConfig)
+    xhtml_transform_fields = schema.List(
+        title=_(u'PloneMeeting_label_xhtmlTransformFields', default=u'Xhtmltransformfields'),
+        description=_(u'xhtml_transform_fields_descr', default=u'XhtmlTransformFields'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.all_rich_text_fields_vocabulary'),
+        required=False,
+        default=defValues.xhtmlTransformFields,
+    )
+
+    form.widget('xhtml_transform_types', CheckBoxFieldWidget)
+    form.write_permission(xhtml_transform_types=WriteRiskyConfig)
+    xhtml_transform_types = schema.List(
+        title=_(u'PloneMeeting_label_xhtmlTransformTypes', default=u'Xhtmltransformtypes'),
+        description=_(u'xhtml_transform_types_descr', default=u'XhtmlTransformTypes'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.transform_types_vocabulary'),
+        required=False,
+        default=defValues.xhtmlTransformTypes,
+    )
+
+    form.write_permission(validation_deadline_default=WriteRiskyConfig)
+    validation_deadline_default = schema.TextLine(
+        title=_(u'PloneMeeting_label_validationDeadlineDefault', default=u'Validationdeadlinedefault'),
+        description=_(u'validation_deadline_default_descr', default=u'ValidationDeadlineDefault'),
+        required=False,
+        default=defValues.validationDeadlineDefault,
+    )
+
+    form.write_permission(freeze_deadline_default=WriteRiskyConfig)
+    freeze_deadline_default = schema.TextLine(
+        title=_(u'PloneMeeting_label_freezeDeadlineDefault', default=u'Freezedeadlinedefault'),
+        description=_(u'freeze_deadline_default_descr', default=u'FreezeDeadlineDefault'),
+        required=False,
+        default=defValues.freezeDeadlineDefault,
+    )
+
+    form.widget('meeting_configs_to_clone_to', BlockDataGridFieldFactory)
+    form.write_permission(meeting_configs_to_clone_to=WriteRiskyConfig)
+    meeting_configs_to_clone_to = schema.List(
+        title=_(u'PloneMeeting_label_meetingConfigsToCloneTo', default=u'Meetingconfigstocloneto'),
+        description=_(u'meeting_configs_to_clone_to_descr', default=u'MeetingConfigsToCloneTo'),
+        value_type=DictRow(schema=IMeetingConfigsToCloneToRowSchema),
+        required=False,
+        default=defValues.meetingConfigsToCloneTo,
+    )
+
+    form.widget('item_auto_sent_to_other_mc_states', CheckBoxFieldWidget)
+    form.write_permission(item_auto_sent_to_other_mc_states=WriteRiskyConfig)
+    item_auto_sent_to_other_mc_states = schema.List(
+        title=_(u'PloneMeeting_label_itemAutoSentToOtherMCStates', default=u'Itemautosenttoothermcstates'),
+        description=_(u'item_auto_sent_to_other_mc_states_descr', default=u'ItemAutoSentToOtherMCStates'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.item_auto_sent_to_other_mc_states_vocabulary'),
+        required=False,
+        default=defValues.itemAutoSentToOtherMCStates,
+    )
+
+    form.widget('item_manual_sent_to_other_mc_states', CheckBoxFieldWidget)
+    form.write_permission(item_manual_sent_to_other_mc_states=WriteRiskyConfig)
+    item_manual_sent_to_other_mc_states = schema.List(
+        title=_(u'PloneMeeting_label_itemManualSentToOtherMCStates', default=u'Itemmanualsenttoothermcstates'),
+        description=_(u'item_manual_sent_to_other_mc_states_descr', default=u'ItemManualSentToOtherMCStates'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.item_states_vocabulary'),
+        required=False,
+        default=defValues.itemManualSentToOtherMCStates,
+    )
+
+    form.widget('contents_kept_on_sent_to_other_mc', CheckBoxFieldWidget)
+    form.write_permission(contents_kept_on_sent_to_other_mc=WriteRiskyConfig)
+    contents_kept_on_sent_to_other_mc = schema.List(
+        title=_(u'PloneMeeting_label_contentsKeptOnSentToOtherMC', default=u'Contentskeptonsenttoothermc'),
+        description=_(u'contents_kept_on_sent_to_other_mc_descr', default=u'ContentsKeptOnSentToOtherMC'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.contents_kept_on_sent_to_other_mc_vocabulary'),
+        required=False,
+        default=defValues.contentsKeptOnSentToOtherMC,
+    )
+
+    form.widget('advices_kept_on_sent_to_other_mc', CheckBoxFieldWidget)
+    form.write_permission(advices_kept_on_sent_to_other_mc=WriteRiskyConfig)
+    advices_kept_on_sent_to_other_mc = schema.List(
+        title=_(u'PloneMeeting_label_advicesKeptOnSentToOtherMC', default=u'AdviceskeptonSenttoothermc'),
+        description=_(u'advices_kept_on_sent_to_other_mc_descr', default=u'AdvicesKeptOnSentToOtherMC'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.askedadvicesvocabulary'),
+        required=False,
+        default=defValues.advicesKeptOnSentToOtherMC,
+    )
+
+    form.widget('enabled_item_actions', CheckBoxFieldWidget)
+    form.write_permission(enabled_item_actions=WriteRiskyConfig)
+    enabled_item_actions = schema.List(
+        title=_(u'PloneMeeting_label_enabledItemActions', default=u'enableditemactions'),
+        description=_(u''),
+        value_type=schema.Choice(vocabulary=u'EnabledItemActions'),
+        required=False,
+        default=defValues.enabledItemActions,
+    )
+
+    form.widget('annex_to_print_mode', RadioFieldWidget)
+    form.write_permission(annex_to_print_mode=WriteRiskyConfig)
+    annex_to_print_mode = schema.Choice(
+        title=_(u'PloneMeeting_label_annexToPrintMode', default=u'Annextoprintmode'),
+        description=_(u'annex_to_print_mode_descr', default=u'AnnexToPrintMode'),
+        vocabulary=u'Products.PloneMeeting.vocabularies.annex_to_print_modes_vocabulary',
+        required=False,
+        default=defValues.annexToPrintMode,
+    )
+
+    form.write_permission(keep_original_to_print_of_cloned_items=WriteRiskyConfig)
+    keep_original_to_print_of_cloned_items = schema.Bool(
+        title=_(u'PloneMeeting_label_keepOriginalToPrintOfClonedItems', default=u'Keeporiginaltoprintofcloneditems'),
+        description=_(u'keep_original_to_print_of_cloned_items_descr', default=u'KeepOriginalToPrintOfClonedItems'),
+        required=False,
+        default=defValues.keepOriginalToPrintOfClonedItems,
+    )
+
+    form.write_permission(remove_annexes_previews_on_meeting_closure=WriteRiskyConfig)
+    remove_annexes_previews_on_meeting_closure = schema.Bool(
+        title=_(u'PloneMeeting_label_removeAnnexesPreviewsOnMeetingClosure', default=u'Removeannexespreviewsonmeetingclosure'),
+        description=_(u'remove_annexes_previews_on_meeting_closure_descr', default=u'RemoveAnnexesPreviewsOnMeetingClosure'),
+        required=False,
+        default=defValues.removeAnnexesPreviewsOnMeetingClosure,
+    )
+
+    form.widget('css_transforms', BlockDataGridFieldFactory)
+    form.write_permission(css_transforms=WriteRiskyConfig)
+    css_transforms = schema.List(
+        title=_(u'PloneMeeting_label_cssTransforms', default=u'Csstransforms'),
+        description=_(u'css_transforms_descr', default=u'CssTransforms'),
+        value_type=DictRow(schema=ICssTransformsRowSchema),
+        required=False,
+        default=defValues.cssTransforms,
+    )
+
+    # ---- workflow fieldset ----
+
+    model.fieldset(
+        'workflow',
+        label=_(u'workflow'),
+        fields=[
+            'item_workflow', 'item_conditions_interface', 'item_actions_interface',
+            'meeting_workflow', 'meeting_conditions_interface', 'meeting_actions_interface',
+            'workflow_adaptations', 'item_wf_validation_levels', 'transitions_to_confirm',
+            'on_transition_field_transforms', 'on_meeting_transition_item_action_to_execute',
+            'meeting_present_item_when_no_current_meeting_states', 'item_preferred_meeting_states',
+        ],
+    )
+
+    form.widget('item_workflow', RadioFieldWidget)
+    form.write_permission(item_workflow=WriteRiskyConfig)
+    item_workflow = schema.Choice(
+        title=_(u'PloneMeeting_label_itemWorkflow', default=u'Itemworkflow'),
+        description=_(u'item_workflow_descr', default=u'ItemWorkflow'),
+        vocabulary=u'ItemWorkflows',
+        required=True,
+        default=defValues.itemWorkflow,
+    )
+
+    form.write_permission(item_conditions_interface=WriteRiskyConfig)
+    item_conditions_interface = schema.TextLine(
+        title=_(u'PloneMeeting_label_itemConditionsInterface', default=u'Itemconditionsinterface'),
+        description=_(u'item_conditions_interface_descr', default=u'ItemConditionsInterface'),
+        required=False,
+        default=defValues.itemConditionsInterface,
+    )
+
+    form.write_permission(item_actions_interface=WriteRiskyConfig)
+    item_actions_interface = schema.TextLine(
+        title=_(u'PloneMeeting_label_itemActionsInterface', default=u'Itemactionsinterface'),
+        description=_(u'item_actions_interface_descr', default=u'ItemActionsInterface'),
+        required=False,
+        default=defValues.itemActionsInterface,
+    )
+
+    form.widget('meeting_workflow', RadioFieldWidget)
+    form.write_permission(meeting_workflow=WriteRiskyConfig)
+    meeting_workflow = schema.Choice(
+        title=_(u'PloneMeeting_label_meetingWorkflow', default=u'Meetingworkflow'),
+        description=_(u'meeting_workflow_descr', default=u'MeetingWorkflow'),
+        vocabulary=u'MeetingWorkflows',
+        required=True,
+        default=defValues.meetingWorkflow,
+    )
+
+    form.write_permission(meeting_conditions_interface=WriteRiskyConfig)
+    meeting_conditions_interface = schema.TextLine(
+        title=_(u'PloneMeeting_label_meetingConditionsInterface', default=u'Meetingconditionsinterface'),
+        description=_(u'meeting_conditions_interface_descr', default=u'MeetingConditionsInterface'),
+        required=False,
+        default=defValues.meetingConditionsInterface,
+    )
+
+    form.write_permission(meeting_actions_interface=WriteRiskyConfig)
+    meeting_actions_interface = schema.TextLine(
+        title=_(u'PloneMeeting_label_meetingActionsInterface', default=u'Meetingactionsinterface'),
+        description=_(u'meeting_actions_interface_descr', default=u'MeetingActionsInterface'),
+        required=False,
+        default=defValues.meetingActionsInterface,
+    )
+
+    form.widget('workflow_adaptations', CheckBoxFieldWidget)
+    form.write_permission(workflow_adaptations=WriteRiskyConfig)
+    workflow_adaptations = schema.List(
+        title=_(u'PloneMeeting_label_workflowAdaptations', default=u'Workflowadaptations'),
+        description=_(u'workflow_adaptations_descr', default=u'WorkflowAdaptations'),
+        value_type=schema.Choice(vocabulary=u'WorkflowAdaptations'),
+        required=False,
+        default=defValues.workflowAdaptations,
+    )
+
+    form.widget('item_wf_validation_levels', BlockDataGridFieldFactory)
+    form.write_permission(item_wf_validation_levels=WriteRiskyConfig)
+    item_wf_validation_levels = schema.List(
+        title=_(u'PloneMeeting_label_itemWFValidationLevels', default=u'Itemwfvalidationlevels'),
+        description=_(u'item_wf_validation_levels_descr', default=u'ItemWFValidationLevels'),
+        value_type=DictRow(schema=IItemWFValidationLevelsRowSchema),
+        required=False,
+        default=defValues.itemWFValidationLevels,
+    )
+
+    form.widget('transitions_to_confirm', CheckBoxFieldWidget)
+    form.write_permission(transitions_to_confirm=WriteRiskyConfig)
+    transitions_to_confirm = schema.List(
+        title=_(u'PloneMeeting_label_transitionsToConfirm', default=u'Transitionstoconfirm'),
+        description=_(u'transitions_to_confirm_descr', default=u'TransitionsToConfirm'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.all_transitions_vocabulary'),
+        required=False,
+        default=defValues.transitionsToConfirm,
+    )
+
+    form.widget('on_transition_field_transforms', BlockDataGridFieldFactory)
+    form.write_permission(on_transition_field_transforms=WriteRiskyConfig)
+    on_transition_field_transforms = schema.List(
+        title=_(u'PloneMeeting_label_onTransitionFieldTransforms', default=u'Ontransitionfieldtransforms'),
+        description=_(u'on_transition_field_transforms_descr', default=u'OnTransitionFieldTransforms'),
+        value_type=DictRow(schema=IOnTransitionFieldTransformsRowSchema),
+        required=False,
+        default=defValues.onTransitionFieldTransforms,
+    )
+
+    form.widget('on_meeting_transition_item_action_to_execute', BlockDataGridFieldFactory)
+    form.write_permission(on_meeting_transition_item_action_to_execute=WriteRiskyConfig)
+    on_meeting_transition_item_action_to_execute = schema.List(
+        title=_(u'PloneMeeting_label_onMeetingTransitionItemActionToExecute', default=u'Onmeetingtransitionitemactiontoexecute'),
+        description=_(u'on_meeting_transition_item_action_to_execute_descr', default=u'OnMeetingTransitionItemActionToExecute'),
+        value_type=DictRow(schema=IOnMeetingTransitionItemActionRowSchema),
+        required=False,
+        default=defValues.onMeetingTransitionItemActionToExecute,
+    )
+
+    form.widget('meeting_present_item_when_no_current_meeting_states', CheckBoxFieldWidget)
+    form.write_permission(meeting_present_item_when_no_current_meeting_states=WriteRiskyConfig)
+    meeting_present_item_when_no_current_meeting_states = schema.List(
+        title=_(u'PloneMeeting_label_meetingPresentItemWhenNoCurrentMeetingStates', default=u'Meetingpresentitemwhennocurrentmeetingstates'),
+        description=_(u'meeting_present_item_when_no_current_meeting_states_descr', default=u'MeetingPresentItemWhenNoCurrentMeetingStates'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.meeting_states_vocabulary'),
+        required=False,
+        default=defValues.meetingPresentItemWhenNoCurrentMeetingStates,
+    )
+
+    form.widget('item_preferred_meeting_states', CheckBoxFieldWidget)
+    form.write_permission(item_preferred_meeting_states=WriteRiskyConfig)
+    item_preferred_meeting_states = schema.List(
+        title=_(u'PloneMeeting_label_itemPreferredMeetingStates', default=u'itemPreferredMeetingStates'),
+        description=_(u'itemPreferredMeetingStates_descr', default=u'itemPreferredMeetingStates'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.meeting_states_vocabulary'),
+        required=False,
+        default=defValues.itemPreferredMeetingStates,
+    )
+
+    # ---- gui fieldset ----
+
+    model.fieldset(
+        'gui',
+        label=_(u'gui'),
+        fields=[
+            'item_columns', 'available_items_list_visible_columns', 'items_list_visible_columns',
+            'item_actions_column_config', 'meeting_columns', 'enabled_annexes_batch_actions',
+            'display_available_items_to', 'redirect_to_next_meeting',
+            'items_visible_fields', 'items_not_viewable_visible_fields',
+            'items_not_viewable_visible_fields_tal_expr', 'items_list_visible_fields',
+            'max_shown_meetings', 'to_do_list_searches',
+            'dashboard_items_listings_filters', 'dashboard_meeting_available_items_filters',
+            'dashboard_meeting_linked_items_filters', 'dashboard_meetings_listings_filters',
+            'groups_hidden_in_dashboard_filter', 'users_hidden_in_dashboard_filter',
+            'max_shown_listings', 'max_shown_available_items', 'max_shown_meeting_items',
+        ],
+    )
+
+    form.widget('item_columns', CheckBoxFieldWidget)
+    form.write_permission(item_columns=WriteRiskyConfig)
+    item_columns = schema.List(
+        title=_(u'PloneMeeting_label_itemColumns', default=u'Itemcolumns'),
+        description=_(u'item_columns_descr', default=u'ItemColumns'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.item_columns_vocabulary'),
+        required=False,
+        default=defValues.itemColumns,
+    )
+
+    form.widget('available_items_list_visible_columns', CheckBoxFieldWidget)
+    form.write_permission(available_items_list_visible_columns=WriteRiskyConfig)
+    available_items_list_visible_columns = schema.List(
+        title=_(u'PloneMeeting_label_availableItemsListVisibleColumns', default=u'AvailableItemslistvisiblecolumns'),
+        description=_(u'available_items_list_visible_columns_descr', default=u'availableItemsListVisibleColumns'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.available_items_list_visible_columns_vocabulary'),
+        required=False,
+        default=defValues.availableItemsListVisibleColumns,
+    )
+
+    form.widget('items_list_visible_columns', CheckBoxFieldWidget)
+    form.write_permission(items_list_visible_columns=WriteRiskyConfig)
+    items_list_visible_columns = schema.List(
+        title=_(u'PloneMeeting_label_itemsListVisibleColumns', default=u'Itemslistvisiblecolumns'),
+        description=_(u'items_list_visible_columns_descr', default=u'ItemsListVisibleColumns'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.items_list_visible_columns_vocabulary'),
+        required=False,
+        default=defValues.itemsListVisibleColumns,
+    )
+
+    form.widget('item_actions_column_config', CheckBoxFieldWidget)
+    form.write_permission(item_actions_column_config=WriteRiskyConfig)
+    item_actions_column_config = schema.List(
+        title=_(u'PloneMeeting_label_itemActionsColumnConfig', default=u'Itemactionscolumnconfig'),
+        description=_(u'item_actions_column_config_descr', default=u'ItemActionsColumnConfig'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.item_actions_column_config_vocabulary'),
+        required=False,
+        default=defValues.itemActionsColumnConfig,
+    )
+
+    form.widget('meeting_columns', CheckBoxFieldWidget)
+    form.write_permission(meeting_columns=WriteRiskyConfig)
+    meeting_columns = schema.List(
+        title=_(u'PloneMeeting_label_meetingColumns', default=u'Meetingcolumns'),
+        description=_(u'meeting_columns_descr', default=u'MeetingColumns'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.meeting_columns_vocabulary'),
+        required=False,
+        default=defValues.meetingColumns,
+    )
+
+    form.widget('enabled_annexes_batch_actions', CheckBoxFieldWidget)
+    form.write_permission(enabled_annexes_batch_actions=WriteRiskyConfig)
+    enabled_annexes_batch_actions = schema.List(
+        title=_(u'PloneMeeting_label_enabledAnnexesBatchActions', default=u'enabledannexesbatchactions'),
+        description=_(u'enabled_annexes_batch_actions_descr', default=u'EnabledAnnexesBatchActions'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.annexes_batch_actions_vocabulary'),
+        required=False,
+        default=defValues.enabledAnnexesBatchActions,
+    )
+
+    form.widget('display_available_items_to', CheckBoxFieldWidget)
+    form.write_permission(display_available_items_to=WriteRiskyConfig)
+    display_available_items_to = schema.List(
+        title=_(u'PloneMeeting_label_displayAvailableItemsTo', default=u'Displayavailableitemsto'),
+        description=_(u'display_available_items_to_descr', default=u'DisplayAvailableItemsTo'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.display_available_items_to_vocabulary'),
+        required=False,
+        default=defValues.displayAvailableItemsTo,
+    )
+
+    form.widget('redirect_to_next_meeting', CheckBoxFieldWidget)
+    form.write_permission(redirect_to_next_meeting=WriteRiskyConfig)
+    redirect_to_next_meeting = schema.List(
+        title=_(u'PloneMeeting_label_redirectToNextMeeting', default=u'Redirecttonextmeeting'),
+        description=_(u'redirect_to_next_meeting_descr', default=u'RedirectToNextMeeting'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.redirect_to_next_meeting_vocabulary'),
+        required=False,
+        default=defValues.redirectToNextMeeting,
+    )
+
+    form.widget('items_visible_fields', PMOrderedSelectFieldWidget)
+    form.write_permission(items_visible_fields=WriteRiskyConfig)
+    items_visible_fields = schema.List(
+        title=_(u'PloneMeeting_label_itemsVisibleFields', default=u'Itemsvisiblefields'),
+        description=_(u'items_visible_fields_descr', default=u'ItemsVisibleFields'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.items_visible_fields_vocabulary'),
+        required=False,
+        default=defValues.itemsVisibleFields,
+    )
+
+    form.widget('items_not_viewable_visible_fields', PMOrderedSelectFieldWidget)
+    form.write_permission(items_not_viewable_visible_fields=WriteRiskyConfig)
+    items_not_viewable_visible_fields = schema.List(
+        title=_(u'PloneMeeting_label_itemsNotViewableVisibleFields', default=u'Itemsnotviewablevisiblefields'),
+        description=_(u'items_not_viewable_visible_fields_descr', default=u'ItemsNotViewableVisibleFields'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.items_not_viewable_visible_fields_vocabulary'),
+        required=False,
+        default=defValues.itemsNotViewableVisibleFields,
+    )
+
+    form.widget('items_not_viewable_visible_fields_tal_expr', PMTextAreaFieldWidget)
+    form.write_permission(items_not_viewable_visible_fields_tal_expr=WriteRiskyConfig)
+    items_not_viewable_visible_fields_tal_expr = schema.Text(
+        title=_(u'PloneMeeting_label_itemsNotViewableVisibleFieldsTALExpr', default=u'Itemsnotviewablevisiblefieldstalexpr'),
+        description=_(u'items_not_viewable_visible_fields_tal_expr_descr', default=u'ItemsNotViewableVisibleFieldsTALExpr'),
+        required=False,
+        default=defValues.itemsNotViewableVisibleFieldsTALExpr,
+    )
+
+    form.widget('items_list_visible_fields', PMOrderedSelectFieldWidget)
+    form.write_permission(items_list_visible_fields=WriteRiskyConfig)
+    items_list_visible_fields = schema.List(
+        title=_(u'PloneMeeting_label_itemsListVisibleFields', default=u'Itemslistvisiblefields'),
+        description=_(u'items_list_visible_fields_descr', default=u'ItemsListVisibleFields'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.items_list_visible_fields_vocabulary'),
+        required=False,
+        default=defValues.itemsListVisibleFields,
+    )
+
+    form.write_permission(max_shown_meetings=WriteRiskyConfig)
+    max_shown_meetings = schema.Int(
+        title=_(u'PloneMeeting_label_maxShownMeetings', default=u'Maxshownmeetings'),
+        description=_(u'max_shown_meetings_descr', default=u'MaxShownMeetings'),
+        required=True,
+        default=defValues.maxShownMeetings,
+    )
+
+    form.widget('to_do_list_searches', PMOrderedSelectFieldWidget)
+    form.write_permission(to_do_list_searches=WriteRiskyConfig)
+    to_do_list_searches = schema.List(
+        title=_(u'PloneMeeting_label_toDoListSearches', default=u'Todolistsearches'),
+        description=_(u'to_do_list_searches', default=u'ToDoListSearches'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.to_do_list_searches_vocabulary'),
+        required=False,
+        default=defValues.toDoListSearches,
+    )
+
+    form.widget('dashboard_items_listings_filters', CheckBoxFieldWidget)
+    form.write_permission(dashboard_items_listings_filters=WriteRiskyConfig)
+    dashboard_items_listings_filters = schema.List(
+        title=_(u'PloneMeeting_label_dashboardItemsListingsFilters', default=u'Dashboarditemslistingsfilters'),
+        description=_(u'dashboard_items_listings_filters_descr', default=u'DashboardItemsListingsFilters'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.dashboard_items_listings_filters_vocabulary'),
+        required=False,
+        default=defValues.dashboardItemsListingsFilters,
+    )
+
+    form.widget('dashboard_meeting_available_items_filters', CheckBoxFieldWidget)
+    form.write_permission(dashboard_meeting_available_items_filters=WriteRiskyConfig)
+    dashboard_meeting_available_items_filters = schema.List(
+        title=_(u'PloneMeeting_label_dashboardMeetingAvailableItemsFilters', default=u'Dashboardmeetingavailableitemsfilters'),
+        description=_(u'dashboard_meeting_available_items_filters_descr', default=u'DashboardMeetingAvailableItemsFilters'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.dashboard_items_listings_filters_vocabulary'),
+        required=False,
+        default=defValues.dashboardMeetingAvailableItemsFilters,
+    )
+
+    form.widget('dashboard_meeting_linked_items_filters', CheckBoxFieldWidget)
+    form.write_permission(dashboard_meeting_linked_items_filters=WriteRiskyConfig)
+    dashboard_meeting_linked_items_filters = schema.List(
+        title=_(u'PloneMeeting_label_dashboardMeetingLinkedItemsFilters', default=u'Dashboardmeetinglinkeditemsfilters'),
+        description=_(u'dashboard_meeting_linked_items_filters_descr', default=u'DashboardMeetingLinkedItemsFilters'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.dashboard_items_listings_filters_vocabulary'),
+        required=False,
+        default=defValues.dashboardMeetingLinkedItemsFilters,
+    )
+
+    form.widget('dashboard_meetings_listings_filters', CheckBoxFieldWidget)
+    form.write_permission(dashboard_meetings_listings_filters=WriteRiskyConfig)
+    dashboard_meetings_listings_filters = schema.List(
+        title=_(u'PloneMeeting_label_dashboardMeetingsListingsFilters', default=u'Dashboardmeetingslistingsfilters'),
+        description=_(u'dashboard_meetings_listings_filters_descr', default=u'DashboardMeetingsListingsFilters'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.dashboard_meetings_listings_filters_vocabulary'),
+        required=False,
+        default=defValues.dashboardMeetingsListingsFilters,
+    )
+
+    form.widget('groups_hidden_in_dashboard_filter', CheckBoxFieldWidget)
+    form.write_permission(groups_hidden_in_dashboard_filter=WriteRiskyConfig)
+    groups_hidden_in_dashboard_filter = schema.List(
+        title=_(u'PloneMeeting_label_groupsHiddenInDashboardFilter', default=u'Groupshiddenindashboardfilter'),
+        description=_(u'groups_hidden_in_dashboard_filter_descr', default=u'GroupsHiddenInDashboardFilter'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.proposinggroupsvocabulary'),
+        required=False,
+        default=defValues.groupsHiddenInDashboardFilter,
+    )
+
+    form.widget('users_hidden_in_dashboard_filter', CheckBoxFieldWidget)
+    form.write_permission(users_hidden_in_dashboard_filter=WriteRiskyConfig)
+    users_hidden_in_dashboard_filter = schema.List(
+        title=_(u'PloneMeeting_label_usersHiddenInDashboardFilter', default=u'Usershiddenindashboardfilter'),
+        description=_(u'users_hidden_in_dashboard_filter_descr', default=u'UsersHiddenInDashboardFilter'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.creatorsvocabulary'),
+        required=False,
+        default=defValues.usersHiddenInDashboardFilter,
+    )
+
+    form.widget('max_shown_listings', RadioFieldWidget)
+    form.write_permission(max_shown_listings=WriteRiskyConfig)
+    max_shown_listings = schema.Choice(
+        title=_(u'PloneMeeting_label_maxShownListings', default=u'Maxshownlistings'),
+        description=_(u'max_shown_listings_descr', default=u'MaxShownListings'),
+        vocabulary=u'Products.PloneMeeting.vocabularies.results_per_page_vocabulary',
+        required=False,
+        default=defValues.maxShownListings,
+    )
+
+    form.widget('max_shown_available_items', RadioFieldWidget)
+    form.write_permission(max_shown_available_items=WriteRiskyConfig)
+    max_shown_available_items = schema.Choice(
+        title=_(u'PloneMeeting_label_maxShownAvailableItems', default=u'Maxshownavailableitems'),
+        description=_(u'max_shown_available_items_descr', default=u'MaxShownAvailableItems'),
+        vocabulary=u'Products.PloneMeeting.vocabularies.results_per_page_vocabulary',
+        required=False,
+        default=defValues.maxShownAvailableItems,
+    )
+
+    form.widget('max_shown_meeting_items', RadioFieldWidget)
+    form.write_permission(max_shown_meeting_items=WriteRiskyConfig)
+    max_shown_meeting_items = schema.Choice(
+        title=_(u'PloneMeeting_label_maxShownMeetingItems', default=u'Maxshownmeetingitems'),
+        description=_(u'max_shown_meeting_items_descr', default=u'MaxShownMeetingItems'),
+        vocabulary=u'Products.PloneMeeting.vocabularies.results_per_page_vocabulary',
+        required=False,
+        default=defValues.maxShownMeetingItems,
+    )
+
+    # ---- mail fieldset ----
+
+    model.fieldset(
+        'mail',
+        label=_(u'mail'),
+        fields=['mail_mode', 'mail_item_events', 'mail_meeting_events'],
+    )
+
+    form.widget('mail_mode', RadioFieldWidget)
+    form.write_permission(mail_mode=WriteRiskyConfig)
+    mail_mode = schema.Choice(
+        title=_(u'PloneMeeting_label_mailMode', default=u'Mailmode'),
+        description=_(u'mail_mode_descr', default=u'MailMode'),
+        vocabulary=u'Products.PloneMeeting.vocabularies.mail_modes_vocabulary',
+        required=False,
+        default=defValues.mailMode,
+    )
+
+    form.widget('mail_item_events', CheckBoxFieldWidget)
+    form.write_permission(mail_item_events=WriteRiskyConfig)
+    mail_item_events = schema.List(
+        title=_(u'PloneMeeting_label_mailItemEvents', default=u'Mailitemevents'),
+        description=_(u'mail_item_events_descr', default=u'MailItemEvents'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.item_events_vocabulary'),
+        required=False,
+        default=defValues.mailItemEvents,
+    )
+
+    form.widget('mail_meeting_events', CheckBoxFieldWidget)
+    form.write_permission(mail_meeting_events=WriteRiskyConfig)
+    mail_meeting_events = schema.List(
+        title=_(u'PloneMeeting_label_mailMeetingEvents', default=u'Mailmeetingevents'),
+        description=_(u'mail_meeting_events', default=u'MailMeetingEvents'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.meeting_events_vocabulary'),
+        required=False,
+        default=defValues.mailMeetingEvents,
+    )
+
+    # ---- advices fieldset ----
+
+    model.fieldset(
+        'advices',
+        label=_(u'advices'),
+        fields=[
+            'use_advices', 'used_advice_types', 'default_advice_type',
+            'selectable_advisers', 'selectable_adviser_users',
+            'item_advice_states', 'item_advice_edit_states', 'item_advice_view_states',
+            'keep_access_to_item_when_advice', 'enable_advice_invalidation',
+            'item_advice_invalidate_states', 'advice_style',
+            'enable_advice_proposing_group_comment', 'enforce_advice_mandatoriness',
+            'default_advice_hidden_during_redaction', 'transitions_reinitializing_delays',
+            'historize_item_data_when_advice_is_given', 'historize_advice_if_given_and_item_modified',
+            'item_with_given_advice_is_not_deletable', 'inherited_advice_removeable_by_adviser',
+            'enable_add_quick_advice', 'custom_advisers', 'power_advisers_groups', 'power_observers',
+            'item_budget_infos_states', 'item_groups_in_charge_states', 'item_observers_states',
+            'selectable_copy_groups', 'item_copy_groups_states',
+            'selectable_restricted_copy_groups', 'item_restricted_copy_groups_states',
+            'hide_history_to', 'hide_item_history_comments_to_users_outside_proposing_group',
+            'hide_not_viewable_linked_items_to', 'restrict_access_to_secret_items',
+            'restrict_access_to_secret_items_to', 'annex_restrict_shown_and_editable_attributes',
+            'owner_may_delete_annex_decision', 'annex_editor_may_insert_barcode',
+            'item_annex_confidential_visible_for', 'advice_annex_confidential_visible_for',
+            'meeting_annex_confidential_visible_for', 'enable_advice_confidentiality',
+            'advice_confidentiality_default', 'advice_confidential_for',
+            'labels_config', 'item_internal_notes_editable_by', 'item_fields_config',
+            'using_groups',
+        ],
+    )
+
+    form.write_permission(use_advices=WriteRiskyConfig)
+    use_advices = schema.Bool(
+        title=_(u'PloneMeeting_label_useAdvices', default=u'Useadvices'),
+        description=_(u'use_advices_descr', default=u'UseAdvices'),
+        required=False,
+        default=defValues.useAdvices,
+    )
+
+    form.widget('used_advice_types', CheckBoxFieldWidget)
+    form.write_permission(used_advice_types=WriteRiskyConfig)
+    used_advice_types = schema.List(
+        title=_(u'PloneMeeting_label_usedAdviceTypes', default=u'Usedadvicetypes'),
+        description=_(u'used_advice_types_descr', default=u'UsedAdviceTypes'),
+        value_type=schema.Choice(vocabulary=u'ConfigAdviceTypes'),
+        required=False,
+        default=defValues.usedAdviceTypes,
+    )
+
+    form.widget('default_advice_type', RadioFieldWidget)
+    form.write_permission(default_advice_type=WriteRiskyConfig)
+    default_advice_type = schema.Choice(
+        title=_(u'PloneMeeting_label_defaultAdviceType', default=u'Defaultadvicetype'),
+        description=_(u'default_advice_type_descr', default=u'DefaultAdviceType'),
+        vocabulary=u'ConfigAdviceTypes',
+        required=False,
+        default=defValues.defaultAdviceType,
+    )
+
+    form.widget('selectable_advisers', CheckBoxFieldWidget)
+    form.write_permission(selectable_advisers=WriteRiskyConfig)
+    selectable_advisers = schema.List(
+        title=_(u'PloneMeeting_label_selectableAdvisers', default=u'Selectableadvisers'),
+        description=_(u'selectable_advisers_descr', default=u'SelectableAdvisers'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.selectable_advisers_vocabulary'),
+        required=False,
+        default=defValues.selectableAdvisers,
+    )
+
+    form.widget('selectable_adviser_users', CheckBoxFieldWidget)
+    form.write_permission(selectable_adviser_users=WriteRiskyConfig)
+    selectable_adviser_users = schema.List(
+        title=_(u'PloneMeeting_label_selectableAdviserUsers', default=u'Selectableadviserusers'),
+        description=_(u'selectable_adviser_users_descr', default=u'SelectableAdviserUsers'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.selectable_advisers_vocabulary'),
+        required=False,
+        default=defValues.selectableAdvisers,
+    )
+
+    form.widget('item_advice_states', CheckBoxFieldWidget)
+    form.write_permission(item_advice_states=WriteRiskyConfig)
+    item_advice_states = schema.List(
+        title=_(u'PloneMeeting_label_itemAdviceStates', default=u'Itemadvicestates'),
+        description=_(u'item_advice_states_descr', default=u'ItemAdviceStates'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.item_states_vocabulary'),
+        required=False,
+        default=defValues.itemAdviceStates,
+    )
+
+    form.widget('item_advice_edit_states', CheckBoxFieldWidget)
+    form.write_permission(item_advice_edit_states=WriteRiskyConfig)
+    item_advice_edit_states = schema.List(
+        title=_(u'PloneMeeting_label_itemAdviceEditStates', default=u'Itemadviceeditstates'),
+        description=_(u'item_advice_edit_states_descr', default=u'ItemAdviceEditStates'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.item_states_vocabulary'),
+        required=False,
+        default=defValues.itemAdviceEditStates,
+    )
+
+    form.widget('item_advice_view_states', CheckBoxFieldWidget)
+    form.write_permission(item_advice_view_states=WriteRiskyConfig)
+    item_advice_view_states = schema.List(
+        title=_(u'PloneMeeting_label_itemAdviceViewStates', default=u'Itemadviceviewstates'),
+        description=_(u'item_advice_view_states_descr', default=u'ItemAdviceViewStates'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.item_states_vocabulary'),
+        required=False,
+        default=defValues.itemAdviceViewStates,
+    )
+
+    form.widget('keep_access_to_item_when_advice', RadioFieldWidget)
+    form.write_permission(keep_access_to_item_when_advice=WriteRiskyConfig)
+    keep_access_to_item_when_advice = schema.Choice(
+        title=_(u'PloneMeeting_label_keepAccessToItemWhenAdvice', default=u'Keepaccesstoitemwhenadvice'),
+        description=_(u'keep_access_to_item_when_advice_descr', default=u'KeepAccessToItemWhenAdvice'),
+        vocabulary=u'Products.PloneMeeting.vocabularies.keep_access_to_item_when_advice_vocabulary',
+        required=False,
+        default=defValues.keepAccessToItemWhenAdvice,
+    )
+
+    form.write_permission(enable_advice_invalidation=WriteRiskyConfig)
+    enable_advice_invalidation = schema.Bool(
+        title=_(u'PloneMeeting_label_enableAdviceInvalidation', default=u'Enableadviceinvalidation'),
+        description=_(u'enable_advice_invalidation_descr', default=u'EnableAdviceInvalidation'),
+        required=False,
+        default=defValues.enableAdviceInvalidation,
+    )
+
+    form.widget('item_advice_invalidate_states', CheckBoxFieldWidget)
+    form.write_permission(item_advice_invalidate_states=WriteRiskyConfig)
+    item_advice_invalidate_states = schema.List(
+        title=_(u'PloneMeeting_label_itemAdviceInvalidateStates', default=u'Itemadviceinvalidatestates'),
+        description=_(u'item_advice_invalidate_states', default=u'ItemAdviceInvalidateStates'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.item_states_vocabulary'),
+        required=False,
+        default=defValues.itemAdviceInvalidateStates,
+    )
+
+    form.widget('advice_style', RadioFieldWidget)
+    form.write_permission(advice_style=WriteRiskyConfig)
+    advice_style = schema.Choice(
+        title=_(u'PloneMeeting_label_adviceStyle', default=u'Advicestyle'),
+        description=_(u'advice_style_descr', default=u'AdviceStyle'),
+        vocabulary=u'Products.PloneMeeting.vocabularies.advice_styles_vocabulary',
+        required=False,
+        default=defValues.adviceStyle,
+    )
+
+    form.write_permission(enable_advice_proposing_group_comment=WriteRiskyConfig)
+    enable_advice_proposing_group_comment = schema.Bool(
+        title=_(u'PloneMeeting_label_enableAdviceProposingGroupComment', default=u'Enableadviceproposinggroupcomment'),
+        description=_(u'enable_advice_proposing_group_comment_descr', default=u'EnableAdviceProposingGroupComment'),
+        required=False,
+        default=defValues.enableAdviceProposingGroupComment,
+    )
+
+    form.write_permission(enforce_advice_mandatoriness=WriteRiskyConfig)
+    enforce_advice_mandatoriness = schema.Bool(
+        title=_(u'PloneMeeting_label_enforceAdviceMandatoriness', default=u'Enforceadvicemandatoriness'),
+        description=_(u'enforce_advice_mandatoriness_descr', default=u'EnforceAdviceMandatoriness'),
+        required=False,
+        default=defValues.enforceAdviceMandatoriness,
+    )
+
+    form.widget('default_advice_hidden_during_redaction', CheckBoxFieldWidget)
+    form.write_permission(default_advice_hidden_during_redaction=WriteRiskyConfig)
+    default_advice_hidden_during_redaction = schema.List(
+        title=_(u'PloneMeeting_label_defaultAdviceHiddenDuringRedaction', default=u'Defaultadvicehiddenduringredaction'),
+        description=_(u'default_advice_hidden_during_redaction_descr', default=u'DefaultAdviceHiddenDuringRedaction'),
+        value_type=schema.Choice(vocabulary=u'AdvicePortalTypes'),
+        required=False,
+        default=defValues.defaultAdviceHiddenDuringRedaction,
+    )
+
+    form.widget('transitions_reinitializing_delays', CheckBoxFieldWidget)
+    form.write_permission(transitions_reinitializing_delays=WriteRiskyConfig)
+    transitions_reinitializing_delays = schema.List(
+        title=_(u'PloneMeeting_label_transitionsReinitializingDelays', default=u'Transitionsreinitializingdelays'),
+        description=_(u'transitions_reinitializing_delays_descr', default=u'TransitionsReinitializingDelays'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.item_transitions_vocabulary'),
+        required=False,
+        default=defValues.transitionsReinitializingDelays,
+    )
+
+    form.write_permission(historize_item_data_when_advice_is_given=WriteRiskyConfig)
+    historize_item_data_when_advice_is_given = schema.Bool(
+        title=_(u'PloneMeeting_label_historizeItemDataWhenAdviceIsGiven', default=u'Historizeitemdatawhenadviceisgiven'),
+        description=_(u'historize_item_data_when_advice_is_given_descr', default=u'HistorizeItemDataWhenAdviceIsGiven'),
+        required=False,
+        default=defValues.historizeItemDataWhenAdviceIsGiven,
+    )
+
+    form.write_permission(historize_advice_if_given_and_item_modified=WriteRiskyConfig)
+    historize_advice_if_given_and_item_modified = schema.Bool(
+        title=_(u'PloneMeeting_label_historizeAdviceIfGivenAndItemModified', default=u'historizeadviceifgivenanditemmodified'),
+        description=_(u'historize_advice_if_given_and_item_modified_descr', default=u'historizeAdviceIfGivenAndItemModified'),
+        required=False,
+        default=defValues.historizeAdviceIfGivenAndItemModified,
+    )
+
+    form.write_permission(item_with_given_advice_is_not_deletable=WriteRiskyConfig)
+    item_with_given_advice_is_not_deletable = schema.Bool(
+        title=_(u'PloneMeeting_label_itemWithGivenAdviceIsNotDeletable', default=u'Itemwithgivenadviceisnotdeletable'),
+        description=_(u'item_with_given_advice_is_not_deletable_descr', default=u'ItemWithGivenAdviceIsNotDeletable'),
+        required=False,
+        default=defValues.itemWithGivenAdviceIsNotDeletable,
+    )
+
+    form.write_permission(inherited_advice_removeable_by_adviser=WriteRiskyConfig)
+    inherited_advice_removeable_by_adviser = schema.Bool(
+        title=_(u'PloneMeeting_label_inheritedAdviceRemoveableByAdviser', default=u'Inheritedadviceremoveablebyadviser'),
+        description=_(u'inherited_advice_removeable_by_adviser_descr', default=u'InheritedAdviceRemoveableByAdviser'),
+        required=False,
+        default=defValues.inheritedAdviceRemoveableByAdviser,
+    )
+
+    form.write_permission(enable_add_quick_advice=WriteRiskyConfig)
+    enable_add_quick_advice = schema.Bool(
+        title=_(u'PloneMeeting_label_enableAddQuickAdvice', default=u'Enableaddquickadvice'),
+        description=_(u'enable_add_quick_advice_descr', default=u'EnableAddQuickAdvice'),
+        required=False,
+        default=defValues.enableAddQuickAdvice,
+    )
+
+    form.widget('custom_advisers', BlockDataGridFieldFactory)
+    form.write_permission(custom_advisers=WriteRiskyConfig)
+    custom_advisers = schema.List(
+        title=_(u'PloneMeeting_label_customAdvisers', default=u'Customadvisers'),
+        description=_(u'custom_advisers_descr', default=u'CustomAdvisers'),
+        value_type=DictRow(schema=ICustomAdvisersRowSchema),
+        required=False,
+        default=defValues.customAdvisers,
+    )
+
+    form.widget('power_advisers_groups', CheckBoxFieldWidget)
+    form.write_permission(power_advisers_groups=WriteRiskyConfig)
+    power_advisers_groups = schema.List(
+        title=_(u'PloneMeeting_label_powerAdvisersGroups', default=u'Poweradvisersgroups'),
+        description=_(u'power_advisers_groups_descr', default=u'PowerAdvisersGroups'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.active_orgs_for_power_advisers_vocabulary'),
+        required=False,
+        default=defValues.powerAdvisersGroups,
+    )
+
+    form.widget('power_observers', BlockDataGridFieldFactory)
+    form.write_permission(power_observers=WriteRiskyConfig)
+    power_observers = schema.List(
+        title=_(u'PloneMeeting_label_powerObservers', default=u'Powerobservers'),
+        description=_(u'power_observers_descr', default=u'PowerObservers'),
+        value_type=DictRow(schema=IPowerObserversRowSchema),
+        required=False,
+        default=defValues.powerObservers,
+    )
+
+    form.widget('item_budget_infos_states', CheckBoxFieldWidget)
+    form.write_permission(item_budget_infos_states=WriteRiskyConfig)
+    item_budget_infos_states = schema.List(
+        title=_(u'PloneMeeting_label_itemBudgetInfosStates', default=u'Itembudgetinfosstates'),
+        description=_(u'item_budget_infos_states_descr', default=u'ItemBudgetInfosStates'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.item_states_vocabulary'),
+        required=False,
+        default=defValues.itemBudgetInfosStates,
+    )
+
+    form.widget('item_groups_in_charge_states', CheckBoxFieldWidget)
+    form.write_permission(item_groups_in_charge_states=WriteRiskyConfig)
+    item_groups_in_charge_states = schema.List(
+        title=_(u'PloneMeeting_label_itemGroupsInChargeStates', default=u'Itemgroupsinchargestates'),
+        description=_(u'item_groups_in_charge_states_descr', default=u'ItemGroupsInChargeStates'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.item_states_vocabulary'),
+        required=False,
+        default=defValues.itemGroupsInChargeStates,
+    )
+
+    form.widget('item_observers_states', CheckBoxFieldWidget)
+    form.write_permission(item_observers_states=WriteRiskyConfig)
+    item_observers_states = schema.List(
+        title=_(u'PloneMeeting_label_itemObserversStates', default=u'Itemobserversstates'),
+        description=_(u'item_observers_states_descr', default=u'IitemObserversStates'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.item_states_vocabulary'),
+        required=False,
+        default=defValues.itemObserversStates,
+    )
+
+    form.widget('selectable_copy_groups', CheckBoxFieldWidget)
+    form.write_permission(selectable_copy_groups=WriteRiskyConfig)
+    selectable_copy_groups = schema.List(
+        title=_(u'PloneMeeting_label_selectableCopyGroups', default=u'Selectablecopygroups'),
+        description=_(u'selectable_copy_groups_descr', default=u'SelectableCopyGroups'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.selectable_copy_groups_vocabulary'),
+        required=False,
+        default=defValues.selectableCopyGroups,
+    )
+
+    form.widget('item_copy_groups_states', CheckBoxFieldWidget)
+    form.write_permission(item_copy_groups_states=WriteRiskyConfig)
+    item_copy_groups_states = schema.List(
+        title=_(u'PloneMeeting_label_itemCopyGroupsStates', default=u'Itemcopygroupsstates'),
+        description=_(u'item_copy_groups_states_descr', default=u'ItemCopyGroupsStates'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.item_states_vocabulary'),
+        required=False,
+        default=defValues.itemCopyGroupsStates,
+    )
+
+    form.widget('selectable_restricted_copy_groups', CheckBoxFieldWidget)
+    form.write_permission(selectable_restricted_copy_groups=WriteRiskyConfig)
+    selectable_restricted_copy_groups = schema.List(
+        title=_(u'PloneMeeting_label_selectableRestrictedCopyGroups', default=u'Selectablerestrictedcopygroups'),
+        description=_(u'selectable_restricted_copy_groups_descr', default=u'SelectableRestrictedCopyGroups'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.selectable_copy_groups_vocabulary'),
+        required=False,
+        default=defValues.selectableRestrictedCopyGroups,
+    )
+
+    form.widget('item_restricted_copy_groups_states', CheckBoxFieldWidget)
+    form.write_permission(item_restricted_copy_groups_states=WriteRiskyConfig)
+    item_restricted_copy_groups_states = schema.List(
+        title=_(u'PloneMeeting_label_itemRestrictedCopyGroupsStates', default=u'Itemrestrictedcopygroupsstates'),
+        description=_(u'item_restricted_copy_groups_states_descr', default=u'ItemRestrictedCopyGroupsStates'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.item_states_vocabulary'),
+        required=False,
+        default=defValues.itemRestrictedCopyGroupsStates,
+    )
+
+    form.widget('hide_history_to', CheckBoxFieldWidget)
+    form.write_permission(hide_history_to=WriteRiskyConfig)
+    hide_history_to = schema.List(
+        title=_(u'PloneMeeting_label_hideHistoryTo', default=u'Hidehistoryto'),
+        description=_(u'hide_history_to_descr', default=u'HideHistoryTo'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.config_hide_history_to_vocabulary'),
+        required=False,
+        default=defValues.hideHistoryTo,
+    )
+
+    form.write_permission(hide_item_history_comments_to_users_outside_proposing_group=WriteRiskyConfig)
+    hide_item_history_comments_to_users_outside_proposing_group = schema.Bool(
+        title=_(u'PloneMeeting_label_hideItemHistoryCommentsToUsersOutsideProposingGroup', default=u'Hideitemhistorycommentstousersoutsideproposinggroup'),
+        description=_(u'hide_item_history_comments_to_users_outside_proposing_group_descr', default=u'HideItemHistoryCommentsToUsersOutsideProposingGroup'),
+        required=False,
+        default=defValues.hideItemHistoryCommentsToUsersOutsideProposingGroup,
+    )
+
+    form.widget('hide_not_viewable_linked_items_to', CheckBoxFieldWidget)
+    form.write_permission(hide_not_viewable_linked_items_to=WriteRiskyConfig)
+    hide_not_viewable_linked_items_to = schema.List(
+        title=_(u'PloneMeeting_label_hideNotViewableLinkedItemsTo', default=u'Hidenotviewablelinkeditemsto'),
+        description=_(u'hide_not_viewable_linked_items_to_descr', default=u'HideNotViewableLinkedItemsTo'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.power_observers_types_vocabulary'),
+        required=False,
+        default=defValues.hideNotViewableLinkedItemsTo,
+    )
+
+    form.write_permission(restrict_access_to_secret_items=WriteRiskyConfig)
+    restrict_access_to_secret_items = schema.Bool(
+        title=_(u'PloneMeeting_label_restrictAccessToSecretItems', default=u'Restrictaccesstosecretitems'),
+        description=_(u'restrict_access_to_secret_items_descr', default=u'RestrictAccessToSecretItems'),
+        required=False,
+        default=defValues.restrictAccessToSecretItems,
+    )
+
+    form.widget('restrict_access_to_secret_items_to', CheckBoxFieldWidget)
+    form.write_permission(restrict_access_to_secret_items_to=WriteRiskyConfig)
+    restrict_access_to_secret_items_to = schema.List(
+        title=_(u'PloneMeeting_label_restrictAccessToSecretItemsTo', default=u'Restrictaccesstosecretitemsto'),
+        description=_(u'restrict_access_to_secret_items_to_descr', default=u'RestrictAccessToSecretItemsTo'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.power_observers_types_vocabulary'),
+        required=False,
+        default=defValues.restrictAccessToSecretItemsTo,
+    )
+
+    form.widget('annex_restrict_shown_and_editable_attributes', CheckBoxFieldWidget)
+    form.write_permission(annex_restrict_shown_and_editable_attributes=WriteRiskyConfig)
+    annex_restrict_shown_and_editable_attributes = schema.List(
+        title=_(u'PloneMeeting_label_annexRestrictShownAndEditableAttributes', default=u'Annexrestrictshownandeditableattributes'),
+        description=_(u'annex_restrict_shown_and_editable_attributes_descr', default=u'AnnexRestrictShownAndEditableAttributes'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.annex_restrict_shown_and_editable_attributes_vocabulary'),
+        required=False,
+        default=defValues.annexRestrictShownAndEditableAttributes,
+    )
+
+    form.write_permission(owner_may_delete_annex_decision=WriteRiskyConfig)
+    owner_may_delete_annex_decision = schema.Bool(
+        title=_(u'PloneMeeting_label_ownerMayDeleteAnnexDecision', default=u'Ownermaydeleteannexdecision'),
+        description=_(u'owner_may_delete_annex_decision_descr', default=u'OwnerMayDeleteAnnexDecision'),
+        required=False,
+        default=defValues.ownerMayDeleteAnnexDecision,
+    )
+
+    form.write_permission(annex_editor_may_insert_barcode=WriteRiskyConfig)
+    annex_editor_may_insert_barcode = schema.Bool(
+        title=_(u'PloneMeeting_label_annexEditorMayInsertBarcode', default=u'Annexeditormayinsertbarcode'),
+        description=_(u'annex_editor_may_insert_barcode_descr', default=u'AnnexEditorMayInsertBarcode'),
+        required=False,
+        default=defValues.annexEditorMayInsertBarcode,
+    )
+
+    form.widget('item_annex_confidential_visible_for', CheckBoxFieldWidget)
+    form.write_permission(item_annex_confidential_visible_for=WriteRiskyConfig)
+    item_annex_confidential_visible_for = schema.List(
+        title=_(u'PloneMeeting_label_itemAnnexConfidentialVisibleFor', default=u'Itemannexconfidentialvisiblefor'),
+        description=_(u'item_annex_confidential_visible_for_descr', default=u'ItemAnnexConfidentialVisibleFor'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.item_attribute_visible_for_vocabulary'),
+        required=False,
+        default=defValues.itemAnnexConfidentialVisibleFor,
+    )
+
+    form.widget('advice_annex_confidential_visible_for', CheckBoxFieldWidget)
+    form.write_permission(advice_annex_confidential_visible_for=WriteRiskyConfig)
+    advice_annex_confidential_visible_for = schema.List(
+        title=_(u'PloneMeeting_label_adviceAnnexConfidentialVisibleFor', default=u'Adviceannexconfidentialvisiblefor'),
+        description=_(u'advice_annex_confidential_visible_for_descr', default=u'AdviceAnnexConfidentialVisibleFor'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.advice_annex_confidential_visible_for_vocabulary'),
+        required=False,
+        default=defValues.adviceAnnexConfidentialVisibleFor,
+    )
+
+    form.widget('meeting_annex_confidential_visible_for', CheckBoxFieldWidget)
+    form.write_permission(meeting_annex_confidential_visible_for=WriteRiskyConfig)
+    meeting_annex_confidential_visible_for = schema.List(
+        title=_(u'PloneMeeting_label_meetingAnnexConfidentialVisibleFor', default=u'Meetingannexconfidentialvisiblefor'),
+        description=_(u'meeting_annex_confidential_visible_for_descr', default=u'meetingAnnexConfidentialVisibleFor'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.meeting_annex_confidential_visible_for_vocabulary'),
+        required=False,
+        default=defValues.meetingAnnexConfidentialVisibleFor,
+    )
+
+    form.write_permission(enable_advice_confidentiality=WriteRiskyConfig)
+    enable_advice_confidentiality = schema.Bool(
+        title=_(u'PloneMeeting_label_enableAdviceConfidentiality', default=u'Enableadviceconfidentiality'),
+        description=_(u'enable_advice_confidentiality_descr', default=u'EnableAdviceConfidentiality'),
+        required=False,
+        default=defValues.enableAdviceConfidentiality,
+    )
+
+    form.write_permission(advice_confidentiality_default=WriteRiskyConfig)
+    advice_confidentiality_default = schema.Bool(
+        title=_(u'PloneMeeting_label_adviceConfidentialityDefault', default=u'Adviceconfidentialitydefault'),
+        description=_(u'advice_confidentiality_default_descr', default=u'AdviceConfidentialityDefault'),
+        required=False,
+        default=defValues.adviceConfidentialityDefault,
+    )
+
+    form.widget('advice_confidential_for', CheckBoxFieldWidget)
+    form.write_permission(advice_confidential_for=WriteRiskyConfig)
+    advice_confidential_for = schema.List(
+        title=_(u'PloneMeeting_label_adviceConfidentialFor', default=u'Adviceconfidentialfor'),
+        description=_(u'advice_confidential_for_descr', default=u'AdviceConfidentialFor'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.power_observers_types_vocabulary'),
+        required=False,
+        default=defValues.adviceConfidentialFor,
+    )
+
+    form.widget('labels_config', BlockDataGridFieldFactory)
+    form.write_permission(labels_config=WriteRiskyConfig)
+    labels_config = schema.List(
+        title=_(u'PloneMeeting_label_labelsConfig', default=u'Labelsconfig'),
+        description=_(u'labels_config_descr', default=u'LabelsConfig'),
+        value_type=DictRow(schema=ILabelsConfigRowSchema),
+        required=False,
+        default=defValues.labelsConfig,
+    )
+
+    form.widget('item_internal_notes_editable_by', CheckBoxFieldWidget)
+    form.write_permission(item_internal_notes_editable_by=WriteRiskyConfig)
+    item_internal_notes_editable_by = schema.List(
+        title=_(u'PloneMeeting_label_itemInternalNotesEditableBy', default=u'Iteminternalnoteseditableby'),
+        description=_(u'item_internal_notes_editable_by_descr', default=u'ItemInternalNotesEditableByMeetingManagers'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.item_attribute_visible_for_with_meeting_managers_vocabulary'),
+        required=False,
+        default=defValues.itemInternalNotesEditableBy,
+    )
+
+    form.widget('item_fields_config', BlockDataGridFieldFactory)
+    form.write_permission(item_fields_config=WriteRiskyConfig)
+    item_fields_config = schema.List(
+        title=_(u'PloneMeeting_label_itemFieldsConfig', default=u'Itemfieldsconfig'),
+        description=_(u'item_fields_config_descr', default=u'ItemFieldsConfig'),
+        value_type=DictRow(schema=IItemFieldsConfigRowSchema),
+        required=False,
+        default=defValues.itemFieldsConfig,
+    )
+
+    form.widget('using_groups', CheckBoxFieldWidget)
+    form.write_permission(using_groups=WriteRiskyConfig)
+    using_groups = schema.List(
+        title=_(u'PloneMeeting_label_configUsingGroups', default=u'Usinggroups'),
+        description=_(u'config_using_groups_descr', default=u'UsingGroups'),
+        value_type=schema.Choice(
+            vocabulary=u'collective.contact.plonegroup.browser.settings.SortedSelectedOrganizationsElephantVocabulary'),
+        required=False,
+    )
+
+    # ---- committees fieldset ----
+
+    model.fieldset(
+        'committees',
+        label=_(u'committees'),
+        fields=[
+            'ordered_committee_contacts', 'item_committees_states',
+            'item_committees_view_states', 'committees',
+        ],
+    )
+
+    form.widget('ordered_committee_contacts', PMOrderedSelectFieldWidget)
+    form.write_permission(ordered_committee_contacts=WriteRiskyConfig)
+    ordered_committee_contacts = schema.List(
+        title=_(u'PloneMeeting_label_orderedCommitteeContacts', default=u'Orderedcommitteecontacts'),
+        description=_(u'ordered_committee_contacts_descr', default=u'OrderedCommitteeContacts'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.every_heldpositions_vocabulary'),
+        required=False,
+        default=defValues.orderedCommitteeContacts,
+    )
+
+    form.widget('item_committees_states', CheckBoxFieldWidget)
+    form.write_permission(item_committees_states=WriteRiskyConfig)
+    item_committees_states = schema.List(
+        title=_(u'PloneMeeting_label_itemCommitteesStates', default=u'Itemcommitteesstates'),
+        description=_(u'item_committees_states_descr', default=u'ItemCommitteesStates'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.item_states_vocabulary'),
+        required=False,
+        default=defValues.itemCommitteesStates,
+    )
+
+    form.widget('item_committees_view_states', CheckBoxFieldWidget)
+    form.write_permission(item_committees_view_states=WriteRiskyConfig)
+    item_committees_view_states = schema.List(
+        title=_(u'PloneMeeting_label_itemCommitteesViewStates', default=u'Itemcommitteesviewstates'),
+        description=_(u'item_committees_view_states_descr', default=u'ItemCommitteesViewStates'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.item_states_vocabulary'),
+        required=False,
+        default=defValues.itemCommitteesViewStates,
+    )
+
+    form.widget('committees', BlockDataGridFieldFactory)
+    form.write_permission(committees=WriteRiskyConfig)
+    committees = schema.List(
+        title=_(u'PloneMeeting_label_committees', default=u'Committees'),
+        description=_(u'committees_descr', default=u'Committees'),
+        value_type=DictRow(schema=ICommitteesRowSchema),
+        required=False,
+        default=defValues.committees,
+    )
+
+    # ---- votes fieldset ----
+
+    model.fieldset(
+        'votes',
+        label=_(u'votes'),
+        fields=[
+            'use_votes', 'votes_encoder', 'used_poll_types', 'default_poll_type',
+            'used_vote_values', 'first_linked_vote_used_vote_values',
+            'next_linked_votes_used_vote_values', 'vote_condition',
+            'votes_result_tal_expr', 'display_voting_group',
+        ],
+    )
+
+    form.write_permission(use_votes=WriteRiskyConfig)
+    use_votes = schema.Bool(
+        title=_(u'PloneMeeting_label_useVotes', default=u'Usevotes'),
+        description=_(u'use_votes_descr', default=u'UseVotes'),
+        required=False,
+        default=defValues.useVotes,
+    )
+
+    form.widget('votes_encoder', CheckBoxFieldWidget)
+    form.write_permission(votes_encoder=WriteRiskyConfig)
+    votes_encoder = schema.List(
+        title=_(u'PloneMeeting_label_votesEncoder', default=u'Votesencoder'),
+        description=_(u'votes_encoder_descr', default=u'VotesEncoder'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.votes_encoders_vocabulary'),
+        required=False,
+        default=defValues.votesEncoder,
+    )
+
+    form.widget('used_poll_types', PMOrderedSelectFieldWidget)
+    form.write_permission(used_poll_types=WriteRiskyConfig)
+    used_poll_types = schema.List(
+        title=_(u'PloneMeeting_label_usedPollTypes', default=u'Usedpolltypes'),
+        description=_(u'used_poll_types_descr', default=u'UsedPollTypes'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.poll_types_vocabulary'),
+        required=False,
+        default=defValues.usedPollTypes,
+    )
+
+    form.widget('default_poll_type', RadioFieldWidget)
+    form.write_permission(default_poll_type=WriteRiskyConfig)
+    default_poll_type = schema.Choice(
+        title=_(u'PloneMeeting_label_defaultPollType', default=u'Defaultpolltype'),
+        description=_(u'default_poll_type_descr', default=u'DefaultPollType'),
+        vocabulary=u'Products.PloneMeeting.vocabularies.poll_types_vocabulary',
+        required=False,
+        default=defValues.defaultPollType,
+    )
+
+    form.widget('used_vote_values', PMOrderedSelectFieldWidget)
+    form.write_permission(used_vote_values=WriteRiskyConfig)
+    used_vote_values = schema.List(
+        title=_(u'PloneMeeting_label_usedVoteValues', default=u'Usedvotevalues'),
+        description=_(u'used_vote_values_descr', default=u'UsedVoteValues'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.allvotevaluesvocabulary'),
+        required=False,
+        default=defValues.usedVoteValues,
+    )
+
+    form.widget('first_linked_vote_used_vote_values', PMOrderedSelectFieldWidget)
+    form.write_permission(first_linked_vote_used_vote_values=WriteRiskyConfig)
+    first_linked_vote_used_vote_values = schema.List(
+        title=_(u'PloneMeeting_label_firstLinkedVoteUsedVoteValues', default=u'Firstlinkedvoteusedvotevalues'),
+        description=_(u'first_linked_vote_used_vote_values_descr', default=u'FirstLinkedVoteUsedVoteValues'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.allvotevaluesvocabulary'),
+        required=False,
+        default=defValues.firstLinkedVoteUsedVoteValues,
+    )
+
+    form.widget('next_linked_votes_used_vote_values', PMOrderedSelectFieldWidget)
+    form.write_permission(next_linked_votes_used_vote_values=WriteRiskyConfig)
+    next_linked_votes_used_vote_values = schema.List(
+        title=_(u'PloneMeeting_label_nextLinkedVotesUsedVoteValues', default=u'nextlinkedvotesusedvotevalues'),
+        description=_(u'next_linked_votes_used_vote_values_descr', default=u'NextLinkedVotesUsedVoteValues'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.allvotevaluesvocabulary'),
+        required=False,
+        default=defValues.nextLinkedVotesUsedVoteValues,
+    )
+
+    form.write_permission(vote_condition=WriteRiskyConfig)
+    vote_condition = schema.TextLine(
+        title=_(u'PloneMeeting_label_voteCondition', default=u'Votecondition'),
+        description=_(u'vote_condition_descr', default=u'VoteCondition'),
+        required=False,
+        default=defValues.voteCondition,
+    )
+
+    form.write_permission(votes_result_tal_expr=WriteRiskyConfig)
+    votes_result_tal_expr = schema.TextLine(
+        title=_(u'PloneMeeting_label_votesResultTALExpr', default=u'Votesresulttalexpr'),
+        description=_(u'votes_result_tal_expr_descr', default=u'VotesResultTALExpr'),
+        required=False,
+        default=defValues.votesResultTALExpr,
+    )
+
+    form.write_permission(display_voting_group=WriteRiskyConfig)
+    display_voting_group = schema.Bool(
+        title=_(u'PloneMeeting_label_displayVotingGroup', default=u'Displayvotinggroup'),
+        description=_(u'display_voting_group_descr', default=u'DisplayVotingGroup'),
+        required=False,
+        default=defValues.displayVotingGroup,
+    )
+
+    # ---- doc fieldset ----
+
+    model.fieldset(
+        'doc',
+        label=_(u'doc'),
+        fields=['meeting_item_templates_to_store_as_annex'],
+    )
+
+    form.widget('meeting_item_templates_to_store_as_annex', CheckBoxFieldWidget)
+    form.write_permission(meeting_item_templates_to_store_as_annex=WriteRiskyConfig)
+    meeting_item_templates_to_store_as_annex = schema.List(
+        title=_(u'PloneMeeting_label_meetingItemTemplatesToStoreAsAnnex', default=u'Meetingitemtemplatestostoreasannex'),
+        description=_(u'meeting_item_templates_to_store_as_annex_descr', default=u'MeetingItemTemplatesToStoreAsAnnex'),
+        value_type=schema.Choice(
+            vocabulary=u'Products.PloneMeeting.vocabularies.itemtemplatesstorableasannexvocabulary'),
+        required=False,
+        default=defValues.meetingItemTemplatesToStoreAsAnnex,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Schema policy
+# ---------------------------------------------------------------------------
+
+class MeetingConfigSchemaPolicy(DexteritySchemaPolicy):
+    """Schema policy for MeetingConfig."""
+
+    def bases(self, schema_policy, schema):
+        return (IMeetingConfig, )
+
+
+# ---------------------------------------------------------------------------
+# Content class
+# ---------------------------------------------------------------------------
+
+class MeetingConfig(Container):
+    """Meeting configuration content type (migrated from Archetypes OrderedBaseFolder).
+
+    Business logic methods are being migrated progressively from MeetingConfig.py.
+    """
+
+    implements(IMeetingConfig)
+    security = ClassSecurityInfo()
+
+    meta_type = 'MeetingConfig'
+
+    # ---------------------------------------------------------------
+    # Business methods migrated from Archetypes MeetingConfig class
+    # ---------------------------------------------------------------
+    def getId(self, real_id=False):
+        """Override to take __real_id__ into account (used in some tests)."""
+        if real_id and base_hasattr(self, "__real_id__"):
+            return self.__real_id__
+        return super(MeetingConfig, self).getId()
+
+    def _searchesInfo(self):
+        """Informations used to create DashboardCollections in the searches."""
+        itemType = self.getItemTypeName()
+        meetingType = self.getMeetingTypeName()
+        infos = OrderedDict(
+            [
+                # My items
+                ('searchmyitems', {
+                    'subFolderId': 'searches_items',
+                    'active': True,
+                    'query':
+                    [
+                        {'i': 'portal_type',
+                         'o': 'plone.app.querystring.operation.selection.is',
+                         'v': [itemType, ]},
+                        {'i': 'Creator',
+                         'o': 'plone.app.querystring.operation.string.currentUser'},
+                    ],
+                    'sort_on': u'modified',
+                    'sort_reversed': True,
+                    'showNumberOfItems': False,
+                    'tal_condition': "python: tool.userIsAmong(['creators'], cfg=cfg)",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Items of my groups
+                ('searchitemsofmygroups', {
+                    'subFolderId': 'searches_items',
+                    'active': True,
+                    'query':
+                    [
+                        {'i': 'CompoundCriterion',
+                         'o': 'plone.app.querystring.operation.compound.is',
+                         'v': 'items-of-my-groups'},
+                    ],
+                    'sort_on': u'modified',
+                    'sort_reversed': True,
+                    'showNumberOfItems': False,
+                    'tal_condition': "python: tool.get_orgs_for_user()",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Living items, items in the current flow, by default every states but decidedStates
+                ('searchlivingitems', {
+                    'subFolderId': 'searches_items',
+                    'active': True,
+                    'query':
+                    [
+                        {'i': 'CompoundCriterion',
+                         'o': 'plone.app.querystring.operation.compound.is',
+                         'v': 'living-items'},
+                    ],
+                    'sort_on': u'modified',
+                    'sort_reversed': True,
+                    'showNumberOfItems': False,
+                    'tal_condition': "python: tool.get_orgs_for_user()",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Items I take over
+                ('searchmyitemstakenover', {
+                    'subFolderId': 'searches_items',
+                    'active': True,
+                    'query':
+                    [
+                        {'i': 'CompoundCriterion',
+                         'o': 'plone.app.querystring.operation.compound.is',
+                         'v': 'my-items-taken-over'},
+                    ],
+                    'sort_on': u'modified',
+                    'sort_reversed': True,
+                    'showNumberOfItems': False,
+                    'tal_condition': "python: 'takenOverBy' in cfg.getUsedItemAttributes() "
+                                     "and (tool.get_orgs_for_user(omitted_suffixes=['observers', ]) "
+                                     "or tool.isManager(cfg))",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # All (visible) items
+                ('searchallitems', {
+                    'subFolderId': 'searches_items',
+                    'active': True,
+                    'query':
+                    [
+                        {'i': 'portal_type',
+                         'o': 'plone.app.querystring.operation.selection.is',
+                         'v': [itemType, ]},
+                    ],
+                    'sort_on': u'modified',
+                    'sort_reversed': True,
+                    'showNumberOfItems': False,
+                    'tal_condition': "",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Items in copy
+                ('searchallitemsincopy', {
+                    'subFolderId': 'searches_items',
+                    'active': True,
+                    'query':
+                    [
+                        {'i': 'CompoundCriterion',
+                         'o': 'plone.app.querystring.operation.compound.is',
+                         'v': 'items-in-copy'},
+                    ],
+                    'sort_on': u'modified',
+                    'sort_reversed': True,
+                    'showNumberOfItems': False,
+                    'tal_condition': "python: cfg.show_copy_groups_search()",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Unread items in copy
+                ('searchunreaditemsincopy', {
+                    'subFolderId': 'searches_items',
+                    'active': True,
+                    'query':
+                    [
+                        {u'i': u'CompoundCriterion',
+                         u'o': u'plone.app.querystring.operation.compound.is',
+                         u'v': [u'items-in-copy']},
+                        {u'i': u'labels',
+                         u'o': u'plone.app.querystring.operation.selection.is',
+                         u'v': [u'lu']},
+                        {'i': 'CompoundCriterion',
+                         'o': 'plone.app.querystring.operation.compound.is',
+                         'v': 'items-with-negative-personal-labels'},
+                    ],
+                    'sort_on': u'modified',
+                    'sort_reversed': True,
+                    'showNumberOfItems': False,
+                    'tal_condition': "python: 'labels' in cfg.getUsedItemAttributes() and "
+                        "cfg.show_copy_groups_search()",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Items to prevalidate
+                ('searchitemstoprevalidate', {
+                    'subFolderId': 'searches_items',
+                    'active': True,
+                    'query':
+                    [
+                        {'i': u'CompoundCriterion',
+                         'o': u'plone.app.querystring.operation.compound.is',
+                         'v': u'items-to-validate-of-my-reviewer-groups'},
+                        {'i': u'review_state',
+                         'o': u'plone.app.querystring.operation.selection.is',
+                         'v': [u'proposed']},
+                    ],
+                    'sort_on': u'modified',
+                    'sort_reversed': True,
+                    'showNumberOfItems': True,
+                    'tal_condition': "python: tool.userIsAmong(['prereviewers'], cfg=cfg) and "
+                                     "'prevalidated' in "
+                                     "cfg.getItemWFValidationLevels(data='state', only_enabled=True)",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Items to validate
+                ('searchitemstovalidate', {
+                    'subFolderId': 'searches_items',
+                    'active': True,
+                    'query':
+                    [
+                        {'i': 'CompoundCriterion',
+                         'o': 'plone.app.querystring.operation.compound.is',
+                         'v': 'items-to-validate-of-highest-hierarchic-level'},
+                    ],
+                    'sort_on': u'modified',
+                    'sort_reversed': True,
+                    'showNumberOfItems': True,
+                    'tal_condition': "python: cfg.userIsAReviewer()",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Validable items
+                ('searchvalidableitems', {
+                    'subFolderId': 'searches_items',
+                    'active': True,
+                    'query':
+                    [
+                        {'i': 'CompoundCriterion',
+                         'o': 'plone.app.querystring.operation.compound.is',
+                         'v': 'items-to-validate-of-every-reviewer-levels-and-lower-levels'},
+                    ],
+                    'sort_on': u'modified',
+                    'sort_reversed': True,
+                    'showNumberOfItems': False,
+                    'tal_condition': "python: cfg.userIsAReviewer()",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # My items to advice
+                ('searchmyitemstoadvice', {
+                    'subFolderId': 'searches_items',
+                    'active': True,
+                    'query':
+                    [
+                        {'i': 'CompoundCriterion',
+                         'o': 'plone.app.querystring.operation.compound.is',
+                         'v': 'my-items-to-advice'},
+                    ],
+                    'sort_on': u'modified',
+                    'sort_reversed': True,
+                    'showNumberOfItems': True,
+                    'tal_condition': "python: cfg.getUseAdvices() and "
+                        "cfg.getSelectableAdviserUsers() and "
+                        "tool.userIsAmong(['advisers'], "
+                        "cfg=cfg, "
+                        "using_groups=cfg.getSelectableAdviserUsers())",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Items to advice
+                ('searchallitemstoadvice', {
+                    'subFolderId': 'searches_items',
+                    'active': True,
+                    'query':
+                    [
+                        {'i': 'CompoundCriterion',
+                         'o': 'plone.app.querystring.operation.compound.is',
+                         'v': 'items-to-advice'},
+                    ],
+                    'sort_on': u'modified',
+                    'sort_reversed': True,
+                    'showNumberOfItems': True,
+                    'tal_condition': "python: cfg.getUseAdvices() and tool.userIsAmong(['advisers'], cfg=cfg)",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Items to advice without delay
+                ('searchitemstoadvicewithoutdelay', {
+                    'subFolderId': 'searches_items',
+                    'active': True,
+                    'query':
+                    [
+                        {'i': 'CompoundCriterion',
+                         'o': 'plone.app.querystring.operation.compound.is',
+                         'v': 'items-to-advice-without-delay'},
+                    ],
+                    'sort_on': u'modified',
+                    'sort_reversed': True,
+                    'showNumberOfItems': True,
+                    'tal_condition': "python: cfg.getUseAdvices() and tool.userIsAmong(['advisers'], cfg=cfg)",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Items to advice with delay
+                ('searchitemstoadvicewithdelay', {
+                    'subFolderId': 'searches_items',
+                    'active': True,
+                    'query':
+                    [
+                        {'i': 'CompoundCriterion',
+                         'o': 'plone.app.querystring.operation.compound.is',
+                         'v': 'items-to-advice-with-delay'},
+                    ],
+                    'sort_on': u'modified',
+                    'sort_reversed': True,
+                    'showNumberOfItems': True,
+                    'tal_condition': "python: cfg.getUseAdvices() and tool.userIsAmong(['advisers'], cfg=cfg)",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Items to advice with exceeded delay
+                ('searchitemstoadvicewithexceededdelay', {
+                    'subFolderId': 'searches_items',
+                    'active': True,
+                    'query':
+                    [
+                        {'i': 'CompoundCriterion',
+                         'o': 'plone.app.querystring.operation.compound.is',
+                         'v': 'items-to-advice-with-exceeded-delay'},
+                    ],
+                    'sort_on': u'modified',
+                    'sort_reversed': True,
+                    'showNumberOfItems': False,
+                    'tal_condition': "python: cfg.getUseAdvices() and tool.userIsAmong(['advisers'], cfg=cfg)",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Every advised items
+                ('searchalladviseditems', {
+                    'subFolderId': 'searches_items',
+                    'active': True,
+                    'query':
+                    [
+                        {'i': 'CompoundCriterion',
+                         'o': 'plone.app.querystring.operation.compound.is',
+                         'v': 'advised-items'},
+                    ],
+                    'sort_on': u'modified',
+                    'sort_reversed': True,
+                    'showNumberOfItems': False,
+                    'tal_condition': "python: cfg.getUseAdvices() and tool.userIsAmong(['advisers'], cfg=cfg)",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Advised items with delay
+                ('searchalladviseditemswithdelay', {
+                    'subFolderId': 'searches_items',
+                    'active': True,
+                    'query':
+                    [
+                        {'i': 'CompoundCriterion',
+                         'o': 'plone.app.querystring.operation.compound.is',
+                         'v': 'advised-items-with-delay'},
+                    ],
+                    'sort_on': u'modified',
+                    'sort_reversed': True,
+                    'showNumberOfItems': False,
+                    'tal_condition': "python: cfg.getUseAdvices() and tool.userIsAmong(['advisers'], cfg=cfg)",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Items to correct
+                ('searchitemstocorrect', {
+                    'subFolderId': 'searches_items',
+                    'active': True,
+                    'query':
+                    [
+                        {'i': 'CompoundCriterion',
+                         'o': 'plone.app.querystring.operation.compound.is',
+                         'v': 'items-to-correct'},
+                    ],
+                    'sort_on': u'modified',
+                    'sort_reversed': True,
+                    'showNumberOfItems': True,
+                    'tal_condition': "python: tool.userIsAmong(['creators'], cfg=cfg) and "
+                                     "('return_to_proposing_group' in cfg.getWorkflowAdaptations() or "
+                                     "'return_to_proposing_group_with_all_validations' "
+                                     "in cfg.getWorkflowAdaptations() or "
+                                     "'return_to_proposing_group_with_last_validation' "
+                                     "in cfg.getWorkflowAdaptations())",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Items to correct to validate
+                ('searchitemstocorrecttovalidate', {
+                    'subFolderId': 'searches_items',
+                    'active': True,
+                    'query':
+                    [
+                        {'i': 'CompoundCriterion',
+                         'o': 'plone.app.querystring.operation.compound.is',
+                         'v': 'items-to-correct-to-validate-of-highest-hierarchic-level'},
+                    ],
+                    'sort_on': u'modified',
+                    'sort_reversed': True,
+                    'showNumberOfItems': True,
+                    'tal_condition': "python: cfg.userIsAReviewer() and "
+                                     "('return_to_proposing_group_with_all_validations' "
+                                     "in cfg.getWorkflowAdaptations() or "
+                                     "'return_to_proposing_group_with_last_validation' "
+                                     "in cfg.getWorkflowAdaptations())",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Validable "Items to correct"
+                ('searchitemstocorrecttovalidateoffeveryreviewergroups', {
+                    'subFolderId': 'searches_items',
+                    'active': True,
+                    'query':
+                    [
+                        {'i': 'CompoundCriterion',
+                         'o': 'plone.app.querystring.operation.compound.is',
+                         'v': 'items-to-correct-to-validate-of-every-reviewer-groups'},
+                    ],
+                    'sort_on': u'modified',
+                    'sort_reversed': True,
+                    'showNumberOfItems': True,
+                    'tal_condition': "python: tool.userIsAmong(['creators'], cfg=cfg) and "
+                                     "('return_to_proposing_group_with_all_validations' "
+                                     "in cfg.getWorkflowAdaptations())",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Unread items
+                ('searchunreaditems', {
+                    'subFolderId': 'searches_items',
+                    'active': True,
+                    'query':
+                    [
+                        {u'i': u'labels',
+                         u'o': u'plone.app.querystring.operation.selection.is',
+                         u'v': [u'lu']},
+                        {'i': 'CompoundCriterion',
+                         'o': 'plone.app.querystring.operation.compound.is',
+                         'v': 'items-with-negative-personal-labels'},
+                    ],
+                    'sort_on': u'modified',
+                    'sort_reversed': True,
+                    'showNumberOfItems': False,
+                    'tal_condition': "python: 'labels' in cfg.getUsedItemAttributes()",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Unread to follow
+                ('searchitemstofollow', {
+                    'subFolderId': 'searches_items',
+                    'active': True,
+                    'query':
+                    [
+                        {u'i': u'labels',
+                         u'o': u'plone.app.querystring.operation.selection.is',
+                         u'v': [u'suivi']},
+                        {'i': 'CompoundCriterion',
+                         'o': 'plone.app.querystring.operation.compound.is',
+                         'v': 'items-with-personal-labels'},
+                    ],
+                    'sort_on': u'modified',
+                    'sort_reversed': True,
+                    'showNumberOfItems': False,
+                    'tal_condition': "python: 'labels' in cfg.getUsedItemAttributes()",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Corrected items
+                ('searchcorrecteditems', {
+                    'subFolderId': 'searches_items',
+                    'active': True,
+                    'query':
+                    [
+                        {'i': 'portal_type',
+                         'o': 'plone.app.querystring.operation.selection.is',
+                         'v': [itemType, ]},
+                        {'i': 'previous_review_state',
+                         'o': 'plone.app.querystring.operation.selection.is',
+                         'v': ['returned_to_proposing_group']}
+                    ],
+                    'sort_on': u'modified',
+                    'sort_reversed': True,
+                    'showNumberOfItems': False,
+                    'tal_condition': "python: tool.isManager(cfg) and "
+                                     "('return_to_proposing_group' in cfg.getWorkflowAdaptations() or "
+                                     "'return_to_proposing_group_with_all_validations' in "
+                                     "cfg.getWorkflowAdaptations() or 'return_to_proposing_group_with_last_validation' "
+                                     "in cfg.getWorkflowAdaptations())",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Decided items
+                ('searchdecideditems', {
+                    'subFolderId': 'searches_items',
+                    'active': True,
+                    'query':
+                    [
+                        {'i': 'CompoundCriterion',
+                         'o': 'plone.app.querystring.operation.compound.is',
+                         'v': 'decided-items'},
+                    ],
+                    'sort_on': u'modified',
+                    'sort_reversed': True,
+                    'showNumberOfItems': False,
+                    'tal_condition': '',
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Unread decided items
+                ('searchunreaddecideditems', {
+                    'subFolderId': 'searches_items',
+                    'active': True,
+                    'query':
+                    [
+                        {'i': 'CompoundCriterion',
+                         'o': 'plone.app.querystring.operation.compound.is',
+                         'v': 'decided-items'},
+                        {u'i': u'labels',
+                         u'o': u'plone.app.querystring.operation.selection.is',
+                         u'v': [u'lu']},
+                        {'i': 'CompoundCriterion',
+                         'o': 'plone.app.querystring.operation.compound.is',
+                         'v': 'items-with-negative-personal-labels'},
+                    ],
+                    'sort_on': u'modified',
+                    'sort_reversed': True,
+                    'showNumberOfItems': False,
+                    'tal_condition': "python: 'labels' in cfg.getUsedItemAttributes()",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Items of my committees
+                ('searchitemsofmycommittees', {
+                    'subFolderId': 'searches_items',
+                    'active': True,
+                    'query':
+                    [
+                        {'i': 'CompoundCriterion',
+                         'o': 'plone.app.querystring.operation.compound.is',
+                         'v': 'items-of-my-committees'},
+                    ],
+                    'sort_on': u'modified',
+                    'sort_reversed': True,
+                    'showNumberOfItems': False,
+                    'tal_condition': "python: tool.get_orgs_for_user(omitted_suffixes=['observers', ]) "
+                        "and cfg.getCommittees()",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Items of my committees editable
+                ('searchitemsofmycommitteeseditable', {
+                    'subFolderId': 'searches_items',
+                    'active': True,
+                    'query':
+                    [
+                        {'i': 'CompoundCriterion',
+                         'o': 'plone.app.querystring.operation.compound.is',
+                         'v': 'items-of-my-committees-editable'},
+                    ],
+                    'sort_on': u'modified',
+                    'sort_reversed': True,
+                    'showNumberOfItems': False,
+                    'tal_condition': "python: tool.get_orgs_for_user(omitted_suffixes=['observers', ]) "
+                        "and cfg.getCommittees()",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Items with neededFollowUp
+                ('searchitemswithneededfollowup', {
+                    'subFolderId': 'searches_items',
+                    'active': True,
+                    'query':
+                    [
+                        {u'i': u'labels',
+                         u'o': u'plone.app.querystring.operation.selection.is',
+                         u'v': [u'needed-follow-up']},
+                        {'i': 'portal_type',
+                         'o': 'plone.app.querystring.operation.selection.is',
+                         'v': [itemType, ]},
+                    ],
+                    'sort_on': u'modified',
+                    'sort_reversed': True,
+                    'showNumberOfItems': True,
+                    'tal_condition': "python: 'neededFollowUp' in cfg.getUsedItemAttributes() and "
+                        "tool.get_orgs_for_user(omitted_suffixes=['observers', ])",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Items with providedFollowUp
+                ('searchitemswithprovidedfollowup', {
+                    'subFolderId': 'searches_items',
+                    'active': True,
+                    'query':
+                    [
+                        {u'i': u'labels',
+                         u'o': u'plone.app.querystring.operation.selection.is',
+                         u'v': [u'provided-follow-up']},
+                        {'i': 'portal_type',
+                         'o': 'plone.app.querystring.operation.selection.is',
+                         'v': [itemType, ]},
+                    ],
+                    'sort_on': u'modified',
+                    'sort_reversed': True,
+                    'showNumberOfItems': False,
+                    'tal_condition': "python: 'providedFollowUp' in cfg.getUsedItemAttributes() and "
+                        "tool.get_orgs_for_user(omitted_suffixes=['observers', ])",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # All not-yet-decided meetings
+                ('searchnotdecidedmeetings', {
+                    'subFolderId': 'searches_meetings',
+                    'active': True,
+                    'query':
+                    [
+                        {'i': 'portal_type',
+                         'o': 'plone.app.querystring.operation.selection.is',
+                         'v': [meetingType, ]},
+                        {'i': 'review_state',
+                         'o': 'plone.app.querystring.operation.selection.is',
+                         'v': ['created', 'frozen', 'published']},
+                    ],
+                    'sort_on': u'sortable_title',
+                    'sort_reversed': False,
+                    'showNumberOfItems': False,
+                    'tal_condition': '',
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Last decided meetings
+                ('searchlastdecisions', {
+                    'subFolderId': 'searches_decisions',
+                    'active': True,
+                    'query':
+                    [
+                        {'i': 'portal_type',
+                         'o': 'plone.app.querystring.operation.selection.is',
+                         'v': [meetingType, ]},
+                        {'i': 'review_state',
+                         'o': 'plone.app.querystring.operation.selection.is',
+                         'v': ['decided', 'closed']},
+                        {'i': 'meeting_date',
+                         'o': 'plone.app.querystring.operation.date.largerThanRelativeDate',
+                         'v': '60'},
+                        {'i': 'CompoundCriterion',
+                         'o': 'plone.app.querystring.operation.compound.is',
+                         'v': 'last-decisions'},
+                    ],
+                    'sort_on': u'sortable_title',
+                    'sort_reversed': False,
+                    'showNumberOfItems': False,
+                    'tal_condition': '',
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # All meetings
+                ('searchallmeetings', {
+                    'subFolderId': 'searches_decisions',
+                    'active': True,
+                    'query':
+                    [
+                        {'i': 'portal_type',
+                         'o': 'plone.app.querystring.operation.selection.is',
+                         'v': [meetingType, ]},
+                    ],
+                    'sort_on': u'sortable_title',
+                    'sort_reversed': True,
+                    'showNumberOfItems': False,
+                    'tal_condition': '',
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+            ]
+        )
+        # manage extra searches defined in a subplugin
+        infos = self.adapted()._extraSearchesInfo(infos)
+        return infos
+
+    def _extraSearchesInfo(self, infos):
+        '''This is made to be overrided by a subplugin, to insert it's own searches.'''
+        return infos
+
+
+    security.declarePublic('Title')
+    def Title(self, include_config_group=False, **kwargs):
+        '''Returns the title and:
+           - include config group label if p_include_config_group is True;
+           - include config group full_label if p_include_config_group is "full_label".'''
+        title = self.title
+        if include_config_group and self.getConfigGroup():
+            if include_config_group is True:
+                # prepend configGroup label
+                title = u"{0} - {1}".format(
+                    safe_unicode(self.getConfigGroup(True)['label']), title)
+            elif include_config_group == "full_label":
+                full_label = self.getConfigGroup(True)['full_label']
+                if full_label:
+                    # prepend configGroup full_label
+                    title = u"{0} - {1}".format(
+                        safe_unicode(self.getConfigGroup(True)['full_label']), title)
+        # Title returns utf-8
+        return title.encode('utf-8')
+
+
+    security.declarePrivate('setAllItemTagsField')
+    def setAllItemTagsField(self):
+        '''Sets the correct value for the field "allItemTags".'''
+        tags = [t.strip() for t in self.getAllItemTags().split('\n')]
+        if self.getSortAllItemTags():
+            tags.sort()
+        self.setAllItemTags('\n'.join(tags))
+
+
+    security.declareProtected(WriteRiskyConfig, 'setCustomAdvisers')
+    def setCustomAdvisers(self, value, **kwargs):
+        '''Overrides the field 'customAdvisers' mutator to manage
+           the 'row_id' column manually.  If empty, we need to add a
+           unique id into it.'''
+        # value contains a list of 'ZPublisher.HTTPRequest', to be compatible
+        # if we receive a 'dict' instead, we use v.get()
+        for v in value:
+            # don't process hidden template row as input data
+            if v.get('orderindex_', None) == "template_row_marker":
+                continue
+            if not v.get('row_id', None):
+                v.row_id = self.generateUniqueId()
+        self.custom_advisers = value
+
+
+    security.declareProtected(WriteRiskyConfig, 'setPowerObservers')
+    def setPowerObservers(self, value, **kwargs):
+        '''Overrides the field 'powerObservers' mutator to manage
+           the 'row_id' column manually.  If empty, we need to add a
+           unique id into it.'''
+        # value contains a list of 'ZPublisher.HTTPRequest', to be compatible
+        # if we receive a 'dict' instead, we use v.get()
+        for v in value:
+            # don't process hidden template row as input data
+            if v.get('orderindex_', None) == "template_row_marker":
+                continue
+            if not v.get('row_id', None):
+                v['row_id'] = 'powerobservers_{0}'.format(self.generateUniqueId())
+        # get removed row_ids and remove linked Plone group
+        storedRowIds = [v['row_id'].strip() for v in self.getPowerObservers()]
+        rowIds = [v['row_id'].strip() for v in value
+                  if v.get('orderindex_', None) != 'template_row_marker']
+        removedRowIds = [storedRowId for storedRowId in storedRowIds
+                         if storedRowId not in rowIds]
+        for removedRowId in removedRowIds:
+            plone_group_id = '{0}_{1}'.format(self.getId(), removedRowId)
+            api.group.delete(plone_group_id)
+
+        self.power_observers = value
+
+
+    security.declareProtected(WriteRiskyConfig, 'setCommittees')
+    def setCommittees(self, value, **kwargs):
+        '''Overrides the field 'committees' mutator to manage
+           the 'row_id' column manually.  If empty, we need to add a
+           unique id into it.'''
+        # value contains a list of 'ZPublisher.HTTPRequest', to be compatible
+        # if we receive a 'dict' instead, we use v.get()
+        for v in value:
+            # don't process hidden template row as input data
+            if v.get('orderindex_', None) == "template_row_marker":
+                continue
+            if not v.get('row_id', None):
+                v['row_id'] = 'committee_{0}'.format(self.generateUniqueId())
+
+        # get removed row_ids and remove linked Plone group
+        # rows that were removed
+        storedRowIds = [v['row_id'].strip() for v in self.getCommittees()
+                        if v['enable_editors'] == "1"]
+        rowIds = [v['row_id'].strip() for v in value
+                  if v.get('orderindex_', None) != 'template_row_marker']
+        removedRowIds = [storedRowId for storedRowId in storedRowIds
+                         if storedRowId not in rowIds]
+        # "enable_editors" that was set from "1" to "0"
+        storedEnableEditorsRowIds = [
+            v['row_id'].strip() for v in self.getCommittees()
+            if v['enable_editors'] == "1"]
+        disabledEditorsRowIds = [
+            v['row_id'].strip() for v in value
+            if v.get('orderindex_', None) != 'template_row_marker' or
+            v.get('enable_editors') == "0"]
+        disabledRowIds = [storedRowId for storedRowId in storedEnableEditorsRowIds
+                          if storedRowId not in disabledEditorsRowIds]
+        for row_id_to_remove in tuple(set(removedRowIds + disabledRowIds)):
+            plone_group_id = '{0}_{1}'.format(self.getId(), row_id_to_remove)
+            api.group.delete(plone_group_id)
+
+        self.committees = value
+
+
+    security.declareProtected(WriteRiskyConfig, 'setMaxShownListings')
+    def setMaxShownListings(self, value, **kwargs):
+        '''Overrides the field 'maxShownListings' mutator to synch
+           defined value with relevant faceted criterion.'''
+        # get the criterion and update it
+        # do not fail at widget initialization
+        if self.get('searches'):
+            criterion = _get_criterion(
+                self.searches.searches_items,
+                ResultsPerPageWidget.widget_type)
+            # avoid updating if not changed as it notifyModified MeetingConfig
+            if str(criterion.default) != str(value):
+                criteria = ICriteria(self.searches.searches_items)
+                # need to use ICriteria.edit to make change persistent
+                criteria.edit(criterion.__name__, **{'default': value})
+        self.max_shown_listings = value
+
+
+    security.declareProtected(WriteRiskyConfig, 'setUsingGroups')
+    def setUsingGroups(self, value, **kwargs):
+        '''Overrides the field 'setUsingGroups' mutator to enable or disable
+           the MEETING_REMOVE_MOG_WFA WFA when relevant.
+           Updating WF role mappings and every meetings local_roles is managed
+           by the onConfigModified event.'''
+        # make sure we do not get a [''] as value
+        value = [v for v in value if v]
+        stored = self.getField('usingGroups').get(self, **kwargs)
+        self.REQUEST.set('need_update_%s' % MEETING_REMOVE_MOG_WFA, False)
+        if not stored and value:
+            # enabling usingGroups
+            self.REQUEST.set('need_update_%s' % MEETING_REMOVE_MOG_WFA, True)
+            wfas = list(self.getWorkflowAdaptations())
+            if MEETING_REMOVE_MOG_WFA not in wfas:
+                wfas.append(MEETING_REMOVE_MOG_WFA)
+                self.setWorkflowAdaptations(wfas)
+        elif stored and not value:
+            # disabling usingGroups
+            self.REQUEST.set('need_update_%s' % MEETING_REMOVE_MOG_WFA, True)
+            wfas = list(self.getWorkflowAdaptations())
+            wfas.remove(MEETING_REMOVE_MOG_WFA)
+            self.setWorkflowAdaptations(wfas)
+        elif stored and value and list(stored) != value:
+            # value changed, need to update local roles but WFA is already selected
+            self.REQUEST.set('need_update_%s' % MEETING_REMOVE_MOG_WFA, True)
+        self.getField('usingGroups').set(self, value, **kwargs)
+
+
+    security.declarePublic('getUsedVoteValues')
+    def getUsedVoteValues(self,
+                          used_values_attr='usedVoteValues',
+                          include_not_encoded=False,
+                          **kwargs):
+        '''Overridde 'usedVoteValues' field accessor.
+           Manage in p_used_values_attr from which attr we get the value,
+           'usedVoteValues' by default but may be
+           'firstLinkedVoteUsedVoteValues' or 'nextLinkedVotesUsedVoteValues'.
+           Manage also the 'include_not_encoded' technical vote value.'''
+        res = self.getField(used_values_attr).get(self, **kwargs)
+        # include special value NOT_ENCODED_VOTE_VALUE
+        if include_not_encoded:
+            res = (NOT_ENCODED_VOTE_VALUE, ) + res
+        return res
+
+    def getItemDecidedStates(self):
+        '''Return list of item decided states.'''
+        # take care that "pre_accepted" is NOT a decided state
+        item_decided_states = [
+            'accepted',
+            'accepted_but_modified',
+            'accepted_out_of_meeting',
+            'accepted_out_of_meeting_emergency',
+            'delayed',
+            'marked_not_applicable',
+            'postponed_next_meeting',
+            'refused',
+            'removed',
+            'transfered']
+        item_decided_states += self.adapted().extra_item_decided_states()
+        return item_decided_states
+
+    def extra_item_decided_states(self):
+        '''See doc in interfaces.py.'''
+        return []
+
+    def getItemPositiveDecidedStates(self):
+        '''Return list of item positive decided states.'''
+        item_positive_decided_states = [
+            'accepted',
+            'accepted_but_modified',
+            'accepted_out_of_meeting',
+            'accepted_out_of_meeting_emergency',
+            'transfered']
+        item_positive_decided_states += self.adapted().extra_item_positive_decided_states()
+        return item_positive_decided_states
+
+    def extra_item_positive_decided_states(self):
+        '''See doc in interfaces.py.'''
+        return []
+
+
+    security.declarePublic('getUsingGroups')
+    def getUsingGroups(self, theObjects=False, **kwargs):
+        '''Overrides the field 'usingGroups' accessor to manage theObjects.'''
+        res = self.getField('usingGroups').get(self, **kwargs)
+        if theObjects:
+            # when no usingGroups, so kept_org_uids=[],
+            # get_organizations will return every orgs
+            res = get_organizations(kept_org_uids=res)
+        return res
+
+
+    security.declarePublic('getItemWFValidationLevels')
+    def getItemWFValidationLevels(self,
+                                  states=[],
+                                  data=None,
+                                  only_enabled=False,
+                                  value=None,
+                                  translated_itemWFValidationLevels=False,
+                                  return_state_singleton=True,
+                                  **kwargs):
+        '''Override the field 'itemWFValidationLevels' accessor to be able to handle some paramters :
+           - states : return rows relative to given p_states (when p_return_state_singleton=True
+             and only one row to return (one state given) then a single dict is returned,
+             either a list of dict);
+           - data : return every values defined for a given datagrid column name;
+           - only_enabled : make sure to return rows having enabled '1'.'''
+        res = value if value is not None else self.getField('itemWFValidationLevels').get(self, **kwargs)
+        enabled = ['0', '1']
+        if only_enabled:
+            enabled = ['1']
+        if only_enabled:
+            res = [level for level in res if level['enabled'] in enabled]
+
+        if states:
+            res = [level for level in res if level['state'] in states]
+        if data:
+            res = [level[data] for level in res if level[data]]
+        if return_state_singleton and len(states) == 1:
+            res = res and res[0] or res
+        # when displayed, append translated values to elements title
+        if self.REQUEST.get('translated_itemWFValidationLevels',
+                            translated_itemWFValidationLevels) and not data:
+            translated_res = deepcopy(res)
+            translated_titles = ('state_title',
+                                 'leading_transition_title',
+                                 'back_transition_title')
+            for line in translated_res:
+                for translated_title in translated_titles:
+                    line_translated_title = safe_unicode(line[translated_title])
+                    translated_value = translate(line_translated_title,
+                                                 domain='plone',
+                                                 context=self.REQUEST)
+                    line[translated_title] = u"{0} ({1})".format(
+                        translated_value, line_translated_title)
+            res = translated_res
+        # when returning for example extra_suffixes as list, avoid it modified
+        return copy.deepcopy(res)
+
+
+    security.declarePublic('getLabelsConfig')
+    def getLabelsConfig(self, label_ids=[], data=None, return_label_id_singleton=True, **kwargs):
+        '''Override the field 'labelsConfig' accessor to be able to handle some paramters:
+           - data : return every values defined for a given datagrid column name.'''
+        res = self.getField('labelsConfig').get(self, **kwargs)
+        if label_ids:
+            res = [level for level in res
+                   if level['label_id'] in label_ids]
+        if data:
+            res = [level[data] for level in res if level[data]]
+            # manage multivalued columns
+            if res and hasattr(res[0], "__iter__"):
+                res = itertools.chain.from_iterable(res)
+        if return_label_id_singleton and len(label_ids) == 1:
+            res = res and res[0] or res
+        return res
+
+
+    security.declarePublic('getItemFieldsConfig')
+    def getItemFieldsConfig(self, names=[], data=None, return_name_singleton=True, **kwargs):
+        '''Override the field 'itemFieldsConfig' accessor to be able to handle some paramters:
+           - data : return every values defined for a given datagrid column name.'''
+        res = self.getField('itemFieldsConfig').get(self, **kwargs)
+        if names:
+            res = [level for level in res
+                   if level['name'] in names]
+        if data:
+            res = [level[data] for level in res if level[data]]
+            # manage multivalued columns
+            if res and hasattr(res[0], "__iter__"):
+                res = itertools.chain.from_iterable(res)
+        if return_name_singleton and len(names) == 1:
+            res = res and res[0] or res
+        return res
+
+
+    security.declarePublic('getOrderedItemInitiators')
+    def getOrderedItemInitiators(self, theObjects=False, **kwargs):
+        '''Overrides the field 'orderedItemInitiators' acessor to manage theObjects.'''
+        res = self.getField('orderedItemInitiators').get(self, **kwargs)
+        if theObjects:
+            res = uuidsToObjects(res, ordered=True, unrestricted=True)
+        return res
+
+
+    security.declarePublic('getOrderedAssociatedOrganizations')
+    def getOrderedAssociatedOrganizations(self, theObjects=False, **kwargs):
+        '''Overrides the field 'orderedAssociatedOrganizations' acessor to manage theObjects.'''
+        res = self.getField('orderedAssociatedOrganizations').get(self, **kwargs)
+        if theObjects:
+            res = uuidsToObjects(res, ordered=True, unrestricted=True)
+        return res
+
+
+    security.declarePublic('getOrderedGroupsInCharge')
+    def getOrderedGroupsInCharge(self, theObjects=False, **kwargs):
+        '''Overrides the field 'orderedGroupsInCharge' acessor to manage theObjects.'''
+        res = self.getField('orderedGroupsInCharge').get(self, **kwargs)
+        if theObjects:
+            res = uuidsToObjects(res, ordered=True, unrestricted=True)
+        return res
+
+
+    security.declarePublic('getMaxShownListings')
+    def getMaxShownListings(self, **kwargs):
+        '''Overrides the field 'maxShownListings' acessor to synch
+           defined value with relevant faceted criterion.'''
+        if self.checkCreationFlag():
+            return defValues.maxShownListings
+        # get the criterion
+        criterion = _get_criterion(
+            self.searches.searches_items,
+            ResultsPerPageWidget.widget_type,
+            raise_on_error=False)
+        if criterion:
+            value = criterion.default
+        else:
+            value = self.getField('maxShownListings').get(self, **kwargs)
+        return safe_unicode(value)
+
+
+    security.declarePublic('getToDoListSearches')
+    def getToDoListSearches(self, theObjects=False, **kwargs):
+        '''Overrides the field 'toDoListSearches' accessor to manage theObjects.'''
+        res = self.getField('toDoListSearches').get(self, **kwargs)
+        if theObjects:
+            res = uuidsToObjects(res, ordered=True, unrestricted=True)
+        return res
+
+    security.declarePrivate('listAnnexesBatchActions')
+
+    def is_committees_using(self, column, value=[]):
+        """Return True if using committees given p_column :
+           - using "auto_from" column mean that committee on item is determined automatically;
+           - using "using_groups" column is exclusive from "auto_groups" and
+             restrict available committees to selected proposing groups."""
+        res = False
+        for committee in value or self.getCommittees():
+            if committee[column]:
+                res = True
+                break
+        return res
+
+    def get_committee(self, row_id):
+        """ """
+        for committee in self.getCommittees():
+            if committee['row_id'] == row_id:
+                return committee.copy()
+
+    def get_committee_label(self, row_id):
+        """ """
+        committee = self.get_committee(row_id)
+        return committee and committee['label']
+
+    def get_supplements_for_committee(self, row_id=None, committee=None):
+        """Return supplements, may receive a p_row_id or a committee config,
+           this is used for validating changes between new and old committee config,
+           see validated_committees."""
+        res = []
+        committee = committee or self.get_committee(row_id)
+        for suppl in range(int(committee['supplements'])):
+            suppl_num = suppl + 1
+            suppl_id = u"{0}__suppl__{1}".format(committee['row_id'], suppl_num)
+            res.append(suppl_id)
+        return res
+
+
+    security.declarePublic('getConfigGroup')
+    def getConfigGroup(self, full=False, **kwargs):
+        '''Overrides the field 'configGroup' accessor to manage p_full parameter
+           that will return full informations about the configGroup from the tool.'''
+        res = self.getField('configGroup').get(self, **kwargs)
+        if full:
+            tool = api.portal.get_tool('portal_plonemeeting')
+            configGroups = tool.getConfigGroups()
+            res = [configGroup for configGroup in configGroups
+                   if configGroup['row_id'] == self.getConfigGroup()]
+            res = res and res[0] or {}
+        return res
+
+    security.declarePrivate('listConfigGroups')
+
+    security.declarePrivate('listAttributes')
+    def listAttributes(self, schema, optionalOnly=False, as_display_list=True):
+        res = []
+        for field in schema.fields():
+            # Take all of them or optionals only, depending on p_optionalOnly
+            if optionalOnly:
+                condition = getattr(field, 'optional', False)
+            else:
+                condition = (field.getName() != 'id') and \
+                            (field.schemata != 'metadata') and \
+                            (field.type != 'reference') and \
+                            (field.read_permission != 'Manage portal')
+            if condition:
+                res.append((field.getName(),
+                            '%s (%s)' % (translate(field.widget.label_msgid,
+                                                   domain=field.widget.i18n_domain,
+                                                   context=self.REQUEST),
+                                         field.getName())
+                            ))
+        if as_display_list:
+            res = DisplayList(tuple(res))
+        return res
+
+    security.declarePrivate('listUsedItemAttributes')
+
+    security.declarePrivate('validate_shortName')
+    def validate_shortName(self, value):
+        '''Checks that the short name is unique among all configs.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        for cfg in tool.objectValues('MeetingConfig'):
+            if (cfg != self) and (cfg.getShortName() == value):
+                return DUPLICATE_SHORT_NAME % value
+
+
+    security.declarePrivate('validate_listTypes')
+    def validate_listTypes(self, value):
+        '''Validate the 'listTypes' field, check that :
+           - default are there (normal, late);
+           - already used may not be removed;
+           - extra provided 'identifier' are strict letter lowercase and not defined twice.'''
+        identifiers = [v['identifier'] for v in value]
+        defaultListTypes = [dlt['identifier'] for dlt in DEFAULT_LIST_TYPES]
+        if set(defaultListTypes).difference(set(identifiers)):
+            return _('error_list_types_missing_default')
+
+        for listType in value:
+            # bypass 'template_row_marker'
+            if listType.get('orderindex_', None) == 'template_row_marker':
+                continue
+            identifier = listType['identifier']
+            # same identifier defined several times?
+            if identifiers.count(identifier) > 1:
+                return _('error_list_types_same_identifier')
+            # wrong identifier format?
+            if not identifier.lower() == identifier or \
+               not identifier.isalpha():
+                return _('error_list_types_wrong_identifier_format')
+
+        # already used listType may not be removed
+        removedIdentifiers = [v['identifier'] for v in self.getListTypes() if v['identifier'] not in identifiers]
+        catalog = api.portal.get_tool('portal_catalog')
+        for removedIdentifier in removedIdentifiers:
+            brains = catalog.unrestrictedSearchResults(
+                portal_type=self.getItemTypeName(), listType=removedIdentifier)
+            if brains:
+                return _('error_list_types_identifier_removed_already_used',
+                         mapping={'url': brains[0].getURL()})
+
+
+    security.declarePrivate('validate_committees')
+    def validate_committees(self, value):
+        '''Validate the 'committees' field, already used may not be removed.'''
+        # use vocabulary managing committees to detect changes
+        vocab = get_vocab(
+            self,
+            "Products.PloneMeeting.vocabularies.selectable_committees_vocabulary",
+            only_factory=True)
+        stored_terms = vocab(self)
+        new_value = [v for v in value
+                     if v.get('orderindex_', None) != 'template_row_marker']
+        new_terms = vocab(self, cfg_committees=new_value)
+        removeds = [term.token for term in stored_terms if term.token not in new_terms]
+        catalog = api.portal.get_tool('portal_catalog')
+        for removed in removeds:
+            # may be linked to an item or a meeting
+            brains = catalog.unrestrictedSearchResults(
+                getConfigId=self.getId(), committees_index=removed)
+            if brains:
+                return _('error_committee_row_id_removed_already_used',
+                         mapping={'url': brains[0].getURL(),
+                                  'committee_label': safe_unicode(self.get_committee_label(removed))})
+            # if "enable_editors", check if linked Plone group is empty
+            if self.getCommittees(committee_id=removed)["enable_editors"] == "1":
+                plone_group_id = '{0}_{1}'.format(self.getId(), removed)
+                if api.group.get(plone_group_id).getGroupMembers():
+                    return translate('committee_removed_plone_group_not_empty',
+                                     domain='PloneMeeting',
+                                     context=self.REQUEST)
+
+        # when changing "enable_editors" from "1" ro "0", Plone group must be empty
+        stored_enable_editors = [row["row_id"] for row in self.getCommittees()
+                                 if row["enable_editors"] == "1"]
+        disabled_editors = [v["row_id"] for v in value
+                            if v.get('orderindex_', None) != 'template_row_marker' and
+                            v["enable_editors"] == "0"]
+        for disabled_editor in set(stored_enable_editors).intersection(disabled_editors):
+            plone_group_id = '{0}_{1}'.format(self.getId(), disabled_editor)
+            if api.group.get(plone_group_id).getGroupMembers():
+                return translate('committee_disabled_editors_plone_group_not_empty',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+
+        # columns using_groups and auto_from are exclusive
+        if self.is_committees_using("auto_from", new_value) and \
+           self.is_committees_using("using_groups", new_value):
+            return _('error_committees_mutually_exclusive_auto_from_and_using_groups')
+
+        # this part should be in a validator for orderedCommitteeContacts
+        # but then we do not get the entire datagridfield value from REQUEST
+        # and it is easier to do it here...
+        committee_contacts = self.REQUEST.get(
+            'orderedCommitteeContacts', self.getOrderedCommitteeContacts())
+        # remove empty values if any
+        committee_contacts = [contact for contact in committee_contacts if contact]
+
+        default_attendees = get_datagridfield_column_value(value, "default_attendees")
+        default_signatories = get_datagridfield_column_value(value, "default_signatories")
+        diff_attendees = set(default_attendees).difference(committee_contacts)
+        diff_signatories = set(default_signatories).difference(committee_contacts)
+        if diff_attendees or diff_signatories:
+            all_diffs = list(diff_attendees) + list(diff_signatories)
+            an_hp_uid = all_diffs[0]
+            hp = uuidToObject(an_hp_uid, unrestricted=True)
+            return _('error_value_removed_used_in_committees_field',
+                     mapping={'hp_title': hp.get_short_title()},
+                     default="Error used values is not selectable, check \"${hp_title}\"")
+
+
+    security.declarePrivate('validate_defaultPollType')
+    def validate_defaultPollType(self, value):
+        '''Validate the defaultPollType field.
+           Selected value must be among MeetingConfig.usedPollTypes.'''
+        usedPollTypes = self.REQUEST.get(
+            'usedPollTypes', self.getUsedPollTypes())
+        if value not in usedPollTypes:
+            return _('error_default_poll_type_must_be_among_used_poll_types')
+
+
+    security.declarePrivate('validate_firstLinkedVoteUsedVoteValues')
+    def validate_firstLinkedVoteUsedVoteValues(self, values):
+        '''Validate the firstLinkedVoteUsedVoteValues field.
+           Selected values must be among MeetingConfig.usedVoteValues.'''
+        usedVoteValues = self.REQUEST.get(
+            'usedVoteValues', self.getUsedVoteValues())
+        if set(values).difference(usedVoteValues):
+            return _('error_first_linked_vote_used_vote_values_must_be_among_used_vote_values')
+
+
+    security.declarePrivate('validate_nextLinkedVotesUsedVoteValues')
+    def validate_nextLinkedVotesUsedVoteValues(self, values):
+        '''Validate the nextLinkedVotesUsedVoteValues field.
+           Selected values must be among MeetingConfig.usedVoteValues.'''
+        usedVoteValues = self.REQUEST.get(
+            'usedVoteValues', self.getUsedVoteValues())
+        if set(values).difference(usedVoteValues):
+            return _('error_next_linked_votes_used_vote_values_must_be_among_used_vote_values')
+
+
+    security.declarePrivate('validate_powerObservers')
+    def validate_powerObservers(self, value):
+        '''We check that :
+           - we do not have same value for 'label';
+           - if we remove a line :
+             - the power observer is not used in any other MeetingConfig fields;
+             - the linked Plone groups is empty.
+        '''
+        # check that each label is different
+        labels = [v['label'].strip() for v in value
+                  if v.get('orderindex_', None) != 'template_row_marker']
+        if len(set(labels)) != len(labels):
+            return translate('power_observer_same_label_error',
+                             domain='PloneMeeting',
+                             context=self.REQUEST)
+
+        # check removed power observers
+        storedPowerObservers = self.getPowerObservers()
+        storedRowIds = [v['row_id'].strip() for v in storedPowerObservers]
+        rowIds = [v['row_id'].strip() for v in value
+                  if v.get('orderindex_', None) != 'template_row_marker']
+        removedRowIds = [storedRowId for storedRowId in storedRowIds
+                         if storedRowId not in rowIds]
+
+        for removedRowId in removedRowIds:
+            # check if used in another MeetingConfig field
+            fields_using_power_observers = self.Schema().filterFields(vocabulary='listPowerObserversTypes')
+            for field in fields_using_power_observers:
+                if removedRowId in field.get(self):
+                    return translate('power_observer_removed_used_in_fields',
+                                     domain='PloneMeeting',
+                                     context=self.REQUEST)
+            # also in additional fields
+            configgroup_value = '{0}{1}'.format(CONFIGGROUPPREFIX, removedRowId)
+            additional_stored_values = self.getItemAnnexConfidentialVisibleFor() + \
+                self.getAdviceAnnexConfidentialVisibleFor() + self.getMeetingAnnexConfidentialVisibleFor()
+            if configgroup_value in additional_stored_values:
+                return translate('power_observer_removed_used_in_fields',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+            # workflowAdaptations
+            if 'hide_decisions_when_under_writing__po__{0}'.format(removedRowId) in \
+               self.getWorkflowAdaptations():
+                return translate('power_observer_removed_used_in_fields',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+
+            # check if linked Plone group is empty
+            plone_group_id = '{0}_{1}'.format(self.getId(), removedRowId)
+            groupMembers = api.group.get(plone_group_id).getGroupMembers()
+            if groupMembers:
+                return translate('power_observer_removed_plone_group_not_empty',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+
+
+    security.declarePrivate('validate_labelsConfig')
+    def validate_labelsConfig(self, value):
+        """Validator for self.labelsConfig:
+            - first row must be the default behavior (for '*');
+            - there can not be several rows for same label."""
+        # first row must be about '*' config
+        if not value or value[0]['label_id'] != '*':
+            return translate(
+                'labels_config_first_row_must_be_default_config',
+                domain='PloneMeeting',
+                context=self.REQUEST)
+        # can not have several config for same label
+        label_ids = [row['label_id'] for row in value
+                     if value and
+                     row.get('orderindex_') != 'template_row_marker']
+        if len(label_ids) != len(set(label_ids)):
+            return translate(
+                'labels_config_can_not_have_several_config_for_same_label',
+                 domain='PloneMeeting',
+                 context=self.REQUEST)
+
+
+    security.declarePrivate('validate_customAdvisers')
+    def validate_customAdvisers(self, value):
+        '''We have several things to check, do lighter checks first :
+           - check that every row_ids are unique, this can be the case
+             when creating MeetingConfig from import profile;
+           - check column contents respect required format :
+               * columns 'for_item_created_from' and 'for_item_created_until',
+                 we use a common string column to store a date, check that the given date
+                 is a real using right format (YYYY/MM/DD);
+               * columns 'delay' and 'delay_left_alert' must be empty or contain only one single digit.
+           - check that if a row changed, it was not already in use in the application.  We
+             can not change a row configuration that is already in use in the application, except the
+             'for_item_created_until' that we can only set if not already set to deactivate a used row
+             and 'help_message' fields.
+            '''
+        # first row can not be 'is_linked_to_previous_row' == '1'
+        if value and value[0]['is_linked_to_previous_row'] == '1':
+            return translate('custom_adviser_first_row_can_not_be_linked_to_previous',
+                             domain='PloneMeeting',
+                             context=self.REQUEST)
+
+        previousRow = None
+        for customAdviser in value:
+            # 'is_linked_to_previous_row' must be '0' or '1'
+            # this could not be case when filling this value from an import_data
+            if not customAdviser['is_linked_to_previous_row'] in self.listBooleanVocabulary().keys():
+                raise Exception('A value is required for \'is_linked_to_previous_row\'!')
+            # a row_id, even empty is required
+            if 'row_id' not in customAdviser:
+                raise Exception('A row_id is required!')
+            # pass 'template_row_marker'
+            if 'orderindex_' in customAdviser and customAdviser['orderindex_'] == 'template_row_marker':
+                continue
+            org = get_organization(customAdviser['org'])
+            # a value is required either for the 'delay' or the 'gives_auto_advice_on' column
+            if not customAdviser['delay'] and not customAdviser['gives_auto_advice_on']:
+                return translate('custom_adviser_not_enough_columns_filled',
+                                 domain='PloneMeeting',
+                                 mapping={'groupName': org.get_full_title(), },
+                                 context=self.REQUEST)
+
+            # 'is_linked_to_previous_row' is only relevant for delay-aware advices
+            if customAdviser['is_linked_to_previous_row'] == '1' and not customAdviser['delay']:
+                return translate('custom_adviser_is_linked_to_previous_row_with_non_delay_aware_adviser',
+                                 domain='PloneMeeting',
+                                 mapping={'groupName': org.get_full_title(), },
+                                 context=self.REQUEST)
+            # 'is_linked_to_previous_row' is only relevant if previous row is also delay-aware
+            if customAdviser['is_linked_to_previous_row'] == '1' and not previousRow['delay']:
+                return translate('custom_adviser_is_linked_to_previous_row_with_non_delay_aware_adviser_previous_row',
+                                 domain='PloneMeeting',
+                                 mapping={'groupName': org.get_full_title(), },
+                                 context=self.REQUEST)
+            # 'is_linked_to_previous_row' is only relevant if previous row is of same group
+            if customAdviser['is_linked_to_previous_row'] == '1' and not previousRow['org'] == customAdviser['org']:
+                return translate('custom_adviser_can_not_is_linked_to_previous_row_with_other_group',
+                                 domain='PloneMeeting',
+                                 mapping={'groupName': org.get_full_title(), },
+                                 context=self.REQUEST)
+
+            # 'available_on' is only relevant on an optional advice
+            # or the row linked to an automatic advice, but not the automatic advice itself
+            # the 'gives_auto_advice_on' will manage availability of an automatic advice
+            # and the fact to specify an 'avilable_on' will give the possibility to restrict
+            # to what value can be changed an automatic advice delay
+            if customAdviser['available_on'] and customAdviser['gives_auto_advice_on']:
+                return translate('custom_adviser_can_not_available_on_and_gives_auto_advice_on',
+                                 domain='PloneMeeting',
+                                 mapping={'groupName': org.get_full_title(), },
+                                 context=self.REQUEST)
+
+            # validate the date in the 'for_item_created_from' and
+            # 'for_item_created_until' columns
+            created_from = customAdviser['for_item_created_from']
+            created_until = customAdviser['for_item_created_until']
+            try:
+                # 'for_item_created_from' is required
+                date_from = DateTime(created_from)
+                # and check if given format respect wished one
+                if not date_from.strftime('%Y/%m/%d') == created_from:
+                    raise Exception
+                # 'for_item_created_until' is not required, but if it is mentionned,
+                # it can not be a past date because the rule could already have been
+                # applied for items created today
+                if created_until:
+                    date_until = DateTime(created_until)
+                    # check if given format respect wished one
+                    if date_until.strftime('%Y/%m/%d') != created_until:
+                        raise Exception
+                    # and check if encoded date is not in the past, it has to be in the future
+                    # except if it was already set before
+                    storedData = self._dataForCustomAdviserRowId(customAdviser['row_id'])
+                    if date_until.isPast() and (not storedData or
+                                                not storedData['for_item_created_until'] == created_until):
+                        raise Exception
+            except Exception:
+                return translate('custom_adviser_wrong_date_format',
+                                 domain='PloneMeeting',
+                                 mapping={'groupName': org.get_full_title(), },
+                                 context=self.REQUEST)
+
+            # validate the delays in the 'delay' and 'delay_left_alert' columns
+            delay = customAdviser['delay']
+            delay_left_alert = customAdviser['delay_left_alert']
+            if (delay and not delay.isdigit()) or (delay_left_alert and not delay_left_alert.isdigit()):
+                org = get_organization(customAdviser['org'])
+                return translate('custom_adviser_wrong_delay_format',
+                                 domain='PloneMeeting',
+                                 mapping={'groupName': org.get_full_title(), },
+                                 context=self.REQUEST)
+            # a delay_left_alert is only coherent if a delay is defined
+            if delay_left_alert and not delay:
+                return translate('custom_adviser_no_delay_left_if_no_delay',
+                                 domain='PloneMeeting',
+                                 mapping={'groupName': org.get_full_title(), },
+                                 context=self.REQUEST)
+            # if a delay_left_alert is defined, it must be <= to the defined delay...
+            if delay_left_alert and delay:
+                if not int(delay_left_alert) <= int(delay):
+                    return translate('custom_adviser_delay_left_must_be_inferior_to_delay',
+                                     domain='PloneMeeting',
+                                     mapping={'groupName': org.get_full_title(), },
+                                     context=self.REQUEST)
+            previousRow = customAdviser
+
+        def _checkIfConfigIsUsed(row_id):
+            '''Check if the rule we want to edit logical data for
+               or that we removed was in use.  This returns an item_url
+               if the configuration is already in use, nothing otherwise.'''
+            # we are setting another field, it is not permitted if
+            # the rule is in use, check every items if the rule is used
+            catalog = api.portal.get_tool('portal_catalog')
+            data = self._dataForCustomAdviserRowId(row_id)
+            # auto or not?
+            indexed_values = []
+            if data['gives_auto_advice_on']:
+                # XXX for now we check if org_uid used but it includes also
+                # "normal" advices, to be fixed by indexing a specific value
+                # for auto advices, see https://support.imio.be/browse/PM-3910
+                indexed_values.append(REAL_ORG_UID_PATTERN.format(data['org']))
+            if data['delay']:
+                indexed_values.append(DELAYAWARE_ROW_ID_PATTERN.format(row_id))
+            brains = catalog.unrestrictedSearchResults(
+                portal_type=self.getItemTypeName(),
+                indexAdvisers=indexed_values)
+            if brains:
+                item = brains[0].getObject()
+                return item.absolute_url()
+
+        # we can not change the position of a row that 'is_linked_to_previous_row'
+        # if it is in use and linked to an automatic adviser
+        # check every rows for wich 'is_linked_to_previous_row' == '1'
+        # and if in use, the prior row must be the same as before
+        # take also into account rows for wich we changed the position
+        # and the value of 'is_linked_to_previous_row'
+        storedCustomAdvisers = self.getCustomAdvisers()
+        for storedRow in storedCustomAdvisers:
+            # if the stored custom adviser is an automatic one and linked to others...
+            isAutomaticAdvice, linkedRows = self._findLinkedRowsFor(storedRow['row_id'])
+            # just do not consider if storedRow is the first of linkedRows
+            if linkedRows and isAutomaticAdvice and not storedRow == linkedRows[0]:
+                # save _checkIfConfigIsUsed and continue the 'if'
+                an_item_url = _checkIfConfigIsUsed(storedRow['row_id'])
+                if an_item_url:
+                    # ... check that it was not moved in the new value
+                    # we are on the second/third/... value of a used 'is_linked_to_previous_row' automatic adviser
+                    # get the previous in stored value and check that it is the same in new value to set
+                    previousStoredRow = storedCustomAdvisers[storedCustomAdvisers.index(storedRow) - 1]
+                    previousCustomAdviserRowId = None
+                    for customAdviser in value:
+                        if customAdviser['row_id'] == storedRow['row_id']:
+                            # we found the corresponding row, check if previous row is the same
+                            if not previousCustomAdviserRowId == previousStoredRow['row_id']:
+                                return translate(
+                                    'custom_adviser_can_not_change_row_order_of_used_row_linked_to_previous',
+                                    domain='PloneMeeting',
+                                    mapping={'item_url': an_item_url,
+                                             'adviser_group': org.get_full_title(), },
+                                    context=self.REQUEST)
+                        previousCustomAdviserRowId = customAdviser['row_id']
+
+        # check also that if we removed some row_id, it was not in use neither
+        row_ids = [v['row_id'] for v in value if v['row_id']]
+        row_ids_to_save = set(row_ids)
+        # check that we have no same row_ids, this can happen when filling field from wrong import_data
+        if len(row_ids) != len(row_ids_to_save):
+            return translate(
+                'custom_adviser_can_not_use_same_row_id_for_different_rows',
+                domain='PloneMeeting',
+                context=self.REQUEST)
+
+        stored_row_ids = set([v['row_id'] for v in self.getCustomAdvisers() if v['row_id']])
+
+        removed_row_ids = stored_row_ids.difference(row_ids_to_save)
+        for row_id in removed_row_ids:
+            an_item_url = _checkIfConfigIsUsed(row_id)
+            if an_item_url:
+                org = get_organization(self._dataForCustomAdviserRowId(row_id)['org'])
+                return translate('custom_adviser_can_not_remove_used_row',
+                                 domain='PloneMeeting',
+                                 mapping={'item_url': an_item_url,
+                                          'adviser_group': org.get_full_title(), },
+                                 context=self.REQUEST)
+
+        # check that if a row changed, it is not already in use
+        # we can not change any logical value but the 'for_item_created_until'
+        # and only if it was empty before
+        for customAdviser in value:
+            # if we still have no value in the 'row_id', it means that it is a new row
+            row_id = customAdviser['row_id']
+            if not row_id:
+                continue
+            for storedCustomAdviser in storedCustomAdvisers:
+                # find the stored value with same 'row_id'
+                if storedCustomAdviser['row_id'] == row_id:
+                    # we found the corresponding row, check if it was modified
+                    for k, v in storedCustomAdviser.items():
+                        if not customAdviser[k] == v:
+                            # we found a value that changed, check if we could
+                            # 1) first check if it is not the 'for_item_created_until' value
+                            #    for wich we are setting a value for the first time (aka is empty in the stored value)
+                            # 2) or a 'non logical field', those fields we can change the value of
+                            # 3) or if we disabled the 'is_linked_to_previous_row' of a used automatic adviser
+                            # that is not permitted
+                            if not (k == 'for_item_created_until' and not v) and \
+                               not (k == 'for_item_created_from' and
+                                    not storedCustomAdviser['gives_auto_advice_on']) and \
+                               k not in ['gives_auto_advice_on_help_message',
+                                         'delay_left_alert',
+                                         'delay_label',
+                                         'is_delay_calendar_days',
+                                         'available_on'] and \
+                               not (k == 'is_linked_to_previous_row' and
+                                    (v == '0' or not self._findLinkedRowsFor(customAdviser['row_id'])[0])):
+                                # we are setting another field, it is not permitted if
+                                # the rule is in use, check every items if the rule is used
+                                # _checkIfConfigIsUsed will return an item absolute_url using this configuration
+                                an_item_url = _checkIfConfigIsUsed(row_id)
+                                if an_item_url:
+                                    org = get_organization(customAdviser['org'])
+                                    columnName = self.Schema()['customAdvisers'].widget.columns[k].label
+                                    return translate(
+                                        'custom_adviser_can_not_edit_used_row',
+                                        domain='PloneMeeting',
+                                        mapping={'item_url': an_item_url,
+                                                 'adviser_group': org.get_full_title(),
+                                                 'column_name': translate(columnName,
+                                                                          domain='datagridfield',
+                                                                          context=self.REQUEST),
+                                                 'column_old_data': v, },
+                                        context=self.REQUEST)
+                                elif k == 'is_linked_to_previous_row':
+                                    # if we are here because k == 'is_linked_to_previous_row', we know that it is
+                                    # an automatic advice, we need to check that the entire chain of linked rows
+                                    # is not in use because we could in a first step set 'is_linked_to_previous_row'
+                                    # to '0' for an intermediate row of the chain that would isolate an used row then
+                                    # it would not be considered as linked to an automatic adviser...
+                                    for linkedRow in self._findLinkedRowsFor(customAdviser['row_id'])[1]:
+                                        an_item_url = _checkIfConfigIsUsed(linkedRow['row_id'])
+                                        if an_item_url:
+                                            org = get_organization(customAdviser['org'])
+                                            columnName = self.Schema()['customAdvisers'].widget.columns[k].label
+                                            return translate(
+                                                'custom_adviser_can_not_change_is_linked_'
+                                                'to_previous_row_isolating_used_rows',
+                                                domain='PloneMeeting',
+                                                mapping={'item_url': an_item_url,
+                                                         'adviser_group': org.get_full_title(),
+                                                         'column_name': translate(columnName,
+                                                                                  domain='datagridfield',
+                                                                                  context=self.REQUEST),
+                                                         'column_old_data': v, },
+                                                context=self.REQUEST)
+
+
+    security.declarePrivate('validate_usedItemAttributes')
+    def validate_usedItemAttributes(self, newValue):
+        '''Some attributes on an item are mutually exclusive. This validator
+           ensures that wrong combinations aren't used.'''
+        pm = 'PloneMeeting'
+        # Prevent combined use of "proposingGroupWithGroupInCharge" and "groupsInCharge"
+        if 'proposingGroupWithGroupInCharge' in newValue and 'groupsInCharge' in newValue:
+            return translate('no_proposingGroupWithGroupInCharge_and_groupsInCharge',
+                             domain=pm,
+                             context=self.REQUEST)
+        # votesResult must be enabled to use
+        # votesResult_after_motivation/votesResult_after_decisionEnd
+        # and votesResult_after_motivation/votesResult_after_decisionEnd can not
+        # be used at the same time
+        if 'votesResult_after_motivation' in newValue and \
+           'votesResult_after_decisionEnd' in newValue:
+            return translate('no_votesResult_after_together',
+                             domain=pm,
+                             context=self.REQUEST)
+        if ('votesResult_after_motivation' in newValue or
+            'votesResult_after_decisionEnd' in newValue) and \
+                'votesResult' not in newValue:
+            return translate('no_votesResult_after_without_votesResult',
+                             domain=pm,
+                             context=self.REQUEST)
+
+
+    security.declarePrivate('validate_usedMeetingAttributes')
+    def validate_usedMeetingAttributes(self, newValue):
+        '''Some attributes on a meeting are mutually exclusive. This validator
+           ensures that wrong combinations aren't used.'''
+        pm = 'PloneMeeting'
+        # Prevent combined use of "signatures" and "signatories"
+        if ('signatures' in newValue) and ('signatories' in newValue):
+            return translate('no_signatories_and_signatures', domain=pm, context=self.REQUEST)
+        # Prevent use of "excused" or "absents" without "attendees"
+        if (('excused' in newValue) or ('absents' in newValue)) and \
+           ('attendees' not in newValue):
+            return translate('attendees_required', domain=pm, context=self.REQUEST)
+        # Prevent use of "assembly_excused" or "assembly_absents" without "assembly"
+        if (('assembly_excused' in newValue) or ('assembly_absents' in newValue)) and \
+           ('assembly' not in newValue):
+            return translate('assembly_required', domain=pm, context=self.REQUEST)
+
+        # Prevent combined use of "assembly" and "attendees"
+        if ('assembly' in newValue) and ('attendees' in newValue):
+            return translate('no_assembly_and_attendees', domain=pm, context=self.REQUEST)
+
+        # Prevent combined use of "committees_assembly" and "committees_attendees"
+        if ('committees_assembly' in newValue) and ('committees_attendees' in newValue):
+            return translate('no_committees_assembly_and_committees_attendees',
+                             domain=pm,
+                             context=self.REQUEST)
+        # Prevent combined use of "committees_signatures" and "committees_signatories"
+        if ('committees_signatures' in newValue) and ('committees_signatories' in newValue):
+            return translate('no_committees_signatures_and_committees_signatories',
+                             domain=pm,
+                             context=self.REQUEST)
+
+        # if a committees_ field is selected, then committees must be selected as well
+        # except the committees_observations field that may be used alone
+        committees_attr = [v for v in newValue if v.startswith('committees_') and
+                           v not in ('committees_observations', )]
+        if committees_attr and "committees" not in newValue:
+            return translate('committees_required', domain=pm, context=self.REQUEST)
+
+
+    security.declarePrivate('validate_itemConditionsInterface')
+    def validate_itemConditionsInterface(self, value):
+        '''Validates the item conditions interface.'''
+        iwf = IMeetingItemWorkflowConditions
+        return WorkflowInterfacesValidator(IMeetingItem, iwf)(value)
+
+
+    security.declarePrivate('validate_itemActionsInterface')
+    def validate_itemActionsInterface(self, value):
+        '''Validates the item actions interface.'''
+        iwf = IMeetingItemWorkflowActions
+        return WorkflowInterfacesValidator(IMeetingItem, iwf)(value)
+
+
+    security.declarePrivate('validate_meetingConditionsInterface')
+    def validate_meetingConditionsInterface(self, value):
+        '''Validates the meeting conditions interface.'''
+        iwf = IMeetingWorkflowConditions
+        return WorkflowInterfacesValidator(IMeeting, iwf)(value)
+
+
+    security.declarePrivate('validate_meetingActionsInterface')
+    def validate_meetingActionsInterface(self, value):
+        '''Validates the meeting actions interface.'''
+        iwf = IMeetingWorkflowActions
+        return WorkflowInterfacesValidator(IMeeting, iwf)(value)
+
+
+    security.declarePrivate('validate_meetingConfigsToCloneTo')
+    def validate_meetingConfigsToCloneTo(self, values):
+        '''Validates the meetingConfigsToCloneTo.'''
+        # first check that we did not define several rows for the same dest cfg
+        meetingConfigs = [v['meeting_config'] for v in values
+                          if not v.get('orderindex_', None) == 'template_row_marker']
+        tool = api.portal.get_tool('portal_plonemeeting')
+        for meetingConfig in meetingConfigs:
+            if meetingConfigs.count(meetingConfig) > 1:
+                return translate('can_not_define_two_rows_for_same_meeting_config',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+            # while importing data, defined meeting_config could not exist...
+            if meetingConfig not in tool.objectIds('MeetingConfig'):
+                return translate('unknown_meeting_config_id',
+                                 domain='PloneMeeting',
+                                 mapping={'meeting_config_id': meetingConfig},
+                                 context=self.REQUEST)
+
+        for mctct in values:
+            # do not consider 'template_row_marker'
+            if mctct.get('orderindex_', None) == 'template_row_marker':
+                continue
+            # first make sure the selected transition correspond to the selected meeting_config
+            if not mctct['trigger_workflow_transitions_until'] == NO_TRIGGER_WF_TRANSITION_UNTIL and \
+               not mctct['trigger_workflow_transitions_until'].startswith(mctct['meeting_config']):
+                return translate('transition_not_from_selected_meeting_config',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+
+    def _check_wf_used_in_config(self,
+                                 removed_or_disabled_states=[],
+                                 removed_or_disabled_transitions=[]):
+        """Check if given p_states or p_transitions are used in any MeetingConfig fields."""
+        cfg_item_wf_attrs = list(ITEM_WF_STATE_ATTRS) + list(ITEM_WF_TRANSITION_ATTRS)
+        cfg_meeting_wf_attrs = list(MEETING_WF_STATE_ATTRS) + list(MEETING_WF_TRANSITION_ATTRS)
+        for attr in cfg_item_wf_attrs + cfg_meeting_wf_attrs:
+            # if attr contains a "/" it means it is a column of a datagridfield
+            field = self.getField(attr.split("/")[0])
+            # manage case where item state direclty equal value
+            # or value contains item state, like 'suffix_profile_prereviewers'
+            values = field.getAccessor(self)()
+            if "/" in attr:
+                col_name = attr.split("/")[1]
+                values = [row[col_name] for row in values]
+                # manage multivalued columns
+                if values and hasattr(values[0], "__iter__"):
+                    values = itertools.chain.from_iterable(values)
+            crossed_states = [v for v in values
+                              for r in removed_or_disabled_states
+                              if r in v]
+            crossed_transitions = [v for v in values
+                                   for r in removed_or_disabled_transitions
+                                   if r in v]
+            if crossed_states or crossed_transitions:
+                crossed_value = (crossed_states + crossed_transitions)[0]
+                if attr in cfg_item_wf_attrs and not crossed_value.startswith("Meeting."):
+                    wf = self.getItemWorkflow(True)
+                else:
+                    wf = self.getMeetingWorkflow(True)
+                # manage values like MeetingItem.proposed
+                crossed_value = crossed_value.split(".")[-1]
+                if crossed_states:
+                    state_or_transition_title = wf.states[crossed_value].title
+                else:
+                    # manage values like MeetingItem.propose
+                    state_or_transition_title = \
+                        wf.transitions[crossed_value].title
+                return translate(
+                    'state_or_transition_can_not_be_removed_in_use_config',
+                    domain='PloneMeeting',
+                    mapping={
+                        'state_or_transition': translate(
+                            safe_unicode(state_or_transition_title),
+                            domain="plone",
+                            context=self.REQUEST),
+                        'cfg_field_name': translate(
+                            msgid='PloneMeeting_label_{0}'.format(field.getName()),
+                            domain='PloneMeeting',
+                            context=self.REQUEST)},
+                    context=self.REQUEST)
+        # special check for MeetingConfig.meetingConfigsToCloneTo, current removed
+        # transition could be used in another cfg
+        cfg_id = self.getId()
+        tool = api.portal.get_tool('portal_plonemeeting')
+        for other_cfg in tool.objectValues('MeetingConfig'):
+            if other_cfg == self:
+                continue
+            values = [
+                v['trigger_workflow_transitions_until'].split('.')[1]
+                for v in other_cfg.getMeetingConfigsToCloneTo()
+                if v['meeting_config'] == cfg_id and
+                v['trigger_workflow_transitions_until'] !=
+                NO_TRIGGER_WF_TRANSITION_UNTIL and
+                v['trigger_workflow_transitions_until'].split('.')[1]
+                in removed_or_disabled_transitions]
+            if values:
+                wf = self.getItemWorkflow(True)
+                transition_title = wf.transitions[values[0]].title
+                return translate(
+                    'state_or_transition_can_not_be_removed_in_use_other_config',
+                    domain='PloneMeeting',
+                    mapping={
+                        'transition': translate(
+                            transition_title,
+                            domain="plone",
+                            context=self.REQUEST),
+                        'parameter_label': translate(
+                            "PloneMeeting_label_meetingConfigsToCloneTo",
+                            domain="PloneMeeting",
+                            context=self.REQUEST),
+                        'other_cfg_title': safe_unicode(other_cfg.Title()), },
+                    context=self.REQUEST)
+
+
+    security.declarePrivate('validate_workflowAdaptations')
+    def validate_workflowAdaptations(self, values):
+        '''Validates field workflowAdaptaations.'''
+
+        # inline validation sends a string instead of a tuple... bypass it!
+        if not hasattr(values, '__iter__'):
+            return
+
+        if '' in values:
+            values.remove('')
+
+        # used to check removed and conflicts
+        item_type = self.getItemTypeName()
+        meeting_type = self.getMeetingTypeName()
+        validation_returned_states = _getValidationReturnedStates(self)
+        removed_and_conflicts_checks = OrderedDict([
+            ('hide_decisions_when_under_writing',
+             {'portal_type': meeting_type,
+              'review_state': ['decisions_published'],
+              'optional_with': ()}),
+            ('accepted_out_of_meeting',
+             {'portal_type': item_type,
+              'review_state': ['accepted_out_of_meeting'],
+              'optional_with': ('accepted_out_of_meeting_and_duplicated', )}),
+            ('accepted_out_of_meeting_and_duplicated',
+             {'portal_type': item_type,
+              'review_state': ['accepted_out_of_meeting'],
+              'optional_with': ('accepted_out_of_meeting', )}),
+            ('accepted_out_of_meeting_emergency',
+             {'portal_type': item_type,
+              'review_state': ['accepted_out_of_meeting_emergency'],
+              'optional_with': ('accepted_out_of_meeting_emergency_and_duplicated', )}),
+            ('accepted_out_of_meeting_emergency_and_duplicated',
+             {'portal_type': item_type,
+              'review_state': ['accepted_out_of_meeting_emergency'],
+              'optional_with': ('accepted_out_of_meeting_emergency', )}),
+            ('itemdecided',
+             {'portal_type': item_type,
+              'review_state': ['itemdecided'],
+              'optional_with': ()}),
+            ('transfered',
+             {'portal_type': item_type,
+              'review_state': ['transfered'],
+              'optional_with': ('transfered_and_duplicated', )}),
+            ('transfered_and_duplicated',
+             {'portal_type': item_type,
+              'review_state': ['transfered'],
+              'optional_with': ('transfered', )}),
+            ('removed',
+             {'portal_type': item_type,
+              'review_state': ['removed'],
+              'optional_with': ('removed_and_duplicated', )}),
+            ('removed_and_duplicated',
+             {'portal_type': item_type,
+              'review_state': ['removed'],
+              'optional_with': ('removed', )}),
+            ('postpone_next_meeting',
+             {'portal_type': item_type,
+              'review_state': ['postponed_next_meeting'],
+              'optional_with': ()}),
+            ('mark_not_applicable',
+             {'portal_type': item_type,
+              'review_state': ['marked_not_applicable'],
+              'optional_with': ()}),
+            ('refused',
+             {'portal_type': item_type,
+              'review_state': ['refused'],
+              'optional_with': ()}),
+            ('delayed',
+             {'portal_type': item_type,
+              'review_state': ['delayed'],
+              'optional_with': ()}),
+            ('accepted_but_modified',
+             {'portal_type': item_type,
+              'review_state': ['accepted_but_modified'],
+              'optional_with': ()}),
+            ('pre_accepted',
+             {'portal_type': item_type,
+              'review_state': ['pre_accepted'],
+              'optional_with': ()}),
+            ('return_to_proposing_group',
+             {'portal_type': item_type,
+              'review_state': ['returned_to_proposing_group'],
+              'optional_with': ('return_to_proposing_group_with_last_validation',
+                                'return_to_proposing_group_with_all_validations')}),
+            ('return_to_proposing_group_with_last_validation',
+             {'portal_type': item_type,
+              'review_state': validation_returned_states,
+              'optional_with': ('return_to_proposing_group_with_all_validations', )})])
+
+        # conflicts
+        msg = translate('wa_conflicts', domain='PloneMeeting', context=self.REQUEST)
+        if 'no_decide' in values and 'hide_decisions_when_under_writing' in values:
+            return msg
+        # several 'return_to_proposing_group' values may not be selected together
+        return_to_prop_group_wf_adaptations = [
+            v for v in values if v.startswith('return_to_proposing_group')]
+        if len(return_to_prop_group_wf_adaptations) > 1:
+            return msg
+        # check removed_checks taking into account the "optional_with" values
+        # that links 2 wfa that can not be used together
+        for conflict_wfa, infos in removed_and_conflicts_checks.items():
+            if infos['optional_with'] and \
+               (conflict_wfa in values and set(infos['optional_with']).intersection(values)):
+                return msg
+
+        # dependecies, some adaptations will complete already select ones
+        dependencies = {
+            'waiting_advices': [v for v in self.wfAdaptations
+                                if v.startswith('waiting_advices_')],
+            'item_validation_shortcuts': ['item_validation_no_validate_shortcuts'],
+            'waiting_advices_given_advices_required_to_validate':
+                ['waiting_advices_given_and_signed_advices_required_to_validate'],
+            'hide_decisions_when_under_writing':
+                ['hide_decisions_when_under_writing_check_returned_to_proposing_group'] +
+                ['hide_decisions_when_under_writing__po__{0}'.format(v['row_id'])
+                 for v in self.getPowerObservers()],
+        }
+        for base_wfa, dependents in dependencies.items():
+            if set(values).intersection(dependents) and base_wfa not in values:
+                return translate(
+                    'wa_dependencies', domain='PloneMeeting', context=self.REQUEST)
+
+        # dependency on 'MeetingConfig.itemWFValidationLevels'
+        msg = translate('wa_item_validation_levels_dependency',
+                        domain='PloneMeeting',
+                        context=self.REQUEST)
+
+        # item validation levels
+        itemWFValidationLevels = self.REQUEST.get(
+            'itemWFValidationLevels', self.getItemWFValidationLevels())
+        item_validation_states = self.getItemWFValidationLevels(
+            data='state',
+            value=itemWFValidationLevels,
+            only_enabled=True)
+
+        back_from_presented = [v for v in values
+                               if v.startswith('presented_item_back_to_')]
+        if not item_validation_states:
+            if 'reviewers_take_back_validated_item' in values or \
+               'return_to_proposing_group_with_last_validation' in values or \
+               'return_to_proposing_group_with_all_validations' in values or \
+               back_from_presented:
+                return msg
+
+        # check that selected back_from_presented transitions
+        # exists in MeetingConfig.itemWFValidationLevels
+        # this may be the case when removing a validation level already selected
+        if back_from_presented:
+            for back_from in back_from_presented:
+                presented_state = back_from.replace('presented_item_back_to_', '')
+                if presented_state not in item_validation_states:
+                    return translate(
+                        'wa_presented_back_to_wrong_itemWFValidationLevels',
+                        domain='PloneMeeting',
+                        mapping={"wfa_back_from_title": back_from},
+                        context=self.REQUEST)
+
+        catalog = api.portal.get_tool('portal_catalog')
+        itemWF = self.getItemWorkflow(theObject=True)
+        meetingWF = self.getMeetingWorkflow(theObject=True)
+
+        # validate new added workflowAdaptations regarding existing items and meetings
+        added = set(values).difference(set(self.getWorkflowAdaptations()))
+        if 'no_publication' in added:
+            # this will remove the 'published' state for Meeting and 'itempublished' for MeetingItem
+            # check that no more elements are in these states
+            if catalog.unrestrictedSearchResults(
+                portal_type=item_type, review_state='itempublished') or \
+               catalog.unrestrictedSearchResults(
+                    portal_type=meeting_type, review_state='published'):
+                return translate('wa_added_no_publication_error',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+        if 'no_freeze' in added:
+            # this will remove the 'frozen' state for Meeting and 'itemfrozen' for MeetingItem
+            # check that no more elements are in these states
+            if catalog.unrestrictedSearchResults(
+                portal_type=item_type, review_state='itemfrozen') or \
+               catalog.unrestrictedSearchResults(
+                    portal_type=meeting_type, review_state='frozen'):
+                return translate('wa_added_no_freeze_error',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+        if 'no_decide' in added:
+            # this will remove the 'decided' state for Meeting
+            # check that no more elements are in these states
+            if catalog.unrestrictedSearchResults(
+                    portal_type=meeting_type, review_state='decided'):
+                return translate('wa_added_no_decide_error',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+
+        # validate removed workflowAdaptations, in case we removed a wfAdaptation that added
+        # a state for example, double check that no more element (item or meeting) is in that state...
+        removed = set(self.getWorkflowAdaptations()).difference(set(values))
+        if 'waiting_advices' in removed:
+            # this will remove the 'waiting_advices' state for MeetingItem
+            # check that no more items are in this state
+            # get every 'waiting_advices'-like states, we could have 'itemcreated_waiting_advices',
+            # 'proposed_waiting_advices' or
+            # 'itemcreated__or__proposedToValidationLevel1__or__..._waiting_advices' for example
+            waiting_advices_states = [state for state in itemWF.states if 'waiting_advices' in state]
+            if catalog.unrestrictedSearchResults(
+                    portal_type=item_type, review_state=waiting_advices_states):
+                return translate('wa_removed_waiting_advices_error',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+
+        if 'return_to_proposing_group_with_all_validations' in removed:
+            # this will remove the 'returned_to_proposing_group with every validation states'
+            # for MeetingItem check that no more items are in these states
+            # not downgrade from all to last validation if one item is in intermediary state
+            if (catalog.unrestrictedSearchResults(
+                    portal_type=item_type, review_state=validation_returned_states)) or \
+               (('return_to_proposing_group' not in added) and
+                ('return_to_proposing_group_with_last_validation' not in added) and
+                    (catalog.unrestrictedSearchResults(
+                        portal_type=item_type, review_state='returned_to_proposing_group'))):
+                return translate('wa_removed_return_to_proposing_group_with_all_validations_error',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+
+        # check removed directly linked to a single review_state
+        for removed_wfa, infos in removed_and_conflicts_checks.items():
+            if removed_wfa in removed and \
+               (not infos['optional_with'] or
+                    not set(infos['optional_with']).intersection(added)):
+                # check that no more elements are in removed state
+                if catalog.unrestrictedSearchResults(
+                        portal_type=infos['portal_type'],
+                        review_state=infos['review_state']):
+                    return translate(
+                        'wa_removed_found_elements_error',
+                        mapping={
+                            'wfa': translate(
+                                "wa_%s" % removed_wfa,
+                                domain="PloneMeeting",
+                                context=self.REQUEST),
+                            'review_state': translate(
+                                infos['review_state'][-1],
+                                domain="plone",
+                                context=self.REQUEST)},
+                        domain='PloneMeeting',
+                        context=self.REQUEST)
+                else:
+                    # check that removed states/transitions no more used in config
+                    # we have the states, get the transitions leading to it
+                    related_wf = itemWF if infos['portal_type'] == item_type else meetingWF
+                    removed_or_disabled_transitions = list(itertools.chain.from_iterable(
+                        [[tr.id for tr in get_leading_transitions(related_wf, state_id)]
+                         for state_id in infos['review_state']]))
+                    used_in_cfg_error_msg = self._check_wf_used_in_config(
+                        removed_or_disabled_states=infos['review_state'],
+                        removed_or_disabled_transitions=removed_or_disabled_transitions)
+                    if used_in_cfg_error_msg:
+                        return used_in_cfg_error_msg
+
+        # MEETING_REMOVE_MOG_WFA can not be managed manually
+        if MEETING_REMOVE_MOG_WFA in added or MEETING_REMOVE_MOG_WFA in removed:
+            return translate('wa_meeting_remove_mog_error',
+                             domain='PloneMeeting',
+                             context=self.REQUEST)
+
+        return self.adapted().custom_validate_workflowAdaptations(values, added, removed)
+
+    def custom_validate_workflowAdaptations(self, values, added, removed):
+        '''See doc in interfaces.py.'''
+        pass
+
+
+    security.declarePrivate('validate_itemWFValidationLevels')
+    def validate_itemWFValidationLevels(self, values):
+        '''Validates field itemWFValidationLevels.'''
+        # inline validation sends a string instead of a tuple... bypass it!
+        if not hasattr(values, '__iter__'):
+            return
+
+        res = []
+        for value in values:
+            # pass 'template_row_marker'
+            if value.get('orderindex_', None) == 'template_row_marker':
+                continue
+            res.append(value)
+        values = res
+
+        itemcreated_values_state = self.getItemWFValidationLevels(
+            states=['itemcreated'],
+            value=values)
+        if not itemcreated_values_state:
+            return translate('item_wf_val_states_itemcreated_must_exist',
+                             domain='PloneMeeting',
+                             context=self.REQUEST)
+
+        enabled_stored_states = self.getItemWFValidationLevels(
+            data='state',
+            only_enabled=True)
+        enabled_values_states = self.getItemWFValidationLevels(
+            data='state',
+            value=values,
+            only_enabled=True)
+        removed_or_disabled_states = tuple(set(enabled_stored_states).difference(
+            set(enabled_values_states)))
+
+        # if some states are enabled, then first state 'itemcreated' is mandatory
+        if enabled_values_states and not enabled_values_states[0] == "itemcreated":
+            return translate('item_wf_val_states_itemcreated_mandatory',
+                             domain='PloneMeeting',
+                             context=self.REQUEST)
+
+        # the values of "back_transition" column must start with "back"
+        back_transition_values = self.getItemWFValidationLevels(
+            data='back_transition',
+            value=values)
+        if [btv for btv in back_transition_values if not btv.startswith("back")]:
+            return translate('item_wf_val_states_back_transition_must_start_with_back',
+                             domain='PloneMeeting',
+                             context=self.REQUEST)
+
+        # identifier columns (state, leading_transition, back_transition)
+        # must respect a valid format, no space, no special characters
+        state_values = self.getItemWFValidationLevels(data='state', value=values)
+        leading_transition_values = self.getItemWFValidationLevels(
+            data='leading_transition', value=values)
+        # ignore first leading_transition (itemcreated)
+        # that is ignored by the workflowAdaptation
+        # because leading_transition is "-"
+        leading_transition_values = leading_transition_values and leading_transition_values[1:]
+        # we accept also "_"
+        if [sv for sv in state_values if not sv.replace("_", "").isalnum()] or \
+           [ltv for ltv in leading_transition_values if not ltv.replace("_", "").isalnum()] or \
+           [btv for btv in back_transition_values if not btv.replace("_", "").isalnum()]:
+            return translate('item_wf_val_states_wrong_identifier_format',
+                             domain='PloneMeeting',
+                             context=self.REQUEST)
+
+        # make sure no item is using a state using a removed or disabled state
+        # either directly the state or a state depending on it
+        # for example removing prevalidated and having item in state
+        # returned_to_proposing_group_prevalidated or prevalidated_waiting_advices
+        # so get from the item workflow, every states starting with a removed state
+        # or containing "_" + a removed state
+        item_states = self.getItemWorkflow(True).states
+        item_contained_states = []
+        for removed_or_disabled_state in removed_or_disabled_states:
+            for item_state in item_states:
+                if item_state.startswith(removed_or_disabled_state) or \
+                   "_%s" % removed_or_disabled_state in item_state:
+                    item_contained_states.append(item_state)
+        item_contained_states += list(removed_or_disabled_states)
+        if item_contained_states:
+            catalog = api.portal.get_tool('portal_catalog')
+            brains = catalog.unrestrictedSearchResults(
+                portal_type=self.getItemTypeName(), review_state=item_contained_states)
+            if brains:
+                aBrain = brains[0]
+                item_state_title = item_states[aBrain.review_state].title
+                return translate('item_wf_val_states_can_not_be_removed_in_use',
+                                 domain='PloneMeeting',
+                                 mapping={'item_state': translate(item_state_title,
+                                                                  domain="plone",
+                                                                  context=self.REQUEST),
+                                          'item_url': aBrain.getURL()},
+                                 context=self.REQUEST)
+
+        # make sure the MeetingConfig does not use a state that was removed or disabled
+        # either using state or transition
+        enabled_stored_transitions = self.getItemWFValidationLevels(
+            data='leading_transition',
+            only_enabled=True)
+        enabled_values_transitions = self.getItemWFValidationLevels(
+            data='leading_transition',
+            value=values,
+            only_enabled=True)
+        removed_or_disabled_transitions = tuple(set(enabled_stored_transitions).difference(
+            set(enabled_values_transitions)))
+        return self._check_wf_used_in_config(
+            removed_or_disabled_states=removed_or_disabled_states,
+            removed_or_disabled_transitions=removed_or_disabled_transitions)
+
+
+    security.declarePrivate('validate_mailItemEvents')
+    def validate_mailItemEvents(self, values):
+        '''Validates field mailItemEvents.'''
+
+        # inline validation sends a string instead of a tuple... bypass it!
+        if not hasattr(values, '__iter__'):
+            return
+
+        if '' in values:
+            values.remove('')
+
+        # conflicts
+        if 'adviceToGive' in values and 'adviceToGiveByUser' in values:
+            vocab = self.Vocabulary('mailItemEvents')[0]
+            conflicts = u", ".join(
+                [vocab.getValue('adviceToGive'), vocab.getValue('adviceToGiveByUser')])
+            msg = translate('mail_item_events_conflicts',
+                            mapping={"conflicting_notifications": conflicts},
+                            domain='PloneMeeting', context=self.REQUEST)
+            return msg
+
+
+    security.declarePrivate('validate_itemAdviceEditStates')
+    def validate_itemAdviceEditStates(self, values):
+        '''This method ensures that the value given in itemAdviceEditStates
+           is a superset of what is given for itemAdviceStates, so a value in itemAdviceState
+           must be in itemAdviceEditStates.'''
+        if '' in values:
+            values.remove('')
+        v_set = set(values)
+        # try to get itemAdviceStates from REQUEST in case we just changed the value
+        # of itemAdviceStates, we must consider this new value and not the value stored in self.getItemAdviceStates
+        itemAdvicesStatesFromRequest = self.REQUEST.get('itemAdviceStates', ())
+        if '' in itemAdvicesStatesFromRequest:
+            itemAdvicesStatesFromRequest.remove('')
+        itemAdviceStates_set = set(itemAdvicesStatesFromRequest) or set(self.getItemAdviceStates())
+        difference = itemAdviceStates_set.difference(v_set)
+        if difference:
+            return translate(
+                'itemAdviceEditStates_validation_error',
+                domain='PloneMeeting',
+                mapping={'missingStates': translate_list(difference)},
+                context=self.REQUEST,
+                default='Values defined in the \'itemAdviceEditStates\' field must contains at least '
+                        'every values selected in the \'itemAdvicesStates\' field!')
+
+
+    security.declarePrivate('validate_insertingMethodsOnAddItem')
+    def validate_insertingMethodsOnAddItem(self, values):
+        '''This method validate the 'insertingMethodsOnAddItem' DataGridField :
+           - if sortingMethod 'at_the_end' is selected, no other sorting method can be selected;
+           - a same sortingMethod can not be selected twice;
+           - the 'on_categories' method can not be selected if we do not use categories;
+           - the 'on_to_discuss' method can not be selected if we do not use the toDicuss field;
+           - the 'on_privacy' method can not be selected if we do not use the privacy field,
+             moreover it can not be used with 'reverse'.'''
+        # transform in a list so we can handle it easily
+        res = []
+        for value in values:
+            # pass 'template_row_marker'
+            if value.get('orderindex_', None) == 'template_row_marker':
+                continue
+            res.append(value['insertingMethod'])
+        # now that we have a list in res, we can check
+        # first check presence of 'at_the_end'
+        if 'at_the_end' in res and len(res) > 1:
+            return translate('inserting_methods_at_the_end_not_alone_error',
+                             domain='PloneMeeting',
+                             context=self.REQUEST)
+        # now check that a same value is not there twice
+        for value in res:
+            if res.count(value) > 1:
+                return translate('inserting_methods_can_not_select_several_times_same_method_error',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+        # check that if we selected 'on_categories', we actually use categories...
+        if 'on_categories' in res:
+            if hasattr(self.REQUEST, 'usedItemAttributes'):
+                notUsingCategories = 'category' not in self.REQUEST.get('usedItemAttributes')
+            else:
+                notUsingCategories = 'category' not in self.getUsedItemAttributes()
+            if notUsingCategories:
+                return translate('inserting_methods_not_using_categories_error',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+
+        # check that if we selected 'on_to_discuss', we actually use the field 'toDisucss'...
+        usedItemAttrs = self.getUsedItemAttributes()
+        if 'on_to_discuss' in res:
+            if hasattr(self.REQUEST, 'usedItemAttributes'):
+                notUsingToDiscuss = 'toDiscuss' not in self.REQUEST.get('usedItemAttributes')
+            else:
+                notUsingToDiscuss = 'toDiscuss' not in usedItemAttrs
+            if notUsingToDiscuss:
+                return translate('inserting_methods_not_using_to_discuss_error',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+
+        # check that if we selected 'on_poll_type', we actually use the field 'pollType'...
+        if 'on_poll_type' in res:
+            if hasattr(self.REQUEST, 'usedItemAttributes'):
+                notUsingPollType = 'pollType' not in self.REQUEST.get('usedItemAttributes')
+            else:
+                notUsingPollType = 'pollType' not in usedItemAttrs
+            if notUsingPollType:
+                return translate('inserting_methods_not_using_poll_type_error',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+
+        if 'on_privacy' in res:
+            if hasattr(self.REQUEST, 'usedItemAttributes'):
+                notUsingPrivacy = 'privacy' not in self.REQUEST.get('usedItemAttributes')
+            else:
+                notUsingPrivacy = 'privacy' not in usedItemAttrs
+            if notUsingPrivacy:
+                return translate('inserting_methods_not_using_privacy_error',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+            # may not use 'reverse'
+            privacy_reverse = [value['reverse'] for value in values
+                               if value['insertingMethod'] == 'on_privacy'][0]
+            if privacy_reverse == '1':
+                return translate('inserting_methods_on_privacy_reverse_error',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+
+    def validate_onMeetingTransitionItemActionToExecute(self, values):
+        '''If EXECUTE_EXPR_VALUE is seleced in column 'item_action',
+           then column 'tal_expression' must be provided, a contrario,
+           it can not be provided when an item transition is selected in 'item_action'.'''
+        for value in values:
+            # bypass template_row_marker
+            if value.get('orderindex_', None) == "template_row_marker":
+                continue
+            if value['item_action'] == EXECUTE_EXPR_VALUE and not value['tal_expression'] or \
+               value['item_action'] != EXECUTE_EXPR_VALUE and value['tal_expression']:
+                return _('on_meeting_transition_item_action_tal_expr_error')
+
+    def _adviceConditionsInterfaceFor(self, advice_obj):
+        '''See doc in interfaces.py.'''
+        return IMeetingAdviceWorkflowConditions.__identifier__
+
+    def _adviceActionsInterfaceFor(self, advice_obj):
+        '''See doc in interfaces.py.'''
+        return IMeetingAdviceWorkflowActions.__identifier__
+
+    def getAdviceConditionsInterface(self, **kwargs):
+        '''Return the interface to use to adapt a meetingadvice
+           regarding the WF conditions.'''
+        return self.adapted()._adviceConditionsInterfaceFor(kwargs['obj'])
+
+    def getAdviceActionsInterface(self, **kwargs):
+        '''Return the interface to use to adapt a meetingadvice
+           regarding the WF actions.'''
+        return self.adapted()._adviceActionsInterfaceFor(kwargs['obj'])
+
+    def _dataForCustomAdviserRowId(self, row_id):
+        '''Returns the data for the given p_row_id from the field 'customAdvisers'.'''
+        for adviser in self.getCustomAdvisers():
+            if adviser['row_id'] == row_id:
+                return dict(adviser)
+
+    def _findLinkedRowsFor_cachekey(method, self, row_id):
+        '''cachekey method for self._findLinkedRowsFor.'''
+        return (row_id, self.modified())
+
+    @ram.cache(_findLinkedRowsFor_cachekey)
+    def _findLinkedRowsFor(self, row_id):
+        '''Returns the fact that linked rows are 'automatic advice' or not and
+           rows linked to given p_row_id row.  If not linked, returns False and an empty list.'''
+        res = []
+        isAutomaticAdvice = False
+        currentRowData = self._dataForCustomAdviserRowId(row_id)
+        if currentRowData['gives_auto_advice_on']:
+            isAutomaticAdvice = True
+        currentRowIndex = self.getCustomAdvisers().index(currentRowData)
+        # if the current row is not linked to previous row or the next row
+        # is not linked the current row, return nothing
+        if not currentRowData['is_linked_to_previous_row'] == '1' and \
+           (currentRowIndex == len(self.getCustomAdvisers()) - 1 or not
+                self.getCustomAdvisers()[currentRowIndex + 1]['is_linked_to_previous_row'] == '1'):
+            return isAutomaticAdvice, res
+        res.append(currentRowData)
+
+        # find previous and next rows linked to row_id row
+        i = currentRowIndex
+        if currentRowData['is_linked_to_previous_row'] == '1':
+            while i > 0:
+                i = i - 1
+                # loop until the first row is found, aka a row for wich
+                # is_linked_to_previous_row == '0'
+                previousRow = self.getCustomAdvisers()[i]
+                res.insert(0, previousRow)
+                if previousRow['gives_auto_advice_on']:
+                    isAutomaticAdvice = True
+                if previousRow['is_linked_to_previous_row'] == '0':
+                    break
+        i = currentRowIndex
+        while i < len(self.getCustomAdvisers()) - 1:
+            i = i + 1
+            # loop until the last row is found, aka end of customAdvisers
+            # or row after has 'is_linked_to_previous_row' == '0'
+            nextRow = self.getCustomAdvisers()[i]
+            if nextRow['is_linked_to_previous_row'] == '1':
+                res.append(nextRow)
+                if nextRow['gives_auto_advice_on']:
+                    isAutomaticAdvice = True
+            else:
+                break
+        return isAutomaticAdvice, res
+
+    security.declarePrivate('listValidationLevelsNumbers')
+
+    def _extraItemRelatedColumns(self):
+        """ """
+        return []
+
+    security.declarePrivate('listAvailableItemsListVisibleColumns')
+
+    def _ignoredVisibleFieldIds(self):
+        """Ignore :
+           - basic fields : id, title;
+           - itemTemplate/recurringItem specific fields : templateUsingGroups, meetingTransitionInsertingMe;
+           - fields not rendered correctly : itemAssembly/itemAssemblyExcused/itemAssemblyAbsents/itemSignatures,
+             manuallyLinkedItems, otherMeetingConfigsClonableToEmergency/otherMeetingConfigsClonableToPrivacy."""
+        return ['id', 'title',
+                'templateUsingGroups', 'meetingTransitionInsertingMe',
+                'itemAssembly', 'itemAssemblyExcused', 'itemAssemblyAbsents', 'itemSignatures',
+                'manuallyLinkedItems',
+                'otherMeetingConfigsClonableToEmergency', 'otherMeetingConfigsClonableToPrivacy']
+
+    def _extraMeetingRelatedColumns(self):
+        """ """
+        return []
+
+    security.declarePrivate('listDisplayAvailableItemsTo')
+
+    security.declarePrivate('get_item_validation_transitions')
+    def get_item_validation_transitions(self):
+        '''Lists the possible transitions as defined in itemWFValidationLevels.'''
+        item_wf_validation_transitions = []
+        for validation_level in self.getItemWFValidationLevels(only_enabled=True,
+                                                               translated_itemWFValidationLevels=True):
+            if validation_level['leading_transition'] != "-":
+                item_wf_validation_transitions.append((
+                    validation_level['leading_transition'],
+                    validation_level['leading_transition_title']
+                ))
+            item_wf_validation_transitions.append((
+                validation_level['back_transition'],
+                validation_level['back_transition_title'],
+            ))
+        return item_wf_validation_transitions
+
+    security.declarePrivate('listActiveOrgsForPowerAdvisers')
+
+    security.declarePrivate('isVotable')
+    def isVotable(self, item):
+        extra_expr_ctx = _base_extra_expr_ctx(item, {'item': item})
+        res = _evaluateExpression(
+            item,
+            expression=self.getVoteCondition(),
+            roles_bypassing_expression=[],
+            extra_expr_ctx=extra_expr_ctx,
+            empty_expr_is_true=True)
+        return res
+
+
+    security.declarePrivate('eval_tal_expr_for_field')
+    def eval_tal_expr_for_field(self, item, field_name, mode='view'):
+        """ """
+        tal_expr = self.getItemFieldsConfig(names=[field_name], data=mode)
+        extra_expr_ctx = _base_extra_expr_ctx(item)
+        extra_expr_ctx.update({'item': item})
+        empty_expr_is_true = True
+        if mode == 'edit':
+            empty_expr_is_true = False
+        return _evaluateExpression(
+            item,
+            expression=tal_expr,
+            roles_bypassing_expression=[],
+            extra_expr_ctx=extra_expr_ctx,
+            empty_expr_is_true=empty_expr_is_true)
+
+    def getItemIconColorName(self):
+        '''This will return the name of the icon used for MeetingItem portal_type.'''
+        iconName = "MeetingItem.png"
+        if not self.getItemIconColor() == "default":
+            iconName = "MeetingItem{0}.png".format(self.getItemIconColor().capitalize())
+        return iconName
+
+
+    security.declarePrivate('updateCollectionColumns')
+    def updateCollectionColumns(self):
+        '''Update customViewFields defined on DashboardCollection
+           from what is defined in self.itemColumns and self.meetingColumns:
+           - column 'pretty_link' will be always dispalyed;
+           - some columns could be defined in itemColumns or meetingColumns
+             but not in the customViewFields of the Collection (it is the case
+             for budgetInfos for example), in this case we pass;
+           - no matter the values were changed for a Collection,
+             for now every collections of a type (item, meeting)
+             will use same columns.'''
+        # update item related collections
+        itemColumns = list(self.getItemColumns())
+        for iColumn in DEFAULT_ITEM_COLUMNS:
+            itemColumns.insert(iColumn['position'], iColumn['name'])
+
+        vocab_factory = getUtility(IVocabularyFactory, "plone.app.contenttypes.metadatafields")
+        for collection in self.searches.searches_items.objectValues():
+            # bypass old collections, necessary for migration from old DashboardCollection to new ones
+            if IDashboardCollection.providedBy(collection):
+                # available customViewFieldIds, as done in an adapter, we compute it for each collection
+                vocab = vocab_factory(collection)
+                customViewFieldIds = vocab.by_token.keys()
+                # set elements existing in both lists, we do not use set() because it is not ordered
+                collection.customViewFields = tuple([iCol for iCol in itemColumns if iCol in customViewFieldIds])
+        # update meeting related collections
+        meetingColumns = list(self.getMeetingColumns())
+        for mColumn in DEFAULT_MEETING_COLUMNS:
+            meetingColumns.insert(mColumn['position'], mColumn['name'])
+
+        for collection in (self.searches.searches_meetings.objectValues() +
+                           self.searches.searches_decisions.objectValues()):
+            # bypass old collections, necessary for migration from old DashboardCollection to new ones
+            if IDashboardCollection.providedBy(collection):
+                vocab = vocab_factory(collection)
+                customViewFieldIds = vocab.by_token.keys()
+                # set elements existing in both lists, we do not use set() because it is not ordered
+                collection.customViewFields = tuple([mCol for mCol in meetingColumns if mCol in customViewFieldIds])
+
+
+    security.declarePrivate('registerPortalTypes')
+    def registerPortalTypes(self):
+        '''Registers, into portal_types, specific item and meeting types
+           corresponding to this meeting config.'''
+        i = -1
+        portal_factory = api.portal.get_tool('portal_factory')
+        registeredFactoryTypes = portal_factory.getFactoryTypes().keys()
+        factoryTypesToRegister = []
+        site_properties = api.portal.get_tool('portal_properties').site_properties
+        portal_types = api.portal.get_tool('portal_types')
+        for metaTypeName in self.metaTypes:
+            i += 1
+            portalTypeName = '%s%s' % (metaTypeName, self.getShortName())
+            # If the portal type corresponding to the meta type is
+            # registered in portal_factory (in the model:
+            # use_portal_factory=True), we must also register the new
+            # portal_type we are currently creating.
+            if metaTypeName in registeredFactoryTypes and \
+               portalTypeName not in registeredFactoryTypes:
+                factoryTypesToRegister.append(portalTypeName)
+            if not hasattr(self.portal_types, portalTypeName):
+                typeInfoName = "PloneMeeting: %s (%s)" % (
+                    metaTypeName, metaTypeName)
+                realMetaType = 'MeetingItem' if metaTypeName.startswith('MeetingItem') \
+                    else metaTypeName
+                portal_types.manage_addTypeInformation(
+                    getattr(portal_types, realMetaType).meta_type,
+                    id=portalTypeName, typeinfo_name=typeInfoName)
+
+                # Set the human readable title explicitly
+                portalType = getattr(portal_types, portalTypeName)
+                portalType.title = portalTypeName
+                # base portal_types 'Meeting' and 'MeetingItem' are global_allow=False
+                portalType.global_allow = True
+
+                if metaTypeName in ('MeetingItemTemplate', 'MeetingItemRecurring'):
+                    # Update the typesUseViewActionInListings property of site_properties
+                    # so MeetingItem types are in it, this is usefull when managing item templates
+                    # in the MeetingConfig because folders there have the 'folder_contents' layout
+                    if portalTypeName not in site_properties.typesUseViewActionInListings:
+                        site_properties.typesUseViewActionInListings = \
+                            site_properties.typesUseViewActionInListings + (portalTypeName, )
+
+        # Copy actions from the base portal type
+        self._updatePortalTypes()
+        # Update the factory tool with the list of types to register
+        portal_factory.manage_setPortalFactoryTypes(
+            listOfTypeIds=factoryTypesToRegister + registeredFactoryTypes)
+        # Perform workflow adaptations
+        _performWorkflowAdaptations(self)
+
+    def _updatePortalTypes(self):
+        '''Reupdates the portal_types in this meeting config.'''
+        typesTool = api.portal.get_tool('portal_types')
+        props = api.portal.get_tool('portal_properties').site_properties
+        wfTool = api.portal.get_tool('portal_workflow')
+        for metaTypeName in self.metaTypes:
+            portalTypeName = '%s%s' % (metaTypeName, self.getShortName())
+            portalType = getattr(typesTool, portalTypeName)
+            basePortalType = getattr(typesTool, metaTypeName)
+            portalType.title = "{0} {1}".format(
+                translate(metaTypeName, domain='plone', context=self.REQUEST).encode('utf-8'),
+                self.Title(include_config_group=True))
+            portalType.i18n_domain = basePortalType.i18n_domain
+            # base portal_types 'Meeting' and 'MeetingItem' are global_allow=False
+            portalType.global_allow = True
+            # Associate a workflow for this new portal type.
+            # keep the method computation because it manages
+            # getItemRecurringWorkflow and getItemTemplateWorkflow
+            workflowName = 'get%sWorkflow' % self.metaNames[self.metaTypes.index(metaTypeName)]
+            workflowName = getattr(self, workflowName)()
+            # set a duplicated WF for Meeting and MeetingItem
+            if metaTypeName in ('Meeting', 'MeetingItem'):
+                duplicatedWFId = '{0}__{1}'.format(self.getId(), workflowName)
+                duplicate_workflow(workflowName, duplicatedWFId, [portalTypeName])
+            else:
+                wfTool.setChainForPortalTypes([portalTypeName], workflowName)
+
+            if metaTypeName.startswith("MeetingItem"):
+                portal_type = metaTypeName == "MeetingItem" and \
+                    self.getItemTypeName() or \
+                    self.getItemTypeName(configType=metaTypeName)
+                # change MeetingItem icon_expr only if necessary as we need to update
+                # the 'getIcon' metadata in this case...
+                iconName = self.getItemIconColorName()
+                # if icon_expr changed, we need to update the 'getIcon' metadata
+                # of items of this MeetingConfig
+                icon_expr = 'string:${{portal_url}}/{0}'.format(iconName)
+                if portalType.icon_expr != icon_expr:
+                    portalType.icon_expr = icon_expr
+                    portalType.icon_expr_object = Expression(portalType.icon_expr)
+                    catalog = api.portal.get_tool('portal_catalog')
+                    brains = catalog.unrestrictedSearchResults(portal_type=portal_type)
+                    pghandler = ZLogHandler(steps=1000)
+                    pghandler.init(
+                        'Updating items icon color ({0})...'.format(metaTypeName), len(brains))
+                    i = 1
+                    for brain in brains:
+                        brain.getObject().reindexObject(idxs=['getIcon'])
+                        pghandler.report(i)
+                        i = i + 1
+                    pghandler.finish()
+                # do not search item templates and recurring items
+                if metaTypeName in ('MeetingItemTemplate', 'MeetingItemRecurring'):
+                    nsTypes = props.getProperty('types_not_searched')
+                    if portal_type not in nsTypes:
+                        if not nsTypes:
+                            nsTypes = []
+                        else:
+                            nsTypes = list(nsTypes)
+                        nsTypes.append(portal_type)
+                        props.manage_changeProperties(types_not_searched=tuple(nsTypes))
+            else:
+                portalType.icon_expr = basePortalType.icon_expr
+                portalType.icon_expr_object = Expression(portalType.icon_expr)
+
+            # now copy common portal_type attributes
+            portalType.content_meta_type = basePortalType.content_meta_type
+            portalType.factory = basePortalType.factory
+            portalType.immediate_view = basePortalType.immediate_view
+            portalType.product = basePortalType.product
+            portalType.filter_content_types = basePortalType.filter_content_types
+            portalType.allowed_content_types = basePortalType.allowed_content_types
+            # for MeetingItem, make sure every 'meetingadvice' portal_types are in allowed_types
+            if basePortalType.id == 'MeetingItem':
+                advice_portal_types = getAdvicePortalTypeIds()
+                allowed = tuple(set(portalType.allowed_content_types + tuple(advice_portal_types)))
+                portalType.allowed_content_types = allowed
+            # Meeting is DX
+            if basePortalType.id == 'Meeting':
+                portalType.add_permission = basePortalType.add_permission
+                portalType.klass = basePortalType.klass
+                portalType.behaviors = basePortalType.behaviors
+                portalType.schema = basePortalType.schema
+                portalType.model_source = basePortalType.model_source
+                portalType.model_file = basePortalType.model_file
+                portalType.schema_policy = basePortalType.schema_policy
+            portalType.allow_discussion = basePortalType.allow_discussion
+            portalType.default_view = basePortalType.default_view
+            portalType.view_methods = basePortalType.view_methods
+            portalType._aliases = basePortalType._aliases
+            portalType._actions = tuple(basePortalType._cloneActions())
+        # Update the cloneToOtherMeetingConfig actions visibility
+        self._updateCloneToOtherMCActions()
+
+    def _updateCloneToOtherMCActions(self):
+        '''Manage the visibility of the object_button action corresponding to
+           the clone/send item to another meetingConfig functionality.
+           This method should only be called if you are sure that no actions regarding
+           the 'send to other mc' functionnality exist.  Either, call updatePortalTypes that
+           actually remove every existing actions on the portal_type then call this submethod'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        item_portal_type = self.portal_types[self.getItemTypeName()]
+        for mctct in self.getMeetingConfigsToCloneTo():
+            configId = mctct['meeting_config']
+            actionId = self._getCloneToOtherMCActionId(configId, self.getId())
+            urlExpr = "string:javascript:callViewAndReload(base_url='${object_url}', " \
+                "view_name='doCloneToOtherMeetingConfig', " \
+                "params={'destMeetingConfigId': '%s'}, force_faceted=false, " \
+                "onsuccess=null, ask_confirm=true);" % configId
+            availExpr = 'python: object.adapted().mayCloneToOtherMeetingConfig("%s")' \
+                % configId
+            destConfig = tool.get(configId)
+            # include configGroup if current cfg configGroup different than destConfig configGroup
+            actionName = self._getCloneToOtherMCActionTitle(
+                destConfig.Title(
+                    include_config_group=self.getConfigGroup() != destConfig.getConfigGroup()))
+            item_portal_type.addAction(
+                id=actionId,
+                name=actionName,
+                category='object_buttons',
+                action=urlExpr,
+                icon_expr='string:${portal_url}/clone_to_other_mc.png',
+                condition=availExpr,
+                permission=(View,),
+                visible=True)
+
+
+    security.declarePrivate('createSearches')
+    def createSearches(self, searchesInfo):
+        '''Adds a bunch of collections in the 'searches' sub-folder.
+           Returns True is collections were added, False otherwise.'''
+        default_language = api.portal.get_tool('portal_languages').getDefaultLanguage()
+        added_collections = False
+        for collectionId, collectionData in searchesInfo.items():
+            container = getattr(self, TOOL_FOLDER_SEARCHES)
+            subFolderId = collectionData['subFolderId']
+            if subFolderId:
+                container = getattr(container, subFolderId)
+            # empty container
+            if not container.objectIds():
+                previous_collection_id = None
+
+            if collectionId in container.objectIds():
+                logger.info("'%s' skipped adding already existing collection '%s'..." % (
+                    self.getId(), collectionId))
+                previous_collection_id = collectionId
+                continue
+            added_collections = True
+            container.invokeFactory('DashboardCollection', collectionId, **collectionData)
+            collection = getattr(container, collectionId)
+            # update query so it is stored correctly because we pass a dict
+            # but it is actually stored as instances of ZPublisher.HTTPRequest.record
+            collection.setQuery(collection.query)
+            collection.setTitle(translate(collectionId,
+                                          domain="PloneMeeting",
+                                          context=self.REQUEST,
+                                          target_language=default_language,
+                                          default=collectionId))
+            collection.customViewFields = ['Title', 'CreationDate', 'Creator', 'review_state', 'actions']
+            if not collectionData['active']:
+                collection.enabled = False
+            collection.reindexObject()
+            if previous_collection_id is not None and \
+               previous_collection_id in container.objectIds():
+                previous_collection_id_pos = container.getObjectPosition(previous_collection_id)
+                container.moveObjectToPosition(collectionId, previous_collection_id_pos + 1)
+            previous_collection_id = collectionId
+        return added_collections
+
+    def _getCloneToOtherMCActionId(self, destMeetingConfigId, meetingConfigId, emergency=False):
+        '''Returns the name of the action used for the cloneToOtherMC functionnality.'''
+        suffix = CLONE_TO_OTHER_MC_ACTION_SUFFIX
+        if emergency:
+            suffix = CLONE_TO_OTHER_MC_EMERGENCY_ACTION_SUFFIX
+        return '%s%s_from_%s' % (suffix,
+                                 destMeetingConfigId,
+                                 meetingConfigId)
+
+    def _getCloneToOtherMCActionTitle(self, destMeetingConfigTitle):
+        '''Returns the title of the action used for the cloneToOtherMC functionnality.'''
+        return translate(msgid='clone_to',
+                         domain='PloneMeeting',
+                         mapping={'meetingConfigTitle': safe_unicode(destMeetingConfigTitle)},
+                         context=self.REQUEST).encode('utf-8')
+
+
+    security.declarePrivate('updateIsDefaultFields')
+    def updateIsDefaultFields(self):
+        '''If this config becomes the default one, all the others must not be
+           default meetings.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        otherConfigs = tool.objectValues('MeetingConfig')
+        if self.getIsDefault():
+            # All the others must not be default meeting configs.
+            for mConfig in otherConfigs:
+                if mConfig != self:
+                    mConfig.setIsDefault(False)
+        else:
+            # At least one other must be the default config
+            defConfig = None
+            for mConfig in otherConfigs:
+                if mConfig.getIsDefault():
+                    defConfig = mConfig
+                    break
+            if not defConfig:
+                self.setIsDefault(True)
+                msg = translate('config_is_still_default',
+                                domain='PloneMeeting',
+                                context=self.REQUEST)
+                self.plone_utils.addPortalMessage(msg)
+
+    def _createOrUpdatePloneGroup(self, groupSuffix, groupTitleSuffix=None, dry_run_return_group_ids=False):
+        '''Create a group for this MeetingConfig using given p_groupSuffix to manage group id and group title.
+           This will return groupId and True if group was added, False otherwise.'''
+        groupId = "{0}_{1}".format(self.getId(), groupSuffix)
+        if dry_run_return_group_ids:
+            return groupId, False
+        groupTitle = self.Title(include_config_group=True)
+        if groupTitleSuffix:
+            groupSuffix = safe_unicode(groupTitleSuffix)
+        wasCreated = createOrUpdatePloneGroup(
+            groupId=groupId, groupTitle=groupTitle, groupSuffix=groupSuffix)
+        return groupId, wasCreated
+
+
+    security.declarePrivate('createPowerObserversGroups')
+    def createPowerObserversGroups(self, force_update_access=False, dry_run_return_group_ids=False):
+        '''Creates Plone groups to manage power observers.'''
+        groupIds = []
+        tool = api.portal.get_tool('portal_plonemeeting')
+        for po_infos in self.getPowerObservers():
+            groupSuffix = po_infos['row_id']
+            groupId, wasCreated = self._createOrUpdatePloneGroup(
+                groupSuffix,
+                groupTitleSuffix=po_infos['label'],
+                dry_run_return_group_ids=dry_run_return_group_ids)
+            groupIds.append(groupId)
+            if wasCreated or force_update_access:
+                # now define local_roles on the tool so it is accessible by this group
+                tool.manage_addLocalRoles(groupId, (READER_USECASES['powerobservers'],))
+                # now define local_roles on the contacts directory so it is accessible by this group
+                portal = api.portal.get()
+                portal.contacts.manage_addLocalRoles(groupId, ('Reader', ))
+                portal.contacts.reindexObjectSecurity()
+                # but we do not want this group to access every MeetingConfigs so
+                # remove inheritance on self and define these local_roles for self too
+                self.__ac_local_roles_block__ = True
+                self.manage_addLocalRoles(groupId, (READER_USECASES['powerobservers'],))
+                self.reindexObjectSecurity()
+        return groupIds
+
+
+    security.declarePrivate('createCommitteeEditorsGroups')
+    def createCommitteeEditorsGroups(self, dry_run_return_group_ids=False):
+        '''Create committee Plone groups that will be used to apply
+           the 'MeetingCommitteeEditor' local role on every items of this
+           MeetingConfig regarding self.committees.'''
+        groupIds = []
+        for committee in self.getCommittees():
+            groupSuffix = committee['row_id']
+            # create or update Plone group
+            if committee["enable_editors"] == "1":
+                groupTitleSuffix = translate(
+                    "committee_editors_group_title",
+                    domain="PloneMeeting",
+                    mapping={"label": safe_unicode(committee['label'])},
+                    context=self.REQUEST)
+                groupId, wasCreated = self._createOrUpdatePloneGroup(
+                    groupSuffix,
+                    groupTitleSuffix=groupTitleSuffix,
+                    dry_run_return_group_ids=dry_run_return_group_ids)
+                groupIds.append(groupId)
+        return groupIds
+
+
+    security.declarePrivate('createBudgetImpactEditorsGroup')
+    def createBudgetImpactEditorsGroup(self, dry_run_return_group_ids=False):
+        '''Creates a Plone group that will be used to apply the 'MeetingBudgetImpactEditor'
+           local role on every items of this MeetingConfig regarding self.itemBudgetInfosStates.'''
+        groupIds = []
+        groupId, wasCreated = self._createOrUpdatePloneGroup(
+            groupSuffix=BUDGETIMPACTEDITORS_GROUP_SUFFIX,
+            dry_run_return_group_ids=dry_run_return_group_ids)
+        groupIds.append(groupId)
+        return groupIds
+
+
+    security.declarePrivate('createMeetingManagersGroup')
+    def createMeetingManagersGroup(self, force_update_access=False, dry_run_return_group_ids=False):
+        '''Creates a Plone group that will be used to apply the 'MeetingManager'
+           local role on every plonemeeting folders of this MeetingConfig and on this MeetingConfig.'''
+        groupIds = []
+        groupId, wasCreated = self._createOrUpdatePloneGroup(
+            groupSuffix=MEETINGMANAGERS_GROUP_SUFFIX,
+            dry_run_return_group_ids=dry_run_return_group_ids)
+        groupIds.append(groupId)
+        if not dry_run_return_group_ids and wasCreated or force_update_access:
+            # now define local_roles on the tool so it is accessible by this group
+            tool = api.portal.get_tool('portal_plonemeeting')
+            tool.manage_addLocalRoles(groupId, ('MeetingManager',))
+            # now define local_roles on the contacts directory so it is accessible by this group
+            portal = api.portal.get()
+            portal.contacts.manage_addLocalRoles(groupId, ('Reader',))
+            portal.contacts.reindexObjectSecurity()
+            # but we do not want this group to get MeetingManager role on every MeetingConfigs so
+            # remove inheritance on self and define these local_roles for self too
+            self.__ac_local_roles_block__ = True
+            self.manage_addLocalRoles(groupId, ('MeetingManager',))
+        return groupIds
+
+
+    security.declarePrivate('createItemTemplateManagersGroup')
+    def createItemTemplateManagersGroup(self, force_update_access=False, dry_run_return_group_ids=False):
+        '''Creates a Plone group that will be used to store users able to manage item templates.'''
+        groupIds = []
+        groupId, wasCreated = self._createOrUpdatePloneGroup(
+            groupSuffix=ITEMTEMPLATESMANAGERS_GROUP_SUFFIX,
+            dry_run_return_group_ids=dry_run_return_group_ids)
+        groupIds.append(groupId)
+        if not dry_run_return_group_ids and wasCreated or force_update_access:
+            # now define local_roles on the tool so it is accessible by this group
+            tool = api.portal.get_tool('portal_plonemeeting')
+            tool.manage_addLocalRoles(groupId, (READER_USECASES[ITEMTEMPLATESMANAGERS_GROUP_SUFFIX],))
+            self.manage_addLocalRoles(groupId, (READER_USECASES[ITEMTEMPLATESMANAGERS_GROUP_SUFFIX],))
+            # now define local_roles on the contacts directory so it is accessible by this group
+            portal = api.portal.get()
+            portal.contacts.manage_addLocalRoles(groupId, ('Reader', ))
+            portal.contacts.reindexObjectSecurity()
+            # give 'Manager' local role to group in the itemtemplates folder
+            self.itemtemplates.manage_addLocalRoles(groupId, ('Manager', ))
+        return groupIds
+
+    def _createOrUpdateAllPloneGroups(self, force_update_access=False, dry_run_return_group_ids=False):
+        """Create or update every linked Plone groups.
+           If p_force_update_access this will force update of access given to created group.
+           If p_dry_run_return_group_ids=True, this will not create groups but return
+           group ids that would be created."""
+        group_ids = []
+        # Create the corresponding group that will contain MeetingManagers
+        group_ids += self.createMeetingManagersGroup(
+            force_update_access=force_update_access,
+            dry_run_return_group_ids=dry_run_return_group_ids)
+        # Create the corresponding group that will contain item templates Managers
+        group_ids += self.createItemTemplateManagersGroup(
+            force_update_access=force_update_access,
+            dry_run_return_group_ids=dry_run_return_group_ids)
+        # Create the corresponding group that will contain MeetingBudgetImpactEditors
+        group_ids += self.createBudgetImpactEditorsGroup(
+            dry_run_return_group_ids=dry_run_return_group_ids)
+        # Create the corresponding group that will contain MeetingPowerObservers
+        group_ids += self.createPowerObserversGroups(
+            force_update_access=force_update_access,
+            dry_run_return_group_ids=dry_run_return_group_ids)
+        # Create the corresponding group that will contain committee editors
+        group_ids += self.createCommitteeEditorsGroups(
+            dry_run_return_group_ids=dry_run_return_group_ids)
+        # Custom create groups
+        group_ids += self.adapted()._custom_createOrUpdateGroups(
+            force_update_access=force_update_access, dry_run_return_group_ids=dry_run_return_group_ids)
+        return group_ids
+
+    def _custom_createOrUpdateGroups(self, force_update_access=False, dry_run_return_group_ids=False):
+        '''See doc in interfaces.py.'''
+        return []
+
+    def _set_default_faceted_search(self, collection_id='searchmyitems'):
+        """ """
+        collection = getattr(self.searches.searches_items, collection_id,
+                             self.searches.searches_items.objectValues()[0])
+        default_uid = collection.UID()
+        # update the criterion default value in searches and searches_items folders
+        _updateDefaultCollectionFor(self.searches, default_uid)
+        _updateDefaultCollectionFor(self.searches.searches_items, default_uid)
+
+
+    security.declarePrivate('at_post_create_script')
+    def at_post_create_script(self):
+        '''Managed by events.onConfigInitialized.'''
+        pass
+
+
+    security.declarePrivate('at_post_edit_script')
+    def at_post_edit_script(self):
+        '''Managed by events.onConfigEdited.'''
+        pass
+
+    def _create_default_item_template(self):
+        """Create the default item template for this MeetingConfig.
+           Return the default_template if it was created, None otherwise."""
+        item_templates_folder = getattr(self, TOOL_FOLDER_ITEM_TEMPLATES, None)
+        default_template = None
+        if item_templates_folder:
+            if ITEM_DEFAULT_TEMPLATE_ID not in item_templates_folder.objectIds():
+                item_template_title = translate('Default ${cfg_title} item template',
+                                                domain='PloneMeeting',
+                                                mapping={'cfg_title': safe_unicode(self.Title()), },
+                                                context=self.REQUEST,
+                                                default="Default ${cfg_title} item template")
+                default_template = api.content.create(
+                    container=item_templates_folder,
+                    type=self.getItemTypeName(configType='MeetingItemTemplate'),
+                    id=ITEM_DEFAULT_TEMPLATE_ID,
+                    title=item_template_title)
+        return default_template
+
+    def get_default_item_template(self, only_active=True):
+        """Return the default item template, only the active one if p_only_active=True."""
+        item_templates = self.get(TOOL_FOLDER_ITEM_TEMPLATES)
+        default_template = item_templates.get(ITEM_DEFAULT_TEMPLATE_ID, None)
+        if default_template and only_active and default_template.query_state() != 'active':
+            default_template = None
+        return default_template
+
+    def _createSubFolders(self):
+        '''
+          Create necessary subfolders for the MeetingConfig.
+        '''
+        default_language = api.portal.get_tool('portal_languages').getDefaultLanguage()
+        for folderId, folderInfo in self.subFoldersInfo.iteritems():
+            folderTitle = folderInfo[0][0]
+            folderType = folderInfo[0][1]
+            # if a folder already exists, we continue
+            # this is done because this method is used as helper
+            # method during migrations (while adding an extra new folder)
+            if folderId in self.objectIds():
+                continue
+
+            self.invokeFactory(folderType, folderId)
+            folder = getattr(self, folderId)
+
+            if folderId == TOOL_FOLDER_SEARCHES:
+                enableFacetedDashboardFor(folder,
+                                          xmlpath=os.path.dirname(__file__) +
+                                          '/faceted_conf/default_dashboard_widgets.xml')
+
+            # special case for folder 'itemtemplates' for which we want
+            # to display the 'navigation' portlet and use the 'folder_contents' layout
+            if folderId == TOOL_FOLDER_ITEM_TEMPLATES:
+                # add navigation portlet
+                manager = getUtility(IPortletManager, name=u"plone.leftcolumn")
+                portletAssignmentMapping = getMultiAdapter(
+                    (folder, manager),
+                    IPortletAssignmentMapping, context=folder)
+                navPortlet = navigation.Assignment(bottomLevel=0,
+                                                   topLevel=0,
+                                                   includeTop=True,
+                                                   root='/portal_plonemeeting/%s/itemtemplates' % self.getId())
+                nameChooser = INameChooser(portletAssignmentMapping)
+                name = nameChooser.chooseName(None, navPortlet)
+                portletAssignmentMapping[name] = navPortlet
+                # use folder_contents layout
+                folder.setLayout('folder_contents')
+                # create the default item template
+                self._create_default_item_template()
+
+            # setup the ManageItemCategoryFields permission
+            # for categories/classifiers folders
+            if folderId in (TOOL_FOLDER_CATEGORIES, TOOL_FOLDER_CLASSIFIERS):
+                folder.manage_permission(
+                    ManageItemCategoryFields,
+                    ('Manager', 'Site Administrator'), acquire=0)
+
+            folder.setTitle(translate(folderTitle,
+                                      domain="PloneMeeting",
+                                      context=self.REQUEST,
+                                      target_language=default_language,
+                                      default=folderTitle))
+            if folderInfo[1]:
+                constrain = IConstrainTypes(folder)
+                constrain.setConstrainTypesMode(1)
+                allowedTypes = list(folderInfo[1])
+                if 'itemType' in allowedTypes:
+                    allowedTypes.remove('itemType')
+                    allowedTypes.append(self.getItemTypeName())
+                elif 'itemTypeTemplate' in allowedTypes:
+                    allowedTypes.remove('itemTypeTemplate')
+                    allowedTypes.append(self.getItemTypeName(configType='MeetingItemTemplate'))
+                elif 'itemTypeRecurring' in allowedTypes:
+                    allowedTypes.remove('itemTypeRecurring')
+                    allowedTypes.append(self.getItemTypeName(configType='MeetingItemRecurring'))
+                constrain.setLocallyAllowedTypes(allowedTypes)
+                constrain.setImmediatelyAddableTypes(allowedTypes)
+
+            # call processForm passing dummy values so existing values are not touched
+            if base_hasattr(folder, 'processForm'):
+                folder.processForm(values={'dummy': None})
+            folder.reindexObject()
+
+            for subFolderId, subFolderTitle, subFolderType, subFolderConstrainTypes in folderInfo[2]:
+                folder.invokeFactory(subFolderType, subFolderId)
+                subFolder = getattr(folder, subFolderId)
+                if subFolderConstrainTypes:
+                    constrain = IConstrainTypes(subFolder)
+                    constrain.setConstrainTypesMode(1)
+                    allowedTypes = list(subFolderConstrainTypes)
+                    constrain.setLocallyAllowedTypes(allowedTypes)
+                    constrain.setImmediatelyAddableTypes(allowedTypes)
+
+                if subFolderId == 'searches_items':
+                    enableFacetedDashboardFor(subFolder,
+                                              xmlpath=os.path.dirname(__file__) +
+                                              '/faceted_conf/default_dashboard_items_widgets.xml')
+                    # synch value between self.maxShownListings and the 'resultsperpage' widget
+                    self.setMaxShownListings(self.max_shown_listings)
+                elif subFolderId == 'searches_meetings':
+                    enableFacetedDashboardFor(subFolder,
+                                              xmlpath=os.path.dirname(__file__) +
+                                              '/faceted_conf/default_dashboard_meetings_widgets.xml')
+                elif subFolderId == 'searches_decisions':
+                    enableFacetedDashboardFor(subFolder,
+                                              xmlpath=os.path.dirname(__file__) +
+                                              '/faceted_conf/default_dashboard_meetings_widgets.xml')
+                subFolder.setTitle(translate(subFolderTitle,
+                                             domain="PloneMeeting",
+                                             context=self.REQUEST,
+                                             target_language=default_language,
+                                             default=subFolderTitle))
+                # do only processForm for AT
+                if base_hasattr(subFolder, 'processForm'):
+                    subFolder.processForm(values={'dummy': None})
+                subFolder.reindexObject()
+
+    def getItemAdviceStatesForOrg_cachekey(method, self, org_uid=None):
+        '''cachekey method for self.getItemAdviceStatesForOrg.'''
+        # the volatile is invalidated when an organization changed
+        return repr(self), org_uid, get_cachekey_volatile('_users_groups_value')
+
+    security.declarePublic('getItemAdviceStates')
+
+    @ram.cache(getItemAdviceStatesForOrg_cachekey)
+    def getItemAdviceStatesForOrg(self, org_uid):
+        '''Method that gets itemAdvicesStates for a given p_org_uid.
+           Made for caching, as it is called in
+           MeetingItem.getAdvicesGroupsInfosForUser especially.'''
+        org = uuidToObject(org_uid, unrestricted=True)
+        return org.get_item_advice_states(cfg=self)
+
+    def _adviceTypesForAdviser(self, meeting_advice_portal_type):
+        """Return the advice types (positive, negative, ...) for given p_meeting_advice_portal_type.
+           By default we will use every MeetingConfig.usedAdviceTypes but check
+           if something is defined in ToolPloneMeeting.advisersConfig."""
+        tool = api.portal.get_tool('portal_plonemeeting')
+        res = []
+        for org_uid, adviser_infos in tool.get_extra_adviser_infos().items():
+            if adviser_infos['portal_type'] == meeting_advice_portal_type:
+                res = adviser_infos['advice_types']
+                break
+        if not res:
+            res = self.getUsedAdviceTypes()
+        return res
+
+
+    security.declarePublic('getItemWorkflow')
+    def getItemWorkflow(self, theObject=False, type_name=None, **kwargs):
+        '''Overrides field 'itemWorkflow' accessor to be able to pass
+           the p_theObject parameter that will return portal_workflow WF object.'''
+        itemWorkflow = self.getField('itemWorkflow').get(self, **kwargs)
+        if theObject:
+            wfTool = api.portal.get_tool('portal_workflow')
+            type_name = type_name or self.getItemTypeName()
+            itemWorkflow = wfTool.getWorkflowsFor(type_name)[0]
+        return itemWorkflow
+
+
+    security.declarePublic('getMeetingWorkflow')
+    def getMeetingWorkflow(self, theObject=False, type_name=None, **kwargs):
+        '''Overrides field 'meetingWorkflow' accessor to be able to pass
+           the p_theObject parameter that will return portal_workflow WF object.'''
+        meetingWorkflow = self.getField('meetingWorkflow').get(self, **kwargs)
+        if theObject:
+            wfTool = api.portal.get_tool('portal_workflow')
+            type_name = type_name or self.getMeetingTypeName()
+            meetingWorkflow = wfTool.getWorkflowsFor(type_name)[0]
+        return meetingWorkflow
+
+
+    security.declarePublic('getItemTypeName')
+    def getItemTypeName(self, configType=None):
+        '''Gets the name of the portal_type of the meeting item for this config.'''
+        if not configType:
+            return 'MeetingItem%s' % self.getShortName()
+        elif configType == 'all':
+            res = []
+            short_name = self.getShortName()
+            res.append('MeetingItem%s' % short_name)
+            res.append('MeetingItemTemplate%s' % short_name)
+            res.append('MeetingItemRecurring%s' % short_name)
+            return res
+        else:
+            return '{0}{1}'.format(configType, self.getShortName())
+
+    def getItemTemplateWorkflow(self):
+        """Return the WF to use for MeetingItemTemplate generated portal_type.
+           Used in self.registerPortalTypes."""
+        return 'plonemeeting_activity_managers_workflow'
+
+    def getItemRecurringWorkflow(self):
+        """Return the WF to use for MeetingItemRecurring generated portal_type.
+           Used in self.registerPortalTypes."""
+        return 'plonemeeting_activity_managers_workflow'
+
+
+    security.declarePublic('getMeetingTypeName')
+    def getMeetingTypeName(self):
+        '''Gets the name of the portal_type of the meeting for this
+           config.'''
+        return 'Meeting%s' % self.getShortName()
+
+
+    security.declarePrivate('_custom_reviewersFor')
+    def _custom_reviewersFor(self):
+        '''See doc in interfaces.py.'''
+        return
+
+
+    security.declarePublic('reviewersFor')
+    def reviewersFor(self):
+        """Return an OrderedDict were key is the reviewer suffix and
+           value the corresponding item state, from highest level to lower level.
+           For example :
+           OrderedDict([('reviewers', ['prevalidated']), ('prereviewers', ['proposed'])])
+        """
+        # try to get custom reviewersFor, necessary for too complex workflows
+        res = self.adapted()._custom_reviewersFor()
+        if res is None:
+            suffixes = list(self.getItemWFValidationLevels(data='suffix', only_enabled=True))[1:]
+            # we need from highest level to lowest
+            suffixes.reverse()
+            states = list(self.getItemWFValidationLevels(data='state', only_enabled=True))[1:]
+            # we need from highest level to lowest
+            states.reverse()
+
+            # group suffix to state
+            tuples = zip(suffixes, states)
+
+            res = OrderedDict()
+            # a reviewer level could interact at different states
+            for suffix, state in tuples:
+                if suffix not in res:
+                    res[suffix] = []
+                res[suffix].append(state)
+        return res
+
+
+    security.declarePublic('userIsAReviewer')
+    def userIsAReviewer(self):
+        '''Is current user a reviewer?  So is current user among groups of reviewers?'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        return bool(tool.get_orgs_for_user(suffixes=self.reviewersFor().keys()))
+
+    def _highestReviewerLevel(self, groupIds):
+        '''Return highest reviewer level found in given p_groupIds.'''
+        groupIds = str(groupIds)
+        for reviewSuffix in self.reviewersFor().keys():
+            if "_%s'" % reviewSuffix in groupIds:
+                return reviewSuffix
+
+    security.declarePublic('listStateIds')
+
+    security.declarePublic('listAllRichTextFields')
+    def listAllRichTextFields(self):
+        '''Lists all rich-text fields belonging to classes MeetingItem and
+           Meeting.'''
+        res = DisplayList(self._listRichTextFieldFor(MeetingItem)).sortedByValue() + get_dx_attrs(
+            portal_type=self.getMeetingTypeName(), richtext_only=True, prefixed_key=True).sortedByValue()
+        return res
+
+
+    security.declarePublic('listItemRichTextFields')
+    def listItemRichTextFields(self):
+        '''Lists all rich-text fields belonging to MeetingItem schema.'''
+        res = [(EXECUTE_EXPR_VALUE, _(EXECUTE_EXPR_VALUE))]
+        res += self._listRichTextFieldFor(MeetingItem)
+        return DisplayList(tuple(res))
+
+    def _listRichTextFieldFor(self, baseClass):
+        '''
+        '''
+        return self._listFieldsFor(baseClass, widget_type='RichWidget')
+
+    def _listFieldsFor(self,
+                       baseClass,
+                       widget_type=None,
+                       ignored_field_ids=[],
+                       hide_not_visible=False):
+        """ """
+        d = 'PloneMeeting'
+        res = []
+        for field in baseClass.schema.filterFields(isMetadata=False):
+            fieldName = field.getName()
+            if fieldName not in ignored_field_ids and \
+               (not widget_type or field.widget.getName() == widget_type) and \
+               (not hide_not_visible or field.widget.visible):
+                label_msgid = getattr(
+                    field.widget, 'label_msgid', field.widget.label)
+                msg = u'%s.%s ➔ %s' % (
+                    baseClass.__name__, fieldName,
+                    translate(label_msgid, domain=d, context=self.REQUEST))
+                res.append(('%s.%s' % (baseClass.__name__, fieldName), msg))
+        return res
+
+    security.declarePublic('listTransformTypes')
+
+    def extraItemEvents(self):
+        '''See doc in interfaces.py.'''
+        return []
+
+    def extraMeetingEvents(self):
+        '''See doc in interfaces.py.'''
+        return []
+
+
+    security.declarePublic('getTransitionsForPresentingAnItem')
+    def getTransitionsForPresentingAnItem(self, org_uid=None):
+        '''Return default transitions to present an item.'''
+        item_wf_val_levels = self.getItemWFValidationLevels(only_enabled=True)
+        transitions = [v['leading_transition'] for v in item_wf_val_levels
+                       if v['leading_transition'] != '-']
+        # in case items are created "validated", there is no "validate" transition
+        if transitions:
+            transitions.append('validate')
+        transitions.append('present')
+        if org_uid:
+            tool = api.portal.get_tool('portal_plonemeeting')
+            tr_suffixes = {v['leading_transition']: v['suffix'] for v in item_wf_val_levels
+                           if v['leading_transition'] != '-'}
+            res = []
+            for transition in transitions:
+                if transition in tr_suffixes and \
+                   not transition == "present" and \
+                   not tool.group_is_not_empty(org_uid, tr_suffixes[transition]):
+                    continue
+                res.append(transition)
+            transitions = res
+        return transitions
+
+
+    security.declarePublic('get_transitions_to_close_a_meeting')
+    def get_transitions_to_close_a_meeting(self):
+        """Return the transitions to close a meeting.
+           WF always go from "created" to "closed"."""
+        res = []
+        meeting_wf = self.getMeetingWorkflow(True)
+        state = meeting_wf.states["created"]
+        while state.id != "closed":
+            transition = [tr for tr in state.transitions
+                          if not tr.startswith("back")][0]
+            res.append(transition)
+            state = meeting_wf.states[
+                meeting_wf.transitions[transition].new_state_id]
+        return res
+
+
+    security.declarePublic('getCertifiedSignatures')
+    def getCertifiedSignatures(self, computed=False, listify=False, **kwargs):
+        '''Overrides field 'certifiedSignatures' accessor to be able to pass
+           the p_computed parameter that will return computed certified signatures,
+           so signatures really available right now.'''
+        signatures = self.getField('certifiedSignatures').get(self, **kwargs)
+        if computed:
+            signatures = computeCertifiedSignatures(signatures)
+            if listify:
+                signatures = listifySignatures(signatures)
+        return signatures
+
+
+    security.declarePublic('getCommittees')
+    def getCommittees(self, only_enabled=False, committee_id=None, **kwargs):
+        '''Overrides field 'committees' accessor to be able to pass
+           the p_only_enabled parameter that will return
+           committees for which enabled is '1'.'''
+        committees = self.getField('committees').get(self, **kwargs)
+        if only_enabled:
+            committees = [committee for committee in committees
+                          if committee['enabled'] == '1']
+        # in case we have p_committee_id, only return this element, not a list
+        if committee_id:
+            # manage __suppl__
+            committee_id = committee_id.split('__suppl__')[0]
+            committees = [committee for committee in committees
+                          if committee['row_id'] == committee_id][0]
+        return committees
+
+    def getCategoriesIds_cachekey(method, self, catType='categories', onlySelectable=True, userId=None):
+        '''cachekey method for self.getCategoriesIds.'''
+        date = get_cachekey_volatile('Products.PloneMeeting.MeetingConfig.getCategoriesIds')
+        return repr(self), date, catType, onlySelectable, userId or get_current_user_id()
+
+    security.declarePublic('getCategoriesIds')
+
+    @ram.cache(getCategoriesIds_cachekey)
+    def getCategoriesIds(self, catType='categories', onlySelectable=True, userId=None):
+        """Cached method to speed up getCategories and to be able to keep cache
+           for longer than a request as getCategories returns objects."""
+        ids = []
+        if catType == 'item':
+            # every item related categories
+            categories = self.categories.objectValues() + self.classifiers.objectValues()
+        else:
+            categories = self.get(catType).objectValues()
+
+        for cat in categories:
+            if not onlySelectable or cat.is_selectable(userId=userId):
+                ids.append(cat.getId())
+        return ids
+
+
+    security.declarePublic('getCategories')
+    def getCategories(self, catType='categories', onlySelectable=True, userId=None,):
+        '''Returns the categories defined for this meeting config.
+           If p_onlySelectable is True, there will be a check to see if the category
+           is available to the current user, otherwise, we return every existing categories.
+           If a p_userId is given, it will be used to be passed to isSelectable.
+           p_catType may be 'categories' (default), then returns 'categories', 'classifiers',
+           then returns classifiers or 'item/meeting' will return item or meeting
+           related categories.'''
+
+        if catType == 'item':
+            # return every item related categories
+            categories = self.categories.objectValues() + self.classifiers.objectValues()
+        elif catType == 'meeting':
+            # return every meeting related categories
+            categories = self.meetingcategories.objectValues()
+        else:
+            # return asked categories: categories, classifiers or meetingcategories
+            categories = self.get(catType).objectValues()
+
+        if onlySelectable:
+            filter_ids = self.getCategoriesIds(catType, onlySelectable, userId)
+            categories = [cat for cat in categories if cat.getId() in filter_ids]
+
+        return list(categories)
+
+    security.declarePublic('listInsertingMethods')
+
+    def extraInsertingMethods(self):
+        '''See doc in interfaces.py.'''
+        return OrderedDict(())
+
+    security.declarePublic('listSelectableCopyGroups')
+
+    security.declarePublic('getSelf')
+    def getSelf(self):
+        if self.getTagName() != 'MeetingConfig':
+            return self.context
+        return self
+
+
+    security.declarePublic('adapted')
+    def adapted(self):
+        return getCustomAdapter(self)
+
+
+    security.declareProtected(ModifyPortalContent, 'onEdit')
+    def onEdit(self, isCreated):
+        '''See doc in interfaces.py.'''
+        pass
+
+
+    security.declarePublic('getCustomFields')
+    def getCustomFields(self, cols):
+        return getCustomSchemaFields(schema, self.schema, cols)
+
+
+    security.declarePublic('isUsingContacts')
+    def isUsingContacts(self):
+        ''' Returns True if we are currently using contacts.'''
+        return bool('attendees' in self.getUsedMeetingAttributes())
+
+
+    security.declarePublic('getAdvicesKeptOnSentToOtherMC')
+    def getAdvicesKeptOnSentToOtherMC(self, as_org_uids=False, item=None, **kwargs):
+        """If p_as_org_uids is True, we return org_uids from what is stored.
+           We store values as 'adviser pattern', it can looks like :
+           "real_org_uid__" or "delay_row_id__".
+           We double check regarding item.adviceIndex, indeed, a same org_uid can
+           be returned by the 2 patterns.
+        """
+        values = self.getField('advicesKeptOnSentToOtherMC').get(self, **kwargs)
+        if not as_org_uids:
+            return values
+
+        res = []
+        rendered_delay_pattern = DELAYAWARE_ROW_ID_PATTERN.format('')
+        rendered_pattern = REAL_ORG_UID_PATTERN.format('')
+        for value in values:
+            if value.startswith(rendered_delay_pattern):
+                # it ends with a row_id
+                row_id = value.replace(rendered_delay_pattern, '')
+                infos = self._dataForCustomAdviserRowId(row_id)
+                org_uid = infos['org']
+                if org_uid in item.adviceIndex and \
+                   item.adviceIndex[org_uid]['row_id'] == row_id:
+                    res.append(infos['org'])
+            else:
+                # it ends with an org_uid
+                org_uid = value.replace(rendered_pattern, '')
+                if org_uid in item.adviceIndex and \
+                   not item.adviceIndex[org_uid]['row_id']:
+                    res.append(org_uid)
+        if values and not res:
+            # return at least a 'dummy_unexisting_value' because if we return an empty list,
+            # it corresponds to nothing selected in MeetingConfig.advicesKeptOnSentToOtherMC
+            # and it means 'keep every advices'
+            res = ['dummy_unexisting_value']
+
+        return res
+
+
+    security.declarePublic('getRecurringItems')
+    def getRecurringItems(self, onlyActive=True):
+        '''Gets the recurring items defined in the configuration.
+           If p_onlyActive is True, only returns 'active' items.'''
+        res = []
+        itemsFolder = getattr(self, TOOL_FOLDER_RECURRING_ITEMS)
+        if not onlyActive:
+            res = itemsFolder.objectValues('MeetingItem')
+        else:
+            res = []
+            for item in itemsFolder.objectValues('MeetingItem'):
+                if item.query_state() == 'active':
+                    res.append(item)
+        return res
+
+    def _itemTemplatesQuery(self, onlyActive=True, filtered=False):
+        '''Returns the catalog query to get item templates.'''
+        query = {'portal_type': self.getItemTypeName(configType='MeetingItemTemplate')}
+        if onlyActive:
+            query['review_state'] = 'active'
+        if filtered:
+            tool = api.portal.get_tool('portal_plonemeeting')
+            member_id = get_current_user_id(self.REQUEST)
+            memberOrgUids = [org_uid for org_uid in
+                             tool.get_orgs_for_user(
+                                 user_id=member_id,
+                                 suffixes=['creators'])]
+            query['templateUsingGroups'] = ('__nothing_selected__', '__folder_in_itemtemplates__', ) + \
+                tuple(memberOrgUids)
+        return query
+
+
+    security.declarePublic('getItemTemplates')
+    def getItemTemplates(self, as_brains=True, onlyActive=True, filtered=False):
+        '''Gets the item templates defined in the configuration.
+           If p_as_brains is True, return brains.
+           If p_onlyActive is True, return active elements.
+           If p_filtered is True, filter out items regarinf the templateUsingGroups attribute.'''
+        res = []
+        catalog = api.portal.get_tool('portal_catalog')
+        query = self._itemTemplatesQuery(onlyActive, filtered)
+        brains = catalog.unrestrictedSearchResults(**query)
+
+        if as_brains:
+            res = brains
+        else:
+            if as_brains:
+                res = brains
+            else:
+                for brain in brains:
+                    res.append(brain.getObject())
+        return res
+
+
+    security.declarePublic('updateAnnexConfidentiality')
+    def updateAnnexConfidentiality(self, annex_portal_types=['annex', 'annexDecision']):
+        '''Update the confidentiality of existing annexes regarding default value
+           for confidentiality defined in the corresponding annex type.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        if not tool.isManager(realManagers=True):
+            raise Unauthorized
+
+        # update every annexes of items, meeting and advices of this MeetingConfig
+        portal_types = []
+        portal_types.append(self.getItemTypeName())
+        portal_types.append(self.getMeetingTypeName())
+        portal_types += getAdvicePortalTypeIds()
+        self._updateAnnexConfidentiality(portal_types=portal_types)
+
+        api.portal.show_message('Done.', request=self.REQUEST)
+        return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
+
+    def _updateAnnexConfidentiality(self,
+                                    portal_types=[],
+                                    annex_portal_types=['annex', 'annexDecision'],
+                                    force_confidential_to=None):
+        '''Update the confidentiality of existing annexes regarding default value
+           for confidentiality defined in the corresponding annex type.'''
+
+        def _update(brains):
+            numberOfBrains = len(brains)
+            i = 1
+            for brain in brains:
+                obj = brain.getObject()
+                logger.info(
+                    '%d/%d Initializing %s confidentiality of %s at %s' %
+                    (i,
+                     numberOfBrains,
+                     ', '.join(annex_portal_types),
+                     brain.portal_type,
+                     '/'.join(obj.getPhysicalPath())))
+                i = i + 1
+
+                annexes = get_annexes(obj, annex_portal_types)
+                if not annexes:
+                    continue
+                for annex in annexes:
+                    if force_confidential_to is not None:
+                        annex.confidential = force_confidential_to
+                    else:
+                        category = get_category_object(annex, annex.content_category)
+                        category_group = category.get_category_group()
+                        if category_group.confidentiality_activated:
+                            annex.confidential = category.confidential
+                        else:
+                            annex.confidential = False
+                    obj.categorized_elements[annex.UID()]['confidential'] = annex.confidential
+                # make change persistent
+                obj.categorized_elements = obj.categorized_elements
+                updateAnnexesAccess(obj)
+
+        catalog = api.portal.get_tool('portal_catalog')
+        for portal_type in portal_types:
+            brains = catalog.unrestrictedSearchResults(
+                portal_type=portal_type, getConfigId=self.getId())
+            _update(brains)
+        logger.info('Done.')
+
+
+    security.declarePublic('updatePersonalLabels')
+    def updatePersonalLabels(self, personal_labels=[], modified_since_days=30):
+        '''Update the given p_personal_labels on items of this MeetingConfig
+           for which modified is older than given p_modified_since_days number of days.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        if not tool.isManager(realManagers=True):
+            raise Unauthorized
+        # remove empty strings from personal_labels
+        personal_labels = [label for label in personal_labels if label]
+        if not personal_labels:
+            api.portal.show_message(_('Select at least one personal label!'),
+                                    request=self.REQUEST,
+                                    type='error')
+        else:
+            updated_items_len = self._updatePersonalLabels(personal_labels, modified_since_days)
+            api.portal.show_message(_('${number_of_items} item(s) updated!',
+                                      mapping={'number_of_items': updated_items_len}),
+                                    request=self.REQUEST)
+        return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
+
+    def _updatePersonalLabels(self, personal_labels=[], modified_since_days=30, reindex=True):
+        """Private method used by self.updatePersonalLabels."""
+
+        catalog = api.portal.get_tool('portal_catalog')
+        brains = catalog.unrestrictedSearchResults(
+            portal_type=self.getItemTypeName(),
+            modified={'range': 'max', 'query': DateTime() - modified_since_days})
+        numberOfBrains = len(brains)
+        i = 1
+        membershipTool = api.portal.get_tool('portal_membership')
+        all_user_ids = membershipTool.listMemberIds()
+        # MeetingManagers are not in item local roles but defined
+        # in the item container local roles...
+        # get every meetingManagers and give role if 'MeetingManager' role as 'View' on item
+        meeting_managers_group_id = "{0}_{1}".format(self.getId(), MEETINGMANAGERS_GROUP_SUFFIX)
+        meeting_manager_user_ids = api.group.get(meeting_managers_group_id).getMemberIds()
+        for brain in brains:
+            item = brain.getObject()
+            logger.info(
+                '%d/%d Initializing personal labels of item at %s' %
+                (i,
+                 numberOfBrains,
+                 '/'.join(item.getPhysicalPath())))
+            i = i + 1
+
+            item_labeling = ILabeling(item)
+            # determinate users able to see the item, every users in local_roles
+            item_user_ids = []
+            for local_role_principal, local_roles in item.__ac_local_roles__.items():
+                # check that one of local_roles defined for principal has current View permission on item
+                has_view = [local_role for local_role in local_roles if local_role in item._View_Permission]
+                if not has_view:
+                    continue
+                # it is a user
+                if local_role_principal in all_user_ids:
+                    item_user_ids.append(local_role_principal)
+                # it is a group
+                else:
+                    local_role_group = api.group.get(local_role_principal)
+                    if local_role_group:
+                        item_user_ids.extend(local_role_group.getMemberIds())
+            # meetingmanagers
+            if 'MeetingManager' in item._View_Permission:
+                item_user_ids.extend(meeting_manager_user_ids)
+            # remove duplicates
+            item_user_ids = list(set(item_user_ids))
+            for label_id in personal_labels:
+                item_labeling.storage[label_id] = PersistentList(item_user_ids)
+            if reindex:
+                reindex_object(item, idxs=['labels'], update_metadata=0)
+        logger.info('Done.')
+        return numberOfBrains
+
+
+    security.declarePublic('update_labels_access_cache')
+    def update_labels_access_cache(self, log=True, redirect=True):
+        '''Update _labels_access_cache on every items.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        if not tool.isManager(realManagers=True):
+            raise Unauthorized
+        catalog = api.portal.get_tool('portal_catalog')
+        brains = catalog.unrestrictedSearchResults(portal_type=self.getItemTypeName())
+        pghandler = ZLogHandler(steps=1000)
+        pghandler.init('Updating labels access cache...', len(brains))
+        warnings = []
+        i = 1
+        if log:
+            extras = 'number_of_elements={0}'.format(len(brains))
+            fplog('update_labels_access_cache', extras=extras)
+        for brain in brains:
+            try:
+                item = brain.getObject()
+            except AttributeError:
+                warning = 'Could not getObject() element at %s' % brain.getPath()
+                warnings.append(warning)
+                logger.warn(warning)
+                continue
+            pghandler.report(i)
+            i = i + 1
+            item._update_labels_access_cache(self, brain.review_state)
+
+        pghandler.finish()
+        if redirect:
+            api.portal.show_message('Done.', request=self.REQUEST)
+            return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
+        else:
+            return warnings
+
+
+    security.declarePublic('updateAdviceConfidentiality')
+    def updateAdviceConfidentiality(self):
+        '''Update the confidentiality of existing advices regarding default value
+           in MeetingConfig.adviceConfidentialityDefault.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        if not tool.isManager(realManagers=True):
+            raise Unauthorized
+        # update every advices of items of this MeetingConfig
+        catalog = api.portal.get_tool('portal_catalog')
+        brains = catalog.unrestrictedSearchResults(portal_type=self.getItemTypeName())
+        numberOfBrains = len(brains)
+        i = 1
+        adviceConfidentialityDefault = self.getAdviceConfidentialityDefault()
+        for brain in brains:
+            item = brain.getObject()
+            logger.info('%d/%d Initializing advices confidentiality of item at %s' %
+                        (i,
+                         numberOfBrains,
+                         '/'.join(item.getPhysicalPath())))
+            i = i + 1
+            for advice in item.adviceIndex.itervalues():
+                advice['isConfidential'] = adviceConfidentialityDefault
+        logger.info('Done.')
+        api.portal.show_message('Done.', request=self.REQUEST)
+        return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
+
+    def checkPodTemplates(self):
+        '''Check Pod templates.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        if not tool.isManager(realManagers=True):
+            raise Unauthorized
+        return self.REQUEST.RESPONSE.redirect(self.absolute_url() + '/@@check-pod-templates')
+
+    def _get_all_meeting_folders(self):
+        """Return every meeting folders for this MeetingConfig."""
+        folders = []
+        portal = api.portal.get()
+        for userFolder in portal.Members.objectValues():
+            mymeetings = getattr(userFolder, 'mymeetings', None)
+            if not mymeetings:
+                continue
+            meetingFolder = getattr(mymeetings, self.getId(), None)
+            if not meetingFolder:
+                continue
+            folders.append(meetingFolder)
+        return folders
+
+    def _synchSearches(self, folder=None):
+        """Synchronize the searches for a given meetingFolder p_folder, if it is not given,
+           every user folder for this MeetingConfig will be synchronized.
+           We will :
+           - remove every relevant folders from the given p_folder (folders searches_items, ...);
+           - we will copy the searches_* folders from the configuration to the p_folder, keeping same UID
+             than before in the user p_folder because this UID appears in the search URL and user may have
+             saved this URL, otherwise it would lead to broken searches called by this URL;
+           - delete inactive collections that have been copy/pasted;
+           - we will copy the facetednav annotation from the MeetingConfig.searches and
+             MeetingConfig.searches_* folders to the corresponding folders in p_folder;
+           - we will update the default for the collection widget."""
+        # synchronize only one folder
+        if folder:
+            folders = [folder, ]
+        else:
+            folders = self._get_all_meeting_folders()
+
+        for folder in folders:
+            logger.info("Synchronizing searches with folder at '{0}'".format(
+                '/'.join(folder.getPhysicalPath())))
+            enableFacetedDashboardFor(folder,
+                                      xmlpath=os.path.dirname(__file__) +
+                                      '/faceted_conf/default_dashboard_widgets.xml')
+
+            # subFolders to create
+            subFolderInfos = [(cfgFolder.getId(), cfgFolder.Title()) for cfgFolder in
+                              self.searches.objectValues()
+                              if cfgFolder.getId().startswith('searches_')]
+            # remove searches_* folders from the given p_folder
+            toDelete = [folderId for folderId in folder.objectIds()
+                        if folderId.startswith('searches_')]
+            folder.manage_delObjects(toDelete)
+
+            # create relevant folders and activate faceted on it
+            for subFolderId, subFolderTitle in subFolderInfos:
+                folder.invokeFactory('Folder',
+                                     id=subFolderId,
+                                     **{'title': subFolderTitle})
+                subFolderObj = getattr(folder, subFolderId)
+                enableFacetedDashboardFor(subFolderObj,
+                                          xmlpath=os.path.dirname(__file__) +
+                                          '/faceted_conf/default_dashboard_widgets.xml')
+                if subFolderObj.getId() == "searches_items":
+                    # item related searches
+                    alsoProvides(subFolderObj, IMeetingItemDashboardBatchActionsMarker)
+                else:
+                    # meeting related searches
+                    alsoProvides(subFolderObj, IMeetingDashboardBatchActionsMarker)
+                # disable possibility to add anything to this folder
+                constrain = IConstrainTypes(subFolderObj)
+                constrain.setConstrainTypesMode(1)
+                allowedTypes = []
+                constrain.setLocallyAllowedTypes(allowedTypes)
+                constrain.setImmediatelyAddableTypes(allowedTypes)
+                # reindex object
+                subFolderObj.reindexObject()
+
+    def getMeetingStatesAcceptingItemsForMeetingManagers(self):
+        '''In those states, the meeting accept items, normal or late.
+           It returns a tuple of meeting review_states.'''
+        return tuple(self.listStateIds("Meeting", excepted='closed'))
+
+    def _getMeetingsAcceptingItemsQuery(self, review_states=[], inTheFuture=False):
+        '''Compute the catalog query to get meeting accepting items.'''
+        # If the current user is a meetingManager (or a Manager),
+        # he is able to add a meetingitem to a 'decided' meeting.
+        # except if we specifically restricted given p_review_states.
+        if not review_states:
+            if self.aq_parent.isManager(self):
+                review_states = self.getMeetingStatesAcceptingItemsForMeetingManagers()
+            else:
+                review_states = self.getItemPreferredMeetingStates()
+
+        query = {'portal_type': self.getMeetingTypeName(),
+                 'review_state': review_states,
+                 'sort_on': 'meeting_date'}
+
+        if inTheFuture:
+            query['meeting_date'] = {'query': datetime.now(), 'range': 'min'}
+
+        return query
+
+    def getMeetingsAcceptingItems(self, review_states=[], inTheFuture=False):
+        '''Returns meetings accepting items.'''
+        # compute the query so when review_states=[], it is computed and we use
+        # the "review_state" value from the query
+        query = self._getMeetingsAcceptingItemsQuery(review_states, inTheFuture)
+        req = self.REQUEST
+        key = "PloneMeeting-MeetingConfig-getMeetingsAcceptingItems-{0}-{1}-{2}".format(
+            self.id, tuple(query['review_state']), inTheFuture)
+        cache = IAnnotations(req)
+        brains = cache.get(key, None)
+
+        if brains is None:
+            catalog = api.portal.get_tool('portal_catalog')
+            brains = catalog.unrestrictedSearchResults(**query)
+            cache[key] = brains
+        return brains
+
+    def update_cfgs(self, field_name, cfg_ids=[], reload=False):
+        """Update other MeetingConfigs p_field_name base on self field_name value."""
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfgs = [cfg for cfg in tool.objectValues('MeetingConfig')
+                if cfg != self and (not cfg_ids or cfg.getId() in cfg_ids)]
+        value = self.getField(field_name).get(self)
+        value = deepcopy(value)
+        for cfg in cfgs:
+            cfg.getField(field_name).set(cfg, value)
+            if reload:
+                notify(ObjectEditedEvent(cfg))
+
+    def get_labels_vocab(
+            self,
+            only_personal=True,
+            vocab_name="Products.PloneMeeting.vocabularies.ftwlabelsvocabulary"):
+        """ """
+        vocab = get_vocab(self, vocab_name)
+        if only_personal:
+            terms = [term for term in vocab._terms if '(*)' in term.title]
+            vocab = SimpleVocabulary(terms)
+        return vocab
+
+    def displayGroupsAndUsers(self):
+        """Display groups and users specific to this MeetingConfig (meetingmanagers, powerobservers, ...)."""
+        plone_group_ids = self._createOrUpdateAllPloneGroups(dry_run_return_group_ids=True)
+        # include also group "Administrators"
+        plone_group_ids.append("Administrators")
+        portal = api.portal.get()
+        res = portal.restrictedTraverse('@@display-group-users')(group_ids=plone_group_ids, short=True)
+        return res
+
+    def _optionalDelayAwareAdvisers(self, validity_date, item=None):
+        '''Returns the 'delay-aware' advisers.
+           This will return a list of dict where dict contains :
+           'org_uid', 'delay' and 'delay_label'.'''
+        res = []
+        for customAdviserConfig in self.getCustomAdvisers():
+            # first check that the customAdviser is actually optional
+            if customAdviserConfig['gives_auto_advice_on']:
+                continue
+            # and check that it is not an advice linked to
+            # an automatic advice ('is_linked_to_previous_row')
+            if customAdviserConfig['is_linked_to_previous_row'] == '1':
+                isAutomatic, linkedRows = self._findLinkedRowsFor(customAdviserConfig['row_id'])
+                # is the first row an automatic adviser?
+                if isAutomatic:
+                    continue
+            # then check if it is a delay-aware advice
+            if not customAdviserConfig['delay']:
+                continue
+
+            # respect 'for_item_created_from' and 'for_item_created_until' defined dates
+            createdFrom = customAdviserConfig['for_item_created_from']
+            createdUntil = customAdviserConfig['for_item_created_until']
+            # createdFrom is required but not createdUntil
+            if DateTime(createdFrom) > validity_date or \
+               (createdUntil and DateTime(createdUntil) < validity_date):
+                continue
+
+            # check the 'available_on' TAL expression when an item is provided
+            eRes = True
+            if item:
+                eRes = item._evalAdviceAvailableOn(customAdviserConfig['available_on'])
+
+            if not eRes:
+                continue
+
+            # ok add the adviser
+            org = get_organization(customAdviserConfig['org'])
+            res.append({'org_uid': customAdviserConfig['org'],
+                        'org_title': org.get_full_title(),
+                        'delay': customAdviserConfig['delay'],
+                        'delay_label': customAdviserConfig['delay_label'],
+                        'is_delay_calendar_days': boolean_value(
+                            customAdviserConfig['is_delay_calendar_days']),
+                        'row_id': customAdviserConfig['row_id']})
+        return res
+
+    def _assembly_field_names(self):
+        ''' '''
+        meeting_schema = get_dx_schema(portal_type=self.getMeetingTypeName())
+        fields = [field_name for field_name in meeting_schema
+                  if field_name.startswith('assembly')]
+        return fields
+
+    def get_item_corresponding_state_to_assign_local_roles(self, item_state):
+        '''See doc in interfaces.py.'''
+        cfg = self.getSelf()
+        corresponding_item_state = None
+        item_val_levels_states = cfg.getItemWFValidationLevels(data='state', only_enabled=True)
+        # return_to_proposing_group WFAdaptation
+        if item_state.startswith('returned_to_proposing_group'):
+            if item_state == 'returned_to_proposing_group':
+                corresponding_item_state = item_val_levels_states[0] if item_val_levels_states else 'itemcreated'
+            else:
+                corresponding_item_state = item_state.split('returned_to_proposing_group_')[1]
+        # waiting_advices WFAdaptation
+        elif item_state.endswith('_waiting_advices'):
+            corresponding_item_state = item_state.split('_waiting_advices')[0]
+        return corresponding_item_state
+
+    def get_item_custom_suffix_roles(self, item, item_state):
+        '''See doc in interfaces.py.'''
+        return True, []
+
+    def render_editform_errors(self, errors):
+        """Render errors in the edit form in case it comes from another fieldset."""
+        error_pattern = u"<dl class=\"portalMessage error\"><dt>{0}</dt><dd>{1}</dd></dl>"
+        res = []
+        for error_field_id, error_msg in errors.items():
+            if isinstance(error_msg, Message):
+                error_msg = translate(error_msg, context=self.REQUEST)
+            field_label = self.getField(error_field_id).widget.label_msgid
+            res.append(error_pattern.format(
+                translate(u"Error",
+                          domain="plone",
+                          context=self.REQUEST),
+                u"<strong>{0}</strong>: {1}".format(
+                    translate(field_label,
+                              domain="PloneMeeting",
+                              context=self.REQUEST),
+                    error_msg)))
+        return u'\n'.join(res)
+
+
+    security.declarePublic('show_meeting_manager_reserved_field')
+    def show_meeting_manager_reserved_field(self, name, meta_type='Meeting'):
+        '''When must field named p_name be shown?'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        # XXX check on optional field to be removed when item will be DX
+        if meta_type == 'Meeting':
+            used_attrs = self.getUsedMeetingAttributes()
+        else:
+            used_attrs = self.getUsedItemAttributes()
+        res = tool.isManager(self) and name in used_attrs
+        return res
+
+    def show_copy_groups_search(self):
+        '''Condition for showing the searchallitemsincopy DashboardCollection.'''
+        return bool('copyGroups' in self.getUsedItemAttributes() and
+                    set(get_plone_groups_for_user()).intersection(
+                        self.getSelectableCopyGroups()))
+
+    def get_orgs_with_as_copy_group_on_expression_cachekey(method, self, restricted=False):
+        '''cachekey method for self.get_orgs_with_as_copy_group_on_expression.
+           MeetingConfig.modified is updated when an organization added/removed/edited.'''
+        # the volatile is invalidated when an organization changed
+        return repr(self), self.modified(), get_cachekey_volatile('_users_groups_value'), restricted
+
+    @ram.cache(get_orgs_with_as_copy_group_on_expression_cachekey)
+    def get_orgs_with_as_copy_group_on_expression(self, restricted=False):
+        """Returns a dict with organizations having a as_copy_group_on TAL expression."""
+        orgs = self.getUsingGroups(theObjects=True)
+        # keep order as new and old item local_roles are compared
+        # to check if other updates must be done
+        data = OrderedDict()
+        for org in orgs:
+            if restricted:
+                expr = org.as_restricted_copy_group_on
+            else:
+                expr = org.as_copy_group_on
+            if not expr or not expr.strip():
+                continue
+            data[org.UID()] = expr
+        return data
+
+
+registerType(MeetingConfig, PROJECTNAME)
+
