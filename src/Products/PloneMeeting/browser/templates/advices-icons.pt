@@ -6,7 +6,7 @@
       <tal:advicesToAddOrExisting condition="python: advicesByType or advicesToAdd">
       <tal:definesIfSomethingToShow define="cfg python: view.cfg;
                                             displayedAddIcon python: False;
-                                            adviceStyle python: cfg.getAdviceStyle();
+                                            adviceStyle python: cfg.advice_style;
                                             advicesToWarn python: view.advicesDelayToWarn();">
       <tal:comment replace="nothing">We include every possible values so a deactivated adviceType is still shown.</tal:comment>
       <tal:menu repeat="adviceType python: ['not_given', 'hidden_during_redaction', 'considered_not_given_hidden_during_redaction', 'asked_again'] + view.every_advice_types">
@@ -44,7 +44,7 @@
               <div tal:condition="python: advicesToAdd and not displayedAddIcon" class="add_advice_icon">
               <tal:loop tal:repeat="advice_portal_type python: context.get_addable_advice_portal_types(advicesToAdd)">
                 <a class="link-overlay-pm-advice"
-                   tal:condition="python: not cfg.getEnableAddQuickAdvice() or advice_portal_type != 'meetingadvice'"
+                   tal:condition="python: not cfg.enable_add_quick_advice or advice_portal_type != 'meetingadvice'"
                    tal:define="global displayedAddIcon python: True"
                    tal:attributes="href string:${item_url}/++add++${advice_portal_type}">
                   <img i18n:attributes="title"
@@ -58,7 +58,7 @@
                                      title string:add_new_meetingadvice;
                                      data-base_url string:${item_url}"
                   class="tooltipster-advice-add-complete-quick"
-                  tal:condition="python: view.cfg.getEnableAddQuickAdvice() and advice_portal_type == 'meetingadvice'"
+                  tal:condition="python: view.cfg.enable_add_quick_advice and advice_portal_type == 'meetingadvice'"
                   tal:define="global displayedAddIcon python: True" />
               </tal:loop>
               </div>
@@ -75,7 +75,7 @@
         <div tal:condition="python: advicesToAdd" class="add_advice_icon">
           <a href="++add++meetingadvice"
              class="link-overlay-pm-advice"
-             tal:condition="python: not view.cfg.getEnableAddQuickAdvice()"
+             tal:condition="python: not view.cfg.enable_add_quick_advice"
              tal:attributes="href string:${item_url}/++add++meetingadvice">
             <img i18n:attributes="title"
                  title="add_new_meetingadvice"
@@ -87,7 +87,7 @@
                                title string:add_new_meetingadvice;
                                data-base_url string:${item_url}"
             class="tooltipster-advice-add-complete-quick"
-            tal:condition="python: view.cfg.getEnableAddQuickAdvice()"
+            tal:condition="python: view.cfg.enable_add_quick_advice"
             tal:define="global displayedAddIcon python: True" />
         </div>
       </tal:noAdvicesByType>

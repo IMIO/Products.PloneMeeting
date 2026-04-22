@@ -63,7 +63,7 @@
             <label class="formQuestion">
               <span i18n:translate="PloneMeeting_label_shortName">Shortname</span>:
             </label>
-            <span tal:content="context/getShortName"/>
+            <span tal:content="context/short_name"/>
             </div>
           </td>
           <td width="25%" tal:define="field python:here.getField('isDefault')">
@@ -231,7 +231,7 @@
     <tal:assembly_and_signatures condition="python: pageName=='assembly_and_signatures'">
       <p i18n:translate="meetingconfig_assembly_and_signatures_descr" class='pageNameDescr'></p><br />
 
-      <tal:defines define="usedMeetingAttributes context/getUsedMeetingAttributes">
+      <tal:defines define="usedMeetingAttributes context/used_meeting_attributes">
         <fieldset><legend class="warningInMeetingConfig" i18n:translate="">This meeting configuration uses following fields to manage assemblies and signatures</legend>
         <p class="warningInMeetingConfig"><span i18n:translate="">Free text fields</span> :</p>
         <ul>
@@ -376,7 +376,7 @@
         <tr valign="top">
           <td tal:define="field python:here.getField('allItemTags')">
             <b i18n:translate="PloneMeeting_label_allItemTags"></b>:
-            <span tal:content="python: ', '.join(context.getAllItemTags().split('\n'))" />
+            <span tal:content="python: ', '.join((context.all_item_tags or '').split('\n'))" />
           </td>
           <td tal:define="field python:here.getField('sortAllItemTags')">
             <span metal:use-macro="here/widgets/field/macros/view" />

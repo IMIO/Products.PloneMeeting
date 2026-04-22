@@ -1,7 +1,7 @@
 <tal:defines define="brains python: view.brains;
                      cfg python: view.cfg;
                      nbOfMeetings python:len(brains);
-                     maxShownMeetings python: cfg.getMaxShownMeetings();"
+                     maxShownMeetings python: cfg.max_shown_meetings;"
              i18n:domain="PloneMeeting">
 
     <tal:comment replace="nothing">A few number of meetings, show a link by meeting</tal:comment>

@@ -96,7 +96,7 @@
                            show_signatories python: 'signatories' in view.used_attrs or signers;
                            user_replacements python: view.get_user_replacements();
                            use_user_replacements python: 'replacements' in view.used_attrs or user_replacements;
-                           use_votes python: view.cfg.getUseVotes() or voters;">
+                           use_votes python: view.cfg.use_votes or voters;">
           <tal:comment replace="nothing">Column captions</tal:comment>
           <thead>
             <tr>

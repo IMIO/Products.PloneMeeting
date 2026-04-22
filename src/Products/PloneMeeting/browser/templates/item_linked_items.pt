@@ -1,5 +1,5 @@
 <tal:defines i18n:domain="PloneMeeting"
-             define="usedAttrs python: view.cfg.getUsedItemAttributes();
+             define="usedAttrs python: view.cfg.used_item_attributes;
                      predecessors python: context.adapted().get_predecessors(only_viewable=True);">
     <span class="item_attribute_label" i18n:translate="auto_linked_items">Automatically linked items</span>:&nbsp;&nbsp;
     <tal:predecessors define="linkedItems predecessors">

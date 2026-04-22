@@ -88,7 +88,7 @@ class CategorizedAnnexesView(CategorizedTabView):
     def _show_column(self, action_type):
         """Made to be overrided."""
         annex_attr_config = '{0}_display'.format(action_type)
-        check = annex_attr_config in self.cfg.getAnnexRestrictShownAndEditableAttributes()
+        check = annex_attr_config in self.cfg.annex_restrict_shown_and_editable_attributes
         return not check or self.tool.isManager(self.cfg)
 
     def showAddAnnex(self):
@@ -239,7 +239,7 @@ class PMCategorizedChildInfosView(CategorizedChildInfosView):
     def _show_detail(self, detail_type):
         """ """
         annex_attr_config = '{0}_display'.format(detail_type)
-        check = annex_attr_config in self.cfg.getAnnexRestrictShownAndEditableAttributes()
+        check = annex_attr_config in self.cfg.annex_restrict_shown_and_editable_attributes
         return not check or self.tool.isManager(self.cfg)
 
 
@@ -266,7 +266,7 @@ class PMBaseActionView(BaseActionView):
             # restricted to MeetingManagers?
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self.context)
-            annex_attr_config = cfg.getAnnexRestrictShownAndEditableAttributes()
+            annex_attr_config = cfg.annex_restrict_shown_and_editable_attributes
             if config_attr_display in annex_attr_config or config_attr_edit in annex_attr_config:
                 res = tool.isManager(cfg)
         return res

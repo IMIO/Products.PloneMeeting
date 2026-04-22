@@ -93,7 +93,7 @@ class AdvicesIcons(BrowserView):
                                         not get_plone_group_id(advice["id"], "advisers") in
                                         get_plone_groups_for_user()]
                 may_view_confidential_advices = not confidential_advices or \
-                    not isPowerObserverForCfg(cfg, power_observer_types=cfg.getAdviceConfidentialFor())
+                    not isPowerObserverForCfg(cfg, power_observer_types=cfg.advice_confidential_for)
         return (repr(self.context),
                 self.context.adviceIndex._p_mtime,
                 server_url,
@@ -191,7 +191,7 @@ class AdvicesIconsInfos(BrowserView):
         self.userIsProposingGroupCommentEditor = False
         self.userMayEditItem = False
         # when on an ItemTemplate, there may be no org_uid
-        if org_uid and self.cfg.getEnableAdviceProposingGroupComment():
+        if org_uid and self.cfg.enable_advice_proposing_group_comment:
             self.userIsProposingGroupCommentEditor = self.isRealManager
             self.userMayEditItem = self.isRealManager
             if not self.context.is_decided(self.cfg, self.itemReviewState):
@@ -231,7 +231,7 @@ class AdvicesIconsInfos(BrowserView):
                     not self.context.is_decided(self.cfg)):
                 res = True
             else:
-                if self.cfg.getInheritedAdviceRemoveableByAdviser() and \
+                if self.cfg.inherited_advice_removeable_by_adviser and \
                    self.advice_id in self.userAdviserOrgUids and \
                    self.itemReviewState in self.cfg.getItemAdviceStatesForOrg(self.advice_id):
                     res = True
@@ -287,7 +287,7 @@ class AdvicesIconsInfos(BrowserView):
            - member is a group editor (not an observer for example);
            - item is editable or advice is addable/editable."""
         res = False
-        if self.cfg.getEnableAdviceProposingGroupComment():
+        if self.cfg.enable_advice_proposing_group_comment:
             advice_info = self.context.adviceIndex[self.advice_id]
             if not self.adviceIsInherited:
                 if self.userIsProposingGroupCommentEditor and \
@@ -302,7 +302,7 @@ class AdvicesIconsInfos(BrowserView):
            - Asked advice advisers;
            - (Meeting)Managers."""
         res = False
-        if self.cfg.getEnableAdviceProposingGroupComment() or \
+        if self.cfg.enable_advice_proposing_group_comment or \
            self.context.adviceIndex[self.advice_id]["proposing_group_comment"]:
             # bypass for (Meeting)Managers
             if self.isManager or \
@@ -510,7 +510,7 @@ class AdviceEventPreviewView(EventPreviewView):
         """ """
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
-        self.advice_style = self.cfg.getAdviceStyle()
+        self.advice_style = self.cfg.advice_style
         # store some advice data
         self.advice_url = self.context.absolute_url()
         self.advice_type = get_event_field_data(event["advice_data"], "advice_type")
@@ -602,7 +602,7 @@ class AdviceEdit(DefaultEditForm):
            self.context.advice_hide_during_redaction is False:
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self.context)
-            if self.context.portal_type in cfg.getDefaultAdviceHiddenDuringRedaction():
+            if self.context.portal_type in cfg.default_advice_hidden_during_redaction:
                 api.portal.show_message(_("advice_hide_during_redaction_set_auto_to_true"),
                                         request=self.request)
                 self.widgets['advice_hide_during_redaction'].value = ['true']

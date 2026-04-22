@@ -116,7 +116,7 @@ class ItemMoreInfosView(BrowserView):
                  'item_cfg': self.cfg})
             res = _evaluateExpression(
                 self.context,
-                expression=self.cfg.getItemsNotViewableVisibleFieldsTALExpr(),
+                expression=self.cfg.items_not_viewable_visible_fields_tal_expr,
                 roles_bypassing_expression=[],
                 extra_expr_ctx=extra_expr_ctx)
             if res:
@@ -312,7 +312,7 @@ class ItemToDiscussView(BrowserView):
     def reviewerMayAskDiscussion(self):
         """Do we use the "reviewer may ask item discussion" ?"""
         return not self.context.getToDiscuss() and \
-            "askDiscussItem" in self.cfg.getMailItemEvents() and \
+            "askDiscussItem" in self.cfg.mail_item_events and \
             self.context.hasMeeting() and \
             not self.context.is_decided(self.cfg) and \
             self.userIsReviewer()
@@ -391,7 +391,7 @@ class ObjectGoToView(BrowserView):
             context_uid = self.context.UID()
             # use index position so element 20 index is 19 and is < 20
             item_pos = tuple(item_uids).index(context_uid)
-            items_by_page = cfg.getMaxShownMeetingItems()
+            items_by_page = cfg.max_shown_meeting_items
             page_num = float(item_pos) / items_by_page
             # round 0.85 to 0 or 1.05 to 1
             int_page_num = int(page_num)
@@ -499,7 +499,7 @@ class UpdateDelayAwareAdvicesView(BrowserView):
         tool = api.portal.get_tool('portal_plonemeeting')
         advice_alive_states = get_advice_alive_states()
         for cfg in tool.objectValues('MeetingConfig'):
-            for row in cfg.getCustomAdvisers():
+            for row in cfg.custom_advisers:
                 isDelayAware = bool(row['delay'])
                 if isDelayAware:
                     org_uid = row['org']
@@ -1699,7 +1699,7 @@ class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGH
             _add_attendance(attendances, meeting, absents, 'absent')
 
         attendances = OrderedDict({})
-        for contact in cfg.getOrderedContacts():
+        for contact in cfg.ordered_contacts:
             position = uuidToObject(contact, unrestricted=True)
             attendances[contact] = {'name': position.get_person_title(),
                                     'function': position.get_label(),
