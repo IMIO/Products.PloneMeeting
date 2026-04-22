@@ -294,7 +294,7 @@ class ItemProposingGroupsForFacetedFilterVocabulary(object):
         not_active_orgs = [org for org in get_organizations(only_selected=False)
                            if org not in active_orgs]
         res_active = []
-        groupsToHide = cfg.getGroupsHiddenInDashboardFilter()
+        groupsToHide = cfg.groups_hidden_in_dashboard_filter
         res_active = []
         for active_org in active_orgs:
             org_uid = active_org.UID()
@@ -395,7 +395,7 @@ class UserProposingGroupsVocabulary(object):
         if include_stored:
             terms = self._handle_include_stored(context, term_values, terms)
         # sort correctly
-        if 'proposingGroup' not in cfg.getItemFieldsToKeepConfigSortingFor():
+        if 'proposingGroup' not in cfg.item_fields_to_keep_config_sorting_for:
             terms = humansorted(terms, key=attrgetter('title'))
         # add a 'make_a_choice' value when used on an itemtemplate
         if context.isDefinedInTool(item_type='itemtemplate'):
@@ -487,7 +487,7 @@ class GroupsInChargeVocabulary(object):
         cfg = tool.getMeetingConfig(context)
         res = []
         is_using_cfg_order = False
-        used_item_attrs = cfg.getUsedItemAttributes()
+        used_item_attrs = cfg.used_item_attributes
         if 'groupsInCharge' not in used_item_attrs:
             # groups in charge are defined on organizations or categories
             # organizations
@@ -552,7 +552,7 @@ class ItemGroupsInChargeVocabulary(GroupsInChargeVocabulary):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         sort = True
-        if 'groupsInCharge' in cfg.getItemFieldsToKeepConfigSortingFor():
+        if 'groupsInCharge' in cfg.item_fields_to_keep_config_sorting_for:
             sort = False
         terms = list(super(ItemGroupsInChargeVocabulary, self).__call__(
             context, sort=sort)._terms)
@@ -777,7 +777,7 @@ class CreatorsForFacetedFilterVocabulary(object):
 
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        creatorsToHide = cfg.getUsersHiddenInDashboardFilter()
+        creatorsToHide = cfg.users_hidden_in_dashboard_filter
         creators = catalog.uniqueValuesFor('Creator')
         filteredCreators = [creator for creator in creators
                             if creator not in creatorsToHide]
@@ -868,7 +868,7 @@ class AskedAdvicesVocabulary(object):
         """ """
         res = []
         # customAdvisers
-        customAdvisers = self.cfg and self.cfg.getCustomAdvisers() or []
+        customAdvisers = self.cfg and self.cfg.custom_advisers or []
         for customAdviser in customAdvisers:
             created_until = customAdviser['for_item_created_until']
             if (active and created_until and DateTime(created_until).isPast()) or \
@@ -883,16 +883,16 @@ class AskedAdvicesVocabulary(object):
 
         # classic advisers
         org_uids = [org_uid for org_uid in get_organizations(only_selected=True, the_objects=False)
-                    if org_uid in self.cfg.getSelectableAdvisers()]
+                    if org_uid in self.cfg.selectable_advisers]
         if not active:
             org_uids = [org_uid for org_uid in get_organizations(only_selected=False, the_objects=False)
-                        if org_uid not in org_uids and org_uid in self.cfg.getSelectableAdvisers()]
+                        if org_uid not in org_uids and org_uid in self.cfg.selectable_advisers]
         for org_uid in org_uids:
             formatted = REAL_ORG_UID_PATTERN.format(org_uid)
             res.append(formatted)
 
         # power advisers
-        power_adviser_uids = self.cfg.getPowerAdvisersGroups()
+        power_adviser_uids = self.cfg.power_advisers_groups
         for power_adviser_uid in power_adviser_uids:
             formatted = REAL_ORG_UID_PATTERN.format(power_adviser_uid)
             res.append(formatted)
@@ -1116,7 +1116,7 @@ class ItemOptionalAdvicesVocabulary(object):
             """Separated so it can be cached."""
             resNonDelayAwareAdvisers = []
             selectableAdviserOrgs = uuidsToObjects(
-                cfg.getSelectableAdvisers(), ordered=True, unrestricted=True)
+                cfg.selectable_advisers, ordered=True, unrestricted=True)
             for org in selectableAdviserOrgs:
                 _insert_term_and_users(
                     resNonDelayAwareAdvisers, org.UID(), org.get_full_title())
@@ -1124,7 +1124,7 @@ class ItemOptionalAdvicesVocabulary(object):
 
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        selectableAdviserUsers = cfg.getSelectableAdviserUsers()
+        selectableAdviserUsers = cfg.selectable_adviser_users
         resDelayAwareAdvisers = []
         delayAwareAdvisers = self._getDelayAwareAdvisers(context, cfg)
         # a delay-aware adviser has a special id so we can handle it specifically after
@@ -1285,7 +1285,7 @@ class AdviceTypesVocabulary(object):
         res["asked_again"] = translate(
             "asked_again", domain='PloneMeeting', context=context.REQUEST)
         # MeetingConfig.usedAdviceTypes
-        for advice_type in cfg.getUsedAdviceTypes():
+        for advice_type in cfg.used_advice_types:
             res[advice_type] = translate(
                 advice_type, domain='PloneMeeting', context=context.REQUEST)
         # ToolPloneMeeting.advisersConfig.advice_types
@@ -1325,7 +1325,7 @@ class SentToInfosVocabulary(object):
                        safe_unicode(translate('not_to_be_cloned_to_term',
                                               domain='PloneMeeting',
                                               context=context.REQUEST))))
-        for cfgInfo in cfg.getMeetingConfigsToCloneTo():
+        for cfgInfo in cfg.meeting_configs_to_clone_to:
             cfgId = cfgInfo['meeting_config']
             cfgTitle = getattr(tool, cfgId).Title(include_config_group=True)
             # add 'clonable to' and 'cloned to' options
@@ -1465,7 +1465,7 @@ class ListTypesVocabulary(object):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         res = []
-        for listType in cfg.getListTypes():
+        for listType in cfg.list_types:
             res.append(SimpleTerm(listType['identifier'],
                                   listType['identifier'],
                                   translate(safe_unicode(listType['label']),
@@ -1585,7 +1585,7 @@ class PrivaciesVocabulary(object):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         res = []
-        keys = cfg.getSelectablePrivacies()
+        keys = cfg.selectable_privacies
         for key in keys:
             res.append(SimpleTerm(
                 key,
@@ -1607,7 +1607,7 @@ class PollTypesVocabulary(object):
         res = []
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        usedPollTypes = list(cfg.getUsedPollTypes())
+        usedPollTypes = list(cfg.used_poll_types)
         # if on an item, include values not unselected in config
         if context.meta_type == 'MeetingItem' and context.getPollType() not in usedPollTypes:
             usedPollTypes.append(context.getPollType())
@@ -1711,7 +1711,7 @@ class ItemTemplatesStorableAsAnnexVocabulary(object):
         # get every POD templates that have a defined 'store_as_annex'
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        meetingItemTemplatesToStoreAsAnnex = cfg.getMeetingItemTemplatesToStoreAsAnnex()
+        meetingItemTemplatesToStoreAsAnnex = cfg.meeting_item_templates_to_store_as_annex
         for pod_template in cfg.podtemplates.objectValues():
             store_as_annex = getattr(pod_template, 'store_as_annex', None)
             if store_as_annex:
@@ -2030,7 +2030,7 @@ class ItemNotPresentTypeVocabulary(object):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         res = []
-        usedMeetingAttributes = cfg.getUsedMeetingAttributes()
+        usedMeetingAttributes = cfg.used_meeting_attributes
         if 'absents' in usedMeetingAttributes:
             res.append(SimpleTerm('absent', 'absent', _(u"absent")))
         if 'excused' in usedMeetingAttributes:
@@ -2318,7 +2318,7 @@ class SelectableCommitteeAttendeesVocabulary(BaseSimplifiedHeldPositionsVocabula
                     itertools.chain.from_iterable(
                         [data.get('attendees') or []
                          for data in context.committees or []]))
-            cfg_values = list(cfg.getOrderedCommitteeContacts())
+            cfg_values = list(cfg.ordered_committee_contacts)
             missing_values = list(current_values.difference(cfg_values))
             uids = cfg_values + missing_values
         return super(SelectableCommitteeAttendeesVocabulary, self).__call__(
@@ -2337,7 +2337,7 @@ class SelectableAssemblyMembersVocabulary(BaseHeldPositionsVocabulary):
             context, usage='assemblyMember')
         stored_terms = []
         if IMeetingConfig.providedBy(context):
-            stored_terms = context.getOrderedContacts()
+            stored_terms = context.ordered_contacts
         else:
             # IOrganization or the datagrid field of it...
             # stored in datagridfield 'certified_signatures'
@@ -2426,7 +2426,7 @@ class ItemVotersVocabulary(BaseHeldPositionsVocabulary):
             include_usages=False,
             include_defaults=False,
             include_signature_number=False,
-            include_voting_group=cfg.getDisplayVotingGroup(),
+            include_voting_group=cfg.display_voting_group,
             review_state=[], )
         # do not modify original terms
         terms = list(terms._terms)
@@ -2527,7 +2527,7 @@ class ItemAssociatedGroupsVocabulary(AssociatedGroupsVocabulary):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         sort = True
-        if 'associatedGroups' in cfg.getItemFieldsToKeepConfigSortingFor():
+        if 'associatedGroups' in cfg.item_fields_to_keep_config_sorting_for:
             sort = False
         terms = super(ItemAssociatedGroupsVocabulary, self).__call__(context, sort=sort)._terms
         # make sure we have a copy of _terms because we will add some
@@ -2572,12 +2572,12 @@ class BaseCopyGroupsVocabulary(object):
         portal_groups = api.portal.get_tool('portal_groups')
         terms = []
         if include_both:
-            groupIds = cfg.getSelectableCopyGroups() + cfg.getSelectableRestrictedCopyGroups()
+            groupIds = cfg.selectable_copy_groups + cfg.selectable_restricted_copy_groups
             # remove duplicates
             groupIds = list(set(groupIds))
         else:
-            groupIds = cfg.getSelectableRestrictedCopyGroups() if restricted \
-                else cfg.getSelectableCopyGroups()
+            groupIds = cfg.selectable_restricted_copy_groups if restricted \
+                else cfg.selectable_copy_groups
         for groupId in groupIds:
             group = portal_groups.getGroupById(groupId)
             terms.append(SimpleTerm(groupId, groupId, safe_unicode(group.getProperty('title'))))
@@ -2927,7 +2927,7 @@ class OtherMCsClonableToVocabulary(object):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         terms = []
-        cfg_ids = [mc['meeting_config'] for mc in cfg.getMeetingConfigsToCloneTo()]
+        cfg_ids = [mc['meeting_config'] for mc in cfg.meeting_configs_to_clone_to]
         cfg_ids = list(set(cfg_ids).union(self._get_stored_values(context)))
         for cfg_id in cfg_ids:
             terms.append(
@@ -3262,7 +3262,7 @@ class PMAttendeeRedefinePositionTypesVocabulary(PMPositionTypesVocabulary):
             _get_base_terms(context)
         tool = api.portal.get_tool("portal_plonemeeting")
         cfg = tool.getMeetingConfig(context)
-        selectableRedefinedPositionTypes = cfg.getSelectableRedefinedPositionTypes()
+        selectableRedefinedPositionTypes = cfg.selectable_redefined_position_types
         hp = self._get_current_hp(context)
         res._terms = [term for term in res._terms
                       if not selectableRedefinedPositionTypes or
@@ -3307,7 +3307,7 @@ class WorkflowAdaptationsVocabulary(object):
             if adaptation == 'hide_decisions_when_under_writing':
                 tool = api.portal.get_tool('portal_plonemeeting')
                 cfg = tool.getMeetingConfig(context)
-                for po in cfg.getPowerObservers():
+                for po in cfg.power_observers:
                     term_id = 'hide_decisions_when_under_writing__po__{0}'.format(po['row_id'])
                     title = translate(
                         'wa_hide_decisions_when_under_writing_excepted_po',
@@ -3386,7 +3386,7 @@ class ConfigHideHistoryTosVocabulary(object):
                 portal_type.title,
                 domain=portal_type.i18n_domain,
                 context=context.REQUEST)
-            for po_infos in context.getPowerObservers():
+            for po_infos in context.power_observers:
                 terms.append(
                     SimpleTerm(
                         "{0}.{1}".format(content_type, po_infos['row_id']),

@@ -153,7 +153,7 @@ def onItemTransition(item, event):
     indexes = do(action, event)
 
     # check if we need to send the item to another meetingConfig
-    if item.query_state() in cfg.getItemAutoSentToOtherMCStates():
+    if item.query_state() in cfg.item_auto_sent_to_other_mc_states:
         otherMCs = item.getOtherMeetingConfigsClonableTo()
         for otherMC in otherMCs:
             # if already cloned to another MC, pass.  This could be the case
@@ -199,7 +199,7 @@ def onMeetingTransition(meeting, event):
         # no more late, clear item references if necessary
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(meeting)
-        if not cfg.getComputeItemReferenceForItemsOutOfMeeting():
+        if not cfg.compute_item_reference_for_items_out_of_meeting:
             meeting.update_item_references(clear=True)
 
     # invalidate last meeting modified
@@ -275,7 +275,7 @@ def onMeetingBeforeTransition(meeting, event):
     # before transition or state is changed nevertheless?
     tool = api.portal.get_tool('portal_plonemeeting')
     cfg = tool.getMeetingConfig(meeting)
-    wfas = cfg.getWorkflowAdaptations()
+    wfas = cfg.wf_adaptations
     if event.new_state.id == 'closed' or \
             (event.new_state.id == 'decisions_published' and
              'hide_decisions_when_under_writing_check_returned_to_proposing_group' in wfas):
@@ -312,7 +312,7 @@ def onConfigBeforeTransition(config, event):
         for other_cfg in tool.objectValues('MeetingConfig'):
             if other_cfg == config:
                 continue
-            meetingConfigs = [v['meeting_config'] for v in other_cfg.getMeetingConfigsToCloneTo()]
+            meetingConfigs = [v['meeting_config'] for v in other_cfg.meeting_configs_to_clone_to]
             if config_id in meetingConfigs:
                 msg = _('Can not disable a meeting configuration used in another, '
                         'please check field "${field_title}" in meeting configuration "${other_cfg_title}"!',
@@ -381,10 +381,10 @@ def onOrgWillBeRemoved(current_org, event):
 
     for mc in tool.objectValues('MeetingConfig'):
         # The organization can be referenced in selectableAdvisers/selectableCopyGroups.
-        customAdvisersOrgUids = [customAdviser['org'] for customAdviser in mc.getCustomAdvisers()]
+        customAdvisersOrgUids = [customAdviser['org'] for customAdviser in mc.custom_advisers]
         if current_org_uid in customAdvisersOrgUids or \
-           current_org_uid in mc.getPowerAdvisersGroups() or \
-           current_org_uid in mc.getSelectableAdvisers() or \
+           current_org_uid in mc.power_advisers_groups or \
+           current_org_uid in mc.selectable_advisers or \
            current_org_uid in mc.getUsingGroups() or \
            current_org_uid in mc.getOrderedAssociatedOrganizations() or \
            current_org_uid in mc.getOrderedGroupsInCharge():
@@ -394,7 +394,7 @@ def onOrgWillBeRemoved(current_org, event):
                                                   context=request))
         for suffix in get_all_suffixes(current_org_uid):
             plone_group_id = get_plone_group_id(current_org_uid, suffix)
-            if plone_group_id in mc.getSelectableCopyGroups():
+            if plone_group_id in mc.selectable_copy_groups:
                 raise BeforeDeleteException(translate("can_not_delete_organization_meetingconfig",
                                                       mapping={'cfg_url': mc.absolute_url()},
                                                       domain="plone",
@@ -487,17 +487,17 @@ def onRegistryModified(event):
                 # from every meetingConfigs.selectableAdvisers
                 for cfg in tool.objectValues('MeetingConfig'):
                     update_cfg = False
-                    selectableCopyGroups = list(cfg.getSelectableCopyGroups())
+                    selectableCopyGroups = list(cfg.selectable_copy_groups)
                     for plone_group_id in get_plone_groups(unselected_org_uid, ids_only=True):
                         if plone_group_id in selectableCopyGroups:
                             update_cfg = True
                             selectableCopyGroups.remove(plone_group_id)
-                            cfg.setSelectableCopyGroups(selectableCopyGroups)
-                    selectableAdvisers = list(cfg.getSelectableAdvisers())
-                    if unselected_org_uid in cfg.getSelectableAdvisers():
+                            cfg.selectable_copy_groups = selectableCopyGroups
+                    selectableAdvisers = list(cfg.selectable_advisers)
+                    if unselected_org_uid in cfg.selectable_advisers:
                         update_cfg = True
                         selectableAdvisers.remove(unselected_org_uid)
-                        cfg.setSelectableAdvisers(selectableAdvisers)
+                        cfg.selectable_advisers = selectableAdvisers
                     if update_cfg:
                         # especially invalidate cache
                         notify(ObjectEditedEvent(cfg))
@@ -647,7 +647,7 @@ def onConfigWillBeRemoved(config, event):
         if other_cfg == config:
             continue
         # check MeetingConfig.meetingConfigsToCloneTo
-        meetingConfigs = [v['meeting_config'] for v in other_cfg.getMeetingConfigsToCloneTo()]
+        meetingConfigs = [v['meeting_config'] for v in other_cfg.meeting_configs_to_clone_to]
         if meetingConfigId in meetingConfigs:
             can_not_delete_meetingconfig_meetingconfig = \
                 translate('can_not_delete_meetingconfig_meetingconfig',
@@ -692,7 +692,7 @@ def onConfigWillBeRemoved(config, event):
     group_suffixes = [MEETINGMANAGERS_GROUP_SUFFIX,
                       BUDGETIMPACTEDITORS_GROUP_SUFFIX,
                       ITEMTEMPLATESMANAGERS_GROUP_SUFFIX]
-    group_suffixes += [po_infos['row_id'] for po_infos in config.getPowerObservers()]
+    group_suffixes += [po_infos['row_id'] for po_infos in config.power_observers]
     for suffix in group_suffixes:
         portal_groups.removeGroup("{0}_{1}".format(config.getId(), suffix))
 
@@ -1148,7 +1148,7 @@ def _annexToPrintChanged(annex, event):
         cfg = tool.getMeetingConfig(annex)
         # in case we are updating an annex that was already converted,
         # c.documentviewer does not manage that
-        if tool.auto_convert_annexes() or cfg.getAnnexToPrintMode() == 'enabled_for_printing':
+        if tool.auto_convert_annexes() or cfg.annex_to_print_mode == 'enabled_for_printing':
             # queueJob manages the fact that annex is only converted again
             # if it was really modified (ModificationDate + md5 filehash)
             queueJob(annex)
@@ -1391,8 +1391,8 @@ def onMeetingRemoved(meeting, event):
     # anyway display a warning message if it was already set
     tool = api.portal.get_tool('portal_plonemeeting')
     cfg = tool.getMeetingConfig(meeting)
-    if cfg.getLastMeetingNumber() == meeting.meeting_number:
-        cfg.setLastMeetingNumber(cfg.getLastMeetingNumber() - 1)
+    if cfg.last_meeting_number == meeting.meeting_number:
+        cfg.last_meeting_number = cfg.getLastMeetingNumber( - 1)
     if meeting.meeting_number or meeting.first_item_number:
         api.portal.show_message(
             _("meeting_removed_verify_numbers"),
@@ -1492,7 +1492,7 @@ def _is_held_pos_uid_used_by(held_pos_uid, obj):
     """ """
     res = False
     if obj.portal_type == 'MeetingConfig':
-        if held_pos_uid in obj.getOrderedContacts() or \
+        if held_pos_uid in obj.ordered_contacts or \
            held_pos_uid in obj.getOrderedItemInitiators() or \
            held_pos_uid in [row['held_position'] for row
                             in obj.getCertifiedSignatures()]:

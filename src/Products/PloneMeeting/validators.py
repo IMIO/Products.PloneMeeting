@@ -211,11 +211,11 @@ class PloneGroupSettingsFunctionsValidator(validator.SimpleFieldValidator):
             msg = _("can_not_delete_plone_group_meetingconfig",
                     mapping={'cfg_title': safe_unicode(cfg.Title(include_config_group=True))})
             # copyGroups
-            if removed_plonegroups.intersection(cfg.getSelectableCopyGroups()):
+            if removed_plonegroups.intersection(cfg.selectable_copy_groups):
                 raise Invalid(msg)
             # advisers (selectableAdvisers/selectableAdviserUsers)
-            if set(advisers_removed_plonegroups).intersection(cfg.getSelectableAdvisers()) or \
-               set(advisers_removed_plonegroups).intersection(cfg.getSelectableAdviserUsers()):
+            if set(advisers_removed_plonegroups).intersection(cfg.selectable_advisers) or \
+               set(advisers_removed_plonegroups).intersection(cfg.selectable_adviser_users):
                 raise Invalid(msg)
             # suffixes, values are like 'suffix_proposing_group_level1reviewers'
             composed_values_attributes = ['itemAnnexConfidentialVisibleFor',

@@ -109,7 +109,7 @@ class AnnexContentDeletableAdapter(APContentDeletableAdapter):
            in the cfg and if still able to add 'annexDecision'."""
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
-        if cfg.getOwnerMayDeleteAnnexDecision() and \
+        if cfg.owner_may_delete_annex_decision and \
            _checkPermission(AddAnnexDecision, parent):
             member = api.user.get_current()
             if 'Owner' in member.getRolesInContext(self.context):
@@ -167,7 +167,7 @@ class MeetingItemContentDeletableAdapter(APContentDeletableAdapter):
             # check itemWithGivenAdviceIsNotDeletable
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self.context)
-            if cfg.getItemWithGivenAdviceIsNotDeletable() and not tool.isManager(cfg):
+            if cfg.item_with_given_advice_is_not_deletable and not tool.isManager(cfg):
                 # do we have any given advice?
                 # do not consider advices that are inherited
                 given_advices = [advice for advice in self.context.adviceIndex.values() if
@@ -320,8 +320,8 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
 
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
-        usedItemAttributes = self.cfg.getUsedItemAttributes()
-        usedMeetingAttributes = self.cfg.getUsedMeetingAttributes()
+        usedItemAttributes = self.cfg.used_item_attributes
+        usedMeetingAttributes = self.cfg.used_meeting_attributes
 
         if displaying_available_items(self.context):
             meeting = getCurrentMeetingObject(self.context)
@@ -479,7 +479,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                     clonedBrain.meeting_date, long_format=long_format))
             iconName = emergency and "clone_to_other_mc_emergency" or "clone_to_other_mc"
             # manage the otherMeetingConfigsClonableToPrivacy
-            if 'privacy' in clonedToOtherMC.getUsedItemAttributes():
+            if 'privacy' in clonedToOtherMC.used_item_attributes:
                 iconName += "_{0}".format(clonedBrain.privacy)
                 msg = msg + u' ({0})'.format(translate(clonedBrain.privacy,
                                                        domain="PloneMeeting",
@@ -509,7 +509,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
             # manage the otherMeetingConfigsClonableToPrivacy
             suffix = ''
             if 'otherMeetingConfigsClonableToPrivacy' in usedItemAttributes and \
-               'privacy' in otherMeetingConfigClonableTo.getUsedItemAttributes():
+               'privacy' in otherMeetingConfigClonableTo.used_item_attributes:
                 if otherMeetingConfigClonableToId in self.context.getOtherMeetingConfigsClonableToPrivacy():
                     suffix = "_secret"
                 else:
@@ -726,7 +726,7 @@ class PMWfHistoryAdapter(ImioWfHistoryAdapter):
         """
         userMayAccessComment = True
         if self.context.getTagName() == 'MeetingItem':
-            if self.cfg.getHideItemHistoryCommentsToUsersOutsideProposingGroup() and \
+            if self.cfg.hide_item_history_comments_to_users_outside_proposing_group and \
                not self.tool.isManager(self.cfg):
                 userOrgUids = self.tool.get_orgs_for_user()
                 group_managing_item_uid = \
@@ -902,24 +902,24 @@ class Criteria(eeaCriteria):
                     is_displaying_available_items = displaying_available_items(context)
                     self.context = cfg.searches.searches_items
                     if is_displaying_available_items:
-                        kept_filters = cfg.getDashboardMeetingAvailableItemsFilters()
-                        resultsperpagedefault = cfg.getMaxShownAvailableItems()
+                        kept_filters = cfg.dashboard_meeting_available_items_filters
+                        resultsperpagedefault = cfg.max_shown_available_items
                     else:
-                        kept_filters = cfg.getDashboardMeetingLinkedItemsFilters()
-                        resultsperpagedefault = cfg.getMaxShownMeetingItems()
+                        kept_filters = cfg.dashboard_meeting_linked_items_filters
+                        resultsperpagedefault = cfg.max_shown_meeting_items
                 else:
                     # on a faceted?  it is a pmFolder or a subFolder of the pmFolder
                     resultsperpagedefault = cfg.getMaxShownListings()
                     if IFacetedNavigable.providedBy(context):
                         # keep relevant filters depending on configuration
                         if context.getId() == 'searches_items':
-                            kept_filters = cfg.getDashboardItemsListingsFilters()
+                            kept_filters = cfg.dashboard_items_listings_filters
                             self.context = cfg.searches.searches_items
                         elif context.getId() == 'searches_meetings':
-                            kept_filters = cfg.getDashboardMeetingsListingsFilters()
+                            kept_filters = cfg.dashboard_meetings_listings_filters
                             self.context = cfg.searches.searches_meetings
                         elif context.getId() == 'searches_decisions':
-                            kept_filters = cfg.getDashboardMeetingsListingsFilters()
+                            kept_filters = cfg.dashboard_meetings_listings_filters
                             self.context = cfg.searches.searches_decisions
                         else:
                             compute = False
@@ -1679,7 +1679,7 @@ class SearchItemsOfMyCommitteesEditableAdapter(SearchItemsOfMyCommitteesAdapter)
         # this manage "portal_type" and "committees_index"
         base_query = self.query_itemsofmycommittees
         # complete with review_states in which items committees fields are editable
-        base_query.update({"review_state": {"query": self.cfg.getItemCommitteesStates()}})
+        base_query.update({"review_state": {"query": self.cfg.item_committees_states}})
         return base_query
 
     # we may not ram.cache methods in same file with same name...
@@ -1756,14 +1756,14 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
         groups = []
         parent_classname = self.parent.getTagName()
         if parent_classname == 'MeetingItem':
-            visible_fors = self.cfg.getItemAnnexConfidentialVisibleFor()
+            visible_fors = self.cfg.item_annex_confidential_visible_for
             groups = self._item_visible_for_groups(visible_fors, item=self.parent)
         elif parent_classname == 'Meeting':
-            visible_fors = self.cfg.getMeetingAnnexConfidentialVisibleFor()
+            visible_fors = self.cfg.meeting_annex_confidential_visible_for
             groups = self._meeting_visible_for_groups(visible_fors)
         else:
             # advice
-            visible_fors = self.cfg.getAdviceAnnexConfidentialVisibleFor()
+            visible_fors = self.cfg.advice_annex_confidential_visible_for
             groups = self._advice_visible_for_groups(
                 visible_fors, item=self.parent.aq_parent)
         return groups
@@ -1842,8 +1842,8 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
                     org_uids = item.adviceIndex.keys()
                 else:
                     # every possible advisers, so configured custom advisers and selectable advisers
-                    custom_advisers_org_uids = [row['org_uid'] for row in self.cfg.getCustomAdvisers()]
-                    selectable_advisers = self.cfg.getSelectableAdvisers()
+                    custom_advisers_org_uids = [row['org_uid'] for row in self.cfg.custom_advisers]
+                    selectable_advisers = self.cfg.selectable_advisers
                     org_uids = set(custom_advisers_org_uids).union(selectable_advisers)
                 for org_uid in org_uids:
                     plone_group_id = get_plone_group_id(org_uid, 'advisers')
@@ -1853,13 +1853,13 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
                 if item:
                     res = res + list(item.getAllCopyGroups(auto_real_plone_group_ids=True))
                 else:
-                    res += list(self.cfg.getSelectableCopyGroups())
+                    res += list(self.cfg.selectable_copy_groups)
             elif visible_for == '{0}restricted_copy_groups'.format(READERPREFIX):
                 # item restrictedCopyGroups if item or every possible restricted copy groups
                 if item:
                     res = res + list(item.getAllRestrictedCopyGroups(auto_real_plone_group_ids=True))
                 else:
-                    res += list(self.cfg.getSelectableRestrictedCopyGroups())
+                    res += list(self.cfg.selectable_restricted_copy_groups)
             elif visible_for == '{0}groupsincharge'.format(READERPREFIX):
                 # item groupsInCharges if item or every possible groups in charge
                 if item:
@@ -1896,7 +1896,7 @@ class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
             # if not viewable annexes are actually displayed,
             # check that current user has access to a viewable linked item
             if (class_name == 'MeetingItem' and
-                'MeetingItem.annexes' in self.cfg.getItemsNotViewableVisibleFields()) and \
+                'MeetingItem.annexes' in self.cfg.items_not_viewable_visible_fields) and \
                (self.context.adapted().get_predecessors(only_viewable=True) or
                     self.context.getManuallyLinkedItems(only_viewable=True)):
                 return True
@@ -1917,7 +1917,7 @@ class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
         else:
             # is the context a MeetingItem and privacy viewable?
             if class_name == 'MeetingItem' and \
-               self.cfg.getRestrictAccessToSecretItems() and \
+               self.cfg.restrict_access_to_secret_items and \
                not self.context.adapted().isPrivacyViewable():
                 return False
 

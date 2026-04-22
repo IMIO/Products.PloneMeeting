@@ -489,7 +489,7 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
     # Do not sent any mail if mail mode is "deactivated".
     tool = api.portal.get_tool("portal_plonemeeting")
     cfg = tool.getMeetingConfig(obj) or tool.getActiveConfigs()[0]
-    mailMode = cfg.getMailMode()
+    mailMode = cfg.mail_mode
     if mailMode == 'deactivated':
         return
     # Compute user name
@@ -671,11 +671,11 @@ def sendMailIfRelevant(obj,
     tool = api.portal.get_tool(TOOL_ID)
     cfg = tool.getMeetingConfig(obj)
     # Do not send the mail if mail mode is "deactivated".
-    if cfg.getMailMode() == 'deactivated':
+    if cfg.mail_mode == 'deactivated':
         return
     # Do not send mail if the (not custom) event is unknown.
-    if not customEvent and event not in cfg.getMailItemEvents() and \
-            event not in cfg.getMailMeetingEvents():
+    if not customEvent and event not in cfg.mail_item_events and \
+            event not in cfg.mail_meeting_events:
         return
     # Ok, send a mail. Who are the recipients ?
     recipients = []
@@ -906,10 +906,10 @@ def rememberPreviousData(obj, name=None):
     tool = api.portal.get_tool(TOOL_ID)
     cfg = tool.getMeetingConfig(obj)
     # Do nothing if the object is not in a state when historization is enabled.
-    if obj.query_state() not in cfg.getRecordItemHistoryStates():
+    if obj.query_state() not in cfg.record_item_history_states:
         return res
     # Store in res the values currently stored on p_obj.
-    historized = cfg.getHistorizedItemAttributes()
+    historized = cfg.historized_item_attributes
     if name:
         if name in historized:
             res[name] = obj.getField(name).get(obj)
@@ -1250,8 +1250,8 @@ def transformAllRichTextFields(obj, onlyField=None):
        the user has the permission to update the field.'''
     tool = api.portal.get_tool('portal_plonemeeting')
     cfg = tool.getMeetingConfig(obj)
-    fieldsToTransform = cfg.getXhtmlTransformFields()
-    transformTypes = cfg.getXhtmlTransformTypes()
+    fieldsToTransform = cfg.xhtml_transform_fields
+    transformTypes = cfg.xhtml_transform_types
     fields = {}
     if IDexterityContent.providedBy(obj):
         if onlyField:
@@ -1327,7 +1327,7 @@ def applyOnTransitionFieldTransform(obj, transitionId):
     idxs = []
     extra_expr_ctx = _base_extra_expr_ctx(obj, {'item': obj, })
     cfg = extra_expr_ctx['cfg']
-    for transform in cfg.getOnTransitionFieldTransforms():
+    for transform in cfg.on_transition_field_transforms:
         tal_expr = transform['tal_expression'].strip()
         # transform a field or execute the TAL expression
         if tal_expr and transform['transition'] == transitionId and \
@@ -1372,7 +1372,7 @@ def meetingExecuteActionOnLinkedItems(meeting, transitionId, items=[]):
     wf_comment = _('wf_transition_triggered_by_application')
     if not items:
         items = meeting.get_items()
-    for action in cfg.getOnMeetingTransitionItemActionToExecute():
+    for action in cfg.on_meeting_transition_item_action_to_execute:
         if action['meeting_transition'] == transitionId:
             is_transition = not action['tal_expression']
             for item in items:
@@ -1576,7 +1576,7 @@ def get_attendee_short_title(hp, cfg, item=None, meeting=None, **kwargs):
     if item is not None:
         position_type = meeting.get_attendee_position_for(
             item.UID(), hp.UID())
-    include_voting_group = cfg.getDisplayVotingGroup()
+    include_voting_group = cfg.display_voting_group
     return hp.get_short_title(
         forced_position_type_value=position_type,
         include_voting_group=include_voting_group,
@@ -2147,7 +2147,7 @@ def main_item_data(item):
     tool = api.portal.get_tool('portal_plonemeeting')
     cfg = tool.getMeetingConfig(item)
     # compute data, save 'title' and every active RichText fields
-    usedItemAttrs = cfg.getUsedItemAttributes()
+    usedItemAttrs = cfg.used_item_attributes
     data = []
     data.append({'field_name': 'title',
                  'field_content': item.Title()})
@@ -2332,7 +2332,7 @@ def compute_item_roles_to_assign_to_suffixes(cfg, item, item_state, org_uid=None
     # by default, observers may View in every states as well as creators
     # for observers, this also depends on MeetingConfig.itemObserversStates if defined
     suffix_roles = {'creators': ['Reader'], }
-    if not cfg.getItemObserversStates() or item_state in cfg.getItemObserversStates():
+    if not cfg.item_observers_states or item_state in cfg.item_observers_states:
         suffix_roles['observers'] = ['Reader']
 
     # MeetingConfig.itemWFValidationLevels
@@ -2688,7 +2688,7 @@ def isPowerObserverForCfg(cfg, power_observer_types=[]):
       If no p_power_observer_types we check every existing power_observers groups.
     """
     user_plone_groups = get_plone_groups_for_user()
-    for po_infos in cfg.getPowerObservers():
+    for po_infos in cfg.power_observers:
         if not power_observer_types or po_infos['row_id'] in power_observer_types:
             groupId = "{0}_{1}".format(cfg.getId(), po_infos['row_id'])
             if groupId in user_plone_groups:
@@ -2719,7 +2719,7 @@ def get_enabled_ordered_wfas(tool):
     return tuple(
         [wfa for wfa in MeetingConfig.wfAdaptations
          if wfa in itertools.chain.from_iterable(
-             [cfg.getWorkflowAdaptations() for cfg in tool.objectValues('MeetingConfig')])])
+             [cfg.wf_adaptations for cfg in tool.objectValues('MeetingConfig')])])
 
 
 def get_internal_number(obj, init=False):
