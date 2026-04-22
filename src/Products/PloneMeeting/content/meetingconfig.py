@@ -141,6 +141,13 @@ import os
 # ---------------------------------------------------------------------------
 
 defValues = MeetingConfigDescriptor.get()
+# Ensure all str attributes are unicode for use as zope.schema field defaults.
+# profiles/__init__.py sets many string attributes without u'' prefix (Python 2).
+for _dv_attr in [a for a in dir(defValues) if not a.startswith('_')]:
+    _dv_val = getattr(defValues, _dv_attr, None)
+    if isinstance(_dv_val, str):
+        setattr(defValues, _dv_attr, safe_unicode(_dv_val))
+del _dv_attr, _dv_val
 
 
 class ICertifiedSignaturesRowSchema(Interface):
