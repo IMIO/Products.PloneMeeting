@@ -9146,7 +9146,7 @@ class testMeetingItem(PloneMeetingTestCase):
             '{"criterionId": "c1", "countByCollection": [{"count": 1, "uid": "%s"}]}' % neededfollowup_uid)
         self.assertEqual(len(neededfollowup.results()), 1)
         self.assertEqual(len(providedfollowup.results()), 0)
-        # provided-follow-up is available to MeetingManagerswhen field providedFollowUp is not empty
+        # provided-follow-up is available to MeetingManagers when field providedFollowUp is not empty
         self.assertFalse(
             'provided-follow-up' in
             [label['label_id'] for label in labelingview.available_labels()[1]])

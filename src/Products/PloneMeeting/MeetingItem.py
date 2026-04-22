@@ -75,6 +75,7 @@ from Products.PloneMeeting.browser.itemvotes import next_vote_is_linked
 from Products.PloneMeeting.config import AddAdvice
 from Products.PloneMeeting.config import AUTO_COPY_GROUP_PREFIX
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
+from Products.PloneMeeting.config import CONFIGURABLE_FIELD_NAMES
 from Products.PloneMeeting.config import CONSIDERED_NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import DEFAULT_COPIED_FIELDS
 from Products.PloneMeeting.config import DUPLICATE_AND_KEEP_LINK_EVENT_ACTION
@@ -2665,8 +2666,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def show_field(self, field_name):
         '''See doc in interfaces.py.'''
         item = self.getSelf()
-        if not item.isDefinedInTool() and \
-            item.attribute_is_used(field_name):
+        if item.attribute_is_used(field_name):
             # evaluate TAL expression
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(item)
@@ -5005,7 +5005,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _bypass_write_perm_check_for(self, fieldName):
         """See docstring in interfaces.py"""
-        if fieldName in ['neededFollowUp', 'providedFollowUp']:
+        if fieldName in CONFIGURABLE_FIELD_NAMES:
             item = self.getSelf()
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(item)
@@ -5040,10 +5040,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             self.adapted()._bypass_write_perm_check_for(fieldName)
         # write_permission is "View" for custom management
         # if bypassWritePermissionCheck is False, make sure write_permission
-        # is no more "View", set it to "Modify portal content"
+        # is no more "View", set it to "Manage portal"
         write_perm = field.write_permission
         if not bypassWritePermissionCheck and write_perm == "View":
-            write_perm = ModifyPortalContent
+            write_perm = ManagePortal
         res = checkMayQuickEdit(
             self,
             bypassWritePermissionCheck=bypassWritePermissionCheck,
