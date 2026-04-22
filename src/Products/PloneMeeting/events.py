@@ -1392,7 +1392,7 @@ def onMeetingRemoved(meeting, event):
     tool = api.portal.get_tool('portal_plonemeeting')
     cfg = tool.getMeetingConfig(meeting)
     if cfg.last_meeting_number == meeting.meeting_number:
-        cfg.last_meeting_number = cfg.getLastMeetingNumber( - 1)
+        cfg.last_meeting_number = cfg.last_meeting_number - 1
     if meeting.meeting_number or meeting.first_item_number:
         api.portal.show_message(
             _("meeting_removed_verify_numbers"),
