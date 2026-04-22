@@ -140,13 +140,13 @@ class testSetup(PloneMeetingTestCase):
         wfTool = api.portal.get_tool('portal_workflow')
         for cfg in self.tool.objectValues('MeetingConfig'):
             # warning, here we get the real WF added by workflows.xml
-            itemBaseWF = wfTool.getWorkflowById(cfg.getItemWorkflow())
+            itemBaseWF = wfTool.getWorkflowById(cfg.item_workflow)
             # this is necessary in case we use same WF for several MeetingConfigs
             if DUMMY_STATE not in itemBaseWF.states:
                 itemBaseWF.states.addState(DUMMY_STATE)
             self.assertTrue(DUMMY_STATE in itemBaseWF.states)
             # same for Meeting workflow
-            meetingBaseWF = wfTool.getWorkflowById(cfg.getMeetingWorkflow())
+            meetingBaseWF = wfTool.getWorkflowById(cfg.meeting_workflow)
             if DUMMY_STATE not in meetingBaseWF.states:
                 meetingBaseWF.states.addState(DUMMY_STATE)
             self.assertTrue(DUMMY_STATE in meetingBaseWF.states)
@@ -160,13 +160,13 @@ class testSetup(PloneMeetingTestCase):
             profile_name, 'workflow')
         # now make sure WFs are clean
         for cfg in self.tool.objectValues('MeetingConfig'):
-            itemBaseWF = wfTool.getWorkflowById(cfg.getItemWorkflow())
+            itemBaseWF = wfTool.getWorkflowById(cfg.item_workflow)
             if itemBaseWF._p_mtime != item_wf_time:
                 self.assertFalse(DUMMY_STATE in itemBaseWF.states)
             else:
                 pm_logger.info('test_pm_WorkflowsRemovedOnReinstall: item workflow not updated using '
                                'profile_name {0} for MeetingConfig {1}?'.format(profile_name, cfg.getId()))
-            meetingBaseWF = wfTool.getWorkflowById(cfg.getMeetingWorkflow())
+            meetingBaseWF = wfTool.getWorkflowById(cfg.meeting_workflow)
             if meetingBaseWF._p_mtime != meeting_wf_time:
                 self.assertFalse(DUMMY_STATE in meetingBaseWF.states)
             else:

@@ -10,8 +10,8 @@
   <tal:defines define="cfg python: view.cfg;
                        displayedAddIcon python: False;
                        displayedReviewState python: False;
-                       adviceStyle python: cfg.getAdviceStyle();
-                       displayAdviceConfidentiality python: cfg.getEnableAdviceConfidentiality() and view.tool.isManager(cfg);
+                       adviceStyle python: cfg.advice_style;
+                       displayAdviceConfidentiality python: cfg.enable_advice_confidentiality and view.tool.isManager(cfg);
                        item_review_state python: view.itemReviewState;
                        readmorable here/@@pm-macros/readmorable;
                        portal_url python: view.portal_url;">

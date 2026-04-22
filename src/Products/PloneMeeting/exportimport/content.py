@@ -36,11 +36,15 @@ from Products.PloneMeeting.config import TOOL_FOLDER_ITEM_TEMPLATES
 from Products.PloneMeeting.config import TOOL_FOLDER_MEETING_CATEGORIES
 from Products.PloneMeeting.config import TOOL_FOLDER_POD_TEMPLATES
 from Products.PloneMeeting.config import TOOL_FOLDER_RECURRING_ITEMS
+from Products.PloneMeeting.content.meeting_config import _meeting_config_dx_field_name
+from Products.PloneMeeting.content.meeting_config import IMeetingConfig
 from Products.PloneMeeting.Extensions.imports import import_contacts
 from Products.PloneMeeting.profiles import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.utils import org_id_to_uid
+from Products.PloneMeeting.utils import richtextval
 from Products.PloneMeeting.utils import updateCollectionCriterion
 from z3c.relationfield.relation import RelationValue
+from zope import schema
 from zope.component import getUtility
 from zope.globalrequest import getRequest
 from zope.i18n import translate
@@ -63,6 +67,30 @@ def update_labels_jar(jar, values):
         jar.add(title=value['title'],
                 color=value['color'],
                 by_user=value['by_user'])
+
+
+def _rename_datagrid_columns(rows, renames):
+    """Return rows with renamed DataGridField column keys."""
+    result = []
+    for row in rows or []:
+        renamed_row = {}
+        for key, value in row.items():
+            renamed_row[renames.get(key, key)] = value
+        result.append(renamed_row)
+    return result
+
+
+def _normalize_dx_value(value):
+    """Normalize profile values for DX schema assignment."""
+    if isinstance(value, str):
+        return unicode(value, 'utf-8')
+    if isinstance(value, tuple):
+        return [_normalize_dx_value(element) for element in value]
+    if isinstance(value, list):
+        return [_normalize_dx_value(element) for element in value]
+    if isinstance(value, dict):
+        return dict((key, _normalize_dx_value(element)) for key, element in value.items())
+    return value
 
 
 class ToolInitializer:
@@ -218,7 +246,7 @@ class ToolInitializer:
             error = cfg.validate_meetingConfigsToCloneTo(adapted_cfgsToCloneTo)
             if error:
                 raise PloneMeetingError(MEETING_CONFIG_ERROR % (cfg.Title(), cfg.getId(), error))
-            cfg.setMeetingConfigsToCloneTo(adapted_cfgsToCloneTo)
+            cfg.meeting_configs_to_clone_to = adapted_cfgsToCloneTo
             cfg._updateCloneToOtherMCActions()
         for org_uid, values in savedOrgsData.items():
             org = uuidToObject(org_uid, unrestricted=True)
@@ -274,17 +302,16 @@ class ToolInitializer:
         for fieldName in ('dashboardItemsListingsFilters',
                           'dashboardMeetingAvailableItemsFilters',
                           'dashboardMeetingLinkedItemsFilters'):
-            field = cfg.getField(fieldName)
-            # we want to validate the vocabulay, as if enforceVocabulary was True
-            error = field.validate_vocabulary(cfg, cfg.getField(field.getName()).get(cfg), {})
+            # we want to validate the vocabulary, as if enforceVocabulary was True
+            error = cfg._validate_dx_field_value(fieldName)
             if error:
                 raise PloneMeetingError(MEETING_CONFIG_ERROR % (cfg.Title(), cfg.getId(), error))
 
         if data.addContactsCSV:
             output = import_contacts(self.portal, path=self.profilePath)
             logger.info(output)
-            selectableOrderedContacts = cfg.getField('orderedContacts').Vocabulary(cfg).keys()
-            cfg.setOrderedContacts(selectableOrderedContacts)
+            selectableOrderedContacts = cfg._dx_field_vocabulary_values('orderedContacts')
+            cfg.ordered_contacts = selectableOrderedContacts
 
         # turn contact path to uid
         for org_storing_field in ('orderedContacts', ):
@@ -298,7 +325,7 @@ class ToolInitializer:
                     except KeyError:
                         logger.warning('While computing "{0}", could not get contact at "{1}"'.format(
                             org_storing_field, contact_path))
-                cfg.getField(org_storing_field).set(cfg, contact_uids)
+                cfg._set_dx_field_value(org_storing_field, contact_uids)
 
         # set default labels
         if data.defaultLabels:
@@ -357,6 +384,30 @@ class ToolInitializer:
                         if sub_type.after_scan_change_annex_type_to:
                             _convert_to_real_after_scan_change_annex_type_to(sub_type)
 
+    def _dx_meeting_config_data(self, data):
+        """Return descriptor data suitable for creating a DX MeetingConfig."""
+        field_names = set(name for name, field in schema.getFieldsInOrder(IMeetingConfig))
+        factory_data = {}
+        for field_name, value in data.items():
+            if field_name in ('id', 'title'):
+                factory_data[field_name] = value
+                continue
+            dx_field_name = _meeting_config_dx_field_name(field_name)
+            if dx_field_name not in field_names:
+                continue
+            factory_data[dx_field_name] = _normalize_dx_value(value)
+
+        if 'budget_default' in factory_data:
+            factory_data['budget_default'] = factory_data['budget_default'] and \
+                richtextval(factory_data['budget_default']) or None
+        if 'certified_signatures' in factory_data:
+            factory_data['certified_signatures'] = _rename_datagrid_columns(
+                factory_data['certified_signatures'], {'signatureNumber': 'signature_number'})
+        if 'inserting_methods_on_add_item' in factory_data:
+            factory_data['inserting_methods_on_add_item'] = _rename_datagrid_columns(
+                factory_data['inserting_methods_on_add_item'], {'insertingMethod': 'inserting_method'})
+        return factory_data
+
     def createMeetingConfig(self, configData, source):
         '''Creates a new meeting configuration from p_configData which is a
            MeetingConfigDescriptor instance. p_source is a string that
@@ -397,32 +448,23 @@ class ToolInitializer:
                 'A MeetingConfig with id {0} already exists, passing...'.format(
                     cData['id']))
             return
-        self.tool.invokeFactory('MeetingConfig', **cData)
+        factory_data = self._dx_meeting_config_data(cData)
+        self.tool.invokeFactory(
+            'MeetingConfig',
+            id=factory_data['id'],
+            title=factory_data.get('title'))
         cfgId = configData.id
         cfg = getattr(self.tool, cfgId)
+        for field_name, value in factory_data.items():
+            if field_name in ('id', 'title'):
+                continue
+            setattr(cfg, field_name, value)
         cfg._at_creation_flag = True
         # for tests where config id is shuffled, save the real id
         if "__real_id__" in cData:
             cfg.__real_id__ = cData["__real_id__"]
-        # TextArea fields are not set properly.
-        for field in cfg.Schema().fields():
-            fieldName = field.getName()
-            widgetName = field.widget.getName()
-            if (widgetName == 'TextAreaWidget') and fieldName in cData:
-                field.set(cfg, cData[fieldName], mimetype='text/html')
-        # call processForm passing dummy values so existing values are not touched
-        cfg.processForm(values={'dummy': None})
-        # Validates meeting config (validation seems not to be triggered
-        # automatically when an object is created from code).
-        errors = []
-        for field in cfg.Schema().fields():
-            error = field.validate(cfg.getField(field.getName()).get(cfg), cfg)
-            if error:
-                errors.append("'%s': %s" % (field.getName(), error))
-        if errors:
-            raise PloneMeetingError(MEETING_CONFIG_ERROR % (
-                safe_unicode(cfg.Title()), cfg.getId(), u'\n'.join(errors)))
-
+        from Products.PloneMeeting.events import onConfigInitialized
+        onConfigInitialized(cfg, None)
         if not configData.active:
             self.portal.portal_workflow.doActionFor(cfg, 'deactivate')
         # Adds the sub-objects within the config: categories, classifiers, items in config, ...
@@ -653,7 +695,7 @@ class ToolInitializer:
             adapted_pod_portal_types = []
             for pod_portal_type in data['pod_portal_types']:
                 if pod_portal_type.startswith('Meeting'):
-                    pod_portal_type = pod_portal_type + cfg.shortName
+                    pod_portal_type = pod_portal_type + cfg.short_name
                 adapted_pod_portal_types.append(pod_portal_type)
             data['pod_portal_types'] = adapted_pod_portal_types
 

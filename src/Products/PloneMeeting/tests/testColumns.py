@@ -29,7 +29,7 @@ class testColumns(PloneMeetingTestCase):
            - no link is rendred, only the title;
            - more infos are not displayed."""
         cfg = self.meetingConfig
-        cfg.setRestrictAccessToSecretItems(True)
+        cfg.restrict_access_to_secret_items = True
         self._setPowerObserverStates(observer_type='restrictedpowerobservers',
                                      states=(self._stateMappingFor('itemcreated'), ))
         self.request.cookies['pmShowDescriptions'] = 'true'
@@ -242,7 +242,7 @@ class testColumns(PloneMeetingTestCase):
         self.assertTrue("c0=sortable_title" in column.renderHeadCell())
         self.assertFalse('static-infos' in column.renderCell(meeting_brain))
         # enable static_end_date without enabled in used_attrs
-        cfg.setMeetingColumns(('static_end_date', ))
+        cfg.meeting_columns = ('static_end_date', )
         self.assertFalse('static-infos' in column.renderCell(meeting_brain))
         # now if end_date contains something, it will be displayed
         meeting.end_date = meeting.date

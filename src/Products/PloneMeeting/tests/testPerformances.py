@@ -57,11 +57,11 @@ class testPerformances(PloneMeetingTestCase):
                                       present_items=False,
                                       as_uids=True):
         cfg = self.meetingConfig
-        wfAdaptations = list(cfg.getWorkflowAdaptations())
+        wfAdaptations = list(cfg.workflow_adaptations)
         if 'no_publication' not in wfAdaptations:
             self.changeUser('siteadmin')
             wfAdaptations.append('no_publication')
-            cfg.setWorkflowAdaptations(wfAdaptations)
+            cfg.workflow_adaptations = wfAdaptations
             notify(ObjectEditedEvent(cfg))
 
         self.changeUser('pmManager')
@@ -141,7 +141,7 @@ class testPerformances(PloneMeetingTestCase):
 
     def _setItemReferenceFormat(self):
         """Compute metingDate, proposingGroup acronym and item number relativeTo meeting."""
-        self.meetingConfig.setItemReferenceFormat(
+        self.meetingConfig.item_reference_format = (
             "python: here.restrictedTraverse('pm_unrestricted_methods').getLinkedMeetingDate().strftime('%Y%m%d') + "
             "'/' + here.getProposingGroup(True).getAcronym() + '/' + "
             "str(here.getItemNumber(relativeTo='meeting', for_display=True))")
@@ -187,7 +187,7 @@ class testPerformances(PloneMeetingTestCase):
            We present 50 by 50 items successively in same meeting'''
         pm_logger.info('Presenting %d items without annexes in a meeting containing %d items.' % (50, 0))
         # use 'complex' inserting method
-        self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_list_type',
+        self.meetingConfig.inserting_methods_on_add_item = (({'insertingMethod': 'on_list_type',
                                                           'reverse': '0'},
                                                          {'insertingMethod': 'on_privacy',
                                                           'reverse': '0'},
@@ -218,18 +218,18 @@ class testPerformances(PloneMeetingTestCase):
         pm_logger.info('Freezing a meeting containing %d items and sending %d items to another MC.' % (50, 25))
         cfg = self.meetingConfig
         self._enableField('category', enable=False)
-        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_proposing_groups',
+        cfg.inserting_methods_on_add_item = (({'insertingMethod': 'on_proposing_groups',
                                            'reverse': '0'}, ))
         cfg2 = self.meetingConfig2
         self._enableField('category', cfg=cfg2, enable=False)
-        cfg2.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_proposing_groups',
+        cfg2.inserting_methods_on_add_item = (({'insertingMethod': 'on_proposing_groups',
                                             'reverse': '0'}, ))
         cfg2Id = cfg2.getId()
         # make items sent to config2 automatically presented in the next meeting
-        cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
+        cfg.meeting_configs_to_clone_to = (({'meeting_config': '%s' % cfg2Id,
                                          'trigger_workflow_transitions_until': '%s.%s' %
                                          (cfg2Id, 'present')},))
-        cfg.setItemAutoSentToOtherMCStates((u'itemfrozen', ))
+        cfg.item_auto_sent_to_other_mc_states = (u'itemfrozen', )
         meeting, items = self._setupMeetingItemsWithAnnexes(50, 5, present_items=True, as_uids=False)
         # make 25 items sendable to another MC
         for item in items[0:25]:
@@ -318,12 +318,12 @@ class testPerformances(PloneMeetingTestCase):
         cfg2 = self.meetingConfig2
         # remove existing groups and add our own
         # make what necessary for groups to be removable...
-        cfg.setOrderedGroupsInCharge(())
-        cfg.setSelectableCopyGroups(())
-        cfg.setSelectableAdvisers(())
-        cfg2.setOrderedGroupsInCharge(())
-        cfg2.setSelectableCopyGroups(())
-        cfg2.setSelectableAdvisers(())
+        cfg.ordered_groups_in_charge = ()
+        cfg.selectable_copy_groups = ()
+        cfg.selectable_advisers = ()
+        cfg2.ordered_groups_in_charge = ()
+        cfg2.selectable_copy_groups = ()
+        cfg2.selectable_advisers = ()
         orgs = get_organizations(only_selected=True)
         for org in orgs:
             self._select_organization(org.UID(), remove=True)
@@ -622,7 +622,7 @@ class testPerformances(PloneMeetingTestCase):
                      'org': gic_uid,
                      'for_item_created_from': '2019/10/15',
                      'row_id': 'row_id__{0}'.format(gic_uid)})
-            cfg.setCustomAdvisers(custom_advisers)
+            cfg.custom_advisers = custom_advisers
 
         self.changeUser('pmManager')
         # create 50 items with 20 annexes
@@ -1013,7 +1013,7 @@ class testPerformances(PloneMeetingTestCase):
             self._select_organization(org_uid)
             org_uids.append(org_uid)
         pm_logger.info('Done.')
-        cfg.setUsingGroups(org_uids)
+        cfg.using_groups = org_uids
         # create 250 meetings
         pm_logger.info('Creating 100 meetings...')
         for i in range(100):

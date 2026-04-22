@@ -26,7 +26,7 @@ from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.content.meeting import get_all_usable_held_positions
 from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.content.meeting import Meeting
-from Products.PloneMeeting.MeetingConfig import POWEROBSERVERPREFIX
+from Products.PloneMeeting.content.meeting_config import POWEROBSERVERPREFIX
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import field_is_empty
 from Products.PloneMeeting.utils import get_attendee_short_title
@@ -256,7 +256,7 @@ class MeetingDefaultView(DefaultView, BaseMeetingView):
         super(MeetingDefaultView, self).updateFieldsFromSchemata()
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
-        self.used_attrs = self.cfg.getUsedMeetingAttributes()
+        self.used_attrs = self.cfg.used_meeting_attributes
         manage_fields(self)
 
     def _update(self):
@@ -277,7 +277,7 @@ def get_default_signatories(cfg):
     '''The default signatories are the active held_positions
        with a defined signature_number.'''
     res = {}
-    if "signatories" in cfg.getUsedMeetingAttributes():
+    if "signatories" in cfg.used_meeting_attributes:
         signers = [held_pos for held_pos in get_all_usable_held_positions(cfg)
                    if held_pos.defaults and 'present' in
                    held_pos.defaults and held_pos.signature_number]
@@ -289,7 +289,7 @@ def get_default_voters(cfg):
     '''The default voters are the active held_positions
        with 'voter' in defaults.'''
     res = []
-    if cfg.getUseVotes():
+    if cfg.use_votes:
         res = [held_pos.UID() for held_pos in get_all_usable_held_positions(cfg)
                if held_pos.defaults and 'voter' in held_pos.defaults]
     return res
@@ -305,7 +305,7 @@ class AttendeesEditProvider(ContentProviderBase, BaseMeetingView):
         self.__parent__ = view
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
-        self.used_attrs = self.cfg.getUsedMeetingAttributes()
+        self.used_attrs = self.cfg.used_meeting_attributes
         self.portal_url = api.portal.get().absolute_url()
 
     def render(self):
@@ -410,7 +410,7 @@ class MeetingEdit(DefaultEditForm, BaseMeetingView):
         super(MeetingEdit, self).updateFields()
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
-        self.used_attrs = self.cfg.getUsedMeetingAttributes()
+        self.used_attrs = self.cfg.used_meeting_attributes
         manage_fields(self)
         reorder_groups(self)
 
@@ -440,7 +440,7 @@ class MeetingAddForm(DefaultAddForm, BaseMeetingView):
         super(MeetingAddForm, self).updateFields()
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
-        self.used_attrs = self.cfg.getUsedMeetingAttributes()
+        self.used_attrs = self.cfg.used_meeting_attributes
         manage_fields(self)
         reorder_groups(self)
 
@@ -511,7 +511,7 @@ class MeetingFacetedView(BaseMeetingFacetedView):
 
     def _display_available_items_to(self):
         """Check if current user profile is selected in MeetingConfig.displayAvailableItemsTo."""
-        displayAvailableItemsTo = self.cfg.getDisplayAvailableItemsTo()
+        displayAvailableItemsTo = self.cfg.display_available_items_to
         suffixes = []
         groups = []
         res = False
@@ -553,7 +553,7 @@ class MeetingFacetedView(BaseMeetingFacetedView):
                         warn = True
             else:
                 if (len(self.context.get_signatures().split('\n')) <
-                    len(self.cfg.getSignatures().split('\n'))) or \
+                    len(self.cfg.signatures.split('\n'))) or \
                    not self.context.get_assembly(for_display=False, striked=False):
                     warn = True
         return warn
@@ -581,11 +581,18 @@ class MeetingInsertingMethodsHelpMsgView(BrowserView):
     def fieldsToDisplay(self):
         """Depending on used inserting methods, display relevant fields."""
         res = []
-        for method in self.cfg.getInsertingMethodsOnAddItem():
+        for method in self.cfg.inserting_methods_on_add_item:
             for mapping in self.inserting_methods_fields_mapping[method['insertingMethod']]:
                 if mapping.startswith('field_'):
                     res.append(mapping[6:])
         return res
+
+    def renderConfigField(self, field_name):
+        """Render a MeetingConfig DX field value for the insertion help popup."""
+        value = self.cfg._dx_field_value(field_name)
+        if isinstance(value, (list, tuple)):
+            return u', '.join([safe_unicode(elem) for elem in value])
+        return safe_unicode(value)
 
     def orderedOrgs(self):
         """Display organizations if one of the selected inserting methods relies on organizations.
@@ -593,7 +600,7 @@ class MeetingInsertingMethodsHelpMsgView(BrowserView):
            goupsInCharge organizations titles as second element."""
         res = []
         orgs_inserting_methods = [
-            method['insertingMethod'] for method in self.cfg.getInsertingMethodsOnAddItem()
+            method['insertingMethod'] for method in self.cfg.inserting_methods_on_add_item
             if 'organization' in self.inserting_methods_fields_mapping[method['insertingMethod']]]
         if orgs_inserting_methods:
             orgs = get_organizations(only_selected=True)
@@ -605,7 +612,7 @@ class MeetingInsertingMethodsHelpMsgView(BrowserView):
         """Display categories if one of the selected inserting methods relies on it."""
         categories = []
         categories_inserting_methods = [
-            method['insertingMethod'] for method in self.cfg.getInsertingMethodsOnAddItem()
+            method['insertingMethod'] for method in self.cfg.inserting_methods_on_add_item
             if 'category' in self.inserting_methods_fields_mapping[method['insertingMethod']]]
         if categories_inserting_methods:
             categories = self.cfg.getCategories()
@@ -615,7 +622,7 @@ class MeetingInsertingMethodsHelpMsgView(BrowserView):
         """Display classifiers if one of the selected inserting methods relies on it."""
         classifiers = []
         classifiers_inserting_methods = [
-            method['insertingMethod'] for method in self.cfg.getInsertingMethodsOnAddItem()
+            method['insertingMethod'] for method in self.cfg.inserting_methods_on_add_item
             if 'classifier' in self.inserting_methods_fields_mapping[method['insertingMethod']]]
         if classifiers_inserting_methods:
             classifiers = self.cfg.getCategories(catType='classifiers')

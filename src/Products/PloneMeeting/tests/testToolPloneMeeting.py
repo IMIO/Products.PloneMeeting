@@ -147,14 +147,14 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         cfg2 = self.meetingConfig2
         # must be connected to access MeetingConfigs
         self.changeUser('pmCreator1')
-        self.assertTrue(cfg.getIsDefault())
-        self.assertTrue(not cfg2.getIsDefault())
+        self.assertTrue(cfg.is_default)
+        self.assertTrue(not cfg2.is_default)
         self.assertEqual(self.tool.getDefaultMeetingConfig().getId(), cfg.getId())
         # if we change default config, it works
-        cfg2.setIsDefault(True)
+        cfg2.is_default = True
         notify(ObjectEditedEvent(cfg2))
-        self.assertTrue(not cfg.getIsDefault())
-        self.assertTrue(cfg2.getIsDefault())
+        self.assertTrue(not cfg.is_default)
+        self.assertTrue(cfg2.is_default)
         self.assertEqual(self.tool.getDefaultMeetingConfig().getId(), cfg2.getId())
 
     def test_pm_CloneItemDefaultFunctionnality(self):
@@ -212,7 +212,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         newAnnex = clonedItem.objectValues()[0]
         self.assertEqual(newAnnex.portal_type, 'annex')
         # to_print is kept as cfg.keepOriginalToPrintOfClonedItems is True by default
-        self.assertTrue(self.meetingConfig.getKeepOriginalToPrintOfClonedItems())
+        self.assertTrue(self.meetingConfig.keep_original_to_print_of_cloned_items)
         self.assertTrue(newAnnex.to_print)
         newAnnexesUids = [annex.UID() for annex in clonedItem.objectValues()]
         self.assertEqual(
@@ -467,7 +467,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # If we disable one meetingConfig, it is no more shown
         self.changeUser('admin')
         # to be deactivated, a MeetingConfig can not be used in another
-        cfg.setMeetingConfigsToCloneTo(())
+        cfg.meeting_configs_to_clone_to = ()
         self.do(cfg2, 'deactivate')
         transaction.commit()
         self.changeUser('restrictedpowerobserver2')
@@ -477,7 +477,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         '''Test shown tab when MeetingConfig.usingGroups is used.'''
         cfg = self.meetingConfig
         cfg2 = self.meetingConfig2
-        cfg2.setUsingGroups([self.vendors_uid])
+        cfg2.using_groups = [self.vendors_uid]
         self.changeUser('pmCreator1')
         self.assertFalse(self.vendors_uid in self.tool.get_orgs_for_user())
         self.assertTrue(self.tool.showPloneMeetingTab(cfg))
@@ -685,7 +685,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
            configuration, the annex is not kept (it is deleted).
         '''
         cfg = self.meetingConfig
-        cfg.setItemManualSentToOtherMCStates((self._stateMappingFor('itemcreated'),))
+        cfg.item_manual_sent_to_other_mc_states = (self._stateMappingFor('itemcreated'),)
         # adapt other_mc_correspondences to set to nothing
         annexCat1 = cfg.annexes_types.item_annexes.get(self.annexFileType)
         annexDecisionCat1 = cfg.annexes_types.item_decision_annexes.get(self.annexFileTypeDecision)
@@ -718,7 +718,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
-        cfg.setItemManualSentToOtherMCStates((self._stateMappingFor('itemcreated'),))
+        cfg.item_manual_sent_to_other_mc_states = (self._stateMappingFor('itemcreated'),)
         # adapt other_mc_correspondences to set to nothing
         annexCat1 = cfg.annexes_types.item_annexes.get(self.annexFileType)
         annexCat1.other_mc_correspondences = set([ANNEX_NOT_KEPT.format(cfg2Id)])
@@ -747,7 +747,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
-        cfg.setItemManualSentToOtherMCStates((self._stateMappingFor('itemcreated'),))
+        cfg.item_manual_sent_to_other_mc_states = (self._stateMappingFor('itemcreated'),)
         # adapt other_mc_correspondences to set to annex not kept
         annexCat1 = cfg.annexes_types.item_annexes.get(self.annexFileType)
         annexCat1.other_mc_correspondences = set([ANNEX_NOT_KEPT.format(cfg2Id)])
@@ -824,9 +824,9 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         """Test the update_all_local_roles method that update every items when configuration changed.
            First set copy groups may view items in state 'itemcreated' then change to 'proposed'."""
         cfg = self.meetingConfig
-        cfg.setSelectableCopyGroups((self.developers_reviewers, self.vendors_reviewers))
+        cfg.selectable_copy_groups = (self.developers_reviewers, self.vendors_reviewers)
         self._enableField('copyGroups')
-        cfg.setItemCopyGroupsStates(('itemcreated', ))
+        cfg.item_copy_groups_states = ('itemcreated', )
         # only available to 'Managers'
         self.changeUser('pmCreator1')
         self.assertRaises(Unauthorized, self.tool.restrictedTraverse, 'update_all_local_roles')
@@ -842,7 +842,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
 
         # change configuration, update_all_local_roles then check again
         self.changeUser('siteadmin')
-        cfg.setItemCopyGroupsStates((self._stateMappingFor('proposed'), ))
+        cfg.item_copy_groups_states = (self._stateMappingFor('proposed'), )
         self.tool.restrictedTraverse('update_all_local_roles')()
         self.assertFalse(self.vendors_reviewers in item1.__ac_local_roles__)
         self.assertTrue(self.vendors_reviewers in item2.__ac_local_roles__)
@@ -851,7 +851,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         """Test the updateBudgetImpactEditors method that update every items when configuration changed.
            First set budget impact editors may edit in state 'itemcreated' then change to 'proposed'."""
         cfg = self.meetingConfig
-        cfg.setItemBudgetInfosStates(('itemcreated', ))
+        cfg.item_budget_infos_states = ('itemcreated', )
         # only available to 'Managers'
         self.changeUser('pmCreator1')
         self.assertRaises(Unauthorized, self.tool.restrictedTraverse, 'update_all_local_roles')
@@ -865,7 +865,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
 
         # change configuration, update_all_local_roles then check again
         self.changeUser('siteadmin')
-        cfg.setItemBudgetInfosStates((self._stateMappingFor('proposed'), ))
+        cfg.item_budget_infos_states = (self._stateMappingFor('proposed'), )
         self.tool.update_all_local_roles()
         self.assertFalse('%s_budgetimpacteditors' % cfg.getId() in item1.__ac_local_roles__)
         self.assertTrue('%s_budgetimpacteditors' % cfg.getId() in item2.__ac_local_roles__)
@@ -1038,7 +1038,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # configure usingGroups
         cfg = self.meetingConfig
         cfg2 = self.meetingConfig2
-        cfg2.setUsingGroups([self.vendors_uid])
+        cfg2.using_groups = [self.vendors_uid]
         self.changeUser('pmCreator1')
         self.assertFalse(self.vendors_creators in self.member.getGroups())
         self.assertTrue(self.tool.userIsAmong(['creators']))
@@ -1077,7 +1077,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         )))
 
         # but fails if removing used value
-        cfg.setConfigGroup('unique_id_2')
+        cfg.config_group = 'unique_id_2'
         error_msg = translate(
             u'configGroup_removed_in_use_error',
             domain='PloneMeeting',
@@ -1209,7 +1209,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertEqual(self.tool.get_selectable_orgs(cfg, only_selectable=False),
                          [self.developers, self.vendors])
         # do not return more than MeetingConfig.usingGroups
-        cfg2.setUsingGroups([self.vendors_uid])
+        cfg2.using_groups = [self.vendors_uid]
         self.assertEqual(self.tool.get_selectable_orgs(cfg2), [])
         self.assertEqual(self.tool.get_selectable_orgs(cfg2, only_selectable=False),
                          [self.vendors])
@@ -1325,7 +1325,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
                            'delay_label': '',
                            'available_on': '',
                            'is_linked_to_previous_row': '0', }, ]
-        cfg.setCustomAdvisers(customAdvisers)
+        cfg.custom_advisers = customAdvisers
         # configure a holday for tomorrow
         tomorrow = (date.today() + timedelta(days=1)).strftime('%Y/%m/%d')
         self.tool.setHolidays(({'date': tomorrow}, ))
@@ -1365,9 +1365,9 @@ class testToolPloneMeeting(PloneMeetingTestCase):
            Here test the base behavior, a more complex behavior is tested in
            Products.MeetingCommunes.tests.testToolPloneMeeting.test_pm_FinancesAdvisersConfig."""
         cfg = self.meetingConfig
-        cfg.setItemAdviceStates((self._stateMappingFor('itemcreated'), ))
-        cfg.setItemAdviceEditStates((self._stateMappingFor('itemcreated'), ))
-        cfg.setItemAdviceViewStates((self._stateMappingFor('itemcreated'), ))
+        cfg.item_advice_states = (self._stateMappingFor('itemcreated'), )
+        cfg.item_advice_edit_states = (self._stateMappingFor('itemcreated'), )
+        cfg.item_advice_view_states = (self._stateMappingFor('itemcreated'), )
         self.tool.setAdvisersConfig(
             ({'advice_types': ['positive',
                                'positive_with_remarks'],
@@ -1430,9 +1430,9 @@ class testToolPloneMeeting(PloneMeetingTestCase):
     def test_pm_ValidateAdvisersConfig(self):
         """Test the ToolPloneMeeting.validate_advisersConfig."""
         cfg = self.meetingConfig
-        cfg.setItemAdviceStates((self._stateMappingFor('itemcreated'), ))
-        cfg.setItemAdviceEditStates((self._stateMappingFor('itemcreated'), ))
-        cfg.setItemAdviceViewStates((self._stateMappingFor('itemcreated'), ))
+        cfg.item_advice_states = (self._stateMappingFor('itemcreated'), )
+        cfg.item_advice_edit_states = (self._stateMappingFor('itemcreated'), )
+        cfg.item_advice_view_states = (self._stateMappingFor('itemcreated'), )
         # can not set config several times for same portal_type
         values = (
             ({'advice_types': [],

@@ -171,8 +171,8 @@ class testMeetingCategory(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfg2 = self.meetingConfig2
         # use special chars in MC title to check for unicodeDecodeErrors
-        cfg.setTitle("héhé")
-        cfg2.setTitle("hàhà")
+        cfg.title = ("héhé")
+        cfg2.title = ("hàhà")
         # by default, items of meetingConfig can be sent to meetingConfig2
         # as meetingConfig2 use categories, it will appear in a category of meetingConfig
         aCatInMC = cfg.categories.development
@@ -194,7 +194,7 @@ class testMeetingCategory(PloneMeetingTestCase):
         # still not enough...
         self.assertEqual(len(vocab_factory(aCatInMC2)), 0)
         # ... we must also specify that elements of self.meetingConfig2 can be sent to self.meetingConfig
-        cfg2.setMeetingConfigsToCloneTo(
+        cfg2.meeting_configs_to_clone_to = (
             ({'meeting_config': '%s' % cfg.getId(),
               'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}, ))
         self.assertEqual(len(vocab_factory(aCatInMC2)), 3)

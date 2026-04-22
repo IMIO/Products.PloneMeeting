@@ -447,8 +447,8 @@ class PloneMeetingTestingHelpers(object):
         cfgItemWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
         item_initial_state = self.wfTool[cfgItemWF.getId()].initial_state
 
-        cfg.setItemAdviceStates((item_initial_state, ))
-        cfg.setItemAdviceEditStates((item_initial_state, ))
+        cfg.item_advice_states = (item_initial_state, )
+        cfg.item_advice_edit_states = (item_initial_state, )
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.setOptionalAdvisers((self.vendors_uid, ))
@@ -471,9 +471,9 @@ class PloneMeetingTestingHelpers(object):
 
     def _setUpCommitteeEditor(self, cfg):
         """Will setup "pmCreator2" as committee_1 editor."""
-        cfg_committees = cfg.getCommittees()
+        cfg_committees = cfg.committees
         cfg_committees[0]['enable_editors'] = "1"
-        cfg.setCommittees(cfg_committees)
+        cfg.committees = cfg_committees
         notify(ObjectEditedEvent(cfg))
         self._addPrincipalToGroup(
             'pmCreator2', "{0}_{1}".format(cfg.getId(), 'committee_1'))
@@ -491,12 +491,12 @@ class PloneMeetingTestingHelpers(object):
         """Enable the 'prevalidated' state in MeetingConfig.itemWFValidationLevels."""
         currentUser = self.member.getId()
         self.changeUser('admin')
-        itemWFValidationLevels = cfg.getItemWFValidationLevels()
+        itemWFValidationLevels = cfg.item_wf_validation_levels
         itemWFValidationLevels[1]['suffix'] = 'prereviewers'
         itemWFValidationLevels[2]['enabled'] = '1'
         if enable_extra_suffixes:
             itemWFValidationLevels[2]['extra_suffixes'] = ['reviewers']
-        cfg.setItemWFValidationLevels(itemWFValidationLevels)
+        cfg.item_wf_validation_levels = itemWFValidationLevels
         notify(ObjectEditedEvent(cfg))
         self.changeUser(currentUser)
 
@@ -504,14 +504,14 @@ class PloneMeetingTestingHelpers(object):
         """Utility method that enable/disable item validation levels."""
         currentUser = self.member.getId()
         self.changeUser('admin')
-        itemValLevels = cfg.getItemWFValidationLevels()
+        itemValLevels = cfg.item_wf_validation_levels
         for itemValLevel in itemValLevels:
             if not level or itemValLevel['state'] == level:
                 itemValLevel['enabled'] = enable and '1' or '0'
                 for k in itemValLevel.keys():
                     if k in kwargs:
                         itemValLevel[k] = kwargs[k]
-        cfg.setItemWFValidationLevels(itemValLevels)
+        cfg.item_wf_validation_levels = itemValLevels
         notify(ObjectEditedEvent(cfg))
         self.changeUser(currentUser)
 
@@ -541,10 +541,10 @@ class PloneMeetingTestingHelpers(object):
         # login to be able to query held_positions for orderedContacts vocabulary
         self.changeUser('siteadmin')
         cfg = self.meetingConfig
-        cfg.setUsedMeetingAttributes(meeting_attrs)
-        cfg.setUsedItemAttributes(item_attrs)
-        ordered_contacts = cfg.getField('orderedContacts').Vocabulary(cfg).keys()
-        cfg.setOrderedContacts(ordered_contacts)
+        cfg.used_meeting_attributes = meeting_attrs
+        cfg.used_item_attributes = item_attrs
+        ordered_contacts = cfg._dx_field_vocabulary_values('orderedContacts')
+        cfg.ordered_contacts = ordered_contacts
         logout()
 
     def _setItemToWaitingAdvices(self, item, transition):
@@ -577,14 +577,14 @@ class PloneMeetingTestingHelpers(object):
             to_disable = ["committees_attendees", "committees_signatories"]
         self._enableField(to_enable, related_to="Meeting")
         self._enableField(to_disable, related_to="Meeting", enable=False)
-        cfg.setOrderedCommitteeContacts((self.hp1_uid, self.hp2_uid, self.hp3_uid))
-        cfg_committees = cfg.getCommittees()
+        cfg.ordered_committee_contacts = (self.hp1_uid, self.hp2_uid, self.hp3_uid)
+        cfg_committees = cfg.committees
         cfg_committees[0]['default_assembly'] = "Default assembly"
         cfg_committees[0]['default_signatures'] = "Line 1,\r\nLine 2\r\nLine 3,\r\nLine 4"
         cfg_committees[0]['default_place'] = "Default place"
         cfg_committees[0]['default_attendees'] = [self.hp1_uid, self.hp2_uid]
         cfg_committees[0]['default_signatories'] = [self.hp2_uid, self.hp3_uid]
-        cfg.setCommittees(cfg_committees)
+        cfg.committees = cfg_committees
         meeting = self.create('Meeting', committees=default_committees(DefaultData(cfg)))
         meeting.committees[0]['committee_observations'] = richtextval('<p>Committee observations</p>')
         return meeting
@@ -595,13 +595,13 @@ class PloneMeetingTestingHelpers(object):
         # make sure we use default itemWFValidationLevels,
         # useful when test executed with custom profile
         defValues = MeetingConfigDescriptor.get()
-        cfg.setItemWFValidationLevels(deepcopy(defValues.itemWFValidationLevels))
+        cfg.item_wf_validation_levels = deepcopy(defValues.itemWFValidationLevels)
         notify(ObjectEditedEvent(cfg))
 
     def _setupLabelsEditableWhenItemEditable(self, cfg, enable=True):
         """Setup labels only editable when item editable."""
         self._enableField('labels')
-        labelsConfig = cfg.getLabelsConfig()
+        labelsConfig = cfg.labels_config
         if enable:
             labelsConfig[0]['edit_groups'] = []
             labelsConfig[0]['edit_access_on'] = 'python: cfg.isManager(cfg) or '\
@@ -614,7 +614,7 @@ class PloneMeetingTestingHelpers(object):
                 'suffix_proposing_group_reviewers']
             labelsConfig[0]['edit_access_on'] = ""
             labelsConfig[0]['edit_access_on_cache'] = '1'
-        cfg.setLabelsConfig(labelsConfig)
+        cfg.labels_config = labelsConfig
 
     def _enable_ftw_labels(self, cfg, add_follow_up=False):
         self._enableField('labels')
@@ -631,7 +631,7 @@ class PloneMeetingTestingHelpers(object):
         """Configure followUp labels."""
         self._enable_ftw_labels(cfg, add_follow_up=True)
         self._enableField(['neededFollowUp', 'providedFollowUp'])
-        config = list(cfg.getLabelsConfig())
+        config = list(cfg.labels_config)
         # needed-follow-up
         new_config = deepcopy(config[0])
         new_config['label_id'] = "needed-follow-up"
@@ -643,4 +643,4 @@ class PloneMeetingTestingHelpers(object):
         new_config['edit_access_on'] = "python: not utils.fieldIsEmpty('providedFollowUp', item)"
         new_config['edit_access_on_cache'] = "0"
         config.append(new_config)
-        cfg.setLabelsConfig(config)
+        cfg.labels_config = config

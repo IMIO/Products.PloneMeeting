@@ -58,7 +58,7 @@ from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.interfaces import IConfigElement
-from Products.PloneMeeting.MeetingConfig import POWEROBSERVERPREFIX
+from Products.PloneMeeting.content.meeting_config import POWEROBSERVERPREFIX
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import extract_recipients
 from Products.PloneMeeting.utils import get_annexes
@@ -446,7 +446,7 @@ class PMFacetedDashboardView(FacetedDashboardView):
         """Check if current user profile is selected in MeetingConfig.redirectToNextMeeting."""
         res = False
         if self.check_redirect_next_meeting:
-            redirectToNextMeeting = self.cfg.getRedirectToNextMeeting()
+            redirectToNextMeeting = self.cfg.redirect_to_next_meeting
             suffixes = []
             groups = []
             cfg_id = self.cfg.getId()
@@ -602,7 +602,7 @@ class BaseActionsPanelView(ActionsPanelView):
         """
         toConfirm = []
         if self.cfg:
-            toConfirm = self.cfg.getTransitionsToConfirm()
+            toConfirm = self.cfg.transitions_to_confirm
         return toConfirm
 
 
@@ -705,7 +705,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
                 isEditorUser = True
             elif item_state.endswith('_waiting_advices'):
                 advicesIndexModified = self.context.adviceIndex._p_mtime
-                wfas = self.cfg.getWorkflowAdaptations()
+                wfas = self.cfg.workflow_adaptations
                 userAbleToCorrectItemWaitingAdvices = []
                 if "waiting_advices_adviser_send_back" in wfas:
                     # will only work if only one advice to give in this state
@@ -721,7 +721,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
                         self.tool.get_filtered_plone_groups_for_user(
                             org_uids=[group_managing_item_uid])
             elif item_state == 'validated' and not isManager:
-                wfas = self.cfg.getWorkflowAdaptations()
+                wfas = self.cfg.workflow_adaptations
                 if 'reviewers_take_back_validated_item' in wfas:
                     last_val_state, last_level = self.context.wfConditions()._getLastValidationState(
                         return_level=True)
@@ -732,13 +732,13 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
             # make sure shortucut transitions are only displayed to relevant user
             proposing_group = self.context.getProposingGroup()
             if proposing_group and \
-               'item_validation_shortcuts' in self.cfg.getWorkflowAdaptations():
+               'item_validation_shortcuts' in self.cfg.workflow_adaptations:
                 pg_groups = self.tool.get_filtered_plone_groups_for_user(
                     org_uids=[proposing_group])
 
             # powerobservers to manage MeetingConfig.hideHistoryTo
             hideHistoryTo_item_values = [
-                v.split('.')[1] for v in self.cfg.getHideHistoryTo()
+                v.split('.')[1] for v in self.cfg.hide_history_to
                 if v.startswith('MeetingItem.')]
             if hideHistoryTo_item_values and \
                isPowerObserverForCfg(
@@ -787,7 +787,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         if useIcons:
             # hide 'duplicate/export_pdf/delete/history' actions from dashboard
             # if not in cfg.itemActionsColumnConfig
-            itemActionsColumnConfig = self.cfg.getItemActionsColumnConfig()
+            itemActionsColumnConfig = self.cfg.item_actions_column_config
             isMeetingManager = self.tool.isManager(self.cfg)
             isManager = self.tool.isManager(realManagers=True)
             if not (
@@ -1419,7 +1419,7 @@ class PMContentHistoryView(IHContentHistoryView):
             # if history shown, check MeetingConfig.hideHistoryTo
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self.context)
-            hideHistoryTo = cfg.getHideHistoryTo()
+            hideHistoryTo = cfg.hide_history_to
             if hideHistoryTo and not tool.isManager(cfg):
                 if self.context.__class__.__name__ == "MeetingItem":
                     # item values are only about powerobservers
@@ -1710,8 +1710,8 @@ class PMCSSIconifiedCategory(IconifiedCategory):
         tool = api.portal.get_tool('portal_plonemeeting')
         advice_style = "standard"
         for cfg in tool.getActiveConfigs(check_using_groups=False):
-            if cfg.getUseAdvices() is True:
-                advice_style = cfg.getAdviceStyle()
+            if cfg.use_advices is True:
+                advice_style = cfg.advice_style
                 break
         new_content = []
         portal_url = api.portal.get().absolute_url()

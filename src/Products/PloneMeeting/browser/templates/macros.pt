@@ -1036,7 +1036,7 @@ The parameter "cFolder" is the folder containing categories.</tal:comment>
 </metal:linkedItems>
 
 <metal:otherMeetingConfigsClonable define-macro="otherMeetingConfigsClonable" i18n:domain="PloneMeeting">
-    <fieldset tal:define="showOtherMeetingConfigsClonableToSpecialFields python: cfg.getMeetingConfigsToCloneTo() and ('otherMeetingConfigsClonableToEmergency' in usedAttrs or 'otherMeetingConfigsClonableToPrivacy' in usedAttrs)"
+    <fieldset tal:define="showOtherMeetingConfigsClonableToSpecialFields python: cfg.meeting_configs_to_clone_to and ('otherMeetingConfigsClonableToEmergency' in usedAttrs or 'otherMeetingConfigsClonableToPrivacy' in usedAttrs)"
           tal:attributes="class python: showOtherMeetingConfigsClonableToSpecialFields and 'item-send-to-other-mc-multiple-fields item-send-to-other-mc' or 'item-send-to-other-mc'">
         <legend i18n:translate="PloneMeeting_label_otherMeetingConfigsClonableTo">Other meeting configs clonable to</legend>
         <div class="other-mc-clonable-to-base-fields">

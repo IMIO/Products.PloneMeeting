@@ -122,7 +122,7 @@ class PMFTWLabelsLabelingViewlet(LabelingViewlet):
     def available(self):
         """ """
         # for PloneMeeting
-        if 'labels' not in self.cfg.getUsedItemAttributes():
+        if 'labels' not in self.cfg.used_item_attributes:
             return False
 
         # override to avoid several calls to self.available_labels

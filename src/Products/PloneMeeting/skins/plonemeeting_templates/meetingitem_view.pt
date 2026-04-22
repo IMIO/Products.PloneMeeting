@@ -21,8 +21,8 @@
                                   member context/@@plone_portal_state/member;
                                   cfg python:tool.getMeetingConfig(context);
                                   meeting python: context.getMeeting();
-                                  usedAttrs python: cfg.getUsedItemAttributes();
-                                  usedMeetingAttrs python: cfg.getUsedMeetingAttributes();
+                                  usedAttrs python: cfg.used_item_attributes;
+                                  usedMeetingAttrs python: cfg.used_meeting_attributes;
                                   context_url python: context.absolute_url();
                                   isVotesEnabled python: context.isVotesEnabled();
                                   showAdvices python: context.adapted().showAdvices();

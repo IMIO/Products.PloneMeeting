@@ -34,7 +34,7 @@ class FTWLabelsVocabulary(object):
         except Exception:
             return SimpleVocabulary(res)
 
-        if cfg and 'labels' in cfg.getUsedItemAttributes():
+        if cfg and 'labels' in cfg.used_item_attributes:
             labels = ILabelJar(cfg).list()
             for label in labels:
                 if label['by_user']:

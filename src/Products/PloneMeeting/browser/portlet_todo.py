@@ -96,7 +96,7 @@ class Renderer(base.Renderer, FacetedRenderer):
         '''Must we show the portlet_todo ?'''
         if not self.cfg:
             return False
-        if self.cfg.getToDoListSearches() and self.getSearches():
+        if self.cfg.to_do_list_searches and self.getSearches():
             return True
         return False
 

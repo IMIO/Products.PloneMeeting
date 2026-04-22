@@ -7,14 +7,10 @@
   <h4 class="inserting-methods-help-msg" i18n:translate="meeting_inserting_methods_help_msg_descr">Parameters of configuration influencing orders of insertion of item in the meeting</h4>
 
   <br />
-  <tal:field define="field python:cfg.getField('insertingMethodsOnAddItem')">
-    <span metal:use-macro="context/widgets/field/macros/view" />
-  </tal:field>
+  <span tal:content="python:view.renderConfigField('insertingMethodsOnAddItem')" />
 
   <tal:fields repeat="field_name view/fieldsToDisplay">
-    <tal:field define="field python:cfg.getField(field_name)">
-      <span metal:use-macro="cfg/widgets/field/macros/view" />
-    </tal:field>
+    <span tal:content="python:view.renderConfigField(field_name)" />
   </tal:fields>
 
   <tal:orgs tal:define="orgs view/orderedOrgs"

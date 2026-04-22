@@ -122,7 +122,7 @@ def votes_default(context):
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(context)
             # only keep NOT_ENCODED_VOTE_VALUE
-            ignored_vote_values = list(cfg.getUsedVoteValues())
+            ignored_vote_values = list(cfg.used_vote_values)
             ignored_vote_values.append(NOT_VOTABLE_LINKED_TO_VALUE)
             last_vote = context.get_item_votes(
                 ignored_vote_values=ignored_vote_values)[-1]

@@ -319,15 +319,15 @@ class testValidators(PloneMeetingTestCase):
         dev_samplers_id = dev_samplers.getId()
         self.assertTrue(dev_samplers in api.group.get_groups())
         # use samplers in MeetingConfig
-        cfg.setSelectableCopyGroups(cfg.getSelectableCopyGroups() + (dev_samplers_id, ))
+        cfg.selectable_copy_groups = cfg.selectable_copy_groups + (dev_samplers_id, )
         validation_error_msg = _('can_not_delete_plone_group_meetingconfig',
                                  mapping={'cfg_url': cfg.absolute_url()})
         _check(validation_error_msg)
         # also check composed values like 'suffix_proposing_group_level1reviewers'
-        cfg.setSelectableCopyGroups(())
-        cfg.setItemAnnexConfidentialVisibleFor(('suffix_proposing_group_samplers', ))
+        cfg.selectable_copy_groups = ()
+        cfg.item_annex_confidential_visible_for = ('suffix_proposing_group_samplers', )
         _check(validation_error_msg, checks=['without', 'disabled'])
-        cfg.setItemAnnexConfidentialVisibleFor(())
+        cfg.item_annex_confidential_visible_for = ()
         # use samplers on item, remove it from MeetingConfig
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -392,14 +392,14 @@ class testValidators(PloneMeetingTestCase):
         orgs[0].groups_in_charge = []
 
         # MeetingConfg.usingGroups
-        cfg.setUsingGroups([orgs[1].UID()])
+        cfg.using_groups = [orgs[1].UID()]
         with self.assertRaises(Invalid) as cm:
             validator.validate([organizations[0]])
         validation_error_msg = _('can_not_unselect_plone_group_meetingconfig',
                                  mapping={'cfg_title': cfg.Title()})
         self.assertEqual(cm.exception.message, validation_error_msg)
         # remove usingGroups so org may be unselected
-        cfg.setUsingGroups([])
+        cfg.using_groups = []
 
         # now org may be unselected
         self.assertIsNone(validator.validate([organizations[0]]))

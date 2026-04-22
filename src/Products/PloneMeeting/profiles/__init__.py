@@ -453,6 +453,24 @@ class MeetingConfigDescriptor(Descriptor):
         return klass.instance
     get = classmethod(get)
 
+    def _normalize_dx_default_value(self, value):
+        if isinstance(value, str):
+            return unicode(value, 'utf-8')
+        if isinstance(value, tuple):
+            return [self._normalize_dx_default_value(element) for element in value]
+        if isinstance(value, list):
+            return [self._normalize_dx_default_value(element) for element in value]
+        if isinstance(value, dict):
+            return dict(
+                (key, self._normalize_dx_default_value(element))
+                for key, element in value.iteritems()
+            )
+        return value
+
+    def _normalize_dx_defaults(self):
+        for name, value in self.__dict__.items():
+            setattr(self, name, self._normalize_dx_default_value(value))
+
     def __init__(self, id, title, folderTitle, isDefault=False, active=True):
         self.id = id  # Identifier of the meeting config.
         self.title = title
@@ -468,7 +486,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.certifiedSignatures = []
         # "Places" describe some predefined places where meetings occur. It is a
         # text widget that should contain one place per line.
-        self.places = ''
+        self.places = u''
         self.budgetDefault = ''
         self.folderTitle = folderTitle
         self.shortName = ''  # Will be used for deducing content types specific
@@ -478,7 +496,7 @@ class MeetingConfigDescriptor(Descriptor):
         # What is the number of the last meeting for this meeting config ?
         self.lastMeetingNumber = 0
         # Reinitialise the meeting number/first_item_number every year ?
-        self.yearlyInitMeetingNumbers = ()
+        self.yearlyInitMeetingNumbers = []
         # If this meeting config corresponds to an organization that identifies
         # its successive forms (ie 5th Parliament, City council 2000-2006, etc),
         # the identifier of the current form may be specified here
@@ -884,6 +902,8 @@ class MeetingConfigDescriptor(Descriptor):
 
         # content_category_groups parameters -----------------------------------
         self.category_group_activated_attrs = {}
+
+        self._normalize_dx_defaults()
 
 
 class PloneMeetingConfiguration(Descriptor):

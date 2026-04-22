@@ -215,11 +215,11 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
                 if IMeeting.providedBy(self.context):
                     # on the meeting
                     if displaying_available_items(self.context):
-                        visibleColumns = cfg.getAvailableItemsListVisibleColumns()
+                        visibleColumns = cfg.available_items_list_visible_columns
                     else:
-                        visibleColumns = cfg.getItemsListVisibleColumns()
+                        visibleColumns = cfg.items_list_visible_columns
                 else:
-                    visibleColumns = cfg.getItemColumns()
+                    visibleColumns = cfg.item_columns
                 staticInfos = obj.restrictedTraverse('@@static-infos')(
                     visibleColumns=visibleColumns)
                 if self.showMoreInfos:
@@ -229,7 +229,7 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
                 annexes = render_item_annexes(obj, tool)
         elif obj.getTagName() == 'Meeting':
             staticInfos = obj.restrictedTraverse('@@static-infos')(
-                visibleColumns=cfg.getMeetingColumns())
+                visibleColumns=cfg.meeting_columns)
             # check_can_view=True because permission check is not enough
             annexes += obj.restrictedTraverse('@@categorized-childs')(
                 portal_type='annex', check_can_view=True)

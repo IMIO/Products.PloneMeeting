@@ -164,7 +164,7 @@ class IMeetingCategory(IConfigElement):
 
 
 class IMeetingConfig(IConfigElement):
-    """Marker interface for .MeetingConfig.MeetingConfig
+    """Marker interface for content.meeting_config.MeetingConfig
     """
 
 

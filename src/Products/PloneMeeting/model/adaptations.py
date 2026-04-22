@@ -164,6 +164,13 @@ def change_transition_new_state_id(wf_id, transition_id, new_state_id):
         transition_id, new_state_id, wf_id))
 
 
+def _workflow_object_id(value):
+    """Return a Zope workflow object id."""
+    if isinstance(value, unicode):
+        return value.encode('utf-8')
+    return value
+
+
 def addState(wf_id,
              new_state_id,
              new_state_title,
@@ -179,6 +186,18 @@ def addState(wf_id,
              old_origin_state_id=None,
              guard_name=None):
     """ """
+    new_state_id = _workflow_object_id(new_state_id)
+    permissions_cloned_state_id = _workflow_object_id(permissions_cloned_state_id)
+    leading_transition_id = _workflow_object_id(leading_transition_id)
+    back_transitions = [_workflow_object_id(transition_id) for transition_id in back_transitions]
+    leaving_transition_id = _workflow_object_id(leaving_transition_id)
+    leaving_to_state_id = _workflow_object_id(leaving_to_state_id)
+    existing_leaving_transition_ids = [
+        _workflow_object_id(transition_id) for transition_id in existing_leaving_transition_ids]
+    existing_back_transition_ids = [
+        _workflow_object_id(transition_id) for transition_id in existing_back_transition_ids]
+    old_origin_state_id = _workflow_object_id(old_origin_state_id)
+
     wfTool = api.portal.get_tool('portal_workflow')
     wf = wfTool.getWorkflowById(wf_id)
     if new_state_id in wf.states:
@@ -214,9 +233,9 @@ def addState(wf_id,
             props={'guard_expr': 'python:here.wfConditions().{0}'.format(guard_name)})
     # back_transition_id
     for back_transition_infos in back_transitions:
-        back_transition_id = back_transition_infos['back_transition_id']
+        back_transition_id = _workflow_object_id(back_transition_infos['back_transition_id'])
         back_transition_title = back_transition_infos['back_transition_title']
-        back_from_state_id = back_transition_infos['back_from_state_id']
+        back_from_state_id = _workflow_object_id(back_transition_infos['back_from_state_id'])
         if back_transition_id not in wf.transitions:
             wf.transitions.addTransition(back_transition_id)
         back_transition = wf.transitions.get(back_transition_id)
@@ -440,7 +459,7 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
     # combinations of adaptations exist, wrong combination of adaptations is
     # performed in meetingConfig.validate_workflowAdaptations.
     # If p_specificAdaptation is passed, just the relevant wfAdaptation is applied.
-    wfAdaptations = meetingConfig.getWorkflowAdaptations()
+    wfAdaptations = meetingConfig.workflow_adaptations
     # make sure given wfAdaptations are in the right order
     # import MeetingConfig only here so we are sure that the 'wfAdaptations' attr
     # has been updated by subplugins if any
@@ -683,7 +702,7 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
             addState(itemWorkflow.id, **level)
 
         # manage item_validation_shortcuts when every states and transitions are created
-        if 'item_validation_shortcuts' in meetingConfig.getWorkflowAdaptations():
+        if 'item_validation_shortcuts' in meetingConfig.workflow_adaptations:
             # every transitions exist, we just need to add it to every item validation states
             back_shortcuts = {}
             # add back transitions
@@ -866,11 +885,11 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
                     decisions_published.setPermission(permission, 0, roles)
                 # Transition "backToPublished" must be protected by a popup, like
                 # any other "correct"-like transition.
-                toConfirm = meetingConfig.getTransitionsToConfirm()
+                toConfirm = meetingConfig.transitions_to_confirm
                 if 'Meeting.backToDecisionsPublished' not in toConfirm:
                     toConfirm = list(toConfirm)
                     toConfirm.append('Meeting.backToDecisionsPublished')
-                    meetingConfig.setTransitionsToConfirm(toConfirm)
+                    meetingConfig.transitions_to_confirm = toConfirm
                 # State "decisions_published" must be selected in decisions DashboardCollections
                 for collection in object_values(meetingConfig.searches.searches_decisions, 'DashboardCollection'):
                     for criterion in collection.query:

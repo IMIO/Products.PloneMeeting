@@ -89,7 +89,7 @@ def lookForAdvisers(group_id):
     # get row_ids of customAdvisers the group_id is used with
     delayAwareCustomAdvisersRowIds = []
     for mc in tool.objectValues('MeetingConfig'):
-        delayAwareCustomAdvisersRowIds += [customAdviser['row_id'] for customAdviser in mc.getCustomAdvisers()
+        delayAwareCustomAdvisersRowIds += [customAdviser['row_id'] for customAdviser in mc.custom_advisers
                                            if (customAdviser['group'] == group_id and customAdviser['delay'])]
     delay_aware_values = [DELAYAWARE_ROW_ID_PATTERN.format(delay_aware_group_id)
                           for delay_aware_group_id in delayAwareCustomAdvisersRowIds]

@@ -60,11 +60,11 @@ class testContacts(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self.changeUser('pmManager')
         # we have selectable contacts
-        self.assertTrue(cfg.getOrderedContacts())
+        self.assertTrue(cfg.ordered_contacts)
         # create meeting and select attendees on it
         meeting = self.create('Meeting')
         # contacts are still in correct order
-        self.assertEqual(cfg.getOrderedContacts(), meeting.get_attendees())
+        self.assertEqual(cfg.ordered_contacts, meeting.get_attendees())
 
     def test_pm_Get_all_usable_held_positions(self):
         ''' '''
@@ -96,13 +96,13 @@ class testContacts(PloneMeetingTestCase):
             meeting.get_all_attendees(the_objects=False),
             get_all_usable_held_positions(meeting, the_objects=False))
         # select new hp
-        ordered_contacts = cfg.getField('orderedContacts').Vocabulary(cfg).keys()
-        cfg.setOrderedContacts(ordered_contacts)
+        ordered_contacts = cfg._dx_field_vocabulary_values('orderedContacts')
+        cfg.ordered_contacts = ordered_contacts
         self.assertEqual(
             meeting.get_all_attendees(the_objects=True) + (new_hp, ),
             get_all_usable_held_positions(meeting))
         # unselect everything on MeetingConfig, all values still available on meeting
-        cfg.setOrderedContacts(())
+        cfg.ordered_contacts = ()
         self.assertEqual(
             meeting.get_all_attendees(the_objects=True),
             get_all_usable_held_positions(meeting))
@@ -123,9 +123,9 @@ class testContacts(PloneMeetingTestCase):
 
         # unselect from MeetingConfig.orderedContacts,
         # still not deletable because used by a meeting
-        orderedContacts = list(cfg.getOrderedContacts())
+        orderedContacts = list(cfg.ordered_contacts)
         orderedContacts.remove(hp_uid)
-        cfg.setOrderedContacts(orderedContacts)
+        cfg.ordered_contacts = orderedContacts
         self.assertRaises(BeforeDeleteException, api.content.delete, hp)
 
         # unselect hp from meeting, now it is deletable
@@ -133,7 +133,7 @@ class testContacts(PloneMeetingTestCase):
         self.assertFalse(hp_uid in meeting.get_attendees())
 
         # test that held positition cannot be delete if used for itemInitiator
-        cfg.setOrderedItemInitiators((hp_uid,))
+        cfg.ordered_item_initiators = (hp_uid,)
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
         self.presentItem(item)
@@ -146,9 +146,9 @@ class testContacts(PloneMeetingTestCase):
 
         # unselect from MeetingConfig.orderedItemInitiators,
         # still not deletable because used by a meeting item
-        orderedItemInitiators = list(cfg.getOrderedItemInitiators())
+        orderedItemInitiators = list(cfg.ordered_item_initiators)
         orderedItemInitiators.remove(hp_uid)
-        cfg.setOrderedItemInitiators(orderedItemInitiators)
+        cfg.ordered_item_initiators = orderedItemInitiators
         self.assertRaises(BeforeDeleteException, api.content.delete, hp)
 
         # unselect hp from meeting item, now it is deletable
@@ -174,9 +174,9 @@ class testContacts(PloneMeetingTestCase):
              'date_to': '',
              },
         ]
-        cfg.setCertifiedSignatures(certified)
+        cfg.certified_signatures = certified
         self.assertRaises(BeforeDeleteException, api.content.delete, hp)
-        cfg.setCertifiedSignatures([])
+        cfg.certified_signatures = []
         # organization
         group_certified_signatures = [
             {'signature_number': '2',
@@ -1335,7 +1335,7 @@ class testContacts(PloneMeetingTestCase):
 
     def test_pm_Print_attendees(self):
         """Basic test for the print_attendees method."""
-        self.meetingConfig.setUseVotes(True)
+        self.meetingConfig.use_votes = True
         meeting, meeting_attendees, item1, item2, item3 = self._setupInAndOutAttendees()
         # item
         view = item1.restrictedTraverse('document-generation')
@@ -1459,7 +1459,7 @@ class testContacts(PloneMeetingTestCase):
 
     def test_pm_Print_attendees_by_type(self):
         """Basic test for the print_attendees method."""
-        self.meetingConfig.setUseVotes(True)
+        self.meetingConfig.use_votes = True
         meeting, meeting_attendees, item1, item2, item3 = self._setupInAndOutAttendees()
         # item
         view = item1.restrictedTraverse('document-generation')
@@ -1700,10 +1700,10 @@ class testContacts(PloneMeetingTestCase):
            it should raise if it is used somewhere...'''
         disable_link_integrity_checks()
         cfg = self.meetingConfig
-        cfg.setSelectableAdvisers(())
-        cfg.setOrderedGroupsInCharge(())
+        cfg.selectable_advisers = ()
+        cfg.ordered_groups_in_charge = ()
         cfg2 = self.meetingConfig2
-        cfg2.setOrderedGroupsInCharge(())
+        cfg2.ordered_groups_in_charge = ()
         self.changeUser('pmManager')
         # delete recurring items, just keep item templates
         self._removeConfigObjectsFor(cfg, folders=['recurringitems', ])
@@ -1719,12 +1719,12 @@ class testContacts(PloneMeetingTestCase):
 
         # 1) fails because used in the configuration, in
         # selectableCopyGroups, selectableAdvisers, customAdvisers, powerAdvisersGroups or usingGroups
-        self.failIf(cfg.getCustomAdvisers())
-        self.failIf(cfg.getPowerAdvisersGroups())
-        self.failIf(cfg.getSelectableAdvisers())
-        self.failIf(cfg.getOrderedAssociatedOrganizations())
-        self.failIf(cfg.getOrderedGroupsInCharge())
-        self.assertIn(self.developers_reviewers, cfg.getSelectableCopyGroups())
+        self.failIf(cfg.custom_advisers)
+        self.failIf(cfg.power_advisers_groups)
+        self.failIf(cfg.selectable_advisers)
+        self.failIf(cfg.ordered_associated_organizations)
+        self.failIf(cfg.ordered_groups_in_charge)
+        self.assertIn(self.developers_reviewers, cfg.selectable_copy_groups)
         can_not_delete_organization_meetingconfig = \
             translate('can_not_delete_organization_meetingconfig',
                       domain="plone",
@@ -1736,21 +1736,21 @@ class testContacts(PloneMeetingTestCase):
                 self.developers_uid, catch_before_delete_exception=False)
         self.assertEqual(cm.exception.message, can_not_delete_organization_meetingconfig)
         # so remove selectableCopyGroups from the meetingConfigs
-        cfg.setSelectableCopyGroups(())
-        cfg2.setSelectableCopyGroups(())
+        cfg.selectable_copy_groups = ()
+        cfg2.selectable_copy_groups = ()
 
         # define selectableAdvisers, the exception is also raised
-        cfg.setSelectableAdvisers((self.developers_uid, ))
+        cfg.selectable_advisers = (self.developers_uid, )
         transaction.commit()
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 self.developers_uid, catch_before_delete_exception=False)
         self.assertEqual(cm.exception.message, can_not_delete_organization_meetingconfig)
         # so remove selectableAdvisers
-        cfg.setSelectableAdvisers(())
+        cfg.selectable_advisers = ()
 
         # define customAdvisers, the exception is also raised
-        cfg.setCustomAdvisers(
+        cfg.custom_advisers = (
             [{'row_id': 'unique_id_123',
               'org': self.developers_uid,
               'delay': '5', }, ])
@@ -1760,47 +1760,47 @@ class testContacts(PloneMeetingTestCase):
                 self.developers_uid, catch_before_delete_exception=False)
         self.assertEqual(cm.exception.message, can_not_delete_organization_meetingconfig)
         # so remove customAdvisers
-        cfg.setCustomAdvisers([])
+        cfg.custom_advisers = []
 
         # define powerAdvisersGroups, the exception is also raised
-        cfg.setPowerAdvisersGroups([self.developers_uid, ])
+        cfg.power_advisers_groups = [self.developers_uid, ]
         transaction.commit()
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 self.developers_uid, catch_before_delete_exception=False)
         self.assertEqual(cm.exception.message, can_not_delete_organization_meetingconfig)
         # so remove powerAdvisersGroups
-        cfg.setPowerAdvisersGroups([])
+        cfg.power_advisers_groups = []
 
         # define usingGroups, the exception is also raised
-        cfg.setUsingGroups([self.developers_uid, ])
+        cfg.using_groups = [self.developers_uid, ]
         transaction.commit()
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 self.developers_uid, catch_before_delete_exception=False)
         self.assertEqual(cm.exception.message, can_not_delete_organization_meetingconfig)
         # so remove usingGroups
-        cfg.setUsingGroups([])
+        cfg.using_groups = []
 
         # define orderedAssociatedOrganizations, the exception is also raised
-        cfg.setOrderedAssociatedOrganizations([self.developers_uid, ])
+        cfg.ordered_associated_organizations = [self.developers_uid, ]
         transaction.commit()
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 self.developers_uid, catch_before_delete_exception=False)
         self.assertEqual(cm.exception.message, can_not_delete_organization_meetingconfig)
         # so remove orderedAssociatedOrganizations
-        cfg.setOrderedAssociatedOrganizations([])
+        cfg.ordered_associated_organizations = []
 
         # define orderedGroupsInCharge, the exception is also raised
-        cfg.setOrderedGroupsInCharge([self.developers_uid, ])
+        cfg.ordered_groups_in_charge = [self.developers_uid, ]
         transaction.commit()
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 self.developers_uid, catch_before_delete_exception=False)
         self.assertEqual(cm.exception.message, can_not_delete_organization_meetingconfig)
         # so remove orderedGroupsInCharge
-        cfg.setOrderedGroupsInCharge([])
+        cfg.ordered_groups_in_charge = []
 
         # 2) fails because the corresponding Plone groups are not empty
         transaction.commit()
@@ -2046,11 +2046,11 @@ class testContacts(PloneMeetingTestCase):
         cfg.itemtemplates.manage_delObjects(['template2', ])
         # and remove 'vendors_reviewers' from every MeetingConfig.selectableCopyGroups
         # and 'vendors' from every MeetingConfig.selectableAdvisers
-        cfg.setSelectableCopyGroups((self.developers_reviewers, ))
-        cfg.setOrderedGroupsInCharge(())
-        cfg2.setOrderedGroupsInCharge(())
-        cfg2.setSelectableAdvisers((self.developers_uid, ))
-        cfg2.setSelectableCopyGroups((self.developers_reviewers, ))
+        cfg.selectable_copy_groups = (self.developers_reviewers, )
+        cfg.ordered_groups_in_charge = ()
+        cfg2.ordered_groups_in_charge = ()
+        cfg2.selectable_advisers = (self.developers_uid, )
+        cfg2.selectable_copy_groups = (self.developers_reviewers, )
         # and remove users from vendors Plone groups
         for ploneGroup in get_plone_groups(self.vendors_uid):
             for memberId in ploneGroup.getGroupMemberIds():
@@ -2107,7 +2107,7 @@ class testContacts(PloneMeetingTestCase):
              'date_to': '',
              },
         ]
-        cfg.setCertifiedSignatures(certified)
+        cfg.certified_signatures = certified
         # called without computed=True, the actual values defined on the MeetingGroup is returned
         self.assertEqual(self.vendors.get_certified_signatures(), [])
         # with a cfg, cfg values are returned if not overrided
@@ -2237,12 +2237,12 @@ class testContacts(PloneMeetingTestCase):
         cfg2 = self.meetingConfig2
         self.changeUser('admin')
         # for now, the 'developers_reviewers' is in self.meetingConfig.selectableCopyGroups
-        self.assertTrue(self.developers_reviewers in cfg.getSelectableCopyGroups())
-        self.assertTrue(self.developers_reviewers in cfg2.getSelectableCopyGroups())
+        self.assertTrue(self.developers_reviewers in cfg.selectable_copy_groups)
+        self.assertTrue(self.developers_reviewers in cfg2.selectable_copy_groups)
         # when deactivated, it is no more the case...
         self._select_organization(self.developers_uid, remove=True)
-        self.assertTrue(self.developers_reviewers not in cfg.getSelectableCopyGroups())
-        self.assertTrue(self.developers_reviewers not in cfg2.getSelectableCopyGroups())
+        self.assertTrue(self.developers_reviewers not in cfg.selectable_copy_groups)
+        self.assertTrue(self.developers_reviewers not in cfg2.selectable_copy_groups)
 
     def test_pm_WarnUserWhenAddingNewOrgOutiseOwnOrg(self):
         """ """

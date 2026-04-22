@@ -160,7 +160,7 @@ class MeetingWorkflowConditions(object):
         meeting_state = self.context.query_state()
         if meeting_state == 'closed':
             if self.tool.isManager(realManagers=True) or \
-               'meetingmanager_correct_closed_meeting' in self.cfg.getWorkflowAdaptations():
+               'meetingmanager_correct_closed_meeting' in self.cfg.workflow_adaptations:
                 return True
             else:
                 return No(_('closed_meeting_not_correctable_by_config'))
@@ -210,12 +210,12 @@ class MeetingWorkflowActions(object):
             if prev and \
                (prev.getDate().year() != self.context.getDate().year()):
                 self.context.setMeetingNumber(1)
-                self.cfg.setLastMeetingNumber(1)
+                self.cfg.last_meeting_number = 1
                 return
         # If we are here, we must simply increment the meeting number.
-        meetingNumber = self.cfg.getLastMeetingNumber() + 1
+        meetingNumber = self.cfg.last_meeting_number + 1
         self.context.setMeetingNumber(meetingNumber)
-        self.cfg.setLastMeetingNumber(meetingNumber)
+        self.cfg.last_meeting_number = meetingNumber
 
     security.declarePrivate('doPublish')
 
@@ -245,7 +245,7 @@ class MeetingWorkflowActions(object):
         self.context.setFirstItemNumber(unrestrictedMethodsView.findFirstItemNumber())
         self.context.updateItemReferences()
         # remove annex previews of every items if relevant
-        if self.cfg.getRemoveAnnexesPreviewsOnMeetingClosure():
+        if self.cfg.remove_annexes_previews_on_meeting_closure:
             # add logging message to fingerpointing log
             for item in self.context.get_items(ordered=True):
                 annexes = get_annexes(item)
@@ -830,9 +830,9 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(self)
         # some columns are displayed in the 'Purpose' column
         if displaying_available_items(self):
-            visibleCols = cfg.getAvailableItemsListVisibleColumns()
+            visibleCols = cfg.available_items_list_visible_columns
         else:
-            visibleCols = cfg.getItemsListVisibleColumns()
+            visibleCols = cfg.items_list_visible_columns
         itemsListVisibleColumns = [col for col in visibleCols if not col.startswith('static_')]
         itemsListVisibleColumns.insert(0, u'pretty_link')
         if not displaying_available_items(self):
@@ -988,7 +988,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             # this is the case while adding new contact and editing existing meeting
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self)
-            selectable_contacts = cfg.getOrderedContacts()
+            selectable_contacts = cfg.ordered_contacts
             new_selectable_contacts = [c for c in selectable_contacts if c not in contacts]
             contacts = contacts + new_selectable_contacts
 
@@ -1544,16 +1544,16 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         isLate = not forceNormal and item.wfConditions().isLateFor(self)
         if isLate:
             item.setListType(item.adapted().getListTypeLateValue(self))
-            toDiscussValue = cfg.getToDiscussLateDefault()
+            toDiscussValue = cfg.to_discuss_late_default
         else:
             item.setListType(item.adapted().getListTypeNormalValue(self))
-            toDiscussValue = cfg.getToDiscussDefault()
+            toDiscussValue = cfg.to_discuss_default
         items = self.get_items(ordered=True)
         # Set the correct value for the 'toDiscuss' field if required
-        if cfg.getToDiscussSetOnItemInsert():
+        if cfg.to_discuss_set_on_item_insert:
             item.setToDiscuss(toDiscussValue)
         # At what place must we insert the item in the list ?
-        insertMethods = cfg.getInsertingMethodsOnAddItem()
+        insertMethods = cfg.inserting_methods_on_add_item
         # wipe out insert methods as stored value is a DataGridField
         # and we only need a tuple of insert methods
         insertAtTheEnd = False
@@ -1744,7 +1744,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         if self.attribute_is_used('signatures'):
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self)
-            return cfg.getSignatures()
+            return cfg.signatures
         return ''
 
     security.declarePrivate('updateTitle')
@@ -1778,7 +1778,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
            meeting date when relevant.'''
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        usedAttrs = cfg.getUsedMeetingAttributes()
+        usedAttrs = cfg.used_meeting_attributes
         meetingDate = self.getDate()
         # Initialize the effective start date with the meeting date
         if 'startDate' in usedAttrs:
@@ -1796,7 +1796,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                 self.setDeadlinePublish(getDateFromDelta(meetingDate, '-' + delta))
         if 'deadlineFreeze' in usedAttrs and not self.getDeadlineFreeze():
             # Compute the freeze deadline
-            delta = cfg.getFreezeDeadlineDefault()
+            delta = cfg.freeze_deadline_default
             if not delta.strip() in ('', '0',):
                 self.setDeadlineFreeze(getDateFromDelta(meetingDate, '-' + delta))
         if 'preMeetingDate' in usedAttrs and not self.getPreMeetingDate():
@@ -1932,7 +1932,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         self.updateContacts()
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        self.setMeetingConfigVersion(cfg.getConfigVersion())
+        self.setMeetingConfigVersion(cfg.config_version)
         # addRecurringItemsIfRelevant(self, '_init_')
         # Apply potential transformations to richtext fields
         transformAllRichTextFields(self)
@@ -2029,7 +2029,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = extra_expr_ctx['cfg']
         cfg_id = cfg.getId()
         meetingState = self.query_state()
-        for po_infos in cfg.getPowerObservers():
+        for po_infos in cfg.power_observers:
             if meetingState in po_infos['meeting_states'] and \
                _evaluateExpression(self,
                                    expression=po_infos['meeting_access_on'],
@@ -2078,7 +2078,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         '''Is the attribute named p_name used in this meeting config ?'''
         tool = api.portal.get_tool('portal_plonemeeting')
         meetingConfig = tool.getMeetingConfig(self)
-        return (name in meetingConfig.getUsedMeetingAttributes())
+        return (name in meetingConfig.used_meeting_attributes)
 
     def query_state_cachekey(method, self):
         '''cachekey method for self.query_state.'''
@@ -2210,7 +2210,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
            - not empty assembly fields.'''
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        usedAttrs = cfg.getUsedMeetingAttributes()
+        usedAttrs = cfg.used_meeting_attributes
         # get assembly fields
         fields = cfg._assembly_fields(field_name=False)
         return [field.getName() for field in fields
@@ -2243,7 +2243,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         meeting = self.getSelf()
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(meeting)
-        if cfg.getUseVotes() or meeting.get_voters():
+        if cfg.use_votes or meeting.get_voters():
             res = True
         return res
 
@@ -2315,7 +2315,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         '''
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        usedMeetingAttributes = cfg.getUsedMeetingAttributes()
+        usedMeetingAttributes = cfg.used_meeting_attributes
         if 'assemblyExcused' in usedMeetingAttributes or \
            'assemblyAbsents' in usedMeetingAttributes:
             return _('PloneMeeting_label_attendees')

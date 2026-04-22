@@ -122,7 +122,7 @@ class testPortlets(PloneMeetingTestCase):
         searchAllItems.tal_condition = ''
         searchAllItemsUID = searchAllItems.UID()
         # select 'searchallitems' in the MeetingConfig.toDoListSearches
-        cfg.setToDoListSearches([searchAllItemsUID])
+        cfg.to_do_list_searches = [searchAllItemsUID]
 
         # viewable in portlet_plonemeeting
         self.changeUser('pmCreator1')
@@ -153,9 +153,9 @@ class testPortlets(PloneMeetingTestCase):
         self._setup_portlets()
         # select 'searchallitems' in the MeetingConfig.toDoListSearches
         searchAllItemsUID = cfg.searches.searches_items.searchallitems.UID()
-        cfg.setToDoListSearches([searchAllItemsUID])
+        cfg.to_do_list_searches = [searchAllItemsUID]
         searchAllItemsUID = cfg2.searches.searches_items.searchallitems.UID()
-        cfg2.setToDoListSearches([searchAllItemsUID])
+        cfg2.to_do_list_searches = [searchAllItemsUID]
         # enable rendering of portlet_todo, updated thru external view
         self.request.set('load_portlet_todo', True)
 

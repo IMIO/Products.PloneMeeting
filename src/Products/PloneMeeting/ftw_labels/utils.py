@@ -39,7 +39,7 @@ def compute_labels_access(adapter,
     """ """
     data = {}
     extra_expr_ctx = None
-    for config in cfg.getLabelsConfig():
+    for config in cfg.labels_config:
         data[config['label_id']] = {}
         # view
         if "view" in modes:
@@ -106,7 +106,7 @@ def filter_access_global_labels(jar, mode='view'):
             adapter, cfg, force_compute_tal_expr=True, modes=[mode])
         # add "view_groups_excluding" from config that is not in labels_access
         # turn "0" to False and "1" to True
-        for config in cfg.getLabelsConfig():
+        for config in cfg.labels_config:
             labels_access[config['label_id']]['%s_groups_excluding' % mode] = \
                 boolean_value(config['%s_groups_excluding' % mode])
     else:
