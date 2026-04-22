@@ -5,8 +5,9 @@
          meta_type="Factory-based Type Information with dynamic views"/>
  <object name="ToolPloneMeeting"
          meta_type="Factory-based Type Information with dynamic views"/>
- <object name="MeetingConfig"
-         meta_type="Factory-based Type Information with dynamic views"/>
+ <!-- migrate MeetingConfig portal_type (AT to DX), remove it and add it just under -->
+ <object name="MeetingConfig" meta_type="Factory-based Type Information with dynamic views" remove="True"/>
+ <object name="MeetingConfig" meta_type="Dexterity FTI"/>
  <object name="Plone Site"
          meta_type="Factory-based Type Information with dynamic views"/>
  <object name="meetingadvice" meta_type="Dexterity FTI"/>

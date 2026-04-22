@@ -65,6 +65,8 @@
 
   <permission id="PloneMeeting.AddMeeting"
               title="PloneMeeting: Add Meeting" />
+  <permission id="PloneMeeting.AddMeetingConfig"
+              title="PloneMeeting: Manage configuration" />
   <permission id="PloneMeeting.AddAdvice"
               title="PloneMeeting: Add advice" />
   <permission id="PloneMeeting.AddAnnex"

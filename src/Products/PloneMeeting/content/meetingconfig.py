@@ -52,6 +52,7 @@ from plone.restapi.deserializer import boolean_value
 from plone.supermodel import model
 from Products.Archetypes.atapi import DisplayList
 from Products.Archetypes.atapi import IntDisplayList
+from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFPlone.utils import base_hasattr
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import ADVICE_TYPES
@@ -134,6 +135,71 @@ import html
 import itertools
 import logging
 import os
+import re
+
+
+# ---------------------------------------------------------------------------
+# AT camelCase → DX snake_case field name mapping (used for dynamic lookups)
+# ---------------------------------------------------------------------------
+
+# Full rename table — only entries where camelCase != simple snake_case conversion
+_AT_CAMEL_TO_DX_SNAKE = {
+    'usingGroups': 'using_groups',
+    'workflowAdaptations': 'wf_adaptations',
+    'usedVoteValues': 'used_vote_values',
+    'firstLinkedVoteUsedVoteValues': 'first_linked_vote_used_vote_values',
+    'nextLinkedVotesUsedVoteValues': 'next_linked_votes_used_vote_values',
+    'itemWFValidationLevels': 'item_wf_validation_levels',
+    'labelsConfig': 'labels_config',
+    'itemFieldsConfig': 'item_fields_config',
+    'orderedItemInitiators': 'ordered_item_initiators',
+    'orderedAssociatedOrganizations': 'ordered_associated_organizations',
+    'orderedGroupsInCharge': 'ordered_groups_in_charge',
+    'maxShownListings': 'max_shown_listings',
+    'toDoListSearches': 'to_do_list_searches',
+    'configGroup': 'config_group',
+    'certifiedSignatures': 'certified_signatures',
+    'committees': 'committees',
+    'advicesKeptOnSentToOtherMC': 'advices_kept_on_sent_to_other_mc',
+    'itemWorkflow': 'item_workflow',
+    'meetingWorkflow': 'meeting_workflow',
+    # WF attrs used by _check_wf_used_in_config
+    'itemAdviceStates': 'item_advice_states',
+    'itemAdviceEditStates': 'item_advice_edit_states',
+    'itemAdviceViewStates': 'item_advice_view_states',
+    'itemAdviceInvalidateStates': 'item_advice_invalidate_states',
+    'itemAutoSentToOtherMCStates': 'item_auto_sent_to_other_mc_states',
+    'itemBudgetInfosStates': 'item_budget_infos_states',
+    'itemCommitteesStates': 'item_committees_states',
+    'itemCommitteesViewStates': 'item_committees_view_states',
+    'itemCopyGroupsStates': 'item_copy_groups_states',
+    'itemGroupsInChargeStates': 'item_groups_in_charge_states',
+    'itemManualSentToOtherMCStates': 'item_manual_sent_to_other_mc_states',
+    'itemObserversStates': 'item_observers_states',
+    'recordItemHistoryStates': 'record_item_history_states',
+    'powerObservers': 'power_observers',
+    'transitionsReinitializingDelays': 'transitions_reinitializing_delays',
+    'transitionsToConfirm': 'transitions_to_confirm',
+    'mailItemEvents': 'mail_item_events',
+    'onTransitionFieldTransforms': 'on_transition_field_transforms',
+    'onMeetingTransitionItemActionToExecute': 'on_meeting_transition_item_action_to_execute',
+    'itemPreferredMeetingStates': 'item_preferred_meeting_states',
+    'meetingPresentItemWhenNoCurrentMeetingStates': 'meeting_present_item_when_no_current_meeting_states',
+    'mailMeetingEvents': 'mail_meeting_events',
+    # update_cfgs callers
+    'places': 'places',
+    'meetingConfigsToCloneTo': 'meeting_configs_to_clone_to',
+}
+
+
+def _at_to_dx(camel_name):
+    """Map an AT camelCase field name to the DX snake_case attribute name."""
+    if camel_name in _AT_CAMEL_TO_DX_SNAKE:
+        return _AT_CAMEL_TO_DX_SNAKE[camel_name]
+    # Fallback: regex-based camelCase → snake_case
+    name = re.sub(r'([A-Z]+)([A-Z][a-z])', r'\1_\2', camel_name)
+    name = re.sub(r'([a-z\d])([A-Z])', r'\1_\2', name)
+    return name.lower()
 
 
 # ---------------------------------------------------------------------------
@@ -147,6 +213,8 @@ for _dv_attr in [a for a in dir(defValues) if not a.startswith('_')]:
     _dv_val = getattr(defValues, _dv_attr, None)
     if isinstance(_dv_val, str):
         setattr(defValues, _dv_attr, safe_unicode(_dv_val))
+    elif isinstance(_dv_val, tuple):
+        setattr(defValues, _dv_attr, list(_dv_val))
 del _dv_attr, _dv_val
 
 
@@ -844,7 +912,7 @@ class IMeetingConfig(IMeetingConfigMarker):
         title=_(u'title_default_assembly'),
         description=_(u'assembly_descr', default=u'Assembly'),
         required=False,
-        default=defValues.certifiedSignatures,
+        default=defValues.assembly,
     )
 
     form.widget('assembly_staves', PMTextAreaFieldWidget)
@@ -870,6 +938,7 @@ class IMeetingConfig(IMeetingConfigMarker):
         description=_(u'certified_signatures_descr', default=u'CertifiedSignatures'),
         value_type=DictRow(schema=ICertifiedSignaturesRowSchema),
         required=False,
+        default=defValues.certifiedSignatures,
     )
 
     form.widget('ordered_contacts', PMOrderedSelectFieldWidget)
@@ -2416,6 +2485,11 @@ class MeetingConfig(Container):
 
     meta_type = 'MeetingConfig'
 
+    # Class-level constants carried over from the AT class
+    metaTypes = ('MeetingItem', 'MeetingItemTemplate', 'MeetingItemRecurring', 'Meeting')
+    metaNames = ('Item', 'ItemTemplate', 'ItemRecurring', 'Meeting')
+    defaultWorkflows = ('meetingitem_workflow', 'meeting_workflow')
+
     # ---------------------------------------------------------------
     # Business methods migrated from Archetypes MeetingConfig class
     # ---------------------------------------------------------------
@@ -2494,7 +2568,7 @@ class MeetingConfig(Container):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: 'takenOverBy' in cfg.getUsedItemAttributes() "
+                    'tal_condition': "python: 'takenOverBy' in cfg.used_item_attributes "
                                      "and (tool.get_orgs_for_user(omitted_suffixes=['observers', ]) "
                                      "or tool.isManager(cfg))",
                     'roles_bypassing_talcondition': ['Manager', ]
@@ -2550,7 +2624,7 @@ class MeetingConfig(Container):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: 'labels' in cfg.getUsedItemAttributes() and "
+                    'tal_condition': "python: 'labels' in cfg.used_item_attributes and "
                         "cfg.show_copy_groups_search()",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
@@ -2620,11 +2694,11 @@ class MeetingConfig(Container):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': True,
-                    'tal_condition': "python: cfg.getUseAdvices() and "
-                        "cfg.getSelectableAdviserUsers() and "
+                    'tal_condition': "python: cfg.use_advices and "
+                        "cfg.selectable_adviser_users and "
                         "tool.userIsAmong(['advisers'], "
                         "cfg=cfg, "
-                        "using_groups=cfg.getSelectableAdviserUsers())",
+                        "using_groups=cfg.selectable_adviser_users)",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items to advice
@@ -2640,7 +2714,7 @@ class MeetingConfig(Container):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': True,
-                    'tal_condition': "python: cfg.getUseAdvices() and tool.userIsAmong(['advisers'], cfg=cfg)",
+                    'tal_condition': "python: cfg.use_advices and tool.userIsAmong(['advisers'], cfg=cfg)",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items to advice without delay
@@ -2656,7 +2730,7 @@ class MeetingConfig(Container):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': True,
-                    'tal_condition': "python: cfg.getUseAdvices() and tool.userIsAmong(['advisers'], cfg=cfg)",
+                    'tal_condition': "python: cfg.use_advices and tool.userIsAmong(['advisers'], cfg=cfg)",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items to advice with delay
@@ -2672,7 +2746,7 @@ class MeetingConfig(Container):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': True,
-                    'tal_condition': "python: cfg.getUseAdvices() and tool.userIsAmong(['advisers'], cfg=cfg)",
+                    'tal_condition': "python: cfg.use_advices and tool.userIsAmong(['advisers'], cfg=cfg)",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items to advice with exceeded delay
@@ -2688,7 +2762,7 @@ class MeetingConfig(Container):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: cfg.getUseAdvices() and tool.userIsAmong(['advisers'], cfg=cfg)",
+                    'tal_condition': "python: cfg.use_advices and tool.userIsAmong(['advisers'], cfg=cfg)",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Every advised items
@@ -2704,7 +2778,7 @@ class MeetingConfig(Container):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: cfg.getUseAdvices() and tool.userIsAmong(['advisers'], cfg=cfg)",
+                    'tal_condition': "python: cfg.use_advices and tool.userIsAmong(['advisers'], cfg=cfg)",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Advised items with delay
@@ -2720,7 +2794,7 @@ class MeetingConfig(Container):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: cfg.getUseAdvices() and tool.userIsAmong(['advisers'], cfg=cfg)",
+                    'tal_condition': "python: cfg.use_advices and tool.userIsAmong(['advisers'], cfg=cfg)",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items to correct
@@ -2737,11 +2811,11 @@ class MeetingConfig(Container):
                     'sort_reversed': True,
                     'showNumberOfItems': True,
                     'tal_condition': "python: tool.userIsAmong(['creators'], cfg=cfg) and "
-                                     "('return_to_proposing_group' in cfg.getWorkflowAdaptations() or "
+                                     "('return_to_proposing_group' in cfg.wf_adaptations or "
                                      "'return_to_proposing_group_with_all_validations' "
-                                     "in cfg.getWorkflowAdaptations() or "
+                                     "in cfg.wf_adaptations or "
                                      "'return_to_proposing_group_with_last_validation' "
-                                     "in cfg.getWorkflowAdaptations())",
+                                     "in cfg.wf_adaptations)",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items to correct to validate
@@ -2759,9 +2833,9 @@ class MeetingConfig(Container):
                     'showNumberOfItems': True,
                     'tal_condition': "python: cfg.userIsAReviewer() and "
                                      "('return_to_proposing_group_with_all_validations' "
-                                     "in cfg.getWorkflowAdaptations() or "
+                                     "in cfg.wf_adaptations or "
                                      "'return_to_proposing_group_with_last_validation' "
-                                     "in cfg.getWorkflowAdaptations())",
+                                     "in cfg.wf_adaptations)",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Validable "Items to correct"
@@ -2779,7 +2853,7 @@ class MeetingConfig(Container):
                     'showNumberOfItems': True,
                     'tal_condition': "python: tool.userIsAmong(['creators'], cfg=cfg) and "
                                      "('return_to_proposing_group_with_all_validations' "
-                                     "in cfg.getWorkflowAdaptations())",
+                                     "in cfg.wf_adaptations)",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Unread items
@@ -2798,7 +2872,7 @@ class MeetingConfig(Container):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: 'labels' in cfg.getUsedItemAttributes()",
+                    'tal_condition': "python: 'labels' in cfg.used_item_attributes",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Unread to follow
@@ -2817,7 +2891,7 @@ class MeetingConfig(Container):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: 'labels' in cfg.getUsedItemAttributes()",
+                    'tal_condition': "python: 'labels' in cfg.used_item_attributes",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Corrected items
@@ -2837,10 +2911,10 @@ class MeetingConfig(Container):
                     'sort_reversed': True,
                     'showNumberOfItems': False,
                     'tal_condition': "python: tool.isManager(cfg) and "
-                                     "('return_to_proposing_group' in cfg.getWorkflowAdaptations() or "
+                                     "('return_to_proposing_group' in cfg.wf_adaptations or "
                                      "'return_to_proposing_group_with_all_validations' in "
-                                     "cfg.getWorkflowAdaptations() or 'return_to_proposing_group_with_last_validation' "
-                                     "in cfg.getWorkflowAdaptations())",
+                                     "cfg.wf_adaptations or 'return_to_proposing_group_with_last_validation' "
+                                     "in cfg.wf_adaptations)",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Decided items
@@ -2878,7 +2952,7 @@ class MeetingConfig(Container):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: 'labels' in cfg.getUsedItemAttributes()",
+                    'tal_condition': "python: 'labels' in cfg.used_item_attributes",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items of my committees
@@ -2931,7 +3005,7 @@ class MeetingConfig(Container):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': True,
-                    'tal_condition': "python: 'neededFollowUp' in cfg.getUsedItemAttributes() and "
+                    'tal_condition': "python: 'neededFollowUp' in cfg.used_item_attributes and "
                         "tool.get_orgs_for_user(omitted_suffixes=['observers', ])",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
@@ -2951,7 +3025,7 @@ class MeetingConfig(Container):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: 'providedFollowUp' in cfg.getUsedItemAttributes() and "
+                    'tal_condition': "python: 'providedFollowUp' in cfg.used_item_attributes and "
                         "tool.get_orgs_for_user(omitted_suffixes=['observers', ])",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
@@ -3050,8 +3124,8 @@ class MeetingConfig(Container):
     security.declarePrivate('setAllItemTagsField')
     def setAllItemTagsField(self):
         '''Sets the correct value for the field "allItemTags".'''
-        tags = [t.strip() for t in self.getAllItemTags().split('\n')]
-        if self.getSortAllItemTags():
+        tags = [t.strip() for t in self.all_item_tags.split('\n')]
+        if self.sort_all_item_tags:
             tags.sort()
         self.setAllItemTags('\n'.join(tags))
 
@@ -3086,7 +3160,7 @@ class MeetingConfig(Container):
             if not v.get('row_id', None):
                 v['row_id'] = 'powerobservers_{0}'.format(self.generateUniqueId())
         # get removed row_ids and remove linked Plone group
-        storedRowIds = [v['row_id'].strip() for v in self.getPowerObservers()]
+        storedRowIds = [v['row_id'].strip() for v in self.power_observers]
         rowIds = [v['row_id'].strip() for v in value
                   if v.get('orderindex_', None) != 'template_row_marker']
         removedRowIds = [storedRowId for storedRowId in storedRowIds
@@ -3163,25 +3237,25 @@ class MeetingConfig(Container):
            by the onConfigModified event.'''
         # make sure we do not get a [''] as value
         value = [v for v in value if v]
-        stored = self.getField('usingGroups').get(self, **kwargs)
+        stored = self.using_groups
         self.REQUEST.set('need_update_%s' % MEETING_REMOVE_MOG_WFA, False)
         if not stored and value:
             # enabling usingGroups
             self.REQUEST.set('need_update_%s' % MEETING_REMOVE_MOG_WFA, True)
-            wfas = list(self.getWorkflowAdaptations())
+            wfas = list(self.wf_adaptations or [])
             if MEETING_REMOVE_MOG_WFA not in wfas:
                 wfas.append(MEETING_REMOVE_MOG_WFA)
-                self.setWorkflowAdaptations(wfas)
+                self.wf_adaptations = wfas
         elif stored and not value:
             # disabling usingGroups
             self.REQUEST.set('need_update_%s' % MEETING_REMOVE_MOG_WFA, True)
-            wfas = list(self.getWorkflowAdaptations())
+            wfas = list(self.wf_adaptations or [])
             wfas.remove(MEETING_REMOVE_MOG_WFA)
-            self.setWorkflowAdaptations(wfas)
+            self.wf_adaptations = wfas
         elif stored and value and list(stored) != value:
             # value changed, need to update local roles but WFA is already selected
             self.REQUEST.set('need_update_%s' % MEETING_REMOVE_MOG_WFA, True)
-        self.getField('usingGroups').set(self, value, **kwargs)
+        self.using_groups = value
 
 
     security.declarePublic('getUsedVoteValues')
@@ -3194,7 +3268,7 @@ class MeetingConfig(Container):
            'usedVoteValues' by default but may be
            'firstLinkedVoteUsedVoteValues' or 'nextLinkedVotesUsedVoteValues'.
            Manage also the 'include_not_encoded' technical vote value.'''
-        res = self.getField(used_values_attr).get(self, **kwargs)
+        res = getattr(self, _at_to_dx(used_values_attr))
         # include special value NOT_ENCODED_VOTE_VALUE
         if include_not_encoded:
             res = (NOT_ENCODED_VOTE_VALUE, ) + res
@@ -3240,7 +3314,7 @@ class MeetingConfig(Container):
     security.declarePublic('getUsingGroups')
     def getUsingGroups(self, theObjects=False, **kwargs):
         '''Overrides the field 'usingGroups' accessor to manage theObjects.'''
-        res = self.getField('usingGroups').get(self, **kwargs)
+        res = self.using_groups or []
         if theObjects:
             # when no usingGroups, so kept_org_uids=[],
             # get_organizations will return every orgs
@@ -3263,7 +3337,7 @@ class MeetingConfig(Container):
              either a list of dict);
            - data : return every values defined for a given datagrid column name;
            - only_enabled : make sure to return rows having enabled '1'.'''
-        res = value if value is not None else self.getField('itemWFValidationLevels').get(self, **kwargs)
+        res = value if value is not None else (self.item_wf_validation_levels or [])
         enabled = ['0', '1']
         if only_enabled:
             enabled = ['1']
@@ -3300,7 +3374,7 @@ class MeetingConfig(Container):
     def getLabelsConfig(self, label_ids=[], data=None, return_label_id_singleton=True, **kwargs):
         '''Override the field 'labelsConfig' accessor to be able to handle some paramters:
            - data : return every values defined for a given datagrid column name.'''
-        res = self.getField('labelsConfig').get(self, **kwargs)
+        res = self.labels_config or []
         if label_ids:
             res = [level for level in res
                    if level['label_id'] in label_ids]
@@ -3318,7 +3392,7 @@ class MeetingConfig(Container):
     def getItemFieldsConfig(self, names=[], data=None, return_name_singleton=True, **kwargs):
         '''Override the field 'itemFieldsConfig' accessor to be able to handle some paramters:
            - data : return every values defined for a given datagrid column name.'''
-        res = self.getField('itemFieldsConfig').get(self, **kwargs)
+        res = self.item_fields_config or []
         if names:
             res = [level for level in res
                    if level['name'] in names]
@@ -3335,7 +3409,7 @@ class MeetingConfig(Container):
     security.declarePublic('getOrderedItemInitiators')
     def getOrderedItemInitiators(self, theObjects=False, **kwargs):
         '''Overrides the field 'orderedItemInitiators' acessor to manage theObjects.'''
-        res = self.getField('orderedItemInitiators').get(self, **kwargs)
+        res = self.ordered_item_initiators or []
         if theObjects:
             res = uuidsToObjects(res, ordered=True, unrestricted=True)
         return res
@@ -3344,7 +3418,7 @@ class MeetingConfig(Container):
     security.declarePublic('getOrderedAssociatedOrganizations')
     def getOrderedAssociatedOrganizations(self, theObjects=False, **kwargs):
         '''Overrides the field 'orderedAssociatedOrganizations' acessor to manage theObjects.'''
-        res = self.getField('orderedAssociatedOrganizations').get(self, **kwargs)
+        res = self.ordered_associated_organizations or []
         if theObjects:
             res = uuidsToObjects(res, ordered=True, unrestricted=True)
         return res
@@ -3353,7 +3427,7 @@ class MeetingConfig(Container):
     security.declarePublic('getOrderedGroupsInCharge')
     def getOrderedGroupsInCharge(self, theObjects=False, **kwargs):
         '''Overrides the field 'orderedGroupsInCharge' acessor to manage theObjects.'''
-        res = self.getField('orderedGroupsInCharge').get(self, **kwargs)
+        res = self.ordered_groups_in_charge or []
         if theObjects:
             res = uuidsToObjects(res, ordered=True, unrestricted=True)
         return res
@@ -3373,14 +3447,14 @@ class MeetingConfig(Container):
         if criterion:
             value = criterion.default
         else:
-            value = self.getField('maxShownListings').get(self, **kwargs)
+            value = self.max_shown_listings
         return safe_unicode(value)
 
 
     security.declarePublic('getToDoListSearches')
     def getToDoListSearches(self, theObjects=False, **kwargs):
         '''Overrides the field 'toDoListSearches' accessor to manage theObjects.'''
-        res = self.getField('toDoListSearches').get(self, **kwargs)
+        res = self.to_do_list_searches or []
         if theObjects:
             res = uuidsToObjects(res, ordered=True, unrestricted=True)
         return res
@@ -3425,7 +3499,7 @@ class MeetingConfig(Container):
     def getConfigGroup(self, full=False, **kwargs):
         '''Overrides the field 'configGroup' accessor to manage p_full parameter
            that will return full informations about the configGroup from the tool.'''
-        res = self.getField('configGroup').get(self, **kwargs)
+        res = self.config_group
         if full:
             tool = api.portal.get_tool('portal_plonemeeting')
             configGroups = tool.getConfigGroups()
@@ -3462,7 +3536,7 @@ class MeetingConfig(Container):
         '''Checks that the short name is unique among all configs.'''
         tool = api.portal.get_tool('portal_plonemeeting')
         for cfg in tool.objectValues('MeetingConfig'):
-            if (cfg != self) and (cfg.getShortName() == value):
+            if (cfg != self) and (cfg.short_name == value):
                 return DUPLICATE_SHORT_NAME % value
 
 
@@ -3491,7 +3565,7 @@ class MeetingConfig(Container):
                 return _('error_list_types_wrong_identifier_format')
 
         # already used listType may not be removed
-        removedIdentifiers = [v['identifier'] for v in self.getListTypes() if v['identifier'] not in identifiers]
+        removedIdentifiers = [v['identifier'] for v in self.list_types if v['identifier'] not in identifiers]
         catalog = api.portal.get_tool('portal_catalog')
         for removedIdentifier in removedIdentifiers:
             brains = catalog.unrestrictedSearchResults(
@@ -3553,7 +3627,7 @@ class MeetingConfig(Container):
         # but then we do not get the entire datagridfield value from REQUEST
         # and it is easier to do it here...
         committee_contacts = self.REQUEST.get(
-            'orderedCommitteeContacts', self.getOrderedCommitteeContacts())
+            'orderedCommitteeContacts', self.ordered_committee_contacts)
         # remove empty values if any
         committee_contacts = [contact for contact in committee_contacts if contact]
 
@@ -3575,7 +3649,7 @@ class MeetingConfig(Container):
         '''Validate the defaultPollType field.
            Selected value must be among MeetingConfig.usedPollTypes.'''
         usedPollTypes = self.REQUEST.get(
-            'usedPollTypes', self.getUsedPollTypes())
+            'usedPollTypes', self.used_poll_types)
         if value not in usedPollTypes:
             return _('error_default_poll_type_must_be_among_used_poll_types')
 
@@ -3617,7 +3691,7 @@ class MeetingConfig(Container):
                              context=self.REQUEST)
 
         # check removed power observers
-        storedPowerObservers = self.getPowerObservers()
+        storedPowerObservers = self.power_observers
         storedRowIds = [v['row_id'].strip() for v in storedPowerObservers]
         rowIds = [v['row_id'].strip() for v in value
                   if v.get('orderindex_', None) != 'template_row_marker']
@@ -3634,15 +3708,15 @@ class MeetingConfig(Container):
                                      context=self.REQUEST)
             # also in additional fields
             configgroup_value = '{0}{1}'.format(CONFIGGROUPPREFIX, removedRowId)
-            additional_stored_values = self.getItemAnnexConfidentialVisibleFor() + \
-                self.getAdviceAnnexConfidentialVisibleFor() + self.getMeetingAnnexConfidentialVisibleFor()
+            additional_stored_values = self.item_annex_confidential_visible_for + \
+                self.advice_annex_confidential_visible_for + self.meeting_annex_confidential_visible_for
             if configgroup_value in additional_stored_values:
                 return translate('power_observer_removed_used_in_fields',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
             # workflowAdaptations
             if 'hide_decisions_when_under_writing__po__{0}'.format(removedRowId) in \
-               self.getWorkflowAdaptations():
+               self.wf_adaptations:
                 return translate('power_observer_removed_used_in_fields',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
@@ -3833,7 +3907,7 @@ class MeetingConfig(Container):
         # and if in use, the prior row must be the same as before
         # take also into account rows for wich we changed the position
         # and the value of 'is_linked_to_previous_row'
-        storedCustomAdvisers = self.getCustomAdvisers()
+        storedCustomAdvisers = self.custom_advisers
         for storedRow in storedCustomAdvisers:
             # if the stored custom adviser is an automatic one and linked to others...
             isAutomaticAdvice, linkedRows = self._findLinkedRowsFor(storedRow['row_id'])
@@ -3869,7 +3943,7 @@ class MeetingConfig(Container):
                 domain='PloneMeeting',
                 context=self.REQUEST)
 
-        stored_row_ids = set([v['row_id'] for v in self.getCustomAdvisers() if v['row_id']])
+        stored_row_ids = set([v['row_id'] for v in self.custom_advisers if v['row_id']])
 
         removed_row_ids = stored_row_ids.difference(row_ids_to_save)
         for row_id in removed_row_ids:
@@ -4086,10 +4160,10 @@ class MeetingConfig(Container):
         cfg_meeting_wf_attrs = list(MEETING_WF_STATE_ATTRS) + list(MEETING_WF_TRANSITION_ATTRS)
         for attr in cfg_item_wf_attrs + cfg_meeting_wf_attrs:
             # if attr contains a "/" it means it is a column of a datagridfield
-            field = self.getField(attr.split("/")[0])
+            dx_attr = _at_to_dx(attr.split("/")[0])
             # manage case where item state direclty equal value
             # or value contains item state, like 'suffix_profile_prereviewers'
-            values = field.getAccessor(self)()
+            values = getattr(self, dx_attr) or []
             if "/" in attr:
                 col_name = attr.split("/")[1]
                 values = [row[col_name] for row in values]
@@ -4138,7 +4212,7 @@ class MeetingConfig(Container):
                 continue
             values = [
                 v['trigger_workflow_transitions_until'].split('.')[1]
-                for v in other_cfg.getMeetingConfigsToCloneTo()
+                for v in other_cfg.meeting_configs_to_clone_to
                 if v['meeting_config'] == cfg_id and
                 v['trigger_workflow_transitions_until'] !=
                 NO_TRIGGER_WF_TRANSITION_UNTIL and
@@ -4279,7 +4353,7 @@ class MeetingConfig(Container):
             'hide_decisions_when_under_writing':
                 ['hide_decisions_when_under_writing_check_returned_to_proposing_group'] +
                 ['hide_decisions_when_under_writing__po__{0}'.format(v['row_id'])
-                 for v in self.getPowerObservers()],
+                 for v in self.power_observers],
         }
         for base_wfa, dependents in dependencies.items():
             if set(values).intersection(dependents) and base_wfa not in values:
@@ -4326,7 +4400,7 @@ class MeetingConfig(Container):
         meetingWF = self.getMeetingWorkflow(theObject=True)
 
         # validate new added workflowAdaptations regarding existing items and meetings
-        added = set(values).difference(set(self.getWorkflowAdaptations()))
+        added = set(values).difference(set(self.wf_adaptations))
         if 'no_publication' in added:
             # this will remove the 'published' state for Meeting and 'itempublished' for MeetingItem
             # check that no more elements are in these states
@@ -4358,7 +4432,7 @@ class MeetingConfig(Container):
 
         # validate removed workflowAdaptations, in case we removed a wfAdaptation that added
         # a state for example, double check that no more element (item or meeting) is in that state...
-        removed = set(self.getWorkflowAdaptations()).difference(set(values))
+        removed = set(self.wf_adaptations).difference(set(values))
         if 'waiting_advices' in removed:
             # this will remove the 'waiting_advices' state for MeetingItem
             # check that no more items are in this state
@@ -4579,7 +4653,7 @@ class MeetingConfig(Container):
         itemAdvicesStatesFromRequest = self.REQUEST.get('itemAdviceStates', ())
         if '' in itemAdvicesStatesFromRequest:
             itemAdvicesStatesFromRequest.remove('')
-        itemAdviceStates_set = set(itemAdvicesStatesFromRequest) or set(self.getItemAdviceStates())
+        itemAdviceStates_set = set(itemAdvicesStatesFromRequest) or set(self.item_advice_states)
         difference = itemAdviceStates_set.difference(v_set)
         if difference:
             return translate(
@@ -4624,14 +4698,14 @@ class MeetingConfig(Container):
             if hasattr(self.REQUEST, 'usedItemAttributes'):
                 notUsingCategories = 'category' not in self.REQUEST.get('usedItemAttributes')
             else:
-                notUsingCategories = 'category' not in self.getUsedItemAttributes()
+                notUsingCategories = 'category' not in self.used_item_attributes
             if notUsingCategories:
                 return translate('inserting_methods_not_using_categories_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
 
         # check that if we selected 'on_to_discuss', we actually use the field 'toDisucss'...
-        usedItemAttrs = self.getUsedItemAttributes()
+        usedItemAttrs = self.used_item_attributes
         if 'on_to_discuss' in res:
             if hasattr(self.REQUEST, 'usedItemAttributes'):
                 notUsingToDiscuss = 'toDiscuss' not in self.REQUEST.get('usedItemAttributes')
@@ -4702,7 +4776,7 @@ class MeetingConfig(Container):
 
     def _dataForCustomAdviserRowId(self, row_id):
         '''Returns the data for the given p_row_id from the field 'customAdvisers'.'''
-        for adviser in self.getCustomAdvisers():
+        for adviser in self.custom_advisers:
             if adviser['row_id'] == row_id:
                 return dict(adviser)
 
@@ -4719,12 +4793,12 @@ class MeetingConfig(Container):
         currentRowData = self._dataForCustomAdviserRowId(row_id)
         if currentRowData['gives_auto_advice_on']:
             isAutomaticAdvice = True
-        currentRowIndex = self.getCustomAdvisers().index(currentRowData)
+        currentRowIndex = self.custom_advisers.index(currentRowData)
         # if the current row is not linked to previous row or the next row
         # is not linked the current row, return nothing
         if not currentRowData['is_linked_to_previous_row'] == '1' and \
-           (currentRowIndex == len(self.getCustomAdvisers()) - 1 or not
-                self.getCustomAdvisers()[currentRowIndex + 1]['is_linked_to_previous_row'] == '1'):
+           (currentRowIndex == len(self.custom_advisers) - 1 or not
+                self.custom_advisers[currentRowIndex + 1]['is_linked_to_previous_row'] == '1'):
             return isAutomaticAdvice, res
         res.append(currentRowData)
 
@@ -4735,18 +4809,18 @@ class MeetingConfig(Container):
                 i = i - 1
                 # loop until the first row is found, aka a row for wich
                 # is_linked_to_previous_row == '0'
-                previousRow = self.getCustomAdvisers()[i]
+                previousRow = self.custom_advisers[i]
                 res.insert(0, previousRow)
                 if previousRow['gives_auto_advice_on']:
                     isAutomaticAdvice = True
                 if previousRow['is_linked_to_previous_row'] == '0':
                     break
         i = currentRowIndex
-        while i < len(self.getCustomAdvisers()) - 1:
+        while i < len(self.custom_advisers) - 1:
             i = i + 1
             # loop until the last row is found, aka end of customAdvisers
             # or row after has 'is_linked_to_previous_row' == '0'
-            nextRow = self.getCustomAdvisers()[i]
+            nextRow = self.custom_advisers[i]
             if nextRow['is_linked_to_previous_row'] == '1':
                 res.append(nextRow)
                 if nextRow['gives_auto_advice_on']:
@@ -4797,7 +4871,7 @@ class MeetingConfig(Container):
         extra_expr_ctx = _base_extra_expr_ctx(item, {'item': item})
         res = _evaluateExpression(
             item,
-            expression=self.getVoteCondition(),
+            expression=self.vote_condition,
             roles_bypassing_expression=[],
             extra_expr_ctx=extra_expr_ctx,
             empty_expr_is_true=True)
@@ -4823,8 +4897,8 @@ class MeetingConfig(Container):
     def getItemIconColorName(self):
         '''This will return the name of the icon used for MeetingItem portal_type.'''
         iconName = "MeetingItem.png"
-        if not self.getItemIconColor() == "default":
-            iconName = "MeetingItem{0}.png".format(self.getItemIconColor().capitalize())
+        if not self.item_icon_color == "default":
+            iconName = "MeetingItem{0}.png".format(self.item_icon_color.capitalize())
         return iconName
 
 
@@ -4840,7 +4914,7 @@ class MeetingConfig(Container):
              for now every collections of a type (item, meeting)
              will use same columns.'''
         # update item related collections
-        itemColumns = list(self.getItemColumns())
+        itemColumns = list(self.item_columns)
         for iColumn in DEFAULT_ITEM_COLUMNS:
             itemColumns.insert(iColumn['position'], iColumn['name'])
 
@@ -4854,7 +4928,7 @@ class MeetingConfig(Container):
                 # set elements existing in both lists, we do not use set() because it is not ordered
                 collection.customViewFields = tuple([iCol for iCol in itemColumns if iCol in customViewFieldIds])
         # update meeting related collections
-        meetingColumns = list(self.getMeetingColumns())
+        meetingColumns = list(self.meeting_columns)
         for mColumn in DEFAULT_MEETING_COLUMNS:
             meetingColumns.insert(mColumn['position'], mColumn['name'])
 
@@ -4880,7 +4954,7 @@ class MeetingConfig(Container):
         portal_types = api.portal.get_tool('portal_types')
         for metaTypeName in self.metaTypes:
             i += 1
-            portalTypeName = '%s%s' % (metaTypeName, self.getShortName())
+            portalTypeName = '%s%s' % (metaTypeName, self.short_name)
             # If the portal type corresponding to the meta type is
             # registered in portal_factory (in the model:
             # use_portal_factory=True), we must also register the new
@@ -4925,7 +4999,7 @@ class MeetingConfig(Container):
         props = api.portal.get_tool('portal_properties').site_properties
         wfTool = api.portal.get_tool('portal_workflow')
         for metaTypeName in self.metaTypes:
-            portalTypeName = '%s%s' % (metaTypeName, self.getShortName())
+            portalTypeName = '%s%s' % (metaTypeName, self.short_name)
             portalType = getattr(typesTool, portalTypeName)
             basePortalType = getattr(typesTool, metaTypeName)
             portalType.title = "{0} {1}".format(
@@ -5021,7 +5095,7 @@ class MeetingConfig(Container):
            actually remove every existing actions on the portal_type then call this submethod'''
         tool = api.portal.get_tool('portal_plonemeeting')
         item_portal_type = self.portal_types[self.getItemTypeName()]
-        for mctct in self.getMeetingConfigsToCloneTo():
+        for mctct in self.meeting_configs_to_clone_to:
             configId = mctct['meeting_config']
             actionId = self._getCloneToOtherMCActionId(configId, self.getId())
             urlExpr = "string:javascript:callViewAndReload(base_url='${object_url}', " \
@@ -5111,20 +5185,20 @@ class MeetingConfig(Container):
            default meetings.'''
         tool = api.portal.get_tool('portal_plonemeeting')
         otherConfigs = tool.objectValues('MeetingConfig')
-        if self.getIsDefault():
+        if self.is_default:
             # All the others must not be default meeting configs.
             for mConfig in otherConfigs:
                 if mConfig != self:
-                    mConfig.setIsDefault(False)
+                    mConfig.is_default = False
         else:
             # At least one other must be the default config
             defConfig = None
             for mConfig in otherConfigs:
-                if mConfig.getIsDefault():
+                if mConfig.is_default:
                     defConfig = mConfig
                     break
             if not defConfig:
-                self.setIsDefault(True)
+                self.is_default = True
                 msg = translate('config_is_still_default',
                                 domain='PloneMeeting',
                                 context=self.REQUEST)
@@ -5149,7 +5223,7 @@ class MeetingConfig(Container):
         '''Creates Plone groups to manage power observers.'''
         groupIds = []
         tool = api.portal.get_tool('portal_plonemeeting')
-        for po_infos in self.getPowerObservers():
+        for po_infos in self.power_observers:
             groupSuffix = po_infos['row_id']
             groupId, wasCreated = self._createOrUpdatePloneGroup(
                 groupSuffix,
@@ -5467,7 +5541,7 @@ class MeetingConfig(Container):
                 res = adviser_infos['advice_types']
                 break
         if not res:
-            res = self.getUsedAdviceTypes()
+            res = self.used_advice_types
         return res
 
 
@@ -5475,7 +5549,7 @@ class MeetingConfig(Container):
     def getItemWorkflow(self, theObject=False, type_name=None, **kwargs):
         '''Overrides field 'itemWorkflow' accessor to be able to pass
            the p_theObject parameter that will return portal_workflow WF object.'''
-        itemWorkflow = self.getField('itemWorkflow').get(self, **kwargs)
+        itemWorkflow = self.item_workflow
         if theObject:
             wfTool = api.portal.get_tool('portal_workflow')
             type_name = type_name or self.getItemTypeName()
@@ -5487,7 +5561,7 @@ class MeetingConfig(Container):
     def getMeetingWorkflow(self, theObject=False, type_name=None, **kwargs):
         '''Overrides field 'meetingWorkflow' accessor to be able to pass
            the p_theObject parameter that will return portal_workflow WF object.'''
-        meetingWorkflow = self.getField('meetingWorkflow').get(self, **kwargs)
+        meetingWorkflow = self.meeting_workflow
         if theObject:
             wfTool = api.portal.get_tool('portal_workflow')
             type_name = type_name or self.getMeetingTypeName()
@@ -5499,16 +5573,16 @@ class MeetingConfig(Container):
     def getItemTypeName(self, configType=None):
         '''Gets the name of the portal_type of the meeting item for this config.'''
         if not configType:
-            return 'MeetingItem%s' % self.getShortName()
+            return 'MeetingItem%s' % self.short_name
         elif configType == 'all':
             res = []
-            short_name = self.getShortName()
+            short_name = self.short_name
             res.append('MeetingItem%s' % short_name)
             res.append('MeetingItemTemplate%s' % short_name)
             res.append('MeetingItemRecurring%s' % short_name)
             return res
         else:
-            return '{0}{1}'.format(configType, self.getShortName())
+            return '{0}{1}'.format(configType, self.short_name)
 
     def getItemTemplateWorkflow(self):
         """Return the WF to use for MeetingItemTemplate generated portal_type.
@@ -5525,7 +5599,7 @@ class MeetingConfig(Container):
     def getMeetingTypeName(self):
         '''Gets the name of the portal_type of the meeting for this
            config.'''
-        return 'Meeting%s' % self.getShortName()
+        return 'Meeting%s' % self.short_name
 
 
     security.declarePrivate('_custom_reviewersFor')
@@ -5675,7 +5749,7 @@ class MeetingConfig(Container):
         '''Overrides field 'certifiedSignatures' accessor to be able to pass
            the p_computed parameter that will return computed certified signatures,
            so signatures really available right now.'''
-        signatures = self.getField('certifiedSignatures').get(self, **kwargs)
+        signatures = self.certified_signatures or []
         if computed:
             signatures = computeCertifiedSignatures(signatures)
             if listify:
@@ -5688,7 +5762,7 @@ class MeetingConfig(Container):
         '''Overrides field 'committees' accessor to be able to pass
            the p_only_enabled parameter that will return
            committees for which enabled is '1'.'''
-        committees = self.getField('committees').get(self, **kwargs)
+        committees = self.committees or []
         if only_enabled:
             committees = [committee for committee in committees
                           if committee['enabled'] == '1']
@@ -5780,7 +5854,7 @@ class MeetingConfig(Container):
     security.declarePublic('isUsingContacts')
     def isUsingContacts(self):
         ''' Returns True if we are currently using contacts.'''
-        return bool('attendees' in self.getUsedMeetingAttributes())
+        return bool('attendees' in self.used_meeting_attributes)
 
 
     security.declarePublic('getAdvicesKeptOnSentToOtherMC')
@@ -5791,7 +5865,7 @@ class MeetingConfig(Container):
            We double check regarding item.adviceIndex, indeed, a same org_uid can
            be returned by the 2 patterns.
         """
-        values = self.getField('advicesKeptOnSentToOtherMC').get(self, **kwargs)
+        values = self.advices_kept_on_sent_to_other_mc or []
         if not as_org_uids:
             return values
 
@@ -6062,7 +6136,7 @@ class MeetingConfig(Container):
         brains = catalog.unrestrictedSearchResults(portal_type=self.getItemTypeName())
         numberOfBrains = len(brains)
         i = 1
-        adviceConfidentialityDefault = self.getAdviceConfidentialityDefault()
+        adviceConfidentialityDefault = self.advice_confidentiality_default
         for brain in brains:
             item = brain.getObject()
             logger.info('%d/%d Initializing advices confidentiality of item at %s' %
@@ -6169,7 +6243,7 @@ class MeetingConfig(Container):
             if self.aq_parent.isManager(self):
                 review_states = self.getMeetingStatesAcceptingItemsForMeetingManagers()
             else:
-                review_states = self.getItemPreferredMeetingStates()
+                review_states = self.item_preferred_meeting_states
 
         query = {'portal_type': self.getMeetingTypeName(),
                  'review_state': review_states,
@@ -6198,14 +6272,17 @@ class MeetingConfig(Container):
         return brains
 
     def update_cfgs(self, field_name, cfg_ids=[], reload=False):
-        """Update other MeetingConfigs p_field_name base on self field_name value."""
+        """Update other MeetingConfigs p_field_name based on self field_name value.
+
+        p_field_name may be either an AT camelCase name or a DX snake_case name.
+        """
         tool = api.portal.get_tool('portal_plonemeeting')
         cfgs = [cfg for cfg in tool.objectValues('MeetingConfig')
                 if cfg != self and (not cfg_ids or cfg.getId() in cfg_ids)]
-        value = self.getField(field_name).get(self)
-        value = deepcopy(value)
+        dx_attr = _at_to_dx(field_name)
+        value = deepcopy(getattr(self, dx_attr))
         for cfg in cfgs:
-            cfg.getField(field_name).set(cfg, value)
+            setattr(cfg, dx_attr, value)
             if reload:
                 notify(ObjectEditedEvent(cfg))
 
@@ -6234,7 +6311,7 @@ class MeetingConfig(Container):
            This will return a list of dict where dict contains :
            'org_uid', 'delay' and 'delay_label'.'''
         res = []
-        for customAdviserConfig in self.getCustomAdvisers():
+        for customAdviserConfig in self.custom_advisers:
             # first check that the customAdviser is actually optional
             if customAdviserConfig['gives_auto_advice_on']:
                 continue
@@ -6310,7 +6387,9 @@ class MeetingConfig(Container):
         for error_field_id, error_msg in errors.items():
             if isinstance(error_msg, Message):
                 error_msg = translate(error_msg, context=self.REQUEST)
-            field_label = self.getField(error_field_id).widget.label_msgid
+            dx_attr = _at_to_dx(error_field_id)
+            schema_field = IMeetingConfig.get(dx_attr)
+            field_label = schema_field.title if schema_field is not None else error_field_id
             res.append(error_pattern.format(
                 translate(u"Error",
                           domain="plone",
@@ -6329,17 +6408,17 @@ class MeetingConfig(Container):
         tool = api.portal.get_tool('portal_plonemeeting')
         # XXX check on optional field to be removed when item will be DX
         if meta_type == 'Meeting':
-            used_attrs = self.getUsedMeetingAttributes()
+            used_attrs = self.used_meeting_attributes
         else:
-            used_attrs = self.getUsedItemAttributes()
+            used_attrs = self.used_item_attributes
         res = tool.isManager(self) and name in used_attrs
         return res
 
     def show_copy_groups_search(self):
         '''Condition for showing the searchallitemsincopy DashboardCollection.'''
-        return bool('copyGroups' in self.getUsedItemAttributes() and
+        return bool('copyGroups' in self.used_item_attributes and
                     set(get_plone_groups_for_user()).intersection(
-                        self.getSelectableCopyGroups()))
+                        self.selectable_copy_groups))
 
     def get_orgs_with_as_copy_group_on_expression_cachekey(method, self, restricted=False):
         '''cachekey method for self.get_orgs_with_as_copy_group_on_expression.

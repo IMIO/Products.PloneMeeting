@@ -21,7 +21,7 @@
   <element value="base_view"/>
  </property>
  <property name="default_view_fallback">False</property>
- <property name="add_permission">zope2.AddFolders</property>
+ <property name="add_permission">PloneMeeting.AddMeetingConfig</property>
  <property name="schema_policy">schema_policy_meetingconfig</property>
  <property name="klass">Products.PloneMeeting.content.meetingconfig.MeetingConfig</property>
  <property name="behaviors">

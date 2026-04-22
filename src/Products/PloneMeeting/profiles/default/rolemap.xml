@@ -11,6 +11,9 @@
   </roles>
 
   <permissions>
+    <permission name="PloneMeeting: Manage configuration" acquire="False">
+      <role name="Manager"/>
+    </permission>
     <permission name="CMFEditions: Save new version"
                 acquire="False">
       <role name="Manager"/>
