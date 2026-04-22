@@ -1198,6 +1198,7 @@ class testVotes(PloneMeetingTestCase):
         self.assertEqual(item.getVotesResult(), '')
         self.assertEqual(item.getVotesResult(real=True), '')
         self.assertFalse(isinstance(item.getVotesResult(), unicode))
+        cfg.votes_result_tal_expr = (
             'python: pm_utils.print_votes(item, include_total_voters=True)')
         cleanRamCache()
         # not computed when not in a meeting

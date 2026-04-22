@@ -413,7 +413,8 @@ class testWorkflows(PloneMeetingTestCase):
     def test_pm_RecurringItems(self):
         '''Tests the recurring items system.'''
         cfg = self.meetingConfig
-                                           'reverse': '0'}, ))
+        cfg.inserting_methods_on_add_item = [{'insertingMethod': 'at_the_end',
+                                              'reverse': '0'}]
         item_type_name = cfg.getItemTypeName()
         self._setupRecurringItems()
         self.changeUser('pmManager')

@@ -677,9 +677,10 @@ class testWFAdaptations(PloneMeetingTestCase):
                 'cfg_field_name':
                     "Transforms to apply to rich text fields of an item after a workflow transition"},
             context=self.request)
-            ({'transition': item_transition,
-              'field_name': 'MeetingItem.decision',
-              'tal_expression': 'string:Decided'},))
+        cfg.on_transition_field_transforms = (
+            {'transition': item_transition,
+             'field_name': 'MeetingItem.decision',
+             'tal_expression': 'string:Decided'},)
         self.assertEqual(
             cfg.validate_workflowAdaptations(()),
             state_or_transition_can_not_be_removed_in_use_config_error)
