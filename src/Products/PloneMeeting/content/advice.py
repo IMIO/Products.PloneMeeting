@@ -108,7 +108,7 @@ def _advice_type_default(advice_portal_type, context):
             break
     if not res:
         cfg = tool.getMeetingConfig(context)
-        res = cfg and cfg.getDefaultAdviceType() or ''
+        res = cfg and cfg.default_advice_type or ''
     return res
 
 
@@ -126,7 +126,7 @@ def advice_hide_during_redactionDefaultValue(data):
     tool = api.portal.get_tool('portal_plonemeeting')
     cfg = tool.getMeetingConfig(data.context)
     # manage when portal_type accessed from the Dexterity types configuration
-    hidden = cfg and published.ti.id in cfg.getDefaultAdviceHiddenDuringRedaction() or False
+    hidden = cfg and published.ti.id in cfg.default_advice_hidden_during_redaction or False
     if hidden:
         api.portal.show_message(_("advice_hide_during_redaction_set_auto_to_true"),
                                 request=data.context.REQUEST)
@@ -176,7 +176,7 @@ class MeetingAdvice(Container):
             cfg = tool.getMeetingConfig(self)
             if not parent._adviceIsViewableForCurrentUser(
                cfg,
-               isPowerObserverForCfg(cfg, cfg.getAdviceConfidentialFor()),
+               isPowerObserverForCfg(cfg, cfg.advice_confidential_for),
                parent.adviceIndex[self.advice_group]):
                 raise Unauthorized
 
@@ -232,7 +232,7 @@ class MeetingAdvice(Container):
             # check if it is actually a power adviser adding a not asked advice
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(item)
-            if self.advice_group in cfg.getPowerAdvisersGroups():
+            if self.advice_group in cfg.power_advisers_groups:
                 row_id = ''
             else:
                 raise KeyError('Not able to find a value to set for advice row_id!')

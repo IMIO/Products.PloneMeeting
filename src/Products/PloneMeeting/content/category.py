@@ -153,13 +153,13 @@ class MeetingCategory(Item):
             is_used = False
             # meeting category
             if cat_type == 'meetingcategories':
-                is_used = 'category' in cfg.getUsedMeetingAttributes()
+                is_used = 'category' in cfg.used_meeting_attributes
             else:
                 # item category or classifier
                 if cat_type == 'categories':
-                    is_used = 'category' in cfg.getUsedItemAttributes()
+                    is_used = 'category' in cfg.used_item_attributes
                 else:
-                    is_used = 'classifier' in cfg.getUsedItemAttributes()
+                    is_used = 'classifier' in cfg.used_item_attributes
             selectable = is_used
             # If we have using_groups make sure userId is creator for one of it
             # check using_groups if relevant
@@ -218,12 +218,12 @@ class CategoriesOfOtherMCsVocabulary(object):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         # get every other MC the items of this MC can be sent to
-        otherMCs = cfg.getMeetingConfigsToCloneTo()
+        otherMCs = cfg.meeting_configs_to_clone_to
         catType = self._get_type(context)
         cat_ids = []
         for otherMC in otherMCs:
             otherMCObj = getattr(tool, otherMC['meeting_config'])
-            if 'category' not in otherMCObj.getUsedItemAttributes():
+            if 'category' not in otherMCObj.used_item_attributes:
                 continue
             otherMCId = otherMCObj.getId()
             otherMCTitle = otherMCObj.Title()

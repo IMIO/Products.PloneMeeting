@@ -372,7 +372,7 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
                 if cfgId == givenCfgId:
                     tmpres.append(state)
             # if nothing redefined for given p_cfg in this MeetingGroup, use value defined on the cfg
-            res = tmpres or cfg.getItemAdviceStates()
+            res = tmpres or cfg.item_advice_states
         return tuple(res)
 
     security.declarePublic('getItemAdviceEditStates')
@@ -388,7 +388,7 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
                 if cfgId == givenCfgId:
                     tmpres.append(state)
             # if nothing redefined for given p_cfg in this MeetingGroup, use value defined on the cfg
-            res = tmpres or cfg.getItemAdviceEditStates()
+            res = tmpres or cfg.item_advice_edit_states
         return tuple(res)
 
     security.declarePublic('getItemAdviceViewStates')
@@ -404,7 +404,7 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
                 if cfgId == givenCfgId:
                     tmpres.append(state)
             # if nothing redefined for given p_cfg in this MeetingGroup, use value defined on the cfg
-            res = tmpres or cfg.getItemAdviceViewStates()
+            res = tmpres or cfg.item_advice_view_states
         return tuple(res)
 
     security.declarePublic('getKeepAccessToItemWhenAdviceIsGiven')
@@ -419,7 +419,7 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
         res = self.getField('keepAccessToItemWhenAdviceIsGiven').get(self, **kwargs)
         if cfg:
             if not res:
-                res = cfg.getKeepAccessToItemWhenAdviceIsGiven()
+                res = cfg.keep_access_to_item_when_advice
             elif res == '0':
                 res = False
             else:
