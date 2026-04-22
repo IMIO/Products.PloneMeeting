@@ -140,6 +140,9 @@ import os
 # Row schemas for DataGridField fields
 # ---------------------------------------------------------------------------
 
+defValues = MeetingConfigDescriptor.get()
+
+
 class ICertifiedSignaturesRowSchema(Interface):
     """Row schema for the certified_signatures DataGridField."""
 
@@ -719,8 +722,6 @@ class ICommitteesRowSchema(Interface):
 # ---------------------------------------------------------------------------
 # IMeetingConfig schema interface
 # ---------------------------------------------------------------------------
-
-defValues = MeetingConfigDescriptor.get()
 
 
 class IMeetingConfig(IMeetingConfigMarker):
