@@ -2271,6 +2271,8 @@ class IMeetingConfig(IConfigElement):
 class MeetingConfig(Container):
     """MeetingConfig Dexterity content type."""
 
+    meta_type = 'MeetingConfig'
+
 
 # ---------------------------------------------------------------------------
 # Schema policy
