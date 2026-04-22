@@ -25,6 +25,17 @@ def _rename_datagrid_columns(rows, renames):
     return result
 
 
+def _ordered_reference_uids(obj, relationship):
+    """Return target UIDs for AT references stored on the object, preserving order."""
+    at_references = getattr(obj, 'at_references', None)
+    if at_references is None:
+        return []
+    return [
+        reference.targetUID
+        for reference in at_references.objectValues()
+        if reference.relationship == relationship]
+
+
 class MeetingConfigWalker(Walker):
     """Walker that finds MeetingConfig objects from portal_plonemeeting
        instead of the portal_catalog."""
@@ -308,6 +319,25 @@ class Migrate_To_4218(Migrator):
         """Hook for plugins after MeetingConfig AT to DX migration."""
         pass
 
+    def _migrate_to_do_list_search_references(self):
+        """Migrate leftover AT references for MeetingConfig.toDoListSearches.
+
+           The field was changed from ReferenceField to LinesField in an older
+           migration, but some databases may still contain ordered
+           ``ToDoSearches`` entries in ``at_references``.  Keep the UID storage
+           used by the DX schema and remove only those stale AT references.
+        """
+        logger.info('Migrating MeetingConfig.toDoListSearches AT references...')
+        migrated = 0
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            reference_uids = _ordered_reference_uids(cfg, 'ToDoSearches')
+            if not reference_uids:
+                continue
+            cfg.setToDoListSearches(reference_uids)
+            cfg.deleteReferences('ToDoSearches')
+            migrated += 1
+        logger.info('Migrated MeetingConfig.toDoListSearches AT references for %d configs.', migrated)
+
     def _migrateMeetingConfigToDX(self):
         """Migrate every AT MeetingConfig to DX."""
         logger.info('Migrating MeetingConfig from AT to DX...')
@@ -335,6 +365,7 @@ class Migrate_To_4218(Migrator):
 
         logger.info('Migrating to PloneMeeting 4218...')
         self._hook_before_meeting_config_to_dx()
+        self._migrate_to_do_list_search_references()
         self._migrateMeetingConfigToDX()
         self._hook_after_meeting_config_to_dx()
         logger.info('Migrating to PloneMeeting 4218... Done.')
