@@ -100,7 +100,7 @@ class testVotes(PloneMeetingTestCase):
            unless pollType is "no_vote"."""
         cfg = self.meetingConfig
         self.changeUser('pmManager')
-        self.assertTrue(cfg.getUseVotes())
+        self.assertTrue(cfg.use_votes)
         meeting = self.create('Meeting')
         self.assertTrue(meeting.get_voters())
         item = self.create('MeetingItem')
@@ -115,7 +115,7 @@ class testVotes(PloneMeetingTestCase):
         item.setPollType('secret')
         self.assertTrue(item.show_votes())
         # disable votes
-        cfg.setUseVotes(False)
+        cfg.use_votes = False
         # still shown because voters
         self.assertTrue(item.show_votes())
 
@@ -129,7 +129,7 @@ class testVotes(PloneMeetingTestCase):
         self.assertFalse(no_vote_item.get_item_voters())
         self.assertFalse(no_vote_item.show_votes())
         # even if enabled, if nothing to show, nothing shown
-        cfg.setUseVotes(True)
+        cfg.use_votes = True
         self.assertFalse(no_vote_item.show_votes())
 
     def test_pm_GetItemVotes(self):
@@ -245,7 +245,7 @@ class testVotes(PloneMeetingTestCase):
 
         # other possible vote values
         cfg = self.meetingConfig
-        cfg.setUsedVoteValues(ALL_VOTE_VALUES)
+        cfg.used_vote_values = ALL_VOTE_VALUES
 
         voters = meeting.get_voters()
         # public votes
@@ -564,7 +564,7 @@ class testVotes(PloneMeetingTestCase):
         cleanRamCache()
         self.assertTrue(hp4_uid in votes_form.render())
         # make hp no more selectable
-        ordered_contacts = list(cfg.getOrderedContacts())
+        ordered_contacts = list(cfg.ordered_contacts)
         ordered_contacts.remove(hp4_uid)
         cfg.setOrderedContacts(ordered_contacts)
         cleanRamCache()
@@ -1194,11 +1194,10 @@ class testVotes(PloneMeetingTestCase):
         self.assertTrue(may_view_field(item, 'votesResult'))
 
         # get outside meeting
-        self.assertEqual(cfg.getVotesResultTALExpr(), '')
+        self.assertEqual(cfg.votes_result_tal_expr, '')
         self.assertEqual(item.getVotesResult(), '')
         self.assertEqual(item.getVotesResult(real=True), '')
         self.assertFalse(isinstance(item.getVotesResult(), unicode))
-        cfg.setVotesResultTALExpr(
             'python: pm_utils.print_votes(item, include_total_voters=True)')
         cleanRamCache()
         # not computed when not in a meeting
@@ -1262,7 +1261,7 @@ class testVotes(PloneMeetingTestCase):
         IStatusMessage(self.request).show()
         item.setVotesResult('')
         public_item.setVotesResult('')
-        cfg.setVotesResultTALExpr("string:not html")
+        cfg.votes_result_tal_expr = "string:not html"
         cleanRamCache()
         # no message as item not in a meeting
         item.restrictedTraverse('base_view')()
@@ -1272,7 +1271,6 @@ class testVotes(PloneMeetingTestCase):
         self.assertEqual(IStatusMessage(self.request).show()[0].message,
                          u'Votes result is not HTML')
         # is_all_count is also available on pm_utils
-        cfg.setVotesResultTALExpr(
             "python: pm_utils.is_all_count(item) and '<p>All OK</p>' or '<p>Not all OK</p>'")
         cleanRamCache()
         self.assertEqual(public_item.getVotesResult(), '<p>Not all OK</p>')

@@ -147,14 +147,14 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         cfg2 = self.meetingConfig2
         # must be connected to access MeetingConfigs
         self.changeUser('pmCreator1')
-        self.assertTrue(cfg.getIsDefault())
-        self.assertTrue(not cfg2.getIsDefault())
+        self.assertTrue(cfg.is_default)
+        self.assertTrue(not cfg2.is_default)
         self.assertEqual(self.tool.getDefaultMeetingConfig().getId(), cfg.getId())
         # if we change default config, it works
-        cfg2.setIsDefault(True)
+        cfg2.is_default = True
         notify(ObjectEditedEvent(cfg2))
-        self.assertTrue(not cfg.getIsDefault())
-        self.assertTrue(cfg2.getIsDefault())
+        self.assertTrue(not cfg.is_default)
+        self.assertTrue(cfg2.is_default)
         self.assertEqual(self.tool.getDefaultMeetingConfig().getId(), cfg2.getId())
 
     def test_pm_CloneItemDefaultFunctionnality(self):
@@ -212,7 +212,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         newAnnex = clonedItem.objectValues()[0]
         self.assertEqual(newAnnex.portal_type, 'annex')
         # to_print is kept as cfg.keepOriginalToPrintOfClonedItems is True by default
-        self.assertTrue(self.meetingConfig.getKeepOriginalToPrintOfClonedItems())
+        self.assertTrue(self.meetingConfig.keep_original_to_print_of_cloned_items)
         self.assertTrue(newAnnex.to_print)
         newAnnexesUids = [annex.UID() for annex in clonedItem.objectValues()]
         self.assertEqual(
@@ -851,7 +851,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         """Test the updateBudgetImpactEditors method that update every items when configuration changed.
            First set budget impact editors may edit in state 'itemcreated' then change to 'proposed'."""
         cfg = self.meetingConfig
-        cfg.setItemBudgetInfosStates(('itemcreated', ))
+        cfg.item_budget_infos_states = ('itemcreated',)
         # only available to 'Managers'
         self.changeUser('pmCreator1')
         self.assertRaises(Unauthorized, self.tool.restrictedTraverse, 'update_all_local_roles')
@@ -865,7 +865,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
 
         # change configuration, update_all_local_roles then check again
         self.changeUser('siteadmin')
-        cfg.setItemBudgetInfosStates((self._stateMappingFor('proposed'), ))
+        cfg.item_budget_infos_states = (self._stateMappingFor('proposed', ))
         self.tool.update_all_local_roles()
         self.assertFalse('%s_budgetimpacteditors' % cfg.getId() in item1.__ac_local_roles__)
         self.assertTrue('%s_budgetimpacteditors' % cfg.getId() in item2.__ac_local_roles__)
@@ -1365,9 +1365,9 @@ class testToolPloneMeeting(PloneMeetingTestCase):
            Here test the base behavior, a more complex behavior is tested in
            Products.MeetingCommunes.tests.testToolPloneMeeting.test_pm_FinancesAdvisersConfig."""
         cfg = self.meetingConfig
-        cfg.setItemAdviceStates((self._stateMappingFor('itemcreated'), ))
-        cfg.setItemAdviceEditStates((self._stateMappingFor('itemcreated'), ))
-        cfg.setItemAdviceViewStates((self._stateMappingFor('itemcreated'), ))
+        cfg.item_advice_states = (self._stateMappingFor('itemcreated', ))
+        cfg.item_advice_edit_states = (self._stateMappingFor('itemcreated', ))
+        cfg.item_advice_view_states = (self._stateMappingFor('itemcreated', ))
         self.tool.setAdvisersConfig(
             ({'advice_types': ['positive',
                                'positive_with_remarks'],
@@ -1430,9 +1430,9 @@ class testToolPloneMeeting(PloneMeetingTestCase):
     def test_pm_ValidateAdvisersConfig(self):
         """Test the ToolPloneMeeting.validate_advisersConfig."""
         cfg = self.meetingConfig
-        cfg.setItemAdviceStates((self._stateMappingFor('itemcreated'), ))
-        cfg.setItemAdviceEditStates((self._stateMappingFor('itemcreated'), ))
-        cfg.setItemAdviceViewStates((self._stateMappingFor('itemcreated'), ))
+        cfg.item_advice_states = (self._stateMappingFor('itemcreated', ))
+        cfg.item_advice_edit_states = (self._stateMappingFor('itemcreated', ))
+        cfg.item_advice_view_states = (self._stateMappingFor('itemcreated', ))
         # can not set config several times for same portal_type
         values = (
             ({'advice_types': [],

@@ -60,11 +60,11 @@ class testContacts(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self.changeUser('pmManager')
         # we have selectable contacts
-        self.assertTrue(cfg.getOrderedContacts())
+        self.assertTrue(cfg.ordered_contacts)
         # create meeting and select attendees on it
         meeting = self.create('Meeting')
         # contacts are still in correct order
-        self.assertEqual(cfg.getOrderedContacts(), meeting.get_attendees())
+        self.assertEqual(cfg.ordered_contacts, meeting.get_attendees())
 
     def test_pm_Get_all_usable_held_positions(self):
         ''' '''
@@ -123,7 +123,7 @@ class testContacts(PloneMeetingTestCase):
 
         # unselect from MeetingConfig.orderedContacts,
         # still not deletable because used by a meeting
-        orderedContacts = list(cfg.getOrderedContacts())
+        orderedContacts = list(cfg.ordered_contacts)
         orderedContacts.remove(hp_uid)
         cfg.setOrderedContacts(orderedContacts)
         self.assertRaises(BeforeDeleteException, api.content.delete, hp)
@@ -1700,7 +1700,7 @@ class testContacts(PloneMeetingTestCase):
            it should raise if it is used somewhere...'''
         disable_link_integrity_checks()
         cfg = self.meetingConfig
-        cfg.setSelectableAdvisers(())
+        cfg.selectable_advisers = ()
         cfg.setOrderedGroupsInCharge(())
         cfg2 = self.meetingConfig2
         cfg2.setOrderedGroupsInCharge(())
@@ -1719,12 +1719,12 @@ class testContacts(PloneMeetingTestCase):
 
         # 1) fails because used in the configuration, in
         # selectableCopyGroups, selectableAdvisers, customAdvisers, powerAdvisersGroups or usingGroups
-        self.failIf(cfg.getCustomAdvisers())
-        self.failIf(cfg.getPowerAdvisersGroups())
-        self.failIf(cfg.getSelectableAdvisers())
+        self.failIf(cfg.custom_advisers)
+        self.failIf(cfg.power_advisers_groups)
+        self.failIf(cfg.selectable_advisers)
         self.failIf(cfg.getOrderedAssociatedOrganizations())
         self.failIf(cfg.getOrderedGroupsInCharge())
-        self.assertIn(self.developers_reviewers, cfg.getSelectableCopyGroups())
+        self.assertIn(self.developers_reviewers, cfg.selectable_copy_groups)
         can_not_delete_organization_meetingconfig = \
             translate('can_not_delete_organization_meetingconfig',
                       domain="plone",
@@ -1740,14 +1740,14 @@ class testContacts(PloneMeetingTestCase):
         cfg2.setSelectableCopyGroups(())
 
         # define selectableAdvisers, the exception is also raised
-        cfg.setSelectableAdvisers((self.developers_uid, ))
+        cfg.selectable_advisers = (self.developers_uid,)
         transaction.commit()
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 self.developers_uid, catch_before_delete_exception=False)
         self.assertEqual(cm.exception.message, can_not_delete_organization_meetingconfig)
         # so remove selectableAdvisers
-        cfg.setSelectableAdvisers(())
+        cfg.selectable_advisers = ()
 
         # define customAdvisers, the exception is also raised
         cfg.setCustomAdvisers(
@@ -2049,7 +2049,7 @@ class testContacts(PloneMeetingTestCase):
         cfg.setSelectableCopyGroups((self.developers_reviewers, ))
         cfg.setOrderedGroupsInCharge(())
         cfg2.setOrderedGroupsInCharge(())
-        cfg2.setSelectableAdvisers((self.developers_uid, ))
+        cfg2.selectable_advisers = (self.developers_uid,)
         cfg2.setSelectableCopyGroups((self.developers_reviewers, ))
         # and remove users from vendors Plone groups
         for ploneGroup in get_plone_groups(self.vendors_uid):
@@ -2237,12 +2237,12 @@ class testContacts(PloneMeetingTestCase):
         cfg2 = self.meetingConfig2
         self.changeUser('admin')
         # for now, the 'developers_reviewers' is in self.meetingConfig.selectableCopyGroups
-        self.assertTrue(self.developers_reviewers in cfg.getSelectableCopyGroups())
-        self.assertTrue(self.developers_reviewers in cfg2.getSelectableCopyGroups())
+        self.assertTrue(self.developers_reviewers in cfg.selectable_copy_groups)
+        self.assertTrue(self.developers_reviewers in cfg2.selectable_copy_groups)
         # when deactivated, it is no more the case...
         self._select_organization(self.developers_uid, remove=True)
-        self.assertTrue(self.developers_reviewers not in cfg.getSelectableCopyGroups())
-        self.assertTrue(self.developers_reviewers not in cfg2.getSelectableCopyGroups())
+        self.assertTrue(self.developers_reviewers not in cfg.selectable_copy_groups)
+        self.assertTrue(self.developers_reviewers not in cfg2.selectable_copy_groups)
 
     def test_pm_WarnUserWhenAddingNewOrgOutiseOwnOrg(self):
         """ """

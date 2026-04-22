@@ -117,7 +117,7 @@ class testAdvices(PloneMeetingTestCase):
         cfg = self.meetingConfig
 
         self.changeUser('pmCreator1')
-        cfg.setUseAdvices(False)
+        cfg.use_advices = False
         item = self.create('MeetingItem')
         self.assertFalse(item.adapted().showAdvices())
         # if an advice is asked, it will be shown
@@ -128,7 +128,7 @@ class testAdvices(PloneMeetingTestCase):
         item.setOptionalAdvisers(())
         item._update_after_edit()
         self.assertFalse(item.adapted().showAdvices())
-        cfg.setUseAdvices(True)
+        cfg.use_advices = True
         self.assertTrue(item.adapted().showAdvices())
 
     def test_pm_AddEditDeleteAdvices(self):
@@ -240,11 +240,11 @@ class testAdvices(PloneMeetingTestCase):
 
         # if advices are disabled in the meetingConfig, getAdvicesGroupsInfosForUser is emtpy
         self.changeUser('admin')
-        self.meetingConfig.setUseAdvices(False)
+        self.meetingConfig.use_advices = False
         self.changeUser('pmReviewer2')
         self.assertEqual(item1.getAdvicesGroupsInfosForUser(), ([], []))
         self.changeUser('admin')
-        self.meetingConfig.setUseAdvices(True)
+        self.meetingConfig.use_advices = True
 
         # activate advices again and this time remove the fact that we asked the advice
         self.changeUser('pmReviewer2')
@@ -261,9 +261,9 @@ class testAdvices(PloneMeetingTestCase):
         '''
         # advice are addable/editable when item is 'proposed'
         cfg = self.meetingConfig
-        cfg.setItemAdviceStates((self._stateMappingFor('proposed'), ))
-        cfg.setItemAdviceEditStates((self._stateMappingFor('proposed'), ))
-        cfg.setItemAdviceViewStates((self._stateMappingFor('proposed'),
+        cfg.item_advice_states = (self._stateMappingFor('proposed', ))
+        cfg.item_advice_edit_states = (self._stateMappingFor('proposed', ))
+        cfg.item_advice_view_states = (self._stateMappingFor('proposed',
                                      self._stateMappingFor('validated'), ))
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
@@ -363,9 +363,9 @@ class testAdvices(PloneMeetingTestCase):
            MeetingItem.getAdvicesGroupsInfosForUser returns 2 lists : first with addable advices and
            the second with editable/deletable advices.'''
         cfg = self.meetingConfig
-        cfg.setItemAdviceStates(itemAdviceStates)
-        cfg.setItemAdviceEditStates(itemAdviceEditStates)
-        cfg.setItemAdviceViewStates(itemAdviceViewStates)
+        cfg.item_advice_states = itemAdviceStates
+        cfg.item_advice_edit_states = itemAdviceEditStates
+        cfg.item_advice_view_states = itemAdviceViewStates
         self.changeUser('pmCreator1')
         # create an item and ask the advice of group 'vendors'
         data = {
@@ -385,8 +385,8 @@ class testAdvices(PloneMeetingTestCase):
         # advisers can give an advice when item is 'proposed' or 'validated'
         # activate advice invalidation in state 'validated'
         cfg = self.meetingConfig
-        cfg.setEnableAdviceInvalidation(True)
-        cfg.setItemAdviceInvalidateStates((self._stateMappingFor('validated'),))
+        cfg.enable_advice_invalidation = True
+        cfg.item_advice_invalidate_states = (self._stateMappingFor('validated',))
         self.changeUser('pmCreator1')
         # create an item and ask the advice of group 'vendors'
         data = {
@@ -497,8 +497,8 @@ class testAdvices(PloneMeetingTestCase):
               'delay': '5',
               'delay_label': ''}, ])
         # an advice can be given or edited when an item is 'proposed'
-        cfg.setItemAdviceStates((self._stateMappingFor('proposed'), ))
-        cfg.setItemAdviceEditStates((self._stateMappingFor('proposed'), ))
+        cfg.item_advice_states = (self._stateMappingFor('proposed', ))
+        cfg.item_advice_edit_states = (self._stateMappingFor('proposed', ))
         # create an item to advice
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -908,7 +908,7 @@ class testAdvices(PloneMeetingTestCase):
         '''Test the indexAdvisers 'combined idnex' functionnality that makes it possible
            to query items having advice of a given group using a given advice_type.'''
         # an advice can be given when an item is 'proposed' or 'validated'
-        self.assertEqual(self.meetingConfig.getItemAdviceStates(),
+        self.assertEqual(self.meetingConfig.item_advice_states,
                          (self._stateMappingFor('proposed'), ))
         # create 3 items with various advices
         self.changeUser('pmCreator1')
@@ -1249,8 +1249,8 @@ class testAdvices(PloneMeetingTestCase):
         # for now, make sure no custom adviser is defined
         cfg = self.meetingConfig
         cfg.setCustomAdvisers([])
-        cfg.setItemAdviceStates(('itemcreated', ))
-        cfg.setItemAdviceEditStates(('itemcreated', ))
+        cfg.item_advice_states = ('itemcreated',)
+        cfg.item_advice_edit_states = ('itemcreated',)
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
         item.setOptionalAdvisers((self.developers_uid, ))
@@ -1285,7 +1285,7 @@ class testAdvices(PloneMeetingTestCase):
 
         # same behaviour for an automatic advice
         cfg.setCustomAdvisers(
-            list(cfg.getCustomAdvisers()) +
+            list(cfg.custom_advisers) +
             [{'row_id': 'unique_id_456',
               'org': self.vendors_uid,
               'gives_auto_advice_on': 'not:item/getBudgetRelated',
@@ -1311,21 +1311,21 @@ class testAdvices(PloneMeetingTestCase):
            The 2 dates are only reinitialized to None if the user
            triggers the MeetingConfig.transitionsReinitializingDelays.
         '''
-        self.meetingConfig.setKeepAccessToItemWhenAdvice('default')
+        self.meetingConfig.keep_access_to_item_when_advice = 'default'
         self._checkDelayStartedStoppedOn()
 
     def test_pm_DelayStartedStoppedOnWithKeepAccessToItemWhenAdviceIsGiven(self):
         '''Same has 'test_pm_DelayStartedStoppedOn' but when
            MeetingConfig.keepAccessToItemWhenAdvice 'is_given'.
         '''
-        self.meetingConfig.setKeepAccessToItemWhenAdvice('is_given')
+        self.meetingConfig.keep_access_to_item_when_advice = 'is_given'
         self._checkDelayStartedStoppedOn()
 
     def _checkDelayStartedStoppedOn(self):
         # make advice giveable when item is 'validated'
         cfg = self.meetingConfig
-        cfg.setItemAdviceStates(('validated', ))
-        cfg.setItemAdviceEditStates(('validated', ))
+        cfg.item_advice_states = ('validated',)
+        cfg.item_advice_edit_states = ('validated',)
         self.changeUser('pmManager')
         # configure one automatic adviser with delay
         # and ask one non-delay-aware optional adviser
@@ -1399,7 +1399,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(isinstance(item.adviceIndex[self.developers_uid]['delay_stopped_on'], datetime))
         self.assertTrue(item.adviceIndex[self.vendors_uid]['delay_stopped_on'] is None)
         # if we excute the transition that will reinitialize dates, it is 'backToItemCreated'
-        self.assertEqual(cfg.getTransitionsReinitializingDelays(),
+        self.assertEqual(cfg.transitions_reinitializing_delays,
                          (self._transitionMappingFor('backToItemCreated'), ))
         self.backToState(item, self._stateMappingFor('itemcreated'))
         self.assertEqual(item.query_state(), self._stateMappingFor('itemcreated'))
@@ -1492,10 +1492,10 @@ class testAdvices(PloneMeetingTestCase):
         self.assertFalse(self.vendors.get_item_advice_states())
         # make advice giveable when item is proposed
         cfg = self.meetingConfig
-        cfg.setItemAdviceStates((self._stateMappingFor('proposed'), ))
-        cfg.setItemAdviceEditStates((self._stateMappingFor('proposed'), ))
-        cfg.setItemAdviceViewStates((self._stateMappingFor('proposed'), ))
-        self.assertEqual(self.vendors.get_item_advice_states(cfg), cfg.getItemAdviceStates())
+        cfg.item_advice_states = (self._stateMappingFor('proposed', ))
+        cfg.item_advice_edit_states = (self._stateMappingFor('proposed', ))
+        cfg.item_advice_view_states = (self._stateMappingFor('proposed', ))
+        self.assertEqual(self.vendors.get_item_advice_states(cfg), cfg.item_advice_states)
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
         # ask 'vendors' advice
@@ -1513,7 +1513,7 @@ class testAdvices(PloneMeetingTestCase):
         self.vendors.item_advice_states = \
             ("%s__state__%s" % (cfg.getId(), self._stateMappingFor('validated')), )
         # no more using values defined on the meetingConfig
-        self.assertNotEqual(self.vendors.get_item_advice_states(cfg), cfg.getItemAdviceStates())
+        self.assertNotEqual(self.vendors.get_item_advice_states(cfg), cfg.item_advice_states)
         self.assertEqual(self.vendors.get_item_advice_states(cfg), [self._stateMappingFor('validated')])
         item.at_post_create_script()
         self.changeUser('pmReviewer2')
@@ -1526,15 +1526,15 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(self.vendors_uid in item.getAdvicesGroupsInfosForUser()[0])
 
         # it is the same for itemAdviceEditStates and itemAdviceViewStates
-        self.assertEqual(self.vendors.get_item_advice_edit_states(cfg), cfg.getItemAdviceEditStates())
-        self.assertEqual(self.vendors.get_item_advice_view_states(cfg), cfg.getItemAdviceViewStates())
+        self.assertEqual(self.vendors.get_item_advice_edit_states(cfg), cfg.item_advice_edit_states)
+        self.assertEqual(self.vendors.get_item_advice_view_states(cfg), cfg.item_advice_view_states)
         self.vendors.item_advice_edit_states = \
             ("%s__state__%s" % (cfg.getId(), self._stateMappingFor('validated')), )
         self.vendors.item_advice_view_states = \
             ("%s__state__%s" % (cfg.getId(), self._stateMappingFor('validated')), )
-        self.assertNotEqual(self.vendors.get_item_advice_edit_states(cfg), cfg.getItemAdviceEditStates())
+        self.assertNotEqual(self.vendors.get_item_advice_edit_states(cfg), cfg.item_advice_edit_states)
         self.assertEqual(self.vendors.get_item_advice_edit_states(cfg), [self._stateMappingFor('validated')])
-        self.assertNotEqual(self.vendors.get_item_advice_view_states(cfg), cfg.getItemAdviceViewStates())
+        self.assertNotEqual(self.vendors.get_item_advice_view_states(cfg), cfg.item_advice_view_states)
         self.assertEqual(self.vendors.get_item_advice_view_states(cfg), [self._stateMappingFor('validated')])
 
     def test_pm_OrgDefinedItemAdviceStatesWorksTogetherWithMeetingConfigValues(self):
@@ -1551,14 +1551,14 @@ class testAdvices(PloneMeetingTestCase):
         self.vendors.item_advice_view_states = \
             ("%s__state__%s" % (cfg_id, self._stateMappingFor('proposed')), )
         cfg2 = self.meetingConfig2
-        cfg2.setItemAdviceStates((self._stateMappingFor('itemcreated'), ))
-        cfg2.setItemAdviceEditStates((self._stateMappingFor('itemcreated'), ))
-        cfg2.setItemAdviceViewStates((self._stateMappingFor('itemcreated'), ))
+        cfg2.item_advice_states = (self._stateMappingFor('itemcreated', ))
+        cfg2.item_advice_edit_states = (self._stateMappingFor('itemcreated', ))
+        cfg2.item_advice_view_states = (self._stateMappingFor('itemcreated', ))
 
         # getting states for cfg2 will get states on the cfg2
-        self.assertEqual(self.vendors.get_item_advice_states(cfg2), cfg2.getItemAdviceStates())
-        self.assertEqual(self.vendors.get_item_advice_edit_states(cfg2), cfg2.getItemAdviceEditStates())
-        self.assertEqual(self.vendors.get_item_advice_view_states(cfg2), cfg2.getItemAdviceViewStates())
+        self.assertEqual(self.vendors.get_item_advice_states(cfg2), cfg2.item_advice_states)
+        self.assertEqual(self.vendors.get_item_advice_edit_states(cfg2), cfg2.item_advice_edit_states)
+        self.assertEqual(self.vendors.get_item_advice_view_states(cfg2), cfg2.item_advice_view_states)
 
     def test_pm_PowerAdvisers(self):
         '''Power advisers are users that can give an advice even when not asked...
@@ -1566,8 +1566,8 @@ class testAdvices(PloneMeetingTestCase):
            item is given by another functionnality (MeetingManager, power observer, ...).'''
         # set developers as power advisers
         cfg = self.meetingConfig
-        cfg.setItemAdviceStates((self._stateMappingFor('proposed'), ))
-        cfg.setPowerAdvisersGroups((self.developers_uid, ))
+        cfg.item_advice_states = (self._stateMappingFor('proposed', ))
+        cfg.power_advisers_groups = (self.developers_uid,)
         self._setPowerObserverStates(states=(self._stateMappingFor('proposed'), ))
 
         self.changeUser('pmManager')
@@ -1613,7 +1613,7 @@ class testAdvices(PloneMeetingTestCase):
         # but if he is also adviser for 'vendors', he can give it also
         self.changeUser('admin')
         self._addPrincipalToGroup('pmAdviser1', '{0}_advisers'.format(self.vendors_uid))
-        cfg.setPowerAdvisersGroups((self.developers_uid, self.vendors_uid, ))
+        cfg.power_advisers_groups = (self.developers_uid, self.vendors_uid,)
         item.update_local_roles()
         # now as pmAdviser1 is adviser for vendors and vendors is a PowerAdviser,
         # he can add an advice for vendors
@@ -1649,9 +1649,9 @@ class testAdvices(PloneMeetingTestCase):
         # no unavailable ending days for now...
         self.tool.setDelayUnavailableEndDays([])
         # make advice giveable when item is proposed
-        self.meetingConfig.setItemAdviceStates((self._stateMappingFor('proposed'), ))
-        self.meetingConfig.setItemAdviceEditStates((self._stateMappingFor('proposed'), ))
-        self.meetingConfig.setItemAdviceViewStates((self._stateMappingFor('proposed'), ))
+        self.meetingConfig.item_advice_states = (self._stateMappingFor('proposed', ))
+        self.meetingConfig.item_advice_edit_states = (self._stateMappingFor('proposed', ))
+        self.meetingConfig.item_advice_view_states = (self._stateMappingFor('proposed', ))
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
         item.setOptionalAdvisers(('{0}__rowid__unique_id_123'.format(self.vendors_uid), ))
@@ -1764,9 +1764,9 @@ class testAdvices(PloneMeetingTestCase):
         """Test when is_delay_calendar_days then delay is computed in calendar days."""
         cfg = self.meetingConfig
         # make advice giveable when item is proposed
-        cfg.setItemAdviceStates((self._stateMappingFor('itemcreated'), ))
-        cfg.setItemAdviceEditStates((self._stateMappingFor('itemcreated'), ))
-        cfg.setItemAdviceViewStates((self._stateMappingFor('itemcreated'), ))
+        cfg.item_advice_states = (self._stateMappingFor('itemcreated', ))
+        cfg.item_advice_edit_states = (self._stateMappingFor('itemcreated', ))
+        cfg.item_advice_view_states = (self._stateMappingFor('itemcreated', ))
         cfg.setCustomAdvisers(
             [{'row_id': 'unique_id_123',
               'org': self.vendors_uid,
@@ -1807,9 +1807,9 @@ class testAdvices(PloneMeetingTestCase):
            available delays for a selected delay-aware advice.'''
         cfg = self.meetingConfig
         # make advice addable and editable when item is 'proposed'
-        cfg.setItemAdviceStates((self._stateMappingFor('proposed'), ))
-        cfg.setItemAdviceEditStates((self._stateMappingFor('proposed'), ))
-        cfg.setItemAdviceViewStates((self._stateMappingFor('proposed'),
+        cfg.item_advice_states = (self._stateMappingFor('proposed', ))
+        cfg.item_advice_edit_states = (self._stateMappingFor('proposed', ))
+        cfg.item_advice_view_states = (self._stateMappingFor('proposed',
                                      self._stateMappingFor('validated')))
         self._setPowerObserverStates(states=(self._stateMappingFor('proposed'), ))
         self.changeUser('pmCreator1')
@@ -1980,9 +1980,9 @@ class testAdvices(PloneMeetingTestCase):
         '''Test the view '@@change-advice-delay' that apply the change delay action.'''
         cfg = self.meetingConfig
         # make advice addable and editable when item is 'proposed'
-        cfg.setItemAdviceStates((self._stateMappingFor('proposed'), ))
-        cfg.setItemAdviceEditStates((self._stateMappingFor('proposed'), ))
-        cfg.setItemAdviceViewStates((self._stateMappingFor('proposed'),
+        cfg.item_advice_states = (self._stateMappingFor('proposed', ))
+        cfg.item_advice_edit_states = (self._stateMappingFor('proposed', ))
+        cfg.item_advice_view_states = (self._stateMappingFor('proposed',
                                      self._stateMappingFor('validated')))
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -2073,15 +2073,15 @@ class testAdvices(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self._removeConfigObjectsFor(cfg)
         # make advice addable when item is itemcreated and give access to copyGroups
-        cfg.setItemAdviceStates((self._stateMappingFor('itemcreated'),
+        cfg.item_advice_states = (self._stateMappingFor('itemcreated',
                                  self._stateMappingFor('proposed'), ))
-        cfg.setItemAdviceEditStates((self._stateMappingFor('itemcreated'),
+        cfg.item_advice_edit_states = (self._stateMappingFor('itemcreated',
                                      self._stateMappingFor('proposed'), ))
-        cfg.setKeepAccessToItemWhenAdvice("was_giveable")
+        cfg.keep_access_to_item_when_advice = "was_giveable"
         self._enableField('copyGroups')
-        cfg.setItemCopyGroupsStates((self._stateMappingFor('itemcreated'),
+        cfg.item_copy_groups_states = (self._stateMappingFor('itemcreated',
                                      self._stateMappingFor('proposed'), ))
-        cfg.setEnableAdviceProposingGroupComment(True)
+        cfg.enable_advice_proposing_group_comment = True
         # create item and ask advices
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem', decision=self.decisionText)
@@ -2160,9 +2160,9 @@ class testAdvices(PloneMeetingTestCase):
         '''Test the view '@@advice-reinit-delay' that reinitialize the advice delay to 0.'''
         cfg = self.meetingConfig
         # make advice addable and editable when item is 'itemcreated'
-        cfg.setItemAdviceStates((self._stateMappingFor('itemcreated'), ))
-        cfg.setItemAdviceEditStates((self._stateMappingFor('itemcreated'), ))
-        cfg.setItemAdviceViewStates((self._stateMappingFor('itemcreated'), ))
+        cfg.item_advice_states = (self._stateMappingFor('itemcreated', ))
+        cfg.item_advice_edit_states = (self._stateMappingFor('itemcreated', ))
+        cfg.item_advice_view_states = (self._stateMappingFor('itemcreated', ))
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         custom_advisers = [{'row_id': 'unique_id_123',
@@ -2227,9 +2227,9 @@ class testAdvices(PloneMeetingTestCase):
            A confidential advice is not visible by power observers or restricted power observers.'''
         cfg = self.meetingConfig
         # hide confidential advices to power observers
-        cfg.setEnableAdviceConfidentiality(True)
-        cfg.setAdviceConfidentialityDefault(True)
-        cfg.setAdviceConfidentialFor(('powerobservers', ))
+        cfg.enable_advice_confidentiality = True
+        cfg.advice_confidentiality_default = True
+        cfg.advice_confidential_for = ('powerobservers',)
         # make power observers able to see proposed items
         self._setPowerObserverStates(states=(self._stateMappingFor('proposed'), ))
         # first check default confidentiality value
@@ -2244,7 +2244,7 @@ class testAdvices(PloneMeetingTestCase):
         toggle_view = item.restrictedTraverse('@@toggle_advice_is_confidential')
         self.assertRaises(Unauthorized, toggle_view.toggle, UID='%s__%s' % (item.UID(), self.developers_uid))
         self.assertTrue(item.adviceIndex[self.developers_uid]['isConfidential'])
-        cfg.setAdviceConfidentialityDefault(False)
+        cfg.advice_confidentiality_default = False
         # ask 'vendors' advice
         item.setOptionalAdvisers((self.developers_uid, self.vendors_uid, ))
         item._update_after_edit()
@@ -2303,9 +2303,9 @@ class testAdvices(PloneMeetingTestCase):
            transitions triggered on advice that will 'giveAdvice'.'''
         cfg = self.meetingConfig
         # advice can be given when item is validated
-        cfg.setItemAdviceStates((self._stateMappingFor('validated'), ))
-        cfg.setItemAdviceEditStates((self._stateMappingFor('validated'), ))
-        cfg.setItemAdviceViewStates((self._stateMappingFor('validated'), ))
+        cfg.item_advice_states = (self._stateMappingFor('validated', ))
+        cfg.item_advice_edit_states = (self._stateMappingFor('validated', ))
+        cfg.item_advice_view_states = (self._stateMappingFor('validated', ))
         # create an item as vendors and give an advice as vendors on it
         # it is viewable by MeetingManager when validated
         self.changeUser('pmCreator2')
@@ -2336,9 +2336,9 @@ class testAdvices(PloneMeetingTestCase):
     def test_pm_ChangeAdviceHiddenDuringRedactionView(self):
         """Test the view that will toggle the advice_hide_during_redaction attribute on an item."""
         cfg = self.meetingConfig
-        cfg.setItemAdviceStates(['itemcreated', ])
-        cfg.setItemAdviceEditStates(['itemcreated', ])
-        cfg.setItemAdviceViewStates(['itemcreated', ])
+        cfg.item_advice_states = ['itemcreated', ]
+        cfg.item_advice_edit_states = ['itemcreated', ]
+        cfg.item_advice_view_states = ['itemcreated', ]
         self.changeUser('pmCreator1')
         # create an item and ask the advice of group 'vendors'
         data = {
@@ -2386,11 +2386,11 @@ class testAdvices(PloneMeetingTestCase):
     def test_pm_ChangeAdviceAskedAgainView(self):
         """Test the view that will change from advice asked_again/back to previous advice."""
         cfg = self.meetingConfig
-        cfg.setItemAdviceStates([self._stateMappingFor('proposed'), ])
-        cfg.setItemAdviceEditStates([self._stateMappingFor('proposed'), ])
-        cfg.setItemAdviceViewStates([self._stateMappingFor('proposed'), ])
+        cfg.item_advice_states = [self._stateMappingFor('proposed', ])
+        cfg.item_advice_edit_states = [self._stateMappingFor('proposed', ])
+        cfg.item_advice_view_states = [self._stateMappingFor('proposed', ])
         # default value of field 'advice_hide_during_redaction' will be True
-        cfg.setDefaultAdviceHiddenDuringRedaction(['meetingadvice'])
+        cfg.default_advice_hidden_during_redaction = ['meetingadvice']
         self.changeUser('pmCreator1')
         # create an item and ask the advice of group 'vendors'
         data = {
@@ -2409,7 +2409,7 @@ class testAdvices(PloneMeetingTestCase):
                                              'advice_hide_during_redaction': False,
                                              'advice_comment': richtextval(u'My comment')})
         # 'asked_again' is always enabled
-        self.assertFalse('asked_again' in cfg.getUsedAdviceTypes())
+        self.assertFalse('asked_again' in cfg.used_advice_types)
         self.changeUser('pmManager')
         self.assertTrue(item.adapted().mayAskAdviceAgain(advice))
 
@@ -2458,7 +2458,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(item.adapted().mayBackToPreviousAdvice(advice))
         # when an advice is 'asked_again', the field hidden_during_redaction
         # is set to the default defined in the MeetingConfig
-        self.assertTrue('meetingadvice' in cfg.getDefaultAdviceHiddenDuringRedaction())
+        self.assertTrue('meetingadvice' in cfg.default_advice_hidden_during_redaction)
         # when "asked_again", advice_hide_during_redaction is set to True on edit
         # so for now it is still False
         self.assertFalse(advice.advice_hide_during_redaction)
@@ -2518,11 +2518,11 @@ class testAdvices(PloneMeetingTestCase):
     def _setUpHistorizedAdvice(self):
         """ """
         cfg = self.meetingConfig
-        cfg.setItemAdviceStates([self._stateMappingFor('itemcreated')])
-        cfg.setItemAdviceEditStates([self._stateMappingFor('itemcreated')])
-        cfg.setItemAdviceViewStates([self._stateMappingFor('itemcreated'), self._stateMappingFor('proposed')])
+        cfg.item_advice_states = [self._stateMappingFor('itemcreated'])
+        cfg.item_advice_edit_states = [self._stateMappingFor('itemcreated'])
+        cfg.item_advice_view_states = [self._stateMappingFor('itemcreated', self._stateMappingFor('proposed')])
         self._enableField('copyGroups')
-        cfg.setItemCopyGroupsStates([self._stateMappingFor('proposed')])
+        cfg.item_copy_groups_states = [self._stateMappingFor('proposed'])
         self._setPowerObserverStates(states=(self._stateMappingFor('proposed'), ))
         self.changeUser('pmCreator1')
         # create an item and ask the advice of group 'vendors'
@@ -2641,14 +2641,14 @@ class testAdvices(PloneMeetingTestCase):
            Moreover, advice is only versioned if it was modified."""
         cfg = self.meetingConfig
         # item data are saved if cfg.historizeItemDataWhenAdviceIsGiven
-        self.assertTrue(cfg.getHistorizeItemDataWhenAdviceIsGiven())
+        self.assertTrue(cfg.historize_item_data_when_advice_is_given)
         # make sure we know what item rich text fields are enabled
-        cfg.setUsedItemAttributes(('description', 'detailedDescription', 'motivation', ))
-        cfg.setItemAdviceStates([self._stateMappingFor('proposed'), ])
-        cfg.setItemAdviceEditStates([self._stateMappingFor('proposed'), ])
-        cfg.setItemAdviceViewStates([self._stateMappingFor('proposed'), ])
+        cfg.used_item_attributes = ('description', 'detailedDescription', 'motivation',)
+        cfg.item_advice_states = [self._stateMappingFor('proposed', ])
+        cfg.item_advice_edit_states = [self._stateMappingFor('proposed', ])
+        cfg.item_advice_view_states = [self._stateMappingFor('proposed', ])
         # set that default value of field 'advice_hide_during_redaction' will be True
-        cfg.setDefaultAdviceHiddenDuringRedaction(['meetingadvice'])
+        cfg.default_advice_hidden_during_redaction = ['meetingadvice']
         self.changeUser('pmCreator1')
         # create an item and ask the advice of group 'vendors'
         data = {
@@ -2713,10 +2713,10 @@ class testAdvices(PloneMeetingTestCase):
         """Make sure historizing the advice will not change the advice modification date."""
         cfg = self.meetingConfig
         # item data are saved if cfg.historizeItemDataWhenAdviceIsGiven
-        self.assertTrue(cfg.getHistorizeItemDataWhenAdviceIsGiven())
-        cfg.setItemAdviceStates([self._stateMappingFor('proposed'), ])
-        cfg.setItemAdviceEditStates([self._stateMappingFor('proposed'), ])
-        cfg.setItemAdviceViewStates([self._stateMappingFor('proposed'), ])
+        self.assertTrue(cfg.historize_item_data_when_advice_is_given)
+        cfg.item_advice_states = [self._stateMappingFor('proposed', ])
+        cfg.item_advice_edit_states = [self._stateMappingFor('proposed', ])
+        cfg.item_advice_view_states = [self._stateMappingFor('proposed', ])
 
         # create an item and ask the advice of group 'vendors'
         self.changeUser('pmCreator1')
@@ -2749,9 +2749,9 @@ class testAdvices(PloneMeetingTestCase):
            This will care that an advice that is edited out of the period the adviser may
            edit the advice is still using the correct given_on date."""
         cfg = self.meetingConfig
-        cfg.setItemAdviceStates([self._stateMappingFor('itemcreated'), ])
-        cfg.setItemAdviceEditStates([self._stateMappingFor('itemcreated'), ])
-        cfg.setItemAdviceViewStates([self._stateMappingFor('itemcreated'), ])
+        cfg.item_advice_states = [self._stateMappingFor('itemcreated', ])
+        cfg.item_advice_edit_states = [self._stateMappingFor('itemcreated', ])
+        cfg.item_advice_view_states = [self._stateMappingFor('itemcreated', ])
 
         # create an item and ask the advice of group 'vendors'
         self.changeUser('pmCreator1')
@@ -2787,14 +2787,14 @@ class testAdvices(PloneMeetingTestCase):
            Moreover, advice is only versioned if it was modified since last version."""
         cfg = self.meetingConfig
         # item data are saved if cfg.historizeItemDataWhenAdviceIsGiven
-        self.assertTrue(cfg.getHistorizeItemDataWhenAdviceIsGiven())
+        self.assertTrue(cfg.historize_item_data_when_advice_is_given)
         # make sure we know what item rich text fields are enabled
-        cfg.setUsedItemAttributes(('description', 'detailedDescription', 'motivation', ))
-        cfg.setItemAdviceStates([self._stateMappingFor('proposed'), ])
-        cfg.setItemAdviceEditStates([self._stateMappingFor('proposed'), ])
-        cfg.setItemAdviceViewStates([self._stateMappingFor('proposed'), ])
+        cfg.used_item_attributes = ('description', 'detailedDescription', 'motivation',)
+        cfg.item_advice_states = [self._stateMappingFor('proposed', ])
+        cfg.item_advice_edit_states = [self._stateMappingFor('proposed', ])
+        cfg.item_advice_view_states = [self._stateMappingFor('proposed', ])
         # default value of field 'advice_hide_during_redaction' is False
-        self.assertFalse(cfg.getDefaultAdviceHiddenDuringRedaction())
+        self.assertFalse(cfg.default_advice_hidden_during_redaction)
 
         self.changeUser('pmCreator1')
         # create an item and ask the advice of group 'vendors'
@@ -2820,7 +2820,7 @@ class testAdvices(PloneMeetingTestCase):
         # advice will be versioned if the item is edited
         # this is only the case if cfg.historizeAdviceIfGivenAndItemModified is True
         self.changeUser('siteadmin')
-        cfg.setHistorizeAdviceIfGivenAndItemModified(False)
+        cfg.historize_advice_if_given_and_item_modified = False
         self.changeUser('pmReviewer1')
         adapter = getAdapter(advice, IImioHistory, 'advice_given')
         self.assertIsNone(getLastAction(adapter))
@@ -2833,7 +2833,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertIsNone(getLastAction(adapter))
         # activate and try again
         self.changeUser('siteadmin')
-        cfg.setHistorizeAdviceIfGivenAndItemModified(True)
+        cfg.historize_advice_if_given_and_item_modified = True
         self.changeUser('pmReviewer1')
         item.processForm()
         # first version, item data was historized on it
@@ -2949,10 +2949,10 @@ class testAdvices(PloneMeetingTestCase):
         # classic scenario is an item visible by advisers when it is 'proposed'
         # and no more when it goes back to 'itemcreated'
         cfg = self.meetingConfig
-        cfg.setItemAdviceStates([self._stateMappingFor('proposed'), ])
-        cfg.setItemAdviceEditStates([self._stateMappingFor('proposed'), ])
-        cfg.setItemAdviceViewStates([self._stateMappingFor('proposed'), ])
-        cfg.setKeepAccessToItemWhenAdvice(value)
+        cfg.item_advice_states = [self._stateMappingFor('proposed', ])
+        cfg.item_advice_edit_states = [self._stateMappingFor('proposed', ])
+        cfg.item_advice_view_states = [self._stateMappingFor('proposed', ])
+        cfg.keep_access_to_item_when_advice = value
 
         # create an item, set it to 'proposed', give advice and set it back to 'itemcreated'
         self.changeUser('pmCreator1')
@@ -2996,12 +2996,12 @@ class testAdvices(PloneMeetingTestCase):
 
         # set item back to 'itemcreated', it will not be visible anymore by advisers
         self.changeUser('pmReviewer2')
-        self.assertEqual(cfg.getKeepAccessToItemWhenAdvice(), 'default')
+        self.assertEqual(cfg.keep_access_to_item_when_advice, 'default')
         self.backToState(item, self._stateMappingFor('itemcreated'))
         self.assertFalse(self.hasPermission(View, item))
 
         # activate keepAccessToItemWhenAdvice, then item is visible again
-        cfg.setKeepAccessToItemWhenAdvice('is_given')
+        cfg.keep_access_to_item_when_advice = 'is_given'
         item.update_local_roles()
         self.assertTrue(self.hasPermission(View, item))
 
@@ -3021,12 +3021,12 @@ class testAdvices(PloneMeetingTestCase):
         # set item back to 'itemcreated', it will still be visible by advisers
         # even if advice was not given
         self.changeUser('pmReviewer2')
-        self.assertEqual(cfg.getKeepAccessToItemWhenAdvice(), 'default')
+        self.assertEqual(cfg.keep_access_to_item_when_advice, 'default')
         self.backToState(item, self._stateMappingFor('itemcreated'))
         self.assertFalse(self.hasPermission(View, item))
 
         # activate keepAccessToItemWhenAdvice, then item is visible again
-        cfg.setKeepAccessToItemWhenAdvice('was_giveable')
+        cfg.keep_access_to_item_when_advice = 'was_giveable'
         item.update_local_roles()
         self.assertTrue(self.hasPermission(View, item))
 
@@ -3044,7 +3044,7 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('pmReviewer2')
         self.assertEqual(self.vendors.get_keep_access_to_item_when_advice(),
                          'use_meetingconfig_value')
-        self.assertEqual(cfg.getKeepAccessToItemWhenAdvice(), 'default')
+        self.assertEqual(cfg.keep_access_to_item_when_advice, 'default')
         self.backToState(item, self._stateMappingFor('itemcreated'))
         self.backToState(item, self._stateMappingFor('itemcreated'))
 
@@ -3064,7 +3064,7 @@ class testAdvices(PloneMeetingTestCase):
         # override the other way round
         self.changeUser('pmReviewer2')
         self.vendors.keep_access_to_item_when_advice = 'use_meetingconfig_value'
-        cfg.setKeepAccessToItemWhenAdvice('is_given')
+        cfg.keep_access_to_item_when_advice = 'is_given'
         item.update_local_roles()
         self.assertTrue(self.hasPermission(View, item))
 
@@ -3096,9 +3096,9 @@ class testAdvices(PloneMeetingTestCase):
         """A user able to edit the advice is able to add images."""
         cfg = self.meetingConfig
         cfg.setCustomAdvisers([])
-        cfg.setItemAdviceStates(('itemcreated', ))
-        cfg.setItemAdviceEditStates(('itemcreated', ))
-        cfg.setItemAdviceViewStates(('itemcreated', ))
+        cfg.item_advice_states = ('itemcreated',)
+        cfg.item_advice_edit_states = ('itemcreated',)
+        cfg.item_advice_view_states = ('itemcreated',)
         file_path = path.join(path.dirname(__file__), 'dot.gif')
         data = open(file_path, 'r')
 
@@ -3137,9 +3137,9 @@ class testAdvices(PloneMeetingTestCase):
         """External images are stored locally."""
         cfg = self.meetingConfig
         cfg.setCustomAdvisers([])
-        cfg.setItemAdviceStates(('itemcreated', ))
-        cfg.setItemAdviceEditStates(('itemcreated', ))
-        cfg.setItemAdviceViewStates(('itemcreated', ))
+        cfg.item_advice_states = ('itemcreated',)
+        cfg.item_advice_edit_states = ('itemcreated',)
+        cfg.item_advice_view_states = ('itemcreated',)
 
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -3170,9 +3170,9 @@ class testAdvices(PloneMeetingTestCase):
            object if available, otherwise it returns None."""
         cfg = self.meetingConfig
         cfg.setCustomAdvisers([])
-        cfg.setItemAdviceStates(('itemcreated', ))
-        cfg.setItemAdviceEditStates(('itemcreated', ))
-        cfg.setItemAdviceViewStates(('itemcreated', ))
+        cfg.item_advice_states = ('itemcreated',)
+        cfg.item_advice_edit_states = ('itemcreated',)
+        cfg.item_advice_view_states = ('itemcreated',)
 
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -3210,9 +3210,9 @@ class testAdvices(PloneMeetingTestCase):
               'delay_label': '',
               'available_on': '',
               'is_linked_to_previous_row': '1'}, ])
-        cfg.setItemAdviceStates(('itemcreated', ))
-        cfg.setItemAdviceEditStates(('itemcreated', ))
-        cfg.setItemAdviceViewStates(('itemcreated', ))
+        cfg.item_advice_states = ('itemcreated',)
+        cfg.item_advice_edit_states = ('itemcreated',)
+        cfg.item_advice_view_states = ('itemcreated',)
 
         # create 2 items and inheritate from an advice
         self.changeUser('pmCreator1')
@@ -3273,8 +3273,8 @@ class testAdvices(PloneMeetingTestCase):
         selected_orgs.append(self.endUsers_uid)
         api.portal.set_registry_record(ORGANIZATIONS_REGISTRY, selected_orgs)
         self._addPrincipalToGroup('pmAdviser1', '{0}_advisers'.format(self.endUsers_uid))
-        cfg.setSelectableAdvisers(cfg.getSelectableAdvisers() + (self.endUsers_uid, ))
-        cfg.setPowerAdvisersGroups((self.endUsers_uid, ))
+        cfg.selectable_advisers = cfg.selectable_advisers + (self.endUsers_uid,)
+        cfg.power_advisers_groups = (self.endUsers_uid,)
 
     def test_pm_InheritedAdviceNotAskedAdvice(self):
         """Check that not_asked advices are inherited as well."""
@@ -3368,9 +3368,9 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(download_view())
         # confidential annexes on advices are not viewable by powerobservers
         download_view = annexConfidential.restrictedTraverse('@@download')
-        self.assertFalse(cfg.getAdviceAnnexConfidentialVisibleFor())
+        self.assertFalse(cfg.advice_annex_confidential_visible_for)
         self.assertRaises(Unauthorized, download_view)
-        cfg.setAdviceAnnexConfidentialVisibleFor(('configgroup_powerobservers', ))
+        cfg.advice_annex_confidential_visible_for = ('configgroup_powerobservers',)
         item1.__ac_local_roles__.clear()
         item1.update_local_roles()
         self.assertTrue(download_view())
@@ -3399,9 +3399,9 @@ class testAdvices(PloneMeetingTestCase):
     def test_pm_GetAdviceDataForAdviceHiddenDuringRedaction(self):
         '''Test the getAdviceDataFor method p_hide_advices_under_redaction parameter.'''
         cfg = self.meetingConfig
-        cfg.setItemAdviceStates(['itemcreated', ])
-        cfg.setItemAdviceEditStates(['itemcreated', ])
-        cfg.setItemAdviceViewStates(['itemcreated', ])
+        cfg.item_advice_states = ['itemcreated', ]
+        cfg.item_advice_edit_states = ['itemcreated', ]
+        cfg.item_advice_view_states = ['itemcreated', ]
         self.changeUser('pmCreator1')
         # create an item and ask the advice of group 'vendors'
         data = {
@@ -3525,9 +3525,9 @@ class testAdvices(PloneMeetingTestCase):
               'for_item_created_from': '2016/08/10',
               'delay': '5',
               'delay_label': ''}, ])
-        cfg.setItemAdviceStates(('itemcreated', ))
-        cfg.setItemAdviceEditStates(('itemcreated', ))
-        cfg.setItemAdviceViewStates(('itemcreated', ))
+        cfg.item_advice_states = ('itemcreated',)
+        cfg.item_advice_edit_states = ('itemcreated',)
+        cfg.item_advice_view_states = ('itemcreated',)
 
         self.changeUser('pmCreator1')
         # item without predecessor
@@ -3634,9 +3634,9 @@ class testAdvices(PloneMeetingTestCase):
            as expected and the inherited advice is shown correctly.'''
         cfg = self.meetingConfig
         cfg = self.meetingConfig
-        cfg.setItemAdviceStates((self._stateMappingFor('itemcreated'), ))
-        cfg.setPowerAdvisersGroups((self.developers_uid, ))
-        cfg.setItemManualSentToOtherMCStates((self._stateMappingFor('itemcreated')))
+        cfg.item_advice_states = (self._stateMappingFor('itemcreated', ))
+        cfg.power_advisers_groups = (self.developers_uid,)
+        cfg.item_manual_sent_to_other_mc_states = (self._stateMappingFor('itemcreated'))
         self._setPowerObserverStates(states=(self._stateMappingFor('itemcreated'), ))
         cfg2 = self.meetingConfig2
         cfg2_id = cfg2.getId()
@@ -3648,7 +3648,7 @@ class testAdvices(PloneMeetingTestCase):
               'delay': '5',
               'delay_label': ''}, ])
 
-        cfg.setContentsKeptOnSentToOtherMC(('advices', ))
+        cfg.contents_kept_on_sent_to_other_mc = ('advices',)
         self.changeUser('pmManager')
         item1 = self.create('MeetingItem')
         item1.setOtherMeetingConfigsClonableTo((cfg2_id, ))
@@ -3765,7 +3765,7 @@ class testAdvices(PloneMeetingTestCase):
         '''Access to inherited item is taking into account MeetingConfig.hideNotViewableLinkedItemsTo.'''
         item1, item2, vendors_advice, developers_advice = self._setupInheritedAdvice()
         cfg = self.meetingConfig
-        cfg.setHideNotViewableLinkedItemsTo(('powerobservers', ))
+        cfg.hide_not_viewable_linked_items_to = ('powerobservers',)
         self._setPowerObserverStates(states=(self._stateMappingFor('itemcreated'), ))
         self._setPowerObserverStates(observer_type='restrictedpowerobservers',
                                      states=(self._stateMappingFor('itemcreated'), ))
@@ -3792,9 +3792,9 @@ class testAdvices(PloneMeetingTestCase):
     def test_pm_AdviceAuthorDisplayedInAdviceInfos(self):
         """Test that the advice creator is displayed on the @@advices-icons-infos."""
         cfg = self.meetingConfig
-        cfg.setItemAdviceStates([self._stateMappingFor('itemcreated'), ])
-        cfg.setItemAdviceEditStates([self._stateMappingFor('itemcreated'), ])
-        cfg.setItemAdviceViewStates([self._stateMappingFor('itemcreated'), ])
+        cfg.item_advice_states = [self._stateMappingFor('itemcreated', ])
+        cfg.item_advice_edit_states = [self._stateMappingFor('itemcreated', ])
+        cfg.item_advice_view_states = [self._stateMappingFor('itemcreated', ])
         self.changeUser('pmCreator1')
         # create an item and ask the advice of group 'developers'
         data = {
@@ -3850,7 +3850,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertFalse(item2.adviceIndex[self.vendors_uid]['inherited'])
 
         # 2.2) if advice is not askable, advice inheritance is not removed
-        cfg.setSelectableAdvisers(())
+        cfg.selectable_advisers = ()
         # invalidate cache for item advices vocabulary used by MeetingItem.showOptionalAdvisers
         notify(ObjectEditedEvent(cfg))
         item1, item2, vendors_advice, developers_advice = self._setupInheritedAdvice()
@@ -3901,11 +3901,11 @@ class testAdvices(PloneMeetingTestCase):
         form.update()
         self.assertRaises(Unauthorized, form.handleSaveRemoveAdviceInheritance, form, None)
         # add item review_state to itemAdviceEditStates
-        cfg.setItemAdviceEditStates((item2.query_state(),))
+        cfg.item_advice_edit_states = (item2.query_state(,))
         item2.update_local_roles()
         # still raises as removing advice inheritance not enabled in MeetingConfig
         self.assertRaises(Unauthorized, form.handleSaveRemoveAdviceInheritance, form, None)
-        cfg.setInheritedAdviceRemoveableByAdviser(True)
+        cfg.inherited_advice_removeable_by_adviser = True
         form.handleSaveRemoveAdviceInheritance(form, None)
         self.assertFalse(self.vendors_uid in item2.adviceIndex)
         # in this case, as adviser removed inherited advice, he does not have access anymore to item...
@@ -3950,10 +3950,10 @@ class testAdvices(PloneMeetingTestCase):
         # select another row_id, mean non delay aware adviser of a delay aware adviser
         # or another delay for a delay aware adviser
         cfg = self.meetingConfig
-        cfg.setContentsKeptOnSentToOtherMC((u'advices', ))
+        cfg.contents_kept_on_sent_to_other_mc = (u'advices',)
         cfg2 = self.meetingConfig2
         cfg2_id = cfg2.getId()
-        cfg.setItemManualSentToOtherMCStates((self._stateMappingFor('itemcreated')))
+        cfg.item_manual_sent_to_other_mc_states = (self._stateMappingFor('itemcreated'))
         item1.setOtherMeetingConfigsClonableTo((cfg2_id, ))
         item3 = item1.cloneToOtherMeetingConfig(cfg2_id)
         self.assertNotEqual(item1.portal_type, item3.portal_type)
@@ -3977,12 +3977,12 @@ class testAdvices(PloneMeetingTestCase):
         """When an advice is added/modified/removed/attribute changed,
            the item modification date is updated."""
         cfg = self.meetingConfig
-        cfg.setItemAdviceStates((self._stateMappingFor('proposed'), ))
-        cfg.setItemAdviceEditStates((self._stateMappingFor('proposed'), ))
-        cfg.setItemAdviceViewStates((self._stateMappingFor('proposed'),
+        cfg.item_advice_states = (self._stateMappingFor('proposed', ))
+        cfg.item_advice_edit_states = (self._stateMappingFor('proposed', ))
+        cfg.item_advice_view_states = (self._stateMappingFor('proposed',
                                      self._stateMappingFor('validated'), ))
-        cfg.setEnableAdviceConfidentiality(True)
-        cfg.setAdviceConfidentialityDefault(True)
+        cfg.enable_advice_confidentiality = True
+        cfg.advice_confidentiality_default = True
 
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -4106,8 +4106,8 @@ class testAdvices(PloneMeetingTestCase):
            "MeetingAdviser" to manage add advice permission."""
         cfg = self.meetingConfig
         cfg.setCustomAdvisers([])
-        cfg.setItemAdviceStates(('itemcreated', ))
-        cfg.setItemAdviceEditStates(('itemcreated', ))
+        cfg.item_advice_states = ('itemcreated',)
+        cfg.item_advice_edit_states = ('itemcreated',)
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
         item.setOptionalAdvisers((self.developers_uid, ))
@@ -4124,17 +4124,17 @@ class testAdvices(PloneMeetingTestCase):
     def test_pm_AdvicesIconsCaching(self):
         """Test @@advices-icons caching."""
         cfg = self.meetingConfig
-        cfg.setItemAdviceStates([self._stateMappingFor('itemcreated'), ])
-        cfg.setItemAdviceEditStates([self._stateMappingFor('itemcreated'), ])
-        cfg.setItemAdviceViewStates([self._stateMappingFor('itemcreated'), ])
-        cfg.setPowerAdvisersGroups((self.vendors_uid, ))
+        cfg.item_advice_states = [self._stateMappingFor('itemcreated', ])
+        cfg.item_advice_edit_states = [self._stateMappingFor('itemcreated', ])
+        cfg.item_advice_view_states = [self._stateMappingFor('itemcreated', ])
+        cfg.power_advisers_groups = (self.vendors_uid,)
         self._setPowerObserverStates(states=(self._stateMappingFor('itemcreated'), ))
         self._enableField('copyGroups')
-        cfg.setItemCopyGroupsStates((self._stateMappingFor('itemcreated'), ))
+        cfg.item_copy_groups_states = (self._stateMappingFor('itemcreated', ))
         self._setPowerObserverStates(observer_type='restrictedpowerobservers',
                                      states=('itemcreated', ))
-        cfg.setRestrictAccessToSecretItems(True)
-        self.assertTrue('restrictedpowerobservers' in cfg.getRestrictAccessToSecretItemsTo())
+        cfg.restrict_access_to_secret_items = True
+        self.assertTrue('restrictedpowerobservers' in cfg.restrict_access_to_secret_items_to)
 
         # create an item and ask the advice of group 'developers'
         self.changeUser('pmCreator1')
@@ -4298,7 +4298,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(contenthistory.show_history())
 
         # hide it to powerobservers
-        cfg.setHideHistoryTo(('meetingadvice.powerobservers', ))
+        cfg.hide_history_to = ('meetingadvice.powerobservers',)
         self.changeUser('powerobserver1')
         self.assertTrue(self.hasPermission(View, advice))
         self.assertFalse(contenthistory.show_history())
@@ -4317,7 +4317,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(contenthistory.show_history())
 
         # hide it to everyone
-        cfg.setHideHistoryTo(('meetingadvice.everyone', ))
+        cfg.hide_history_to = ('meetingadvice.everyone',)
         self.changeUser('powerobserver1')
         self.assertTrue(self.hasPermission(View, advice))
         self.assertFalse(contenthistory.show_history())
@@ -4348,21 +4348,21 @@ class testAdvices(PloneMeetingTestCase):
     def test_pm_send_suffixes_and_owner_mail_if_relevant(self):
         """Test that the mail is sent when an advice is edited."""
         cfg = self.meetingConfig
-        cfg.setMailItemEvents(('advice_edited__reviewers',))
+        cfg.mail_item_events = ('advice_edited__reviewers',)
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
         self.request['debug_sendMailIfRelevant'] = True
         sent = item.send_suffixes_and_owner_mail_if_relevant("advice_edited")
         self.assertEqual(len(sent), 1)
         self.assertIn(u'M. PMReviewer One <pmreviewer1@plonemeeting.org>', sent[0][0])
-        cfg.setMailItemEvents(())
+        cfg.mail_item_events = ()
         sent = item.send_suffixes_and_owner_mail_if_relevant("advice_edited")
         self.assertEqual(len(sent), 0)
-        cfg.setMailItemEvents(('advice_edited__reviewers',))
+        cfg.mail_item_events = ('advice_edited__reviewers',)
         cfg.setCustomAdvisers([])
-        cfg.setItemAdviceStates(('itemcreated', ))
-        cfg.setItemAdviceEditStates(('itemcreated', ))
-        cfg.setItemAdviceViewStates(('itemcreated', ))
+        cfg.item_advice_states = ('itemcreated',)
+        cfg.item_advice_edit_states = ('itemcreated',)
+        cfg.item_advice_view_states = ('itemcreated',)
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.setOptionalAdvisers((self.vendors_uid, self.developers_uid, ))
@@ -4379,7 +4379,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertIn(u'M. PMReviewer One <pmreviewer1@plonemeeting.org>',
                       self.request["debug_sendMailIfRelevant_result"][0])
 
-        cfg.setMailItemEvents(())
+        cfg.mail_item_events = ()
         self.request["debug_sendMailIfRelevant_result"] = None
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -4396,14 +4396,14 @@ class testAdvices(PloneMeetingTestCase):
                                     'advice_comment': richtextval(u'My comment')})
         self.assertIsNone(self.request["debug_sendMailIfRelevant_result"])
         # owner
-        cfg.setMailItemEvents(('advice_edited__Owner',))
+        cfg.mail_item_events = ('advice_edited__Owner',)
         self.changeUser('pmManager')
         sent = item.send_suffixes_and_owner_mail_if_relevant("advice_edited")
         self.assertEqual(len(sent[0][0]), 1)
         self.assertEqual(sent[0][0][0], u'M. PMCreator One <pmcreator1@plonemeeting.org>')
 
         # in meeting, not necessary to put in meeting, just testing the mail event
-        cfg.setMailItemEvents(('advice_edited__Owner', 'advice_edited_in_meeting__creators'))
+        cfg.mail_item_events = ('advice_edited__Owner', 'advice_edited_in_meeting__creators')
         sent = item.send_suffixes_and_owner_mail_if_relevant("advice_edited_in_meeting")
         self.assertEqual(len(sent[0][0]), 2)
         self.assertEqual(sent[0][0][0], u'M. PMCreator One bee <pmcreator1b@plonemeeting.org>')
@@ -4413,7 +4413,7 @@ class testAdvices(PloneMeetingTestCase):
         """When using MeetingConfig.enforceAdviceMandatoriness, an item
            may only be presented if auto or delay-aware advices are positive."""
         cfg = self.meetingConfig
-        cfg.setEnforceAdviceMandatoriness(True)
+        cfg.enforce_advice_mandatoriness = True
         item1, item2, vendors_advice, developers_advice = \
             self._setupInheritedAdvice()
         self.changeUser('pmManager')
@@ -4426,9 +4426,9 @@ class testAdvices(PloneMeetingTestCase):
     def test_pm_AdviceAddCompleteQuick(self):
         """Test the @@advice-add-complete-quick view."""
         cfg = self.meetingConfig
-        cfg.setItemAdviceStates([self._stateMappingFor('itemcreated'), ])
-        cfg.setItemAdviceEditStates([self._stateMappingFor('itemcreated'), ])
-        cfg.setItemAdviceViewStates([self._stateMappingFor('itemcreated'), ])
+        cfg.item_advice_states = [self._stateMappingFor('itemcreated', ])
+        cfg.item_advice_edit_states = [self._stateMappingFor('itemcreated', ])
+        cfg.item_advice_view_states = [self._stateMappingFor('itemcreated', ])
 
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem', optionalAdvisers=(self.vendors_uid, ))
@@ -4439,12 +4439,12 @@ class testAdvices(PloneMeetingTestCase):
         view = item.restrictedTraverse('@@advice-add-complete-quick')
         self.assertTrue(self.vendors_uid in view())
         # trying to quick add an advice for another group will raise Unauthorized
-        self.assertTrue("positive" in cfg.getUsedAdviceTypes())
+        self.assertTrue("positive" in cfg.used_advice_types)
         # wrong advice_group
         self.assertRaises(Unauthorized, view, advice_group=self.developers_uid, advice_type='positive')
         self.assertRaises(Unauthorized, view, advice_group=self.developers_uid)
         # wrong advice_type
-        self.assertFalse("read" in cfg.getUsedAdviceTypes())
+        self.assertFalse("read" in cfg.used_advice_types)
         self.assertRaises(Unauthorized, view, advice_group=self.vendors_uid, advice_type='read')
         self.assertRaises(Unauthorized, view, advice_type='read')
         # now add advice

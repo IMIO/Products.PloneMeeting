@@ -81,7 +81,7 @@ class testSearches(PloneMeetingTestCase):
            a user has to give an advice for.'''
         self.changeUser('admin')
         cfg = self.meetingConfig
-        cfg.setUsedAdviceTypes(cfg.getUsedAdviceTypes() + ('asked_again', ))
+        cfg.used_advice_types = cfg.getUsedAdviceTypes( + ('asked_again', ))
         cfg.setCustomAdvisers(
             [{'row_id': 'unique_id_123',
               'org': self.vendors_uid,
@@ -117,7 +117,7 @@ class testSearches(PloneMeetingTestCase):
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstoadvice')
         self.failIf(collection.results())
         # an advice can be given when an item is 'proposed'
-        self.assertEqual(cfg.getItemAdviceStates(), (self._stateMappingFor('proposed'), ))
+        self.assertEqual(cfg.item_advice_states, (self._stateMappingFor('proposed'), ))
         # create an item to advice
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -210,7 +210,7 @@ class testSearches(PloneMeetingTestCase):
            Advice asked to another user will not be returned.'''
         self.changeUser('admin')
         cfg = self.meetingConfig
-        cfg.setUsedAdviceTypes(cfg.getUsedAdviceTypes() + ('asked_again', ))
+        cfg.used_advice_types = cfg.getUsedAdviceTypes( + ('asked_again', ))
         originalCustomAdvisers = {'row_id': 'unique_id_123',
                                   'org': self.vendors_uid,
                                   'gives_auto_advice_on': '',
@@ -222,9 +222,9 @@ class testSearches(PloneMeetingTestCase):
                                   'delay_label': 'Delay label', }
         cfg.setCustomAdvisers([originalCustomAdvisers])
         cfg.setSelectableAdviserUsers((self.vendors_uid, ))
-        cfg.setItemAdviceStates((self._stateMappingFor('itemcreated'), ))
-        cfg.setItemAdviceEditStates((self._stateMappingFor('itemcreated'), ))
-        cfg.setItemAdviceViewStates((self._stateMappingFor('itemcreated'), ))
+        cfg.item_advice_states = (self._stateMappingFor('itemcreated', ))
+        cfg.item_advice_edit_states = (self._stateMappingFor('itemcreated', ))
+        cfg.item_advice_view_states = (self._stateMappingFor('itemcreated', ))
         itemTypeName = cfg.getItemTypeName()
 
         # first test the generated query
@@ -302,7 +302,7 @@ class testSearches(PloneMeetingTestCase):
         self.changeUser('admin')
         cfg = self.meetingConfig
         itemTypeName = cfg.getItemTypeName()
-        cfg.setUsedAdviceTypes(cfg.getUsedAdviceTypes() + ('asked_again', ))
+        cfg.used_advice_types = cfg.getUsedAdviceTypes( + ('asked_again', ))
 
         # first test the generated query
         adapter = getAdapter(cfg,
@@ -338,7 +338,7 @@ class testSearches(PloneMeetingTestCase):
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_adviseditems')
         self.failIf(collection.results())
         # an advice can be given when an item is 'proposed'
-        self.assertEqual(cfg.getItemAdviceStates(), (self._stateMappingFor('proposed'), ))
+        self.assertEqual(cfg.item_advice_states, (self._stateMappingFor('proposed'), ))
         # create an item to advice
         self.changeUser('pmCreator1')
         item1 = self.create('MeetingItem')
@@ -433,7 +433,7 @@ class testSearches(PloneMeetingTestCase):
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_adviseditemswithdelay')
         self.failIf(collection.results())
         # an advice can be given when an item is 'proposed'
-        self.assertEqual(cfg.getItemAdviceStates(), (self._stateMappingFor('proposed'), ))
+        self.assertEqual(cfg.item_advice_states, (self._stateMappingFor('proposed'), ))
         # create an item to advice
         self.changeUser('pmCreator1')
         item1 = self.create('MeetingItem')
@@ -550,7 +550,7 @@ class testSearches(PloneMeetingTestCase):
         """Test MeetingConfig.show_copy_groups_search used to show items in copy searches."""
         cfg = self.meetingConfig
         self._enableField('copyGroups')
-        self.assertEqual(cfg.getSelectableCopyGroups(),
+        self.assertEqual(cfg.selectable_copy_groups,
                          (self.developers_reviewers, self.vendors_reviewers))
         self.changeUser('pmCreator1')
         self.assertFalse(cfg.show_copy_groups_search())
@@ -898,7 +898,7 @@ class testSearches(PloneMeetingTestCase):
                              name='items-to-correct')
         # wfAdaptation 'return_to_proposing_group' is not enabled
         self.assertEqual(adapter.query, _find_nothing_query(itemTypeName))
-        wfAdaptations = list(cfg.getWorkflowAdaptations())
+        wfAdaptations = list(cfg.wf_adaptations)
         if 'return_to_proposing_group' not in wfAdaptations:
             wfAdaptations.append('return_to_proposing_group')
         cfg.setWorkflowAdaptations(wfAdaptations)
@@ -967,7 +967,7 @@ class testSearches(PloneMeetingTestCase):
 
         itemTypeName = cfg.getItemTypeName()
         self.changeUser('siteadmin')
-        wfAdaptations = list(cfg.getWorkflowAdaptations())
+        wfAdaptations = list(cfg.wf_adaptations)
         if 'return_to_proposing_group_with_last_validation' not in wfAdaptations:
             wfAdaptations.append('return_to_proposing_group_with_last_validation')
         # desactivate simple return to proposing group wf
@@ -1125,7 +1125,7 @@ class testSearches(PloneMeetingTestCase):
                              name='items-to-correct-to-validate-of-every-reviewer-groups')
         # wfAdaptation 'return_to_proposing_group_with_last_validation' is not enabled
         self.assertEqual(adapter.query, _find_nothing_query(itemTypeName))
-        wfAdaptations = list(cfg.getWorkflowAdaptations())
+        wfAdaptations = list(cfg.wf_adaptations)
         if 'return_to_proposing_group_with_all_validations' not in wfAdaptations:
             wfAdaptations.append('return_to_proposing_group_with_all_validations')
         # deactivate simple return to proposing group wf

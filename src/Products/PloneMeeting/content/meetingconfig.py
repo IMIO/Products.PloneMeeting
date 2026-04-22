@@ -3258,6 +3258,142 @@ class MeetingConfig(Container):
         self.using_groups = value
 
 
+    security.declareProtected(WriteRiskyConfig, 'setInsertingMethodsOnAddItem')
+    def setInsertingMethodsOnAddItem(self, value, **kwargs):
+        self.inserting_methods_on_add_item = list(value)
+
+    security.declareProtected(WriteRiskyConfig, 'setUsedItemAttributes')
+    def setUsedItemAttributes(self, value, **kwargs):
+        self.used_item_attributes = list(value)
+
+    security.declareProtected(WriteRiskyConfig, 'setItemAdviceStates')
+    def setItemAdviceStates(self, value, **kwargs):
+        self.item_advice_states = list(value)
+
+    security.declareProtected(WriteRiskyConfig, 'setOnTransitionFieldTransforms')
+    def setOnTransitionFieldTransforms(self, value, **kwargs):
+        self.on_transition_field_transforms = list(value)
+
+    security.declareProtected(WriteRiskyConfig, 'setMailItemEvents')
+    def setMailItemEvents(self, value, **kwargs):
+        self.mail_item_events = list(value)
+
+    security.declareProtected(WriteRiskyConfig, 'setListTypes')
+    def setListTypes(self, value, **kwargs):
+        self.list_types = list(value)
+
+    security.declareProtected(WriteRiskyConfig, 'setItemsListVisibleFields')
+    def setItemsListVisibleFields(self, value, **kwargs):
+        self.items_list_visible_fields = list(value)
+
+    security.declareProtected(WriteRiskyConfig, 'setItemsVisibleFields')
+    def setItemsVisibleFields(self, value, **kwargs):
+        self.items_visible_fields = list(value)
+
+    security.declareProtected(WriteRiskyConfig, 'setOnMeetingTransitionItemActionToExecute')
+    def setOnMeetingTransitionItemActionToExecute(self, value, **kwargs):
+        self.on_meeting_transition_item_action_to_execute = list(value)
+
+    security.declareProtected(WriteRiskyConfig, 'setMeetingConfigsToCloneTo')
+    def setMeetingConfigsToCloneTo(self, value, **kwargs):
+        self.meeting_configs_to_clone_to = list(value)
+
+    security.declareProtected(WriteRiskyConfig, 'setItemAnnexConfidentialVisibleFor')
+    def setItemAnnexConfidentialVisibleFor(self, value, **kwargs):
+        self.item_annex_confidential_visible_for = list(value)
+
+    security.declareProtected(WriteRiskyConfig, 'setDisplayAvailableItemsTo')
+    def setDisplayAvailableItemsTo(self, value, **kwargs):
+        self.display_available_items_to = list(value)
+
+    security.declareProtected(WriteRiskyConfig, 'setItemReferenceFormat')
+    def setItemReferenceFormat(self, value, **kwargs):
+        self.item_reference_format = value
+
+    security.declareProtected(WriteRiskyConfig, 'setHideHistoryTo')
+    def setHideHistoryTo(self, value, **kwargs):
+        self.hide_history_to = list(value)
+
+    security.declareProtected(WriteRiskyConfig, 'setVotesResultTALExpr')
+    def setVotesResultTALExpr(self, value, **kwargs):
+        self.votes_result_tal_expr = value
+
+    security.declareProtected(WriteRiskyConfig, 'setEnableAdviceInvalidation')
+    def setEnableAdviceInvalidation(self, value, **kwargs):
+        self.enable_advice_invalidation = value
+
+    security.declareProtected(WriteRiskyConfig, 'setItemAdviceInvalidateStates')
+    def setItemAdviceInvalidateStates(self, value, **kwargs):
+        self.item_advice_invalidate_states = list(value)
+
+    security.declareProtected(WriteRiskyConfig, 'setKeepAccessToItemWhenAdvice')
+    def setKeepAccessToItemWhenAdvice(self, value, **kwargs):
+        self.keep_access_to_item_when_advice = value
+
+    security.declareProtected(WriteRiskyConfig, 'setPowerAdvisersGroups')
+    def setPowerAdvisersGroups(self, value, **kwargs):
+        self.power_advisers_groups = list(value)
+
+    security.declareProtected(WriteRiskyConfig, 'setItemCopyGroupsStates')
+    def setItemCopyGroupsStates(self, value, **kwargs):
+        self.item_copy_groups_states = list(value)
+
+    security.declareProtected(WriteRiskyConfig, 'setEnableAdviceProposingGroupComment')
+    def setEnableAdviceProposingGroupComment(self, value, **kwargs):
+        self.enable_advice_proposing_group_comment = value
+
+    security.declareProtected(WriteRiskyConfig, 'setEnableAdviceConfidentiality')
+    def setEnableAdviceConfidentiality(self, value, **kwargs):
+        self.enable_advice_confidentiality = value
+
+    security.declareProtected(WriteRiskyConfig, 'setAdviceConfidentialityDefault')
+    def setAdviceConfidentialityDefault(self, value, **kwargs):
+        self.advice_confidentiality_default = value
+
+    security.declareProtected(WriteRiskyConfig, 'setAdviceConfidentialFor')
+    def setAdviceConfidentialFor(self, value, **kwargs):
+        self.advice_confidential_for = list(value)
+
+    security.declareProtected(WriteRiskyConfig, 'setDefaultAdviceHiddenDuringRedaction')
+    def setDefaultAdviceHiddenDuringRedaction(self, value, **kwargs):
+        self.default_advice_hidden_during_redaction = value
+
+    security.declareProtected(WriteRiskyConfig, 'setHistorizeAdviceIfGivenAndItemModified')
+    def setHistorizeAdviceIfGivenAndItemModified(self, value, **kwargs):
+        self.historize_advice_if_given_and_item_modified = value
+
+    security.declareProtected(WriteRiskyConfig, 'setItemManualSentToOtherMCStates')
+    def setItemManualSentToOtherMCStates(self, value, **kwargs):
+        self.item_manual_sent_to_other_mc_states = list(value)
+
+    security.declareProtected(WriteRiskyConfig, 'setContentsKeptOnSentToOtherMC')
+    def setContentsKeptOnSentToOtherMC(self, value, **kwargs):
+        self.contents_kept_on_sent_to_other_mc = list(value)
+
+    security.declareProtected(WriteRiskyConfig, 'setHideNotViewableLinkedItemsTo')
+    def setHideNotViewableLinkedItemsTo(self, value, **kwargs):
+        self.hide_not_viewable_linked_items_to = list(value)
+
+    security.declareProtected(WriteRiskyConfig, 'setInheritedAdviceRemoveableByAdviser')
+    def setInheritedAdviceRemoveableByAdviser(self, value, **kwargs):
+        self.inherited_advice_removeable_by_adviser = value
+
+    security.declareProtected(WriteRiskyConfig, 'setAdviceAnnexConfidentialVisibleFor')
+    def setAdviceAnnexConfidentialVisibleFor(self, value, **kwargs):
+        self.advice_annex_confidential_visible_for = list(value)
+
+    security.declareProtected(WriteRiskyConfig, 'setRestrictAccessToSecretItems')
+    def setRestrictAccessToSecretItems(self, value, **kwargs):
+        self.restrict_access_to_secret_items = value
+
+    security.declareProtected(WriteRiskyConfig, 'setEnforceAdviceMandatoriness')
+    def setEnforceAdviceMandatoriness(self, value, **kwargs):
+        self.enforce_advice_mandatoriness = value
+
+    security.declareProtected(WriteRiskyConfig, 'setItemAnnexConfidentialVisibleFor')
+    def setItemAnnexConfidentialVisibleFor(self, value, **kwargs):
+        self.item_annex_confidential_visible_for = list(value)
+
     security.declarePublic('getUsedVoteValues')
     def getUsedVoteValues(self,
                           used_values_attr='usedVoteValues',

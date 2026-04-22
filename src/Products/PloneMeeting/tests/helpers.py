@@ -447,8 +447,8 @@ class PloneMeetingTestingHelpers(object):
         cfgItemWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
         item_initial_state = self.wfTool[cfgItemWF.getId()].initial_state
 
-        cfg.setItemAdviceStates((item_initial_state, ))
-        cfg.setItemAdviceEditStates((item_initial_state, ))
+        cfg.item_advice_states = (item_initial_state,)
+        cfg.item_advice_edit_states = (item_initial_state,)
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.setOptionalAdvisers((self.vendors_uid, ))
@@ -541,8 +541,8 @@ class PloneMeetingTestingHelpers(object):
         # login to be able to query held_positions for orderedContacts vocabulary
         self.changeUser('siteadmin')
         cfg = self.meetingConfig
-        cfg.setUsedMeetingAttributes(meeting_attrs)
-        cfg.setUsedItemAttributes(item_attrs)
+        cfg.used_meeting_attributes = meeting_attrs
+        cfg.used_item_attributes = item_attrs
         ordered_contacts = cfg.getField('orderedContacts').Vocabulary(cfg).keys()
         cfg.setOrderedContacts(ordered_contacts)
         logout()

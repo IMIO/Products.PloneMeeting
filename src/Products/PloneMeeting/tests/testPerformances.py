@@ -187,12 +187,12 @@ class testPerformances(PloneMeetingTestCase):
            We present 50 by 50 items successively in same meeting'''
         pm_logger.info('Presenting %d items without annexes in a meeting containing %d items.' % (50, 0))
         # use 'complex' inserting method
-        self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_list_type',
+        self.meetingConfig.inserting_methods_on_add_item = ({'insertingMethod': 'on_list_type',
                                                           'reverse': '0'},
                                                          {'insertingMethod': 'on_privacy',
                                                           'reverse': '0'},
                                                          {'insertingMethod': 'on_proposing_groups',
-                                                          'reverse': '0'},))
+                                                          'reverse': '0'},)
         meeting, items = self._setupMeetingItemsWithAnnexes(50, 0, as_uids=False)
         # called when no item in the meeting
         self._presentSeveralItems(items)
@@ -218,12 +218,12 @@ class testPerformances(PloneMeetingTestCase):
         pm_logger.info('Freezing a meeting containing %d items and sending %d items to another MC.' % (50, 25))
         cfg = self.meetingConfig
         self._enableField('category', enable=False)
-        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_proposing_groups',
-                                           'reverse': '0'}, ))
+        cfg.inserting_methods_on_add_item = ({'insertingMethod': 'on_proposing_groups',
+                                           'reverse': '0'}, )
         cfg2 = self.meetingConfig2
         self._enableField('category', cfg=cfg2, enable=False)
-        cfg2.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_proposing_groups',
-                                            'reverse': '0'}, ))
+        cfg2.inserting_methods_on_add_item = ({'insertingMethod': 'on_proposing_groups',
+                                            'reverse': '0'}, )
         cfg2Id = cfg2.getId()
         # make items sent to config2 automatically presented in the next meeting
         cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,

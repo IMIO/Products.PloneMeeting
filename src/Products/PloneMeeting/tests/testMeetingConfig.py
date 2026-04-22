@@ -77,9 +77,9 @@ class testMeetingConfig(PloneMeetingTestCase):
            This validates that the shortName is unique across every MeetingConfigs.'''
         self.changeUser("siteadmin")
         cfg = self.meetingConfig
-        cfg2Name = self.meetingConfig2.getShortName()
+        cfg2Name = self.meetingConfig2.short_name
         # can validate it's own shortName
-        self.assertFalse(cfg.validate_shortName(cfg.getShortName()))
+        self.assertFalse(cfg.validate_shortName(cfg.short_name))
         # can validate an unknown shortName
         self.assertFalse(cfg.validate_shortName('other-short-name'))
         self.assertEqual(cfg.validate_shortName(cfg2Name),
@@ -391,8 +391,8 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.failIf(cfg.validate_customAdvisers([changedCustomAdvisers, ]))
         # now use the config
         # make advice givable when item is 'itemcreated'
-        cfg.setItemAdviceStates(('itemcreated', ))
-        cfg.setItemAdviceEditStates(('itemcreated', ))
+        cfg.item_advice_states = ('itemcreated',)
+        cfg.item_advice_edit_states = ('itemcreated',)
         cfg.setCustomAdvisers([originalCustomAdvisers, ])
         item.setBudgetRelated(True)
         item._update_after_edit()
@@ -755,19 +755,19 @@ class testMeetingConfig(PloneMeetingTestCase):
                            'is_linked_to_previous_row': '1'}]
         cfg.setCustomAdvisers(customAdvisers)
         # for now stored data are ok
-        self.failIf(cfg.validate_customAdvisers(cfg.getCustomAdvisers()))
+        self.failIf(cfg.validate_customAdvisers(cfg.custom_advisers))
         # create an item and ask advice relative to second row, row_id 'unique_id_456'
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.setOptionalAdvisers(('{0}__rowid__unique_id_456'.format(self.vendors_uid), ))
         # 'is_linked_to_previous_row' can be changed if the row is used as optional adviser
         customAdvisers[1]['is_linked_to_previous_row'] = '0'
-        self.failIf(cfg.validate_customAdvisers(cfg.getCustomAdvisers()))
+        self.failIf(cfg.validate_customAdvisers(cfg.custom_advisers))
         customAdvisers[1]['is_linked_to_previous_row'] = '1'
         # an element of the chain of rows linked together can be changed
         # as the advice is used as optional advice
         customAdvisers[2]['is_linked_to_previous_row'] = '0'
-        self.failIf(cfg.validate_customAdvisers(cfg.getCustomAdvisers()))
+        self.failIf(cfg.validate_customAdvisers(cfg.custom_advisers))
         customAdvisers[2]['is_linked_to_previous_row'] = '1'
 
         # 'is_linked_to_previous_row' can not be changed
@@ -780,7 +780,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # advice linked to second row is asked
         self.assertTrue(item.adviceIndex[self.vendors_uid]['row_id'] == customAdvisers[2]['row_id'])
         # current config still does validate correctly
-        self.failIf(cfg.validate_customAdvisers(cfg.getCustomAdvisers()))
+        self.failIf(cfg.validate_customAdvisers(cfg.custom_advisers))
 
         # disable the second row 'is_linked_to_previous_row' will
         # "break" the chain of linked elements, it is not permitted if
@@ -840,7 +840,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # we can remove the before last row, chained but unused
         customAdvisers.pop(3)
         cfg.setCustomAdvisers(customAdvisers)
-        self.failIf(cfg.validate_customAdvisers(cfg.getCustomAdvisers()))
+        self.failIf(cfg.validate_customAdvisers(cfg.custom_advisers))
 
         # check that a non delay aware auto asked row may not be removed when used
         extra_row = {'row_id': 'unique_id_1213',
@@ -875,7 +875,7 @@ class testMeetingConfig(PloneMeetingTestCase):
            - if categories are not used, we can not select the 'on_categories' method;
            - fi the 'toDiscuss' field is not used, we can not select the 'on_to_discuss' method.'''
         cfg = self.meetingConfig
-        cfg.setUsedItemAttributes(('pollType', 'toDiscuss', 'privacy'))
+        cfg.used_item_attributes = ('pollType', 'toDiscuss', 'privacy')
         # first test when using 'at_the_end' and something else
         at_the_end_error_msg = translate('inserting_methods_at_the_end_not_alone_error',
                                          domain='PloneMeeting',
@@ -902,7 +902,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                                                    context=self.request)
         values = ({'insertingMethod': 'on_categories',
                    'reverse': '0'}, )
-        self.assertFalse('category' in cfg.getUsedItemAttributes())
+        self.assertFalse('category' in cfg.used_item_attributes)
         self.assertTrue(cfg.validate_insertingMethodsOnAddItem(values) == not_using_categories_error_msg)
         # check on using categories is made on presence of 'category' in 'usedItemAttributes'
         # in the REQUEST, or if not found, on the value defined on the MeetingConfig object
@@ -910,11 +910,11 @@ class testMeetingConfig(PloneMeetingTestCase):
         # this time it validates
         self.failIf(cfg.validate_insertingMethodsOnAddItem(values))
         # except if we just redefined it, aka 'category' not in 'usedItemAttributes' in the REQUEST
-        used_item_attrs = list(cfg.getUsedItemAttributes())
+        used_item_attrs = list(cfg.used_item_attributes)
         used_item_attrs.remove('category')
         self.portal.REQUEST.set('usedItemAttributes', used_item_attrs)
         self.assertTrue(cfg.validate_insertingMethodsOnAddItem(values) == not_using_categories_error_msg)
-        self.portal.REQUEST.set('usedItemAttributes', cfg.getUsedItemAttributes())
+        self.portal.REQUEST.set('usedItemAttributes', cfg.used_item_attributes)
         # this time it validates as redefining it to using category
         self.failIf(cfg.validate_insertingMethodsOnAddItem(values))
 
@@ -932,7 +932,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # check on using 'pollType' is made on presence of 'pollType' in 'usedItemAttributes' in the
         # REQUEST, or if not found, on the value defined on the MeetingConfig object
         # unselect 'pollType', validation fails
-        usedItemAttrsWithoutPollType = list(cfg.getUsedItemAttributes())
+        usedItemAttrsWithoutPollType = list(cfg.used_item_attributes)
         usedItemAttrsWithoutPollType.remove('pollType')
         self._enableField('pollType', enable=False)
         self.assertEqual(cfg.validate_insertingMethodsOnAddItem(values),
@@ -953,15 +953,15 @@ class testMeetingConfig(PloneMeetingTestCase):
                       context=self.request)
         values = ({'insertingMethod': 'on_to_discuss',
                    'reverse': '0'}, )
-        self.assertTrue('toDiscuss' in cfg.getUsedItemAttributes())
+        self.assertTrue('toDiscuss' in cfg.used_item_attributes)
         # it validates
         self.failIf(cfg.validate_insertingMethodsOnAddItem(values))
         # check on using 'toDiscuss' is made on presence of 'toDiscuss' in 'usedItemAttributes' in the
         # REQUEST, or if not found, on the value defined on the MeetingConfig object
         # unselect 'toDiscuss', validation fails
-        usedItemAttrsWithoutToDiscuss = list(cfg.getUsedItemAttributes())
+        usedItemAttrsWithoutToDiscuss = list(cfg.used_item_attributes)
         usedItemAttrsWithoutToDiscuss.remove('toDiscuss')
-        cfg.setUsedItemAttributes(usedItemAttrsWithoutToDiscuss)
+        cfg.used_item_attributes = usedItemAttrsWithoutToDiscuss
         self.portal.REQUEST.set('usedItemAttributes', ())
         self.assertEqual(cfg.validate_insertingMethodsOnAddItem(values),
                          inserting_methods_not_using_to_discuss_error_msg)
@@ -981,15 +981,15 @@ class testMeetingConfig(PloneMeetingTestCase):
                       context=self.request)
         values = ({'insertingMethod': 'on_privacy',
                    'reverse': '0'}, )
-        self.assertTrue('privacy' in cfg.getUsedItemAttributes())
+        self.assertTrue('privacy' in cfg.used_item_attributes)
         # it validates
         self.failIf(cfg.validate_insertingMethodsOnAddItem(values))
         # check on using 'privacy' is made on presence of 'privacy' in 'usedItemAttributes' in the
         # REQUEST, or if not found, on the value defined on the MeetingConfig object
         # unselect 'privacy', validation fails
-        usedItemAttrsWithoutPrivacy = list(cfg.getUsedItemAttributes())
+        usedItemAttrsWithoutPrivacy = list(cfg.used_item_attributes)
         usedItemAttrsWithoutPrivacy.remove('privacy')
-        cfg.setUsedItemAttributes(usedItemAttrsWithoutPrivacy)
+        cfg.used_item_attributes = usedItemAttrsWithoutPrivacy
         self.portal.REQUEST.set('usedItemAttributes', ())
         self.assertEqual(cfg.validate_insertingMethodsOnAddItem(values),
                          inserting_methods_not_using_privacy_error_msg)
@@ -1098,7 +1098,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         valuesWithExtra.append({'identifier': 'extra',
                                 'label': 'Extra'})
         self.failIf(cfg.validate_listTypes(valuesWithExtra))
-        cfg.setListTypes(valuesWithExtra)
+        cfg.list_types = valuesWithExtra
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
         item.setListType('extra')
@@ -1161,8 +1161,8 @@ class testMeetingConfig(PloneMeetingTestCase):
                        'tal_expression': ''})
         self.failIf(cfg.validate_onMeetingTransitionItemActionToExecute(values))
         # 'template_row_marker' is ignored by datagridfield
-        cfg.setOnMeetingTransitionItemActionToExecute(values)
-        self.assertEqual(cfg.getOnMeetingTransitionItemActionToExecute(),
+        cfg.on_meeting_transition_item_action_to_execute = values
+        self.assertEqual(cfg.on_meeting_transition_item_action_to_execute,
                          ({'item_action': EXECUTE_EXPR_VALUE,
                            'meeting_transition': 'close',
                            'tal_expression': 'item/Title'},
@@ -1245,7 +1245,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # create an item, it is using default itemIconColor, then change and check
         self.changeUser('pmCreator1')
         cfg = self.meetingConfig
-        self.assertTrue(cfg.getItemIconColor() == "default")
+        self.assertTrue(cfg.item_icon_color == "default")
         itemType = self.portal.portal_types[cfg.getItemTypeName()]
         self.assertTrue(itemType.icon_expr.endswith('MeetingItem.png'))
         # get one item of the config to check that these items are updated too
@@ -1277,7 +1277,6 @@ class testMeetingConfig(PloneMeetingTestCase):
         cfgId = cfg.getId()
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
-        cfg2.setMeetingConfigsToCloneTo(
             ({'meeting_config': cfgId,
               'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL},)
         )
@@ -1336,12 +1335,12 @@ class testMeetingConfig(PloneMeetingTestCase):
                       domain="plone",
                       context=self.request)
         self.assertEqual(cm.exception.message, can_not_delete_meetingconfig_meetingconfig)
-        cfg2.setMeetingConfigsToCloneTo(())
+        cfg2.meeting_configs_to_clone_to = ()
 
         # fails if an annex_type is used by another MeetingConfig annex_type in other_mc_correspondences
         # here we use cfg2 where correspondences are defined
         self._removeConfigObjectsFor(cfg2)
-        cfg.setMeetingConfigsToCloneTo(())
+        cfg.meeting_configs_to_clone_to = ()
         with self.assertRaises(BeforeDeleteException) as cm:
             self.tool.manage_delObjects([cfg2Id, ])
         can_not_delete_meetingconfig_annex_types = \
@@ -1364,8 +1363,8 @@ class testMeetingConfig(PloneMeetingTestCase):
         # elements created by MeetingConfig were deleted (portal_types, groups, metingFolders)
         # portal_types
         all_portal_type_ids = self.portal.portal_types.listContentTypes()
-        self.assertEqual([pt for pt in all_portal_type_ids if pt.endswith(cfg.getShortName())], [])
-        self.assertEqual([pt for pt in all_portal_type_ids if pt.endswith(cfg2.getShortName())], [])
+        self.assertEqual([pt for pt in all_portal_type_ids if pt.endswith(cfg.short_name)], [])
+        self.assertEqual([pt for pt in all_portal_type_ids if pt.endswith(cfg2.short_name)], [])
         # groups, cfg id is suffixed with different values
         all_group_ids = self.portal.portal_groups.listGroupIds()
         self.assertEqual([gr for gr in all_group_ids if gr.startswith('{0}_'.format(cfgId))], [])
@@ -1439,7 +1438,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         newItemColId = searches.searches_items.invokeFactory('DashboardCollection', id='newItemCol')
         newItemCol = getattr(searches.searches_items, newItemColId)
         newItemCol.processForm(values={'dummy': None})
-        itemColumns = list(cfg.getItemColumns())
+        itemColumns = list(cfg.item_columns)
         for column in DEFAULT_ITEM_COLUMNS:
             itemColumns.insert(column['position'], column['name'])
         self.assertEqual(newItemCol.customViewFields, tuple(itemColumns))
@@ -1447,7 +1446,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         newMeetingColId = searches.searches_meetings.invokeFactory('DashboardCollection', id='newMeetingCol')
         newMeetingCol = getattr(searches.searches_meetings, newMeetingColId)
         newMeetingCol.processForm(values={'dummy': None})
-        meetingColumns = list(cfg.getMeetingColumns())
+        meetingColumns = list(cfg.meeting_columns)
         for column in DEFAULT_MEETING_COLUMNS:
             meetingColumns.insert(column['position'], column['name'])
         self.assertEqual(newMeetingCol.customViewFields, tuple(meetingColumns))
@@ -1680,13 +1679,13 @@ class testMeetingConfig(PloneMeetingTestCase):
         cfg3 = self.create('MeetingConfig', workflowAdaptations=[])
 
         # test with normal value
-        self.assertEqual(cfg2.getPlaces(), '')
-        self.assertEqual(cfg3.getPlaces(), '')
+        self.assertEqual(cfg2.places, '')
+        self.assertEqual(cfg3.places, '')
         places = 'Place1\r\nPlace2\r\nPlace3\r\n'
         cfg.setPlaces(places)
         cfg.update_cfgs(field_name='places')
-        self.assertEqual(cfg2.getPlaces(), places)
-        self.assertEqual(cfg3.getPlaces(), places)
+        self.assertEqual(cfg2.places, places)
+        self.assertEqual(cfg3.places, places)
 
         # test with dict and cfg_ids parameter
         cfg_value = ({'meeting_config': cfg2.getId(),
@@ -1708,9 +1707,9 @@ class testMeetingConfig(PloneMeetingTestCase):
         # useful to reapply WFAdaptations for example
         # enable 'mark_not_applicable' WFAdaptation that adds the
         # 'marked_not_applicable' state to the item WF
-        self.assertEqual(cfg.getWorkflowAdaptations(), ())
-        self.assertEqual(cfg2.getWorkflowAdaptations(), ())
-        self.assertEqual(cfg3.getWorkflowAdaptations(), ())
+        self.assertEqual(cfg.wf_adaptations, ())
+        self.assertEqual(cfg2.wf_adaptations, ())
+        self.assertEqual(cfg3.wf_adaptations, ())
         cfg_item_type_name = cfg.getItemTypeName()
         cfg2_item_type_name = cfg2.getItemTypeName()
         cfg3_item_type_name = cfg3.getItemTypeName()
@@ -2046,7 +2045,7 @@ class testMeetingConfig(PloneMeetingTestCase):
 
         # remove a used powerObserver (restrictedpowerobservers)
         # used in MeetingConfig fields
-        self.assertTrue('restrictedpowerobservers' in cfg.getRestrictAccessToSecretItemsTo())
+        self.assertTrue('restrictedpowerobservers' in cfg.restrict_access_to_secret_items_to)
         values = [
             {'item_access_on': '',
              'item_states': ['accepted'],
@@ -2063,11 +2062,11 @@ class testMeetingConfig(PloneMeetingTestCase):
             domain='PloneMeeting',
             context=self.portal.REQUEST)
         self.assertEqual(cfg.validate_powerObservers(values), used_in_fields_error_msg)
-        cfg.setRestrictAccessToSecretItemsTo(())
+        cfg.restrict_access_to_secret_items_to = ()
         # also check configgroup_ prefixed fields
-        cfg.setItemAnnexConfidentialVisibleFor(('configgroup_restrictedpowerobservers', ))
+        cfg.item_annex_confidential_visible_for = ('configgroup_restrictedpowerobservers',)
         self.assertEqual(cfg.validate_powerObservers(values), used_in_fields_error_msg)
-        cfg.setItemAnnexConfidentialVisibleFor(())
+        cfg.item_annex_confidential_visible_for = ()
         self.assertEqual(cfg.validate_powerObservers(values), plone_group_not_empty_error_msg)
 
         # used as WFA
@@ -2097,8 +2096,8 @@ class testMeetingConfig(PloneMeetingTestCase):
         # useful when test executed with custom profile
         self._setUpDefaultItemWFValidationLevels(cfg)
         # make sure not used in config
-        cfg.setItemAdviceStates(())
-        cfg.setItemAdviceEditStates(())
+        cfg.item_advice_states = ()
+        cfg.item_advice_edit_states = ()
 
         # itemcreated level is mandatory
         level_itemcreated_error = \
@@ -2164,9 +2163,9 @@ class testMeetingConfig(PloneMeetingTestCase):
 
         waiting_advices_proposed_state = '{0}_waiting_advices'.format(
             proposed_state)
-        cfg.setItemAdviceStates((waiting_advices_proposed_state, ))
-        cfg.setItemAdviceEditStates((waiting_advices_proposed_state, ))
-        cfg.setItemAdviceViewStates((waiting_advices_proposed_state, ))
+        cfg.item_advice_states = (waiting_advices_proposed_state,)
+        cfg.item_advice_edit_states = (waiting_advices_proposed_state,)
+        cfg.item_advice_view_states = (waiting_advices_proposed_state,)
 
         # add item and set it in waiting_advices_proposed_state
         self.changeUser('pmManager')
@@ -2198,7 +2197,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         """Test MeetingConfig.validate_itemWFValidationLevels, if we remove a validation
            level state that is used by the MeetingConfig."""
         cfg = self.meetingConfig
-        cfg.setItemAdviceEditStates(())
+        cfg.item_advice_edit_states = ()
         # itemcreated level is mandatory
         proposed_state = cfg.getItemWorkflow(True).states[self._stateMappingFor('proposed')]
         proposed_state_id = proposed_state.getId()
@@ -2216,7 +2215,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # used in itemAdviceStates, as state
         self.assertEqual(cfg.validate_itemWFValidationLevels(values_disabled_proposed),
                          level_removed_config_error)
-        cfg.setItemAdviceStates(())
+        cfg.item_advice_states = ()
         # also for field itemObserversStates
         level_removed_config_error = \
             translate(
@@ -2226,12 +2225,12 @@ class testMeetingConfig(PloneMeetingTestCase):
                          'Restrict observers access to item to following states', },
                 domain='PloneMeeting',
                 context=self.request)
-        cfg.setItemObserversStates((self._stateMappingFor('proposed'), ))
+        cfg.item_observers_states = (self._stateMappingFor('proposed', ))
         self.assertEqual(cfg.validate_itemWFValidationLevels(values_disabled_proposed),
                          level_removed_config_error)
-        cfg.setItemObserversStates(())
+        cfg.item_observers_states = ()
         # used in transitionsToConfirm, as transition
-        cfg.setTransitionsToConfirm(('MeetingItem.%s' % proposed_state_id, 'MeetingItem.validate'))
+        cfg.transitions_to_confirm = ('MeetingItem.%s' % proposed_state_id, 'MeetingItem.validate')
         level_removed_config_error = \
             translate('state_or_transition_can_not_be_removed_in_use_config',
                       mapping={'state_or_transition': translated_proposed_state,
@@ -2241,8 +2240,8 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertEqual(cfg.validate_itemWFValidationLevels(values_disabled_proposed),
                          level_removed_config_error)
         # make no more used
-        cfg.setItemAdviceEditStates(())
-        cfg.setTransitionsToConfirm(())
+        cfg.item_advice_edit_states = ()
+        cfg.transitions_to_confirm = ()
         self.failIf(cfg.validate_itemWFValidationLevels(values_disabled_proposed))
         # could be used in another cfg field meetingConfigsToCloneTo.trigger_workflow_transitions_until
         cfg2 = self.meetingConfig2
@@ -2264,13 +2263,11 @@ class testMeetingConfig(PloneMeetingTestCase):
                     context=self.request),
                 'other_cfg_title': safe_unicode(cfg2.Title()), },
             context=self.request)
-        cfg2.setMeetingConfigsToCloneTo(
             ({'meeting_config': '%s' % cfg_id,
               'trigger_workflow_transitions_until': '%s.%s' % (cfg_id, tr.id)},))
         self.assertEqual(
             cfg.validate_itemWFValidationLevels(values_disabled_proposed), error_msg)
         # ok if transition not used
-        cfg2.setMeetingConfigsToCloneTo(
             ({'meeting_config': '%s' % cfg_id,
               'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL},))
         self.failIf(cfg.validate_itemWFValidationLevels(values_disabled_proposed))
@@ -2285,8 +2282,8 @@ class testMeetingConfig(PloneMeetingTestCase):
         """
         cfg = self.meetingConfig
         # make sure not used in config
-        cfg.setItemAdviceStates(())
-        cfg.setItemAdviceEditStates(())
+        cfg.item_advice_states = ()
+        cfg.item_advice_edit_states = ()
 
         # the "itemcreated" row must exist as first row
         # itemcreated level is mandatory
@@ -2349,7 +2346,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertEqual(infos[annex_decision.UID()]['preview_status'], 'converted')
         self.assertEqual(infos[preview_annex.UID()]['preview_status'], 'converted')
         # removeAnnexesPreviewsOnMeetingClosure=False
-        self.assertFalse(cfg.getRemoveAnnexesPreviewsOnMeetingClosure())
+        self.assertFalse(cfg.remove_annexes_previews_on_meeting_closure)
         self.presentItem(item)
         self.closeMeeting(meeting)
         self.assertEqual(meeting.query_state(), 'closed')
@@ -2379,7 +2376,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # add special characters into cfg/cfg2 titles
         cfg.setTitle(cfg.Title() + "hé")
         cfg2.setTitle(cfg.Title() + "hé")
-        self.assertEqual(cfg.getMeetingConfigsToCloneTo()[0]['meeting_config'],
+        self.assertEqual(cfg.meeting_configs_to_clone_to[0]['meeting_config'],
                          cfg2.getId())
         self.assertEqual(api.content.get_state(cfg2), 'active')
         # can not be deactivated
@@ -2393,7 +2390,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # still 'active'
         self.assertEqual(api.content.get_state(cfg2), 'active')
         # make it deactivable
-        cfg.setMeetingConfigsToCloneTo(())
+        cfg.meeting_configs_to_clone_to = ()
         self.do(cfg2, 'deactivate')
         self.assertEqual(api.content.get_state(cfg2), 'inactive')
 
@@ -2403,10 +2400,10 @@ class testMeetingConfig(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self.changeUser('pmManager')
         # a reserved field is shown if used
-        usedMeetingAttrs = cfg.getUsedMeetingAttributes()
+        usedMeetingAttrs = cfg.used_meeting_attributes
         self.assertFalse('a_meeting_field' in usedMeetingAttrs)
         self.assertFalse(cfg.show_meeting_manager_reserved_field('a_meeting_field'))
-        cfg.setUsedMeetingAttributes(usedMeetingAttrs + ('a_meeting_field', ))
+        cfg.used_meeting_attributes = usedMeetingAttrs + ('a_meeting_field',)
         self.assertTrue(cfg.show_meeting_manager_reserved_field('a_meeting_field'))
         # not viewable by non MeetingManagers
         self.changeUser('pmCreator1')
@@ -2530,7 +2527,7 @@ class testMeetingConfig(PloneMeetingTestCase):
            selected defaultPollType must be among MeetingConfig.usedPollTypes."""
         cfg = self.meetingConfig
         self.changeUser('siteadmin')
-        self.assertEqual(cfg.getUsedPollTypes(),
+        self.assertEqual(cfg.used_poll_types,
                          ('freehand', 'no_vote', 'secret', 'secret_separated'))
         self.failIf(cfg.validate_defaultPollType('secret_separated'))
         self.assertEqual(cfg.validate_defaultPollType('out_loud'),
@@ -2630,10 +2627,10 @@ class testMeetingConfig(PloneMeetingTestCase):
         cfg_cat_ids = [cat.getId() for cat in cfg.getCategories()]
         cfg2_cat_ids = [cat.getId() for cat in cfg2.getCategories()]
         # categories are not enabled in cfg
-        self.assertFalse('category' in cfg.getUsedItemAttributes())
+        self.assertFalse('category' in cfg.used_item_attributes)
         self.assertFalse(cfg_cat_ids)
         self._enableField('category', reload=True)
-        self.assertTrue('category' in cfg.getUsedItemAttributes())
+        self.assertTrue('category' in cfg.used_item_attributes)
         cfg_cat_ids = [cat.getId() for cat in cfg.getCategories()]
         self.assertEqual(cfg_cat_ids,
                          ['development', 'research', 'events'])
@@ -2642,7 +2639,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                           'events', 'research', 'projects'])
         # onlySelectable=False, returned even if not enabled
         self._enableField('category', enable=False, reload=True)
-        self.assertFalse('category' in cfg.getUsedItemAttributes())
+        self.assertFalse('category' in cfg.used_item_attributes)
         cfg_cat_ids = [cat.getId() for cat in cfg.getCategories(onlySelectable=False)]
         cfg2_cat_ids = [cat.getId() for cat in cfg2.getCategories(onlySelectable=False)]
         self.assertEqual(cfg_cat_ids,
@@ -2705,7 +2702,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         meeting = self.create('Meeting')
         self.changeUser('pmCreator1')
         self.assertTrue(self.hasPermission(View, meeting))
-        self.assertFalse(MEETING_REMOVE_MOG_WFA in cfg.getWorkflowAdaptations())
+        self.assertFalse(MEETING_REMOVE_MOG_WFA in cfg.wf_adaptations)
         # enable usingGroups
         # empty value '' is ignored
         self.changeUser('siteadmin')
@@ -2714,14 +2711,14 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         # still no access as only '' was given
         self.assertTrue(self.hasPermission(View, meeting))
-        self.assertFalse(MEETING_REMOVE_MOG_WFA in cfg.getWorkflowAdaptations())
+        self.assertFalse(MEETING_REMOVE_MOG_WFA in cfg.wf_adaptations)
         # now with correct values
         self.changeUser('siteadmin')
         cfg.setUsingGroups((self.vendors_uid, ))
         notify(ObjectEditedEvent(cfg))
         self.changeUser('pmCreator1')
         self.assertFalse(self.hasPermission(View, meeting))
-        self.assertTrue(MEETING_REMOVE_MOG_WFA in cfg.getWorkflowAdaptations())
+        self.assertTrue(MEETING_REMOVE_MOG_WFA in cfg.wf_adaptations)
         # give access to developers
         self.changeUser('siteadmin')
         cfg.setUsingGroups((self.vendors_uid, self.developers_uid))
@@ -2729,7 +2726,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         self.assertTrue(self.hasPermission(View, meeting))
         self.assertEqual(
-            cfg.getWorkflowAdaptations().count(MEETING_REMOVE_MOG_WFA), 1)
+            cfg.wf_adaptations.count(MEETING_REMOVE_MOG_WFA), 1)
         # disable usingGroups
         # empty value '' is ignored
         self.changeUser('siteadmin')
@@ -2737,13 +2734,13 @@ class testMeetingConfig(PloneMeetingTestCase):
         notify(ObjectEditedEvent(cfg))
         self.changeUser('pmCreator1')
         self.assertTrue(self.hasPermission(View, meeting))
-        self.assertFalse(MEETING_REMOVE_MOG_WFA in cfg.getWorkflowAdaptations())
+        self.assertFalse(MEETING_REMOVE_MOG_WFA in cfg.wf_adaptations)
 
     def test_pm_UsingGroupsMailMeetingEvents(self):
         """When MeetingConfig.usingGroups is defined, mail notifications are not
            wrongly sent to wrong user."""
         cfg = self.meetingConfig
-        cfg.setMailMeetingEvents(['meeting_state_changed_freeze'])
+        cfg.mail_meeting_events = ['meeting_state_changed_freeze']
         # test without usingGroups then enable it
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
