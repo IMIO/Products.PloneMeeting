@@ -3468,3 +3468,816 @@ class EveryConfigsVocabulary(object):
 
 
 EveryConfigsVocabularyFactory = EveryConfigsVocabulary()
+
+
+# ============================================================================
+# MeetingConfig vocabulary factories
+# (delegates to MeetingConfig list* methods for config-dependent vocabularies)
+# ============================================================================
+
+def _dl_to_vocabulary(display_list):
+    """Convert an AT DisplayList to a zope.schema SimpleVocabulary."""
+    terms = []
+    for value in display_list:
+        label = display_list.getValue(value)
+        if not isinstance(value, basestring):
+            token = str(value)
+        elif isinstance(value, unicode):
+            token = value.encode('utf-8')
+        else:
+            token = value
+        terms.append(SimpleTerm(value, token, label))
+    return SimpleVocabulary(terms)
+
+
+class BooleanVocabulary(object):
+    """Boolean vocabulary (0/1) for DataGridField columns.
+    Replaces AT instance method: MeetingConfig.listBooleanVocabulary
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listBooleanVocabulary())
+
+
+BooleanVocabularyFactory = BooleanVocabulary()
+
+
+class CommitteesEnabledVocabulary(object):
+    """Vocabulary for committees.enabled column.
+    Replaces AT instance method: MeetingConfig.listCommitteesEnabled
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listCommitteesEnabled())
+
+
+CommitteesEnabledVocabularyFactory = CommitteesEnabledVocabulary()
+
+
+class AnnexesBatchActionsVocabulary(object):
+    """Vocabulary for enabledAnnexesBatchActions field.
+    Replaces AT instance method: MeetingConfig.listAnnexesBatchActions
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listAnnexesBatchActions())
+
+
+AnnexesBatchActionsVocabularyFactory = AnnexesBatchActionsVocabulary()
+
+
+class AnnexToPrintModesVocabulary(object):
+    """Vocabulary for annexToPrintMode field.
+    Replaces AT instance method: MeetingConfig.listAnnexToPrintModes
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listAnnexToPrintModes())
+
+
+AnnexToPrintModesVocabularyFactory = AnnexToPrintModesVocabulary()
+
+
+class ContentsKeptOnSentToOtherMCVocabulary(object):
+    """Vocabulary for contentsKeptOnSentToOtherMC field.
+    Replaces AT instance method: MeetingConfig.listContentsKeptOnSentToOtherMCs
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listContentsKeptOnSentToOtherMCs())
+
+
+ContentsKeptOnSentToOtherMCVocabularyFactory = ContentsKeptOnSentToOtherMCVocabulary()
+
+
+class ItemIconColorsVocabulary(object):
+    """Vocabulary for itemIconColor field.
+    Replaces AT instance method: MeetingConfig.listItemIconColors
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listItemIconColors())
+
+
+ItemIconColorsVocabularyFactory = ItemIconColorsVocabulary()
+
+
+class ItemFieldsToKeepConfigSortingForVocabulary(object):
+    """Vocabulary for itemFieldsToKeepConfigSortingFor field.
+    Replaces AT instance method: MeetingConfig.listItemFieldsToKeepConfigSortingFor
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listItemFieldsToKeepConfigSortingFor())
+
+
+ItemFieldsToKeepConfigSortingForVocabularyFactory = ItemFieldsToKeepConfigSortingForVocabulary()
+
+
+class ResultsPerPageVocabulary(object):
+    """Vocabulary for maxShownListings, maxShownAvailableItems and maxShownMeetingItems fields.
+    Replaces AT instance method: MeetingConfig.listResultsPerPage
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listResultsPerPage())
+
+
+ResultsPerPageVocabularyFactory = ResultsPerPageVocabulary()
+
+
+class AdviceStylesVocabulary(object):
+    """Vocabulary for adviceStyle field.
+    Replaces AT instance method: MeetingConfig.listAdviceStyles
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listAdviceStyles())
+
+
+AdviceStylesVocabularyFactory = AdviceStylesVocabulary()
+
+
+class VotesEncodersVocabulary(object):
+    """Vocabulary for votesEncoder field.
+    Replaces AT instance method: MeetingConfig.listVotesEncoders
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listVotesEncoders())
+
+
+VotesEncodersVocabularyFactory = VotesEncodersVocabulary()
+
+
+class TransformTypesVocabulary(object):
+    """Vocabulary for cssTransforms transform_type column.
+    Replaces AT instance method: MeetingConfig.listTransformTypes
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listTransformTypes())
+
+
+TransformTypesVocabularyFactory = TransformTypesVocabulary()
+
+
+class MailModesVocabulary(object):
+    """Vocabulary for mailMode field.
+    Replaces AT instance method: MeetingConfig.listMailModes
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listMailModes())
+
+
+MailModesVocabularyFactory = MailModesVocabulary()
+
+
+class ItemActionsColumnConfigVocabulary(object):
+    """Vocabulary for itemActionsColumnConfig field.
+    Replaces AT instance method: MeetingConfig.listItemActionsColumnConfig
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listItemActionsColumnConfig())
+
+
+ItemActionsColumnConfigVocabularyFactory = ItemActionsColumnConfigVocabulary()
+
+
+class DisplayAvailableItemsToVocabulary(object):
+    """Vocabulary for displayAvailableItemsTo field.
+    Replaces AT instance method: MeetingConfig.listDisplayAvailableItemsTo
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listDisplayAvailableItemsTo())
+
+
+DisplayAvailableItemsToVocabularyFactory = DisplayAvailableItemsToVocabulary()
+
+
+class RedirectToNextMeetingVocabulary(object):
+    """Vocabulary for redirectToNextMeeting field.
+    Replaces AT instance method: MeetingConfig.listRedirectToNextMeeting
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listRedirectToNextMeeting())
+
+
+RedirectToNextMeetingVocabularyFactory = RedirectToNextMeetingVocabulary()
+
+
+class ConfigGroupsVocabulary(object):
+    """Vocabulary for configGroup field.
+    Replaces AT instance method: MeetingConfig.listConfigGroups
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listConfigGroups())
+
+
+ConfigGroupsVocabularyFactory = ConfigGroupsVocabulary()
+
+
+class PowerObserversTypesVocabulary(object):
+    """Vocabulary for power observer types.
+    Replaces AT instance method: MeetingConfig.listPowerObserversTypes
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listPowerObserversTypes())
+
+
+PowerObserversTypesVocabularyFactory = PowerObserversTypesVocabulary()
+
+
+class ItemAttributeVisibleForVocabulary(object):
+    """Vocabulary for itemAttributeVisibleFor-based fields.
+    Replaces AT instance method: MeetingConfig.listItemAttributeVisibleFor
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listItemAttributeVisibleFor())
+
+
+ItemAttributeVisibleForVocabularyFactory = ItemAttributeVisibleForVocabulary()
+
+
+class ItemAttributeVisibleForWithMeetingManagersVocabulary(object):
+    """Vocabulary including meetingmanagers profile.
+    Replaces AT instance method: MeetingConfig.listItemAttributeVisibleForWithMeetingManagers
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listItemAttributeVisibleForWithMeetingManagers())
+
+
+ItemAttributeVisibleForWithMeetingManagersVocabularyFactory = ItemAttributeVisibleForWithMeetingManagersVocabulary()
+
+
+class AdviceAnnexConfidentialVisibleForVocabulary(object):
+    """Vocabulary for adviceAnnexConfidentialVisibleFor field.
+    Replaces AT instance method: MeetingConfig.listAdviceAnnexConfidentialVisibleFor
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listAdviceAnnexConfidentialVisibleFor())
+
+
+AdviceAnnexConfidentialVisibleForVocabularyFactory = AdviceAnnexConfidentialVisibleForVocabulary()
+
+
+class MeetingAnnexConfidentialVisibleForVocabulary(object):
+    """Vocabulary for meetingAnnexConfidentialVisibleFor field.
+    Replaces AT instance method: MeetingConfig.listMeetingAnnexConfidentialVisibleFor
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listMeetingAnnexConfidentialVisibleFor())
+
+
+MeetingAnnexConfidentialVisibleForVocabularyFactory = MeetingAnnexConfidentialVisibleForVocabulary()
+
+
+class ActiveOrgsForPowerAdvisersVocabulary(object):
+    """Vocabulary for powerAdvisersGroups field.
+    Replaces AT instance method: MeetingConfig.listActiveOrgsForPowerAdvisers
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listActiveOrgsForPowerAdvisers())
+
+
+ActiveOrgsForPowerAdvisersVocabularyFactory = ActiveOrgsForPowerAdvisersVocabulary()
+
+
+class ActiveOrgsForCustomAdvisersVocabulary(object):
+    """Vocabulary for customAdvisers.org column.
+    Replaces AT instance method: MeetingConfig.listActiveOrgsForCustomAdvisers
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listActiveOrgsForCustomAdvisers())
+
+
+ActiveOrgsForCustomAdvisersVocabularyFactory = ActiveOrgsForCustomAdvisersVocabulary()
+
+
+class SelectableContactsVocabulary(object):
+    """Vocabulary for certifiedSignatures.held_position column.
+    Replaces AT instance method: MeetingConfig.listSelectableContacts
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listSelectableContacts())
+
+
+SelectableContactsVocabularyFactory = SelectableContactsVocabulary()
+
+
+class SelectableCommitteeAutoFromVocabulary(object):
+    """Vocabulary for committees.auto_from column.
+    Replaces AT instance method: MeetingConfig.listSelectableCommitteeAutoFrom
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listSelectableCommitteeAutoFrom())
+
+
+SelectableCommitteeAutoFromVocabularyFactory = SelectableCommitteeAutoFromVocabulary()
+
+
+class SelectableAdvisersVocabulary(object):
+    """Vocabulary for selectableAdvisers field.
+    Replaces AT instance method: MeetingConfig.listSelectableAdvisers
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listSelectableAdvisers())
+
+
+SelectableAdvisersVocabularyFactory = SelectableAdvisersVocabulary()
+
+
+class SelectableProposingGroupsVocabulary(object):
+    """Vocabulary for committees.using_groups column.
+    Replaces AT instance method: MeetingConfig.listSelectableProposingGroups
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listSelectableProposingGroups())
+
+
+SelectableProposingGroupsVocabularyFactory = SelectableProposingGroupsVocabulary()
+
+
+class SelectableCopyGroupsVocabulary(object):
+    """Vocabulary for selectableCopyGroups field.
+    Replaces AT instance method: MeetingConfig.listSelectableCopyGroups
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listSelectableCopyGroups())
+
+
+SelectableCopyGroupsVocabularyFactory = SelectableCopyGroupsVocabulary()
+
+
+class ToDoListSearchesVocabulary(object):
+    """Vocabulary for toDoListSearches field.
+    Replaces AT instance method: MeetingConfig.listToDoListSearches
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listToDoListSearches())
+
+
+ToDoListSearchesVocabularyFactory = ToDoListSearchesVocabulary()
+
+
+class DashboardItemsListingsFiltersVocabulary(object):
+    """Vocabulary for dashboardItemsListingsFilters field.
+    Replaces AT instance method: MeetingConfig.listDashboardItemsListingsFilters
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listDashboardItemsListingsFilters())
+
+
+DashboardItemsListingsFiltersVocabularyFactory = DashboardItemsListingsFiltersVocabulary()
+
+
+class DashboardMeetingsListingsFiltersVocabulary(object):
+    """Vocabulary for dashboardMeetingsListingsFilters field.
+    Replaces AT instance method: MeetingConfig.listDashboardMeetingsListingsFilters
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listDashboardMeetingsListingsFilters())
+
+
+DashboardMeetingsListingsFiltersVocabularyFactory = DashboardMeetingsListingsFiltersVocabulary()
+
+
+class MeetingConfigsToCloneToVocabulary(object):
+    """Vocabulary for otherMeetingConfigsClonableTo field.
+    Replaces AT instance method: MeetingConfig.listMeetingConfigsToCloneTo
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listMeetingConfigsToCloneTo())
+
+
+MeetingConfigsToCloneToVocabularyFactory = MeetingConfigsToCloneToVocabulary()
+
+
+class TransitionsUntilPresentedVocabulary(object):
+    """Vocabulary for onMeetingTransitionItemActionToExecute item_wf_val column.
+    Replaces AT instance method: MeetingConfig.listTransitionsUntilPresented
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listTransitionsUntilPresented())
+
+
+TransitionsUntilPresentedVocabularyFactory = TransitionsUntilPresentedVocabulary()
+
+
+class ExecutableItemActionsVocabulary(object):
+    """Vocabulary for onMeetingTransitionItemActionToExecute item_action column.
+    Replaces AT instance method: MeetingConfig.listExecutableItemActions
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listExecutableItemActions())
+
+
+ExecutableItemActionsVocabularyFactory = ExecutableItemActionsVocabulary()
+
+
+class ItemTransitionsVocabulary(object):
+    """Vocabulary listing every item WF transitions.
+    Replaces AT instance method: MeetingConfig.listItemTransitions
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listItemTransitions())
+
+
+ItemTransitionsVocabularyFactory = ItemTransitionsVocabulary()
+
+
+class MeetingTransitionsVocabulary(object):
+    """Vocabulary listing every meeting WF transitions.
+    Replaces AT instance method: MeetingConfig.listMeetingTransitions
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listMeetingTransitions())
+
+
+MeetingTransitionsVocabularyFactory = MeetingTransitionsVocabulary()
+
+
+class ItemStatesVocabulary(object):
+    """Vocabulary listing every item WF states.
+    Replaces AT instance method: MeetingConfig.listItemStates
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listItemStates())
+
+
+ItemStatesVocabularyFactory = ItemStatesVocabulary()
+
+
+class ItemAutoSentToOtherMCStatesVocabulary(object):
+    """Vocabulary for itemAutoSentToOtherMCStates field.
+    Replaces AT instance method: MeetingConfig.listItemAutoSentToOtherMCStates
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listItemAutoSentToOtherMCStates())
+
+
+ItemAutoSentToOtherMCStatesVocabularyFactory = ItemAutoSentToOtherMCStatesVocabulary()
+
+
+class MeetingStatesVocabulary(object):
+    """Vocabulary listing every meeting WF states.
+    Replaces AT instance method: MeetingConfig.listMeetingStates
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listMeetingStates())
+
+
+MeetingStatesVocabularyFactory = MeetingStatesVocabulary()
+
+
+class AllTransitionsVocabulary(object):
+    """Vocabulary listing all transitions (item + meeting).
+    Replaces AT instance method: MeetingConfig.listAllTransitions
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listAllTransitions())
+
+
+AllTransitionsVocabularyFactory = AllTransitionsVocabulary()
+
+
+class ItemEventsVocabulary(object):
+    """Vocabulary for itemMailNotifications field.
+    Replaces AT instance method: MeetingConfig.listItemEvents
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listItemEvents())
+
+
+ItemEventsVocabularyFactory = ItemEventsVocabulary()
+
+
+class MeetingEventsVocabulary(object):
+    """Vocabulary for meetingMailNotifications field.
+    Replaces AT instance method: MeetingConfig.listMeetingEvents
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listMeetingEvents())
+
+
+MeetingEventsVocabularyFactory = MeetingEventsVocabulary()
+
+
+class InsertingMethodsVocabulary(object):
+    """Vocabulary for insertingMethodOnGroups field.
+    Replaces AT instance method: MeetingConfig.listInsertingMethods
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listInsertingMethods())
+
+
+InsertingMethodsVocabularyFactory = InsertingMethodsVocabulary()
+
+
+class UsedItemAttributesVocabulary(object):
+    """Vocabulary for usedItemAttributes field.
+    Replaces AT instance method: MeetingConfig.listUsedItemAttributes
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listUsedItemAttributes())
+
+
+UsedItemAttributesVocabularyFactory = UsedItemAttributesVocabulary()
+
+
+class ItemAttributesVocabulary(object):
+    """Vocabulary for all item attributes.
+    Replaces AT instance method: MeetingConfig.listItemAttributes
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listItemAttributes())
+
+
+ItemAttributesVocabularyFactory = ItemAttributesVocabulary()
+
+
+class UsedMeetingAttributesVocabulary(object):
+    """Vocabulary for usedMeetingAttributes field.
+    Replaces AT instance method: MeetingConfig.listUsedMeetingAttributes
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listUsedMeetingAttributes())
+
+
+UsedMeetingAttributesVocabularyFactory = UsedMeetingAttributesVocabulary()
+
+
+class ItemColumnsVocabulary(object):
+    """Vocabulary for itemColumns field.
+    Replaces AT instance method: MeetingConfig.listItemColumns
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listItemColumns())
+
+
+ItemColumnsVocabularyFactory = ItemColumnsVocabulary()
+
+
+class MeetingColumnsVocabulary(object):
+    """Vocabulary for meetingColumns field.
+    Replaces AT instance method: MeetingConfig.listMeetingColumns
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listMeetingColumns())
+
+
+MeetingColumnsVocabularyFactory = MeetingColumnsVocabulary()
+
+
+class AvailableItemsListVisibleColumnsVocabulary(object):
+    """Vocabulary for availableItemsListVisibleColumns field.
+    Replaces AT instance method: MeetingConfig.listAvailableItemsListVisibleColumns
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listAvailableItemsListVisibleColumns())
+
+
+AvailableItemsListVisibleColumnsVocabularyFactory = AvailableItemsListVisibleColumnsVocabulary()
+
+
+class ItemsListVisibleColumnsVocabulary(object):
+    """Vocabulary for itemsListVisibleColumns field.
+    Replaces AT instance method: MeetingConfig.listItemsListVisibleColumns
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listItemsListVisibleColumns())
+
+
+ItemsListVisibleColumnsVocabularyFactory = ItemsListVisibleColumnsVocabulary()
+
+
+class ItemsVisibleFieldsVocabulary(object):
+    """Vocabulary for itemsVisibleFields field.
+    Replaces AT instance method: MeetingConfig.listItemsVisibleFields
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listItemsVisibleFields())
+
+
+ItemsVisibleFieldsVocabularyFactory = ItemsVisibleFieldsVocabulary()
+
+
+class ItemsNotViewableVisibleFieldsVocabulary(object):
+    """Vocabulary for itemsNotViewableVisibleFields field.
+    Replaces AT instance method: MeetingConfig.listItemsNotViewableVisibleFields
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listItemsNotViewableVisibleFields())
+
+
+ItemsNotViewableVisibleFieldsVocabularyFactory = ItemsNotViewableVisibleFieldsVocabulary()
+
+
+class ItemsListVisibleFieldsVocabulary(object):
+    """Vocabulary for itemsListVisibleFields field.
+    Replaces AT instance method: MeetingConfig.listItemsListVisibleFields
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listItemsListVisibleFields())
+
+
+ItemsListVisibleFieldsVocabularyFactory = ItemsListVisibleFieldsVocabulary()
+
+
+class AllRichTextFieldsVocabulary(object):
+    """Vocabulary for cssTransforms field (all rich text fields).
+    Replaces AT instance method: MeetingConfig.listAllRichTextFields
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listAllRichTextFields())
+
+
+AllRichTextFieldsVocabularyFactory = AllRichTextFieldsVocabulary()
+
+
+class ItemRichTextFieldsVocabulary(object):
+    """Vocabulary for cssTransforms field (item rich text fields only).
+    Replaces AT instance method: MeetingConfig.listItemRichTextFields
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        return _dl_to_vocabulary(context.listItemRichTextFields())
+
+
+ItemRichTextFieldsVocabularyFactory = ItemRichTextFieldsVocabulary()
+
+
+# Simple re-registrations: existing factories with new snake_case names
+
+class NumbersVocabularyAlias(NumbersVocabulary):
+    """Alias for numbers_vocabulary (snake_case name for DX schema)."""
+
+
+NumbersVocabularyAliasFactory = NumbersVocabularyAlias()
+
+
+class NumbersFromZeroVocabularyAlias(NumbersFromZeroVocabulary):
+    """Alias for numbers_from_zero_vocabulary (snake_case name for DX schema)."""
+
+
+NumbersFromZeroVocabularyAliasFactory = NumbersFromZeroVocabularyAlias()
+
+
+class PollTypesVocabularyAlias(PollTypesVocabulary):
+    """Alias for poll_types_vocabulary (snake_case name for DX schema)."""
+
+
+PollTypesVocabularyAliasFactory = PollTypesVocabularyAlias()

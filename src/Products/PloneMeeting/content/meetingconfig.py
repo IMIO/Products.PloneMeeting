@@ -50,13 +50,24 @@ from plone.portlets.interfaces import IPortletAssignmentMapping
 from plone.portlets.interfaces import IPortletManager
 from plone.restapi.deserializer import boolean_value
 from plone.supermodel import model
+from Products.Archetypes.atapi import DisplayList
+from Products.Archetypes.atapi import IntDisplayList
 from Products.CMFPlone.utils import base_hasattr
+from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import ADVICE_TYPES
+from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
+from Products.PloneMeeting.config import EXECUTE_EXPR_VALUE
+from Products.PloneMeeting.config import ITEM_ICON_COLORS
+from Products.PloneMeeting.config import ITEM_INSERT_METHODS
+from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
+from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.config import PMMessageFactory as _
+from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.config import WriteHarmlessConfig
 from Products.PloneMeeting.config import WriteRiskyConfig
 from Products.PloneMeeting.interfaces import IConfigElement
 from Products.PloneMeeting.interfaces import IMeetingAdviceWorkflowActions
+from Products.PloneMeeting.interfaces import IMeetingConfig as IMeetingConfigMarker
 from Products.PloneMeeting.interfaces import IMeetingAdviceWorkflowConditions
 from Products.PloneMeeting.interfaces import IMeetingDashboardBatchActionsMarker
 from Products.PloneMeeting.interfaces import IMeetingItem
@@ -65,10 +76,17 @@ from Products.PloneMeeting.interfaces import IMeetingItemWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowConditions
 from Products.PloneMeeting.interfaces import IMeetingWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingWorkflowConditions
+from Products.PloneMeeting.MeetingConfig import CONFIGGROUPPREFIX
 from Products.PloneMeeting.MeetingConfig import ITEM_WF_STATE_ATTRS
 from Products.PloneMeeting.MeetingConfig import ITEM_WF_TRANSITION_ATTRS
 from Products.PloneMeeting.MeetingConfig import MEETING_WF_STATE_ATTRS
 from Products.PloneMeeting.MeetingConfig import MEETING_WF_TRANSITION_ATTRS
+from Products.PloneMeeting.MeetingConfig import POWEROBSERVERPREFIX
+from Products.PloneMeeting.MeetingConfig import PROPOSINGGROUPPREFIX
+from Products.PloneMeeting.MeetingConfig import READERPREFIX
+from Products.PloneMeeting.MeetingConfig import SUFFIXPROFILEPREFIX
+from Products.PloneMeeting.Meeting import Meeting
+from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.model.adaptations import _getValidationReturnedStates
 from Products.PloneMeeting.model.adaptations import _performWorkflowAdaptations
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
@@ -705,7 +723,7 @@ class ICommitteesRowSchema(Interface):
 defValues = MeetingConfigDescriptor.get()
 
 
-class IMeetingConfig(IConfigElement):
+class IMeetingConfig(IMeetingConfigMarker):
     """Schema for MeetingConfig, migrated from Archetypes OrderedBaseFolder."""
 
     # ---- default fieldset (no explicit fieldset = appears in default tab) ----
@@ -3359,8 +3377,6 @@ class MeetingConfig(Container):
             res = uuidsToObjects(res, ordered=True, unrestricted=True)
         return res
 
-    security.declarePrivate('listAnnexesBatchActions')
-
     def is_committees_using(self, column, value=[]):
         """Return True if using committees given p_column :
            - using "auto_from" column mean that committee on item is determined automatically;
@@ -3410,8 +3426,6 @@ class MeetingConfig(Container):
             res = res and res[0] or {}
         return res
 
-    security.declarePrivate('listConfigGroups')
-
     security.declarePrivate('listAttributes')
     def listAttributes(self, schema, optionalOnly=False, as_display_list=True):
         res = []
@@ -3434,8 +3448,6 @@ class MeetingConfig(Container):
         if as_display_list:
             res = DisplayList(tuple(res))
         return res
-
-    security.declarePrivate('listUsedItemAttributes')
 
     security.declarePrivate('validate_shortName')
     def validate_shortName(self, value):
@@ -4735,13 +4747,9 @@ class MeetingConfig(Container):
                 break
         return isAutomaticAdvice, res
 
-    security.declarePrivate('listValidationLevelsNumbers')
-
     def _extraItemRelatedColumns(self):
         """ """
         return []
-
-    security.declarePrivate('listAvailableItemsListVisibleColumns')
 
     def _ignoredVisibleFieldIds(self):
         """Ignore :
@@ -4759,8 +4767,6 @@ class MeetingConfig(Container):
         """ """
         return []
 
-    security.declarePrivate('listDisplayAvailableItemsTo')
-
     security.declarePrivate('get_item_validation_transitions')
     def get_item_validation_transitions(self):
         '''Lists the possible transitions as defined in itemWFValidationLevels.'''
@@ -4777,8 +4783,6 @@ class MeetingConfig(Container):
                 validation_level['back_transition_title'],
             ))
         return item_wf_validation_transitions
-
-    security.declarePrivate('listActiveOrgsForPowerAdvisers')
 
     security.declarePrivate('isVotable')
     def isVotable(self, item):
@@ -5564,8 +5568,6 @@ class MeetingConfig(Container):
             if "_%s'" % reviewSuffix in groupIds:
                 return reviewSuffix
 
-    security.declarePublic('listStateIds')
-
     security.declarePublic('listAllRichTextFields')
     def listAllRichTextFields(self):
         '''Lists all rich-text fields belonging to classes MeetingItem and
@@ -5740,13 +5742,9 @@ class MeetingConfig(Container):
 
         return list(categories)
 
-    security.declarePublic('listInsertingMethods')
-
     def extraInsertingMethods(self):
         '''See doc in interfaces.py.'''
         return OrderedDict(())
-
-    security.declarePublic('listSelectableCopyGroups')
 
     security.declarePublic('getSelf')
     def getSelf(self):
@@ -6358,6 +6356,1305 @@ class MeetingConfig(Container):
             data[org.UID()] = expr
         return data
 
+    # Vocabulary methods (extracted from AT MeetingConfig.list* methods)
 
-registerType(MeetingConfig, PROJECTNAME)
+
+    security.declarePrivate('listNumbers')
+
+    def listNumbers(self):
+        '''Vocabulary that returns a list of number from 1 to 10.'''
+        res = []
+        for number in range(1, 11):
+            res.append((str(number), str(number)))
+        return DisplayList(tuple(res))
+
+    security.declarePrivate('listNumbersFromZero')
+
+    def listNumbersFromZero(self):
+        '''Vocabulary that returns a list of number from 0 to 10.'''
+        res = []
+        for number in range(0, 11):
+            res.append((str(number), str(number)))
+        return DisplayList(tuple(res))
+
+    security.declarePrivate('listValidationLevelsNumbers')
+
+    def listValidationLevelsNumbers(self):
+        '''Vocabulary for the itemWFValidationLevels.listValidationLevelsNumbers column.'''
+        # insert a "custom" option at the end of numbers 1 to 10
+        res = self.listNumbers()
+        res.add('custom', _('Custom validation level'))
+        return res
+
+    security.declarePrivate('listBooleanVocabulary')
+
+    def listBooleanVocabulary(self):
+        '''Vocabulary generating a boolean behaviour : just 2 values,
+           one yes/True, and the other no/False.
+           This is used in DataGridFields to avoid use of CheckBoxColumn
+           that does not handle validation correctly.'''
+        d = "PloneMeeting"
+        res = DisplayList((
+            ('0', translate('boolean_value_false', domain=d, context=self.REQUEST)),
+            ('1', translate('boolean_value_true', domain=d, context=self.REQUEST)),
+        ))
+        return res
+
+    def listCommitteesEnabled(self):
+        '''Vocabulary for committees.enabled datagrid column.'''
+        d = "PloneMeeting"
+        res = self.listBooleanVocabulary()
+        res.add('item_only',
+                translate('enabled_item_only', domain=d, context=self.REQUEST))
+        return res
+
+    security.declarePrivate('listTransitions')
+
+    def listTransitions(self, objectType, meetingConfig=None):
+        '''Lists the possible transitions for the p_objectType ("Item" or
+           "Meeting") used in the given p_meetingConfig meeting config.'''
+        if not meetingConfig:
+            meetingConfig = self
+        res = []
+        wfTool = api.portal.get_tool('portal_workflow')
+        if objectType == 'Item':
+            workflow = wfTool.getWorkflowsFor(meetingConfig.getItemTypeName())[0]
+        else:
+            # objectType == 'Meeting'
+            workflow = wfTool.getWorkflowsFor(meetingConfig.getMeetingTypeName())[0]
+        for t in workflow.transitions.objectValues():
+            name = translate(
+                safe_unicode(t.title),
+                domain="plone",
+                context=self.REQUEST) + ' (' + t.id + ')'
+            # Indeed several transitions can have the same translation
+            # (ie "correct")
+            res.append((t.id, name))
+        return res
+
+    security.declarePublic('listStates')
+
+    def listStates(self, objectType, excepted=None, with_state_id=True):
+        '''Lists the possible states for the p_objectType ("Item" or "Meeting")
+           used in this meeting config. State name specified in p_excepted will
+           be ommitted from the result.'''
+        if objectType == 'Meeting':
+            workflow = self.getMeetingWorkflow(True)
+        else:
+            workflow = self.getItemWorkflow(True)
+
+        res = []
+        for state in workflow.states.objectValues():
+            if excepted and (state.id == excepted):
+                continue
+
+            state_title = translate(
+                safe_unicode(state.title), domain="plone", context=self.REQUEST)
+            if with_state_id:
+                state_title = u'{0} ({1})'.format(state_title, state.id)
+
+            res.append((state.id, state_title))
+
+        return res
+
+    security.declarePublic('listStateIds')
+
+    def listStateIds(self, objectType, excepted=None):
+        '''Lists the possible state ids for the p_objectType ("Item" or "Meeting")
+           used in this meeting config. State id specified in p_excepted will
+           be ommitted from the result.'''
+        if objectType == 'Meeting':
+            workflow = self.getMeetingWorkflow(True)
+        else:
+            workflow = self.getItemWorkflow(True)
+        return tuple(state.id for state in workflow.states.objectValues() if state.id != excepted)
+
+    security.declarePrivate('listItemRelatedColumns')
+
+    def listItemRelatedColumns(self):
+        '''Lists all the attributes that can be used as columns for displaying
+           information about an item.'''
+        d = 'collective.eeafaceted.z3ctable'
+        # keys beginning with static_ are taken into account by the @@static-infos view
+        res = [
+            ("static_labels", u"{0} (static_labels)".format(
+                translate("labels_column", domain=d, context=self.REQUEST))),
+            ("static_item_reference", u"{0} (static_item_reference)".format(
+                translate("item_reference_column", domain=d, context=self.REQUEST))),
+            ("static_meetingDeadlineDate", u"{0} (static_meetingDeadlineDate)".format(
+                translate("static_item_meeting_deadline_date", domain=d, context=self.REQUEST))),
+            ("static_marginalNotes", u"{0} (static_marginalNotes)".format(
+                translate("marginal_notes_column", domain=d, context=self.REQUEST))),
+            ("static_budget_infos", u"{0} (static_budget_infos)".format(
+                translate("budget_infos_column", domain=d, context=self.REQUEST))),
+            ("Creator", u"{0} (Creator)".format(
+                translate('header_Creator', domain=d, context=self.REQUEST))),
+            ("CreationDate", u"{0} (CreationDate)".format(
+                translate('header_CreationDate', domain=d, context=self.REQUEST))),
+            ("ModificationDate", u"{0} (ModificationDate)".format(
+                translate('header_ModificationDate', domain=d, context=self.REQUEST))),
+            ("review_state", u"{0} (review_state)".format(
+                translate('header_review_state', domain=d, context=self.REQUEST))),
+            ("review_state_title", u"{0} (review_state_title)".format(
+                translate('header_review_state_title_descr', domain=d, context=self.REQUEST))),
+            ("getProposingGroup", u"{0} (getProposingGroup)".format(
+                translate("header_getProposingGroup", domain=d, context=self.REQUEST))),
+            ("proposing_group_acronym", u"{0} (proposing_group_acronym)".format(
+                translate("header_proposing_group_acronym", domain=d, context=self.REQUEST))),
+            ("getCategory", u"{0} (getCategory)".format(
+                translate("header_getCategory", domain=d, context=self.REQUEST))),
+            ("getRawClassifier", u"{0} (getRawClassifier)".format(
+                translate("header_getRawClassifier", domain=d, context=self.REQUEST))),
+            ("getAssociatedGroups", u"{0} (getAssociatedGroups)".format(
+                translate("header_getAssociatedGroups", domain=d, context=self.REQUEST))),
+            ("associated_groups_acronym", u"{0} (associated_groups_acronym)".format(
+                translate("header_associated_groups_acronym", domain=d, context=self.REQUEST))),
+            ("getGroupsInCharge", u"{0} (getGroupsInCharge)".format(
+                translate("header_getGroupsInCharge", domain=d, context=self.REQUEST))),
+            ("groups_in_charge_acronym", u"{0} (groups_in_charge_acronym)".format(
+                translate("header_groups_in_charge_acronym", domain=d, context=self.REQUEST))),
+            ("copyGroups", u"{0} (copyGroups)".format(
+                translate("header_copyGroups", domain=d, context=self.REQUEST))),
+            ("committees_index", u"{0} (committees_index)".format(
+                translate("header_committees_index", domain=d, context=self.REQUEST))),
+            ("committees_index_acronym", u"{0} (committees_index_acronym)".format(
+                translate("header_committees_index_acronym", domain=d, context=self.REQUEST))),
+            ("privacy", u"{0} (privacy)".format(
+                translate("header_privacy", domain=d, context=self.REQUEST))),
+            ("pollType", u"{0} (pollType)".format(
+                translate("header_pollType", domain=d, context=self.REQUEST))),
+            ("advices", u"{0} (advices)".format(
+                translate("header_advices", domain=d, context=self.REQUEST))),
+            ("getItemIsSigned", u"{0} (getItemIsSigned)".format(
+                translate('header_getItemIsSigned', domain=d, context=self.REQUEST))),
+            ("toDiscuss", u"{0} (toDiscuss)".format(
+                translate('header_toDiscuss', domain=d, context=self.REQUEST))),
+            ("item_meeting_deadline_date", u"{0} (meetingDeadlineDate)".format(
+                translate('header_item_meeting_deadline_date', domain=d, context=self.REQUEST))),
+            ("actions", u"{0} (actions)".format(
+                translate("header_actions", domain=d, context=self.REQUEST))),
+            ("async_actions", u"{0} (async_actions)".format(
+                translate("header_async_actions", domain=d, context=self.REQUEST))),
+        ]
+        res = res + self._extraItemRelatedColumns()
+        return res
+
+    security.declarePrivate('listItemAttributeVisibleFor')
+
+    def listItemAttributeVisibleFor(self, include_for_meetingmanagers=False):
+        '''Vocabulary listing profiles available in the application.
+           If p_include_for_meetingmanagers=True, add also the meetingmanagers profile.'''
+
+        confidential_profiles = ['{0}{1}'.format(CONFIGGROUPPREFIX,
+                                                 BUDGETIMPACTEDITORS_GROUP_SUFFIX)]
+        if include_for_meetingmanagers:
+            confidential_profiles.append('{0}{1}'.format(
+                CONFIGGROUPPREFIX, MEETINGMANAGERS_GROUP_SUFFIX))
+
+        # do not consider READER_USECASES 'confidentialannex' and 'itemtemplatesmanagers'
+        reader_usecases = [usecase for usecase in READER_USECASES.keys()
+                           if usecase not in ['confidentialannex', 'itemtemplatesmanagers']]
+        for suffix in reader_usecases:
+            if suffix == 'powerobservers':
+                for po_infos in self.power_observers:
+                    confidential_profiles.append('{0}{1}'.format(CONFIGGROUPPREFIX, po_infos['row_id']))
+            else:
+                confidential_profiles.append('{0}{1}'.format(READERPREFIX, suffix))
+        for suffix in get_item_validation_wf_suffixes(self):
+            confidential_profiles.append('{0}{1}'.format(PROPOSINGGROUPPREFIX, suffix))
+
+        res = []
+        po_row_ids = [po_infos['row_id'] for po_infos in self.power_observers]
+        for profile in confidential_profiles:
+            if profile.startswith(PROPOSINGGROUPPREFIX):
+                res.append(
+                    (profile,
+                     translate('visible_for_{0}'.format(PROPOSINGGROUPPREFIX),
+                               mapping={'meeting_group_suffix':
+                                        translate(profile.replace(PROPOSINGGROUPPREFIX, ''),
+                                                  domain="PloneMeeting",
+                                                  context=self.REQUEST)},
+                               domain="PloneMeeting",
+                               context=self.REQUEST,
+                               default=u"Visible for {0}".format(profile))))
+            elif profile.startswith(CONFIGGROUPPREFIX):
+                config_group_suffix = profile.replace(CONFIGGROUPPREFIX, '')
+                is_power_observer = config_group_suffix in po_row_ids
+                reader_usecase = is_power_observer and safe_unicode(
+                    [po_infos['label'] for po_infos in self.power_observers
+                     if po_infos['row_id'] == config_group_suffix][0]) or \
+                    translate(config_group_suffix, domain='PloneMeeting', context=self.REQUEST)
+                res.append(
+                    (profile,
+                     translate('visible_for_{0}'.format(CONFIGGROUPPREFIX),
+                               mapping={'reader_usecase': reader_usecase},
+                               domain="PloneMeeting",
+                               context=self.REQUEST,
+                               default=u"Visible for {0}".format(reader_usecase))))
+            else:
+                res.append(
+                    (profile, translate('visible_for_{0}'.format(profile),
+                                        domain="PloneMeeting",
+                                        context=self.REQUEST,
+                                        default=u"Visible for {0}".format(profile))))
+        return DisplayList(res).sortedByValue()
+
+    security.declarePrivate('listItemAttributeVisibleForWithMeetingManagers')
+
+    def listItemAttributeVisibleForWithMeetingManagers(self):
+        '''Vocabulary listing profiles available in the application
+           including the meetingmanagers profile.'''
+        return self.listItemAttributeVisibleFor(include_for_meetingmanagers=True)
+
+    security.declarePrivate('listAnnexesBatchActions')
+
+    def listAnnexesBatchActions(self):
+        """Vocabulary for the MeetingConfig.enabledAnnexesBatchActions field."""
+        res = []
+        for annex_ba in ['delete', 'download-annexes', 'insert-barcode']:
+            res.append((annex_ba,
+                        translate('{0}-batch-action-but'.format(annex_ba),
+                                  domain='collective.eeafaceted.batchactions',
+                                  context=self.REQUEST)))
+        return DisplayList(tuple(res)).sortedByValue()
+
+    security.declarePrivate('listAnnexToPrintModes')
+
+    def listAnnexToPrintModes(self):
+        '''Vocabulary for field 'annexToPrintMode'.'''
+        res = [('enabled_for_info',
+                translate('annex_to_print_mode_info',
+                          domain='PloneMeeting',
+                          context=self.REQUEST,
+                          default="For information (annexes are printed manually)")),
+               ('enabled_for_printing',
+                translate('annex_to_print_mode_automated',
+                          domain='PloneMeeting',
+                          context=self.REQUEST,
+                          default="Automated (annexes are printed by the application)")),
+               ]
+        return DisplayList(tuple(res))
+
+    security.declarePrivate('listContentsKeptOnSentToOtherMCs')
+
+    def listContentsKeptOnSentToOtherMCs(self):
+        '''Vocabulary for field 'contentsKeptOnSentToOtherMC'.'''
+        res = [('annexes',
+                translate('content_kept_annexes',
+                          domain='PloneMeeting',
+                          context=self.REQUEST,
+                          default="Annexes")),
+               ('decision_annexes',
+                translate('content_kept_decision_annexes',
+                          domain='PloneMeeting',
+                          context=self.REQUEST,
+                          default="Decision annexes")),
+               ('advices',
+                translate('content_kept_advices',
+                          domain='PloneMeeting',
+                          context=self.REQUEST,
+                          default="Advices")),
+               ]
+        return DisplayList(tuple(res))
+
+    security.declarePrivate('listItemIconColors')
+
+    def listItemIconColors(self):
+        '''Vocabulary for field 'itemIconColor'.'''
+        res = [("default", translate('icon_color_default',
+                                     domain='PloneMeeting',
+                                     context=self.REQUEST))]
+        for color in ITEM_ICON_COLORS:
+            res.append((color, translate('icon_color_{0}'.format(color),
+                                         domain='PloneMeeting',
+                                         context=self.REQUEST)))
+        return DisplayList(tuple(res)).sortedByValue()
+
+    def listItemFieldsToKeepConfigSortingFor(self):
+        '''Vocabulary for itemFieldsToKeepConfigSortingFor field.'''
+        d = "PloneMeeting"
+        res = DisplayList((
+            ('proposingGroup', translate('PloneMeeting_label_proposingGroup',
+                                         domain=d,
+                                         context=self.REQUEST)),
+            ('category', translate('PloneMeeting_label_category',
+                                   domain=d,
+                                   context=self.REQUEST)),
+            ('classifier', translate('PloneMeeting_label_classifier',
+                                     domain=d,
+                                     context=self.REQUEST)),
+            ('associatedGroups', translate('PloneMeeting_label_associatedGroups',
+                                           domain=d,
+                                           context=self.REQUEST)),
+            ('groupsInCharge', translate('PloneMeeting_label_groupsInCharge',
+                                         domain=d,
+                                         context=self.REQUEST)),
+        ))
+        return res
+
+    security.declarePrivate('listResultsPerPage')
+
+    def listResultsPerPage(self):
+        """Vocabulary for 'maxShownListings',
+           'maxShownAvailableItems'
+            and 'maxShownMeetingItems' fields."""
+        res = []
+        for number in range(20, 1001, 20):
+            res.append((number, str(number)))
+        return IntDisplayList(tuple(res))
+
+    security.declarePrivate('listAdviceStyles')
+
+    def listAdviceStyles(self):
+        d = "PloneMeeting"
+        res = DisplayList((
+            ("standard", translate('advices_standard', domain=d, context=self.REQUEST)),
+            ("hands", translate('advices_hands', domain=d, context=self.REQUEST)),
+        ))
+        return res
+
+    security.declarePrivate('listPollTypes')
+
+    def listPollTypes(self):
+        res = [
+            ("out_loud",
+             translate('polltype_out_loud',
+                       domain='PloneMeeting',
+                       context=self.REQUEST)),
+            ("freehand",
+             translate('polltype_freehand',
+                       domain='PloneMeeting',
+                       context=self.REQUEST)),
+            ("mechanical",
+             translate('polltype_mechanical',
+                       domain='PloneMeeting',
+                       context=self.REQUEST)),
+            ("secret",
+             translate('polltype_secret',
+                       domain='PloneMeeting',
+                       context=self.REQUEST)),
+            ("secret_separated",
+             translate('polltype_secret_separated',
+                       domain='PloneMeeting',
+                       context=self.REQUEST)),
+            ("no_vote",
+             translate('polltype_no_vote',
+                       domain='PloneMeeting',
+                       context=self.REQUEST)),
+        ]
+        return DisplayList(res)
+
+    security.declarePublic('listTransformTypes')
+
+    def listTransformTypes(self):
+        '''Lists the possible transform types on a rich text field.'''
+        d = 'PloneMeeting'
+        res = DisplayList((
+            ("removeBlanks", translate('rich_text_remove_blanks', domain=d, context=self.REQUEST)),
+        ))
+        return res
+
+    security.declarePublic('listMailModes')
+
+    def listMailModes(self):
+        '''Lists the available modes for email notifications.'''
+        d = 'PloneMeeting'
+        res = DisplayList((
+            ("activated", translate('mail_mode_activated', domain=d, context=self.REQUEST)),
+            ("deactivated", translate('mail_mode_deactivated', domain=d, context=self.REQUEST)),
+            ("test", translate('mail_mode_test', domain=d, context=self.REQUEST)),
+        ))
+        return res
+
+    security.declarePrivate('listVotesEncoders')
+
+    def listVotesEncoders(self):
+        d = "PloneMeeting"
+        res = DisplayList((
+            ("aMeetingManager", translate('a_meeting_manager', domain=d, context=self.REQUEST)),
+            # ("theVoterHimself", translate('the_voter_himself', domain=d, context=self.REQUEST)),
+        ))
+        return res
+
+    security.declarePrivate('listItemActionsColumnConfig')
+
+    def listItemActionsColumnConfig(self):
+        d = "PloneMeeting"
+        res = DisplayList(())
+        for prefix, translatable_value in (('', ''),
+                                           ('meetingmanager_', ' (MeetingManager)'),
+                                           ('manager_', ' (Manager)')):
+            res.add(prefix + "delete",
+                    translate('Item action delete' + translatable_value, domain=d, context=self.REQUEST))
+            res.add(prefix + "duplicate",
+                    translate('Item action duplicate' + translatable_value, domain=d, context=self.REQUEST))
+            res.add(prefix + "history",
+                    translate('Item action history' + translatable_value, domain=d, context=self.REQUEST))
+            res.add(prefix + "export_pdf",
+                    translate('Item action export PDF' + translatable_value, domain=d, context=self.REQUEST))
+        return res
+
+    security.declarePrivate('listConfigGroups')
+
+    def listConfigGroups(self):
+        """ """
+        tool = api.portal.get_tool('portal_plonemeeting')
+        res = [('',
+                translate('no_config_group',
+                          domain='PloneMeeting',
+                          context=self.REQUEST))]
+        for configGroup in tool.getConfigGroups():
+            res.append(
+                (configGroup['row_id'],
+                 safe_unicode(configGroup['label'])))
+        return DisplayList(res)
+
+    security.declarePrivate('listPowerObserversTypes')
+
+    def listPowerObserversTypes(self):
+        '''
+          Vocabulary displaying power observers types.
+        '''
+        res = []
+        for po_infos in self.power_observers:
+            res.append((po_infos['row_id'], html.escape(po_infos['label'])))
+        return DisplayList(res)
+
+    security.declarePrivate('listDisplayAvailableItemsTo')
+
+    def listDisplayAvailableItemsTo(self):
+        d = "PloneMeeting"
+        res = DisplayList((
+            ("app_users", translate('app_users', domain=d, context=self.REQUEST)),
+        ))
+        for po_infos in self.power_observers:
+            res.add('{0}{1}'.format(POWEROBSERVERPREFIX, po_infos['row_id']),
+                    po_infos['label'])
+        return res
+
+    security.declarePrivate('listRedirectToNextMeeting')
+
+    def listRedirectToNextMeeting(self):
+        d = "PloneMeeting"
+        res = DisplayList((
+            ("app_users", translate('app_users', domain=d, context=self.REQUEST)),
+            ("meeting_managers", translate('meetingmanagers', domain=d, context=self.REQUEST)),
+        ))
+        for po_infos in self.power_observers:
+            res.add('{0}{1}'.format(POWEROBSERVERPREFIX, po_infos['row_id']),
+                    po_infos['label'])
+        return res
+
+    security.declarePrivate('listAdviceAnnexConfidentialVisibleFor')
+
+    def listAdviceAnnexConfidentialVisibleFor(self):
+        '''
+          Vocabulary for the 'adviceAnnexConfidentialVisibleFor' field.
+        '''
+        confidential_profiles = ['adviser_group',
+                                 '{0}{1}'.format(CONFIGGROUPPREFIX,
+                                                 BUDGETIMPACTEDITORS_GROUP_SUFFIX)]
+        # do not consider READER_USECASES 'confidentialannex' and 'itemtemplatesmanagers'
+        reader_usecases = [usecase for usecase in READER_USECASES.keys()
+                           if usecase not in ['confidentialannex', 'itemtemplatesmanagers']]
+        for suffix in reader_usecases:
+            if suffix == 'powerobservers':
+                for po_infos in self.power_observers:
+                    confidential_profiles.append('{0}{1}'.format(CONFIGGROUPPREFIX, po_infos['row_id']))
+            else:
+                confidential_profiles.append('{0}{1}'.format(READERPREFIX, suffix))
+        for suffix in get_item_validation_wf_suffixes(self):
+            confidential_profiles.append('{0}{1}'.format(PROPOSINGGROUPPREFIX, suffix))
+
+        res = []
+        po_row_ids = [po_infos['row_id'] for po_infos in self.power_observers]
+        for profile in confidential_profiles:
+            if profile.startswith(PROPOSINGGROUPPREFIX):
+                res.append(
+                    (profile,
+                     translate('visible_for_{0}'.format(PROPOSINGGROUPPREFIX),
+                               mapping={'meeting_group_suffix':
+                                        translate(profile.replace(PROPOSINGGROUPPREFIX, ''),
+                                                  domain="PloneMeeting",
+                                                  context=self.REQUEST)},
+                               domain="PloneMeeting",
+                               context=self.REQUEST,
+                               default=u"Visible for {0}".format(profile))))
+            elif profile.startswith(CONFIGGROUPPREFIX):
+                config_group_suffix = profile.replace(CONFIGGROUPPREFIX, '')
+                is_power_observer = config_group_suffix in po_row_ids
+                reader_usecase = is_power_observer and safe_unicode(
+                    [po_infos['label'] for po_infos in self.power_observers
+                     if po_infos['row_id'] == config_group_suffix][0]) or \
+                    translate(config_group_suffix, domain='PloneMeeting', context=self.REQUEST)
+                res.append(
+                    (profile,
+                     translate('visible_for_{0}'.format(CONFIGGROUPPREFIX),
+                               mapping={'reader_usecase': reader_usecase},
+                               domain="PloneMeeting",
+                               context=self.REQUEST,
+                               default=u"Visible for {0}".format(reader_usecase))))
+            else:
+                res.append(
+                    (profile,
+                     translate('visible_for_{0}'.format(profile),
+                               domain="PloneMeeting",
+                               context=self.REQUEST,
+                               default=u"Visible for {0}".format(profile))))
+        return DisplayList(res).sortedByValue()
+
+    security.declarePrivate('listMeetingAnnexConfidentialVisibleFor')
+
+    def listMeetingAnnexConfidentialVisibleFor(self):
+        '''
+          Vocabulary for the 'meetingAnnexConfidentialVisibleFor' field.
+        '''
+        confidential_profiles = ['{0}{1}'.format(CONFIGGROUPPREFIX, po_infos['row_id'])
+                                 for po_infos in self.power_observers]
+        for suffix in get_item_validation_wf_suffixes(self):
+            confidential_profiles.append('{0}{1}'.format(SUFFIXPROFILEPREFIX, suffix))
+
+        res = []
+        for profile in confidential_profiles:
+            if profile.startswith(SUFFIXPROFILEPREFIX):
+                res.append(
+                    (profile,
+                     translate('visible_for_{0}'.format(SUFFIXPROFILEPREFIX),
+                               mapping={'meeting_group_suffix':
+                                        translate(profile.replace(SUFFIXPROFILEPREFIX, ''),
+                                                  domain="PloneMeeting",
+                                                  context=self.REQUEST)},
+                               domain="PloneMeeting",
+                               context=self.REQUEST,
+                               default=u"Visible for {0}".format(profile))))
+            elif profile.startswith(CONFIGGROUPPREFIX):
+                config_group_suffix = profile.replace(CONFIGGROUPPREFIX, '')
+                reader_usecase = safe_unicode(
+                    [po_infos['label'] for po_infos in self.power_observers
+                     if po_infos['row_id'] == config_group_suffix][0])
+                res.append(
+                    (profile,
+                     translate('visible_for_{0}'.format(CONFIGGROUPPREFIX),
+                               mapping={'reader_usecase': reader_usecase},
+                               domain="PloneMeeting",
+                               context=self.REQUEST,
+                               default=u"Visible for {0}".format(reader_usecase))))
+            else:
+                res.append(
+                    (profile, translate('visible_for_{0}'.format(profile),
+                                        domain="PloneMeeting",
+                                        context=self.REQUEST,
+                                        default=u"Visible for {0}".format(profile)))
+                )
+        return DisplayList(res).sortedByValue()
+
+    security.declarePrivate('listActiveOrgsForPowerAdvisers')
+
+    def listActiveOrgsForPowerAdvisers(self):
+        """
+          Vocabulary for the powerAdvisersGroups field.
+          It returns every active organizations.
+        """
+        res = []
+        for org in get_organizations():
+            res.append((org.UID(), org.get_full_title(first_index=1)))
+        # make sure that if a configuration was defined for an organization
+        # that is now inactive, it is still displayed
+        storedPowerAdvisersGroups = self.power_advisers_groups
+        if storedPowerAdvisersGroups:
+            orgsInVocab = [org[0] for org in res]
+            for storedPowerAdvisersGroup in storedPowerAdvisersGroups:
+                if storedPowerAdvisersGroup not in orgsInVocab:
+                    org = get_organization(storedPowerAdvisersGroup)
+                    res.append((org.UID(), org.get_full_title(first_index=1)))
+        return DisplayList(res).sortedByValue()
+
+    security.declarePrivate('listActiveOrgsForCustomAdvisers')
+
+    def listActiveOrgsForCustomAdvisers(self):
+        """
+          Vocabulary for the customAdvisers.group DatagridField attribute.
+          It returns every active organizations.
+        """
+        res = []
+        for org in get_organizations():
+            res.append((org.UID(), org.get_full_title(first_index=1)))
+        # make sure that if a configuration was defined for an organization
+        # that is now inactive, it is still displayed
+        storedCustomAdviserGroups = [customAdviser['org'] for customAdviser in self.custom_advisers]
+        if storedCustomAdviserGroups:
+            orgsInVocab = [org[0] for org in res]
+            for storedCustomAdviserGroup in storedCustomAdviserGroups:
+                if storedCustomAdviserGroup not in orgsInVocab:
+                    org = get_organization(storedCustomAdviserGroup)
+                    res.append((org.UID(), org.get_full_title(first_index=1)))
+        return DisplayList(res).sortedByValue()
+
+    security.declarePrivate('listMeetingColumns')
+
+    def listMeetingColumns(self):
+        d = 'collective.eeafaceted.z3ctable'
+        # keys beginning with static_ are taken into account by the @@static-infos view
+        res = [
+            ("static_start_date",
+                u"{0} (static_start_date)".format(
+                    translate('start_date_column', domain=d, context=self.REQUEST))),
+            ("static_end_date",
+                u"{0} (static_end_date)".format(
+                    translate('end_date_column', domain=d, context=self.REQUEST))),
+            ("static_convocation_date",
+                u"{0} (static_convocation_date)".format(
+                    translate('convocation_date_column', domain=d, context=self.REQUEST))),
+            ("static_approval_date",
+                u"{0} (static_approval_date)".format(
+                    translate('approval_date_column', domain=d, context=self.REQUEST))),
+            ("static_place",
+                u"{0} (static_place)".format(
+                    translate('place_column', domain=d, context=self.REQUEST))),
+            ("static_place_other",
+                u"{0} (static_place_other)".format(
+                    translate('place_other_column', domain=d, context=self.REQUEST))),
+            ("static_authority_notice",
+                u"{0} (static_authority_notice)".format(
+                    translate('authority_notice_column', domain=d, context=self.REQUEST))),
+            ("static_meeting_number",
+                u"{0} (static_meeting_number)".format(
+                    translate('meeting_number_column', domain=d, context=self.REQUEST))),
+            ("static_first_item_number",
+                u"{0} (static_first_item_number)".format(
+                    translate('first_item_number_column', domain=d, context=self.REQUEST))),
+            ("Creator",
+                u"{0} (Creator)".format(
+                    translate('header_Creator', domain=d, context=self.REQUEST))),
+            ("CreationDate",
+                u"{0} (CreationDate)".format(
+                    translate('header_CreationDate', domain=d, context=self.REQUEST))),
+            ("ModificationDate",
+                u"{0} (ModificationDate)".format(
+                    translate('header_ModificationDate', domain=d, context=self.REQUEST))),
+            ("review_state",
+                u"{0} (review_state)".format(
+                    translate('header_review_state', domain=d, context=self.REQUEST))),
+            ("review_state_title", u"{0} (review_state_title)".format(
+                translate('header_review_state_title_descr', domain=d, context=self.REQUEST))),
+            ("meeting_category", u"{0} (meeting_category)".format(
+                translate("header_getCategory", domain=d, context=self.REQUEST))),
+            ("actions",
+                u"{0} (actions)".format(
+                    translate("header_actions", domain=d, context=self.REQUEST))),
+            ("async_actions", u"{0} (async_actions)".format(
+                translate("header_async_actions", domain=d, context=self.REQUEST))),
+        ]
+        res = res + self._extraMeetingRelatedColumns()
+        return DisplayList(tuple(res))
+
+    security.declarePrivate('listAvailableItemsListVisibleColumns')
+
+    def listAvailableItemsListVisibleColumns(self):
+        '''Vocabulary for the 'availableItemsListVisibleColumns' field.'''
+        res = self.listItemRelatedColumns()
+        res.insert(-2, ('preferred_meeting_date', u"{0} (preferred_meeting_date)".format(
+            translate('header_preferred_meeting_date',
+                      domain='collective.eeafaceted.z3ctable',
+                      context=self.REQUEST))))
+        # remove review_state columns as items will always be "validated"
+        res = [v for v in res if v[0] not in ('review_state', 'review_state_title')]
+        return DisplayList(tuple(res))
+
+    security.declarePrivate('listItemsListVisibleColumns')
+
+    def listItemsListVisibleColumns(self):
+        '''Vocabulary for the 'itemsListVisibleColumns' field.'''
+        res = self.listItemRelatedColumns()
+        res.insert(-2, ('preferred_meeting_date', u"{0} (preferred_meeting_date)".format(
+            translate('header_preferred_meeting_date',
+                      domain='collective.eeafaceted.z3ctable',
+                      context=self.REQUEST))))
+        return DisplayList(tuple(res))
+
+    def listItemsVisibleFields(self):
+        '''Vocabulary for the 'itemsVisibleFields' field.
+           Every fields available on the MeetingItem can be selectable.'''
+        # insert some static selectable values, ignore static that are also in _listFieldsFor
+        res = [(k, v) for k, v in self.listItemRelatedColumns()
+               if k.startswith('static_') and k not in ('static_marginalNotes', 'static_budget_infos')]
+        res += self._listFieldsFor(MeetingItem,
+                                   ignored_field_ids=self.adapted()._ignoredVisibleFieldIds(),
+                                   hide_not_visible=True)
+        res.insert(0, ('MeetingItem.annexes',
+                       translate('existing_annexes',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)))
+        res.insert(0, ('MeetingItem.advices',
+                       translate('PloneMeeting_label_advices',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)))
+        return DisplayList(tuple(res))
+
+    def listItemsNotViewableVisibleFields(self):
+        '''Vocabulary for the 'itemsNotViewableVisibleFields' field.
+           Every fields available on the MeetingItem can be selectable.'''
+        # insert some static selectable values, ignore static that are also in _listFieldsFor
+        res = [(k, v) for k, v in self.listItemRelatedColumns()
+               if k.startswith('static_') and k not in ('static_marginalNotes', 'static_budget_infos')]
+        res += self._listFieldsFor(MeetingItem,
+                                   ignored_field_ids=self.adapted()._ignoredVisibleFieldIds(),
+                                   hide_not_visible=True)
+        res.insert(0, ('MeetingItem.annexes',
+                       translate('not_confidential_annexes',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)))
+        # not viewable advices can not be displayed for now
+        # this will be possible and easier (like for annexes)
+        # when ticket #MPMPHAI-11 will be fixed
+        # res.insert(0, ('MeetingItem.advices',
+        #               translate('PloneMeeting_label_advices',
+        #                         domain='PloneMeeting',
+        #                         context=self.REQUEST)))
+        return DisplayList(tuple(res))
+
+    def listItemsListVisibleFields(self):
+        '''Vocabulary for the 'itemsListVisibleFields/itemsNotViewableVisibleFields' fields.
+           Every fields available on the MeetingItem can be selectable.'''
+        res = self._listFieldsFor(MeetingItem,
+                                  ignored_field_ids=self.adapted()._ignoredVisibleFieldIds(),
+                                  hide_not_visible=True)
+        return DisplayList(tuple(res))
+
+    security.declarePrivate('listItemColumns')
+
+    def listItemColumns(self):
+        res = self.listItemRelatedColumns()
+        res.insert(-2, ('meeting_date', u"{0} (meeting_date)".format(
+            translate('header_meeting_date',
+                      domain='collective.eeafaceted.z3ctable',
+                      context=self.REQUEST))))
+        res.insert(-2, ('preferred_meeting_date', u"{0} (preferred_meeting_date)".format(
+            translate('header_preferred_meeting_date',
+                      domain='collective.eeafaceted.z3ctable',
+                      context=self.REQUEST))))
+        return DisplayList(tuple(res))
+
+    security.declarePublic('listAllTransitions')
+
+    def listAllTransitions(self):
+        '''Lists the possible transitions for items as well as for meetings.'''
+        res = []
+        for metaType in ('Meeting', 'MeetingItem'):
+            objectType = metaType
+            if objectType == 'MeetingItem':
+                objectType = 'Item'
+            for id, text in self.listTransitions(objectType):
+                res.append((u'%s.%s' % (metaType, id),
+                            u'%s ➔ %s' % (metaType, text)))
+        return DisplayList(tuple(res)).sortedByValue()
+
+    security.declarePrivate('listItemTransitions')
+
+    def listItemTransitions(self):
+        '''Vocabulary that list every item WF transitions.'''
+        return DisplayList(self.listTransitions('Item')).sortedByValue()
+
+    security.declarePrivate('listMeetingTransitions')
+
+    def listMeetingTransitions(self):
+        '''Vocabulary that list every meeting WF transitions.'''
+        return DisplayList(self.listTransitions('Meeting')).sortedByValue()
+
+    security.declarePublic('listItemStates')
+
+    def listItemStates(self):
+        return DisplayList(tuple(self.listStates('Item'))).sortedByValue()
+
+    security.declarePublic('listItemAutoSentToOtherMCStates')
+
+    def listItemAutoSentToOtherMCStates(self):
+        """Vocabulary for the 'itemAutoSentToOtherMCStates' field, every states excepted initial state."""
+        wfTool = api.portal.get_tool('portal_workflow')
+        itemWorkflow = wfTool.getWorkflowsFor(self.getItemTypeName())[0]
+        initialState = itemWorkflow.states[itemWorkflow.initial_state]
+        states = self.listStates('Item', excepted=initialState.id)
+        return DisplayList(tuple(states)).sortedByValue()
+
+    security.declarePublic('listMeetingStates')
+
+    def listMeetingStates(self):
+        return DisplayList(tuple(self.listStates('Meeting'))).sortedByValue()
+
+    security.declarePrivate('listExecutableItemActions')
+
+    def listExecutableItemActions(self):
+        '''Vocabulary for column item_action of field onMeetingTransitionItemActionToExecute.
+           This list a special value 'Execute given action' and the list of item transitions.'''
+        res = [(EXECUTE_EXPR_VALUE, _(EXECUTE_EXPR_VALUE))]
+        transitions = self.listItemTransitions()
+        return DisplayList(res) + transitions
+
+    security.declarePrivate('listMeetingConfigsToCloneTo')
+
+    def listMeetingConfigsToCloneTo(self):
+        '''List available meetingConfigs to clone items to.'''
+        res = []
+        tool = api.portal.get_tool('portal_plonemeeting')
+        for mc in tool.getActiveConfigs():
+            mcId = mc.getId()
+            if not mcId == self.getId():
+                res.append((mcId, safe_unicode(mc.Title(include_config_group=True))))
+        return DisplayList(humansorted(res, key=itemgetter(1)))
+
+    security.declarePrivate('listTransitionsUntilPresented')
+
+    def listTransitionsUntilPresented(self):
+        '''List available workflow transitions until the 'present' transition included.
+           We base this on the MeetingConfig.getTransitionsForPresentingAnItem.
+           This will let us set an item cloned to another meetingConfig to any state until 'presented'.
+           We list every item transitions of every available meetingConfigs.'''
+        # we do not use an empty '' but '__nothing__' because of a bug in DataGridField SelectColumn...
+        res = [(NO_TRIGGER_WF_TRANSITION_UNTIL,
+                translate('let_item_in_initial_state',
+                          domain='PloneMeeting',
+                          context=self.REQUEST)), ]
+        tool = api.portal.get_tool('portal_plonemeeting')
+        # sort cfg by Title
+        for cfg in tool.getActiveConfigs():
+            # only show other meetingConfigs than self
+            if cfg == self:
+                continue
+            availableItemTransitions = self.listTransitions('Item', meetingConfig=cfg)
+            availableItemTransitionIds = [tr[0] for tr in availableItemTransitions]
+            availableItemTransitionTitles = [tr[1] for tr in availableItemTransitions]
+            cfgId = cfg.getId()
+            cfgTitle = safe_unicode(cfg.Title(include_config_group=True))
+            for tr in cfg.getTransitionsForPresentingAnItem():
+                text = u'%s ➔ %s' % (
+                    cfgTitle,
+                    availableItemTransitionTitles[
+                        availableItemTransitionIds.index(tr)])
+                res.append(('%s.%s' % (cfgId, tr), text))
+        return DisplayList(humansorted(res, key=itemgetter(1)))
+
+    security.declarePublic('listItemEvents')
+
+    def listItemEvents(self):
+        '''Lists the events related to items that will trigger a mail being
+           sent.'''
+        d = 'PloneMeeting'
+        res = [
+            ("lateItem", translate('event_late_item',
+                                   domain=d,
+                                   context=self.REQUEST)),
+            ("itemPresented", translate('event_item_presented',
+                                        domain=d,
+                                        context=self.REQUEST)),
+            ("itemPresentedOwner", translate('event_item_presented_owner',
+                                             domain=d,
+                                             context=self.REQUEST)),
+            ("itemUnpresented", translate('event_item_unpresented',
+                                          domain=d,
+                                          context=self.REQUEST)),
+            ("itemUnpresentedOwner", translate('event_item_unpresented_owner',
+                                               domain=d,
+                                               context=self.REQUEST)),
+            ("itemDelayed", translate('event_item_delayed',
+                                      domain=d,
+                                      context=self.REQUEST)),
+            ("itemDelayedOwner", translate('event_item_delayed_owner',
+                                           domain=d,
+                                           context=self.REQUEST)),
+            ("itemPostponedNextMeeting",
+             translate('event_item_postponed_next_meeting',
+                       domain=d,
+                       context=self.REQUEST)),
+            ("itemPostponedNextMeetingOwner",
+             translate('event_item_postponed_next_meeting_owner',
+                       domain=d,
+                       context=self.REQUEST)),
+            ("annexAdded", translate('event_add_annex',
+                                     domain=d,
+                                     context=self.REQUEST)),
+            # relevant if advices are enabled
+            ("adviceToGive", translate('event_advice_to_give',
+                                       domain=d,
+                                       context=self.REQUEST)),
+            ("adviceToGiveByUser", translate('event_advice_to_give_by_user',
+                                             domain=d,
+                                             context=self.REQUEST)),
+            ("adviceInvalidated", translate('event_invalidate_advice',
+                                            domain=d,
+                                            context=self.REQUEST)),
+            ("adviceDelayWarning", translate('event_advice_delay_warning',
+                                             domain=d,
+                                             context=self.REQUEST)),
+            ("adviceDelayExpired", translate('event_advice_delay_expired',
+                                             domain=d,
+                                             context=self.REQUEST)),
+            # relevant if askToDiscuss is enabled
+            ("askDiscussItem", translate('event_ask_discuss_item',
+                                         domain=d,
+                                         context=self.REQUEST)),
+            # relevant if clone to another MC is enabled
+            ("itemClonedToThisMC", translate('event_item_clone_to_this_mc',
+                                             domain=d,
+                                             context=self.REQUEST)),
+            # relevant if wfAdaptation 'return to proposing group' is enabled
+            ("returnedToProposingGroup", translate('event_item_returned_to_proposing_group',
+                                                   domain=d,
+                                                   context=self.REQUEST)),
+            ("returnedToProposingGroupOwner", translate(
+                'event_item_returned_to_proposing_group_owner',
+                domain=d,
+                context=self.REQUEST)),
+            ("returnedToMeetingManagers", translate('event_item_returned_to_meeting_managers',
+                                                    domain=d,
+                                                    context=self.REQUEST)),
+            # relevant if using copyGroups
+            ("copyGroups", translate('event_item_copy_groups',
+                                     domain=d,
+                                     context=self.REQUEST)), ]
+
+        # add custom mail notifications added by subproducs
+        for extra_item_event in self.adapted().extraItemEvents():
+            res.append((extra_item_event,
+                        translate(extra_item_event,
+                                  domain=d,
+                                  context=self.REQUEST)))
+
+        # a notification can also be sent on every item transition
+        # create a separated result (res_transitions) so we can easily sort it
+        item_transitions = self.listTransitions('Item')
+        res_transitions = []
+        for item_transition_id, item_transition_name in item_transitions:
+            translated_msg = translate('transition_event',
+                                       domain="PloneMeeting",
+                                       mapping={'state_info': item_transition_name},
+                                       context=self.REQUEST)
+            res_transitions.append(("item_state_changed_%s" % item_transition_id, translated_msg))
+        res = DisplayList(tuple(res)) + DisplayList(res_transitions).sortedByValue()
+
+        # itemWFValidationLevels based notifications
+        item_wf_validation_transitions = self.get_item_validation_transitions()
+
+        res_transitions = []
+        for item_transition_id, item_transition_name in item_wf_validation_transitions:
+            id = "item_state_changed_%s__history_aware" % item_transition_id
+            translated_msg = translate('transition_event_history_aware',
+                                       domain="PloneMeeting",
+                                       mapping={'state_info': item_transition_name},
+                                       context=self.REQUEST)
+            res_transitions.append((id, translated_msg))
+        res = res + DisplayList(res_transitions).sortedByValue()
+
+        res_transitions = []
+        for item_transition_id, item_transition_name in item_wf_validation_transitions:
+            id = "item_state_changed_%s__proposing_group_suffix" % item_transition_id
+            translated_msg = translate('transition_event_proposing_group_suffix',
+                                       domain="PloneMeeting",
+                                       mapping={'state_info': item_transition_name},
+                                       context=self.REQUEST)
+            res_transitions.append((id, translated_msg))
+        res = res + DisplayList(res_transitions).sortedByValue()
+
+        res_transitions = []
+        for item_transition_id, item_transition_name in item_wf_validation_transitions:
+            id = "item_state_changed_%s__proposing_group_suffix_except_manager" % item_transition_id
+            translated_msg = translate('transition_event_proposing_group_except_manager',
+                                       domain="PloneMeeting",
+                                       mapping={'state_info': item_transition_name},
+                                       context=self.REQUEST)
+            res_transitions.append((id, translated_msg))
+        res = res + DisplayList(res_transitions).sortedByValue()
+
+        # suffixes related notifications
+        functions = [fct for fct in get_registry_functions() if fct['enabled']]
+
+        res_suffixes = []
+        for fct in functions:
+            id = "advice_edited__%s" % fct['fct_id']
+            translated_msg = translate("event_advice_edited",
+                                       domain="PloneMeeting",
+                                       mapping={"suffix": fct['fct_title']},
+                                       context=self.REQUEST)
+            res_suffixes.append((id, translated_msg))
+        res_suffixes.append(("advice_edited__Owner",
+                             translate('event_advice_edited_owner',
+                                       domain=d,
+                                       context=self.REQUEST)))
+        res = res + DisplayList(res_suffixes).sortedByValue()
+
+        res_suffixes = []
+        for fct in functions:
+            id = "advice_edited_in_meeting__%s" % fct['fct_id']
+            translated_msg = translate("event_advice_edited_in_meeting",
+                                       domain="PloneMeeting",
+                                       mapping={"suffix": safe_unicode(fct['fct_title'])},
+                                       context=self.REQUEST)
+            res_suffixes.append((id, translated_msg))
+        res_suffixes.append(("advice_edited_in_meeting__Owner",
+                            translate('event_advice_edited_in_meeting_owner',
+                                      domain=d,
+                                      context=self.REQUEST)))
+        res = res + DisplayList(res_suffixes).sortedByValue()
+
+        # power observers related notification
+        res_po = []
+        for po_infos in self.power_observers:
+            id = "late_item_in_meeting__%s" % po_infos["row_id"]
+            translated_msg = translate("event_late_item_in_meeting",
+                                       domain="PloneMeeting",
+                                       mapping={"po_label": safe_unicode(po_infos["label"])},
+                                       context=self.REQUEST,
+                                       default="event_late_item_in_meeting_%s" % po_infos["row_id"])
+            res_po.append((id, translated_msg))
+        res = res + DisplayList(res_po).sortedByValue()
+        return res
+
+    security.declarePublic('listMeetingEvents')
+
+    def listMeetingEvents(self):
+        '''Lists the events related to meetings that will trigger a mail being sent.'''
+        # Those events correspond to transitions of the workflow that governs meetings.
+        # we just preprend a 'meeting_state_changed_'
+        meeting_transitions = self.listTransitions('Meeting')
+        res = []
+
+        # add custom mail notifications added by subproducs
+        for extra_meeting_event in self.adapted().extraMeetingEvents():
+            res.append((extra_meeting_event,
+                        translate(extra_meeting_event,
+                                  domain='PloneMeeting',
+                                  context=self.REQUEST)))
+
+        for meeting_transition_id, meeting_transition_name in meeting_transitions:
+            translated_msg = translate('transition_event',
+                                       domain="PloneMeeting",
+                                       mapping={'state_info': meeting_transition_name},
+                                       context=self.REQUEST)
+            res.append(("meeting_state_changed_%s" % meeting_transition_id, translated_msg))
+
+        return DisplayList(res).sortedByValue()
+
+    security.declarePublic('listInsertingMethods')
+
+    def listInsertingMethods(self):
+        '''Return a list of available inserting methods when
+           adding a item to a meeting'''
+        res = []
+        for itemInsertMethod in ITEM_INSERT_METHODS:
+            res.append((itemInsertMethod,
+                        translate(itemInsertMethod,
+                                  domain='PloneMeeting',
+                                  context=self.REQUEST)))
+
+        # add custom extra inserting methods
+        for extra_inserting_method in self.adapted().extraInsertingMethods():
+            res.append((extra_inserting_method,
+                        translate(extra_inserting_method,
+                                  domain='PloneMeeting',
+                                  context=self.REQUEST)))
+        return DisplayList(tuple(res))
+
+    security.declarePublic('listSelectableCopyGroups')
+
+    def listSelectableCopyGroups(self):
+        '''Returns a list of groups that can be selected on an item as copy for the item.'''
+        res = []
+        org_uids = get_organizations(the_objects=False)
+        for org_uid in org_uids:
+            plone_groups = get_plone_groups(org_uid)
+            for plone_group in plone_groups:
+                res.append((plone_group.id, plone_group.getProperty('title')))
+        return DisplayList(tuple(res)).sortedByValue()
+
+    security.declarePrivate('listUsedItemAttributes')
+
+    def listUsedItemAttributes(self):
+        res = self.listAttributes(MeetingItem.schema, optionalOnly=True)
+        # add special values for votesResult to repeat it after motivation
+        # and/or after decisionEnd
+        res.add('votesResult_after_motivation',
+                '%s (votesResult_after_motivation)' %
+                (translate('votesResult_after_motivation',
+                           domain='PloneMeeting',
+                           context=self.REQUEST)))
+        res.add('votesResult_after_decisionEnd',
+                '%s (votesResult_after_decisionEnd)' %
+                (translate('votesResult_after_decisionEnd',
+                           domain='PloneMeeting',
+                           context=self.REQUEST)))
+        res.add('labels', '%s (labels)' %
+                (translate('Labels',
+                           domain='eea',
+                           context=self.REQUEST)))
+        return res.sortedByValue()
+
+    security.declarePrivate('listItemAttributes')
+
+    def listItemAttributes(self):
+        return self.listAttributes(MeetingItem.schema).sortedByValue()
+
+    security.declarePrivate('listMeetingAttributes')
+
+    def listMeetingAttributes(self):
+        return get_dx_attrs(
+            self.getMeetingTypeName(), optional_only=False, as_display_list=False)
+
+    security.declarePrivate('listUsedMeetingAttributes')
+
+    def listUsedMeetingAttributes(self):
+        optional_fields = get_dx_attrs(
+            self.getMeetingTypeName(), optional_only=True, as_display_list=False)
+        contact_fields = ['attendees', 'excused', 'absents', 'non_attendees',
+                          'signatories', 'replacements']
+        contact_fields.reverse()
+        index = optional_fields.index('place')
+        for contact_field in contact_fields:
+            optional_fields.insert(index, contact_field)
+        index = optional_fields.index('committees') + 1
+        # committees columns
+        committees_optional_columns = Meeting.FIELD_INFOS['committees']['optional_columns']
+        committees_optional_columns.reverse()
+        for column_name in committees_optional_columns:
+            optional_fields.insert(index, 'committees_{0}'.format(column_name))
+        res = []
+        for field in optional_fields:
+            res.append(
+                (field,
+                 '%s (%s)' % (translate('title_{0}'.format(field),
+                                        domain='PloneMeeting',
+                                        context=self.REQUEST),
+                              field)))
+        return DisplayList(tuple(res)).sortedByValue()
+
+    security.declarePrivate('listSelectableAdvisers')
+
+    def listSelectableAdvisers(self):
+        '''List advisers that will be selectable in the MeetingItem.optionalAdvisers field.'''
+
+        res = []
+        # display every groups with number of users of advisers Plone group
+        activeOrgs = get_organizations(only_selected=True)
+        advisers_msg = translate('advisers',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+        for org in activeOrgs:
+            org_uid = org.UID()
+            title = u"{0} ({1})".format(
+                safe_unicode(org.get_full_title(first_index=1)),
+                org_uid)
+            advisers = get_plone_group(org_uid, "advisers")
+            # bypass organizations that do not have an _advisers Plone group
+            if not advisers:
+                continue
+            users = advisers.getMemberIds()
+            users_suffixed_group_msg = translate(
+                'users_in_suffixed_group',
+                mapping={'suffix': advisers_msg,
+                         'users': len(users)},
+                domain='PloneMeeting',
+                context=self.REQUEST,
+                default="${users} users in \"${suffix}\" sub-group")
+            term_title = u"{0} ({1})".format(title, users_suffixed_group_msg)
+            res.append((org_uid, term_title))
+        return DisplayList(res).sortedByValue()
+
+    security.declarePrivate('listSelectableContacts')
+
+    def listSelectableContacts(self):
+        """Vocabulary for the MeetingConfig.certifiedSignatures datagridfield,
+           held_position column."""
+        vocab_factory = getUtility(
+            IVocabularyFactory,
+            "Products.PloneMeeting.vocabularies.every_heldpositions_vocabulary")
+        vocab = vocab_factory(self)
+        res = [(term.value, term.title) for term in vocab._terms]
+        res.insert(0, ('_none_', _z3c_form('No value')))
+        return DisplayList(res)
+
+    security.declarePrivate('listSelectableCommitteeAttendees')
+
+    def listSelectableCommitteeAttendees(self):
+        """Vocabulary for the MeetingConfig.committees field."""
+        vocab = get_vocab(
+            self, "Products.PloneMeeting.vocabularies.selectable_committee_attendees_vocabulary")
+        res = [(term.value, term.title) for term in vocab._terms]
+        return DisplayList(res)
+
+    security.declarePrivate('listSelectableProposingGroups')
+
+    def listSelectableProposingGroups(self):
+        """Vocabulary for the MeetingConfig.committees field."""
+        vocab = get_vocab(
+            self, "Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")
+        res = [(term.value, term.title) for term in vocab._terms]
+        return DisplayList(res)
+
+    security.declarePrivate('listSelectableCommitteeAutoFrom')
+
+    def listSelectableCommitteeAutoFrom(self):
+        """Elements on item that will auto determinate the committee to use.
+           The proposingGroup, category or classifier may determinate used committee."""
+        # proposing groups
+        proposing_groups_vocab = get_vocab(
+            self, "Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")
+        res = [('proposing_group__' + term.value, 'GP.: ' + term.title)
+               for term in proposing_groups_vocab._terms]
+        # categories
+        categories_vocab = get_vocab(
+            self, "Products.PloneMeeting.vocabularies.categoriesvocabulary")
+        res += [('category__' + term.value, 'Cat.: ' + term.title)
+                for term in categories_vocab._terms]
+        # classifiers
+        classifiers_vocab = get_vocab(
+            self, "Products.PloneMeeting.vocabularies.classifiersvocabulary")
+        res += [('classifier__' + term.value, 'Class.: ' + term.title)
+                for term in classifiers_vocab._terms]
+        return DisplayList(res)
+
+    # Committees related helpers -----------------------------------------------
+
+    security.declarePrivate('listToDoListSearches')
+
+    def listToDoListSearches(self):
+        """Vocabulary for the MeetingConfig.toDoListSearches field."""
+        searches = self.searches.searches_items.objectValues()
+        res = []
+        for search in searches:
+            res.append(
+                (search.UID(), search.Title()))
+        return DisplayList(res)
+
+    security.declarePrivate('listDashboardItemsListingsFilters')
+
+    def listDashboardItemsListingsFilters(self):
+        """Vocabulary for 'dashboardItemsListingsFilters',
+           'dashboardMeetingAvailableItemsFilters'
+            and 'dashboardMeetingLinkedItemsFilters' fields."""
+        criteria = ICriteria(self.searches.searches_items).criteria
+        res = []
+        for criterion in criteria:
+            if criterion.section == u'advanced':
+                res.append(
+                    (criterion.__name__,
+                     u"%s (%s)" % (translate(criterion.title,
+                                             domain="eea",
+                                             context=self.REQUEST),
+                                   criterion.__name__)))
+        return DisplayList(tuple(res))
+
+    security.declarePrivate('listDashboardMeetingsListingsFilters')
+
+    def listDashboardMeetingsListingsFilters(self):
+        """Vocabulary for 'dashboardMeetingsListingsFilters' field."""
+        criteria = ICriteria(self.searches.searches_decisions).criteria
+        res = []
+        for criterion in criteria:
+            if criterion.section == u'advanced':
+                res.append(
+                    (criterion.__name__,
+                     u"%s (%s)" % (translate(criterion.title,
+                                             domain="eea",
+                                             context=self.REQUEST),
+                                   criterion.__name__)))
+        return DisplayList(tuple(res))
+
 

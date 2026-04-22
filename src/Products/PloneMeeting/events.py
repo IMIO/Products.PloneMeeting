@@ -591,8 +591,9 @@ def onConfigWillBeRemoved(config, event):
       - the meetingConfig folder of the Members must be empty.'''
 
     # If we are trying to remove the whole Plone Site, bypass this hook.
-    # bypass also if we are in the creation process
-    if event.object.meta_type == 'Plone Site' or config._at_creation_flag:
+    # bypass also if we are in the AT creation process (_at_creation_flag is AT-specific;
+    # DX objects don't have it but also don't fire this event during creation)
+    if event.object.meta_type == 'Plone Site' or getattr(config, '_at_creation_flag', False):
         return
 
     can_not_delete_meetingconfig_meeting = \
