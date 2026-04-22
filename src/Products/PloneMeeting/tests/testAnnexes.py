@@ -1123,6 +1123,7 @@ class testAnnexes(PloneMeetingTestCase):
         cfgItemWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
         item_initial_state = self.wfTool[cfgItemWF.getId()].initial_state
         cfg.item_copy_groups_states = (item_initial_state,)
+        cfg.setItemAnnexConfidentialVisibleFor((u'suffix_proposing_group_creators',
                                                 u'suffix_proposing_group_reviewers'))
         item_initial_state, item, annexes_table, categorized_child, \
             annexNotConfidential, annexConfidential = self._setupConfidentialityOnItemAnnexes(
@@ -1139,6 +1140,7 @@ class testAnnexes(PloneMeetingTestCase):
         clonedItem = item.clone()
         self.assertEqual(len(get_categorized_elements(clonedItem)), 1)
         # if may view confidential annex, it is kept
+        cfg.setItemAnnexConfidentialVisibleFor((u'suffix_proposing_group_creators',
                                                 u'suffix_proposing_group_reviewers',
                                                 u'reader_copy_groups'))
         update_all_categorized_elements(item)

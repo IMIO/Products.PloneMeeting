@@ -413,8 +413,8 @@ class testWorkflows(PloneMeetingTestCase):
     def test_pm_RecurringItems(self):
         '''Tests the recurring items system.'''
         cfg = self.meetingConfig
-        cfg.inserting_methods_on_add_item = [{'insertingMethod': 'at_the_end',
-                                              'reverse': '0'}]
+        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'at_the_end',
+                                           'reverse': '0'}, ))
         item_type_name = cfg.getItemTypeName()
         self._setupRecurringItems()
         self.changeUser('pmManager')
@@ -610,6 +610,7 @@ class testWorkflows(PloneMeetingTestCase):
            in the meeting are respecting the 'privacy' attribute.'''
         cfg = self.meetingConfig
         self._setupRecurringItems()
+        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_privacy',
                                            'reverse': '0'},
                                           {'insertingMethod': 'on_proposing_groups',
                                            'reverse': '0'}, ))
@@ -701,6 +702,7 @@ class testWorkflows(PloneMeetingTestCase):
         # first, wrong tal_expression, nothing is done
         self.changeUser('siteadmin')
         cfg = self.meetingConfig
+        cfg.setOnMeetingTransitionItemActionToExecute(
             [{'meeting_transition': 'freeze',
               'item_action': EXECUTE_EXPR_VALUE,
               'tal_expression': 'item/unknown'},
@@ -723,6 +725,7 @@ class testWorkflows(PloneMeetingTestCase):
 
         # now a valid config, append ('accepted') to item title when meeting is decided
         title_suffix = " (accepted)"
+        cfg.setOnMeetingTransitionItemActionToExecute(
             [{'meeting_transition': 'decide',
               'item_action': EXECUTE_EXPR_VALUE,
               'tal_expression': 'python: item.setTitle(item.Title() + "{0}")'.format(title_suffix)},
@@ -751,6 +754,7 @@ class testWorkflows(PloneMeetingTestCase):
         # call.update_local_roles on item only if it not already decided
         # as.update_local_roles is called when item review_state changed
         self.assertTrue('accepted' in cfg.getItemDecidedStates())
+        cfg.setOnMeetingTransitionItemActionToExecute(
             [{'meeting_transition': 'decide',
               'item_action': 'itemfreeze',
               'tal_expression': ''},
@@ -845,6 +849,7 @@ class testWorkflows(PloneMeetingTestCase):
         self.assertEqual(late_item.query_state(), 'itemfrozen')
 
         # only late item is frozen, not freezing whole meeting
+        cfg.setOnMeetingTransitionItemActionToExecute(
             [{'meeting_transition': 'freeze',
               'item_action': EXECUTE_EXPR_VALUE,
               'tal_expression': 'python: item.isLate() and '
@@ -863,6 +868,7 @@ class testWorkflows(PloneMeetingTestCase):
         self.assertEqual(late_item2.query_state(), 'itemfrozen')
 
         # items frozen when meeting frozen but not late items
+        cfg.setOnMeetingTransitionItemActionToExecute(
             [{'meeting_transition': 'freeze',
               'item_action': EXECUTE_EXPR_VALUE,
               'tal_expression': 'python: not item.isLate() and '
@@ -961,7 +967,7 @@ class testWorkflows(PloneMeetingTestCase):
     def test_pm_ItemMarginalNotes(self):
         """Field MeetingItem.marginalNotes is writeable when item is decided."""
         cfg = self.meetingConfig
-        cfg.used_item_attributes = ('marginalNotes', 'observations')
+        cfg.setUsedItemAttributes(('marginalNotes', 'observations'))
         self._enableField('category', enable=False)
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -1081,7 +1087,7 @@ class testWorkflows(PloneMeetingTestCase):
         self.assertNotIn(closed_meeting.UID(), item_selectable_preferred_meetings)
 
         # Decided meetings can now be selected as preferred meeting for creators
-        self.meetingConfig.item_preferred_meeting_states = (u"created", u"frozen", u"decided")
+        self.meetingConfig.setItemPreferredMeetingStates((u"created", u"frozen", u"decided"))
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
         self.changeUser('pmCreator1')
         item_selectable_preferred_meetings = item.listMeetingsAcceptingItems()

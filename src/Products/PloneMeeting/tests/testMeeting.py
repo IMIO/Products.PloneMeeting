@@ -227,8 +227,10 @@ class testMeetingType(PloneMeetingTestCase):
         '''Test inserting an item using the "on_list_type" sorting methods.
            With default listTypes and additional listTypes with 'used_in_inserting_method' or not.'''
         cfg = self.meetingConfig
+        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_list_type',
                                            'reverse': '0'}, ))
         # additional listType, not used in inserting_method
+        cfg.setListTypes(DEFAULT_LIST_TYPES + [{'identifier': 'addendum',
                                                 'label': 'Addendum',
                                                 'used_in_inserting_method': '0'}, ])
         self.changeUser('pmManager')
@@ -261,6 +263,7 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertEqual(orderedItems[-1], lateItem)
 
         # but if we 'used_in_inserting_method' for 'addendum', then the new item is inserted before
+        cfg.setListTypes(DEFAULT_LIST_TYPES + [{'identifier': 'addendum',
                                                 'label': 'Addendum',
                                                 'used_in_inserting_method': '1'}, ])
         lateItem2 = self.create('MeetingItem')
@@ -279,7 +282,7 @@ class testMeetingType(PloneMeetingTestCase):
         listTypes = cfg.list_types
         for listType in listTypes:
             listType['used_in_inserting_method'] = ''
-        cfg.list_types = listTypes
+        cfg.setListTypes(listTypes)
         # insert a normal item, it will be simply inserted at the end
         self.backToState(meeting, 'created')
         normalItem2 = self.create('MeetingItem')
@@ -294,6 +297,7 @@ class testMeetingType(PloneMeetingTestCase):
 
     def test_pm_InsertItemOnListTypeThenProposingGroup(self):
         '''Test inserting an item using the "on_list_type" then "on_proposing_group" sorting methods.'''
+        self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_list_type',
                                                           'reverse': '0'},
                                                          {'insertingMethod': 'on_proposing_groups',
                                                           'reverse': '0'},))
@@ -340,6 +344,7 @@ class testMeetingType(PloneMeetingTestCase):
         '''Test that inserting an item using the "on_proposing_groups" sorting method
            in a meeting having items using a disabled proposing group and inserting an item
            for wich the group is disabled works.'''
+        self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_proposing_groups',
                                                           'reverse': '0'}, ))
         self.changeUser('pmManager')
         meeting = self._createMeetingWithItems()
@@ -373,6 +378,7 @@ class testMeetingType(PloneMeetingTestCase):
         '''Sort method tested here is "on_categories".'''
         cfg = self.meetingConfig
         self._enableField('category')
+        cfg.setInsertingMethodsOnAddItem(
             ({'insertingMethod': 'on_categories', 'reverse': '0'}, ))
         self.changeUser('pmManager')
         meeting = self._createMeetingWithItems()
@@ -424,6 +430,7 @@ class testMeetingType(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self._removeConfigObjectsFor(cfg)
         self._enableField('classifier')
+        cfg.setInsertingMethodsOnAddItem(
             ({'insertingMethod': 'on_classifiers', 'reverse': '0'}, ))
         self.changeUser('pmManager')
         meeting = self._createMeetingWithItems()
@@ -441,6 +448,7 @@ class testMeetingType(PloneMeetingTestCase):
            It takes into account the group having the lowest position in all
            group (aka proposing group + associated groups).'''
         self.changeUser('pmManager')
+        self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_all_groups',
                                                           'reverse': '0'}, ))
         meeting = self._createMeetingWithItems()
         orderedItems = meeting.get_items(ordered=True)
@@ -460,6 +468,7 @@ class testMeetingType(PloneMeetingTestCase):
         '''Sort method tested here is "on_all_groups" but with an associated group and
            a proposing group that are disabled.'''
         self.changeUser('pmManager')
+        self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_all_groups',
                                                           'reverse': '0'}, ))
         meeting = self._createMeetingWithItems()
         self.assertEqual([item.getId() for item in meeting.get_items(ordered=True)],
@@ -496,6 +505,7 @@ class testMeetingType(PloneMeetingTestCase):
         self.changeUser('siteadmin')
         cfg = self.meetingConfig
         cfg.setOrderedGroupsInCharge(())
+        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_groups_in_charge',
                                            'reverse': '0'}, ))
         # when groupsInCharge are not defined for some proposingGroups, items are inserted at the beginning
         meeting = self._createMeetingWithItems()
@@ -562,6 +572,7 @@ class testMeetingType(PloneMeetingTestCase):
                           (self.vendors_uid, [gic2_uid])])
 
         # reverse
+        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_groups_in_charge',
                                            'reverse': '1'}, ))
         meeting3 = self._createMeetingWithItems()
         self.assertEqual([(item.getProposingGroup(),
@@ -582,6 +593,7 @@ class testMeetingType(PloneMeetingTestCase):
         self._select_organization(gic2_uid)
         self._select_organization(gic1_uid)
         # reverse, result will finally be the same as here above
+        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_groups_in_charge',
                                            'reverse': '0'}, ))
         meeting4 = self._createMeetingWithItems()
         self.assertEqual([(item.getProposingGroup(),
@@ -618,6 +630,7 @@ class testMeetingType(PloneMeetingTestCase):
         self.changeUser('siteadmin')
         cfg = self.meetingConfig
         cfg.setOrderedGroupsInCharge(())
+        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_groups_in_charge',
                                            'reverse': '0'}, ))
         # create some groups in charge
         gic1 = self.create(
@@ -729,6 +742,7 @@ class testMeetingType(PloneMeetingTestCase):
         self.changeUser('siteadmin')
         self._select_organization(self.endUsers_uid)
         self.changeUser('pmManager')
+        cfg.setInsertingMethodsOnAddItem(
             ({'insertingMethod': 'on_all_associated_groups', 'reverse': '0'}, ))
         meeting = self.create('Meeting')
         data = ({'proposingGroup': self.developers_uid,
@@ -822,6 +836,7 @@ class testMeetingType(PloneMeetingTestCase):
            - Committee4.'''
         cfg = self.meetingConfig
         self.changeUser('pmManager')
+        cfg.setInsertingMethodsOnAddItem(
             ({'insertingMethod': 'on_all_committees', 'reverse': '0'}, ))
         meeting = self.create('Meeting')
         data = ({'committees': ("committee_1", )},
@@ -851,13 +866,14 @@ class testMeetingType(PloneMeetingTestCase):
     def test_pm_InsertItemOnPrivacyThenProposingGroups(self):
         '''Sort method tested here is "on_privacy" then "on_proposing_groups".'''
         cfg = self.meetingConfig
+        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_privacy',
                                            'reverse': '0'},
                                           {'insertingMethod': 'on_proposing_groups',
                                            'reverse': '0'},))
 
         self.changeUser('pmManager')
         # on_privacy_public
-        cfg.selectable_privacies = ('public', 'secret')
+        cfg.setSelectablePrivacies(('public', 'secret'))
         meeting = self._createMeetingWithItems()
         self.assertEqual([item.getId() for item in meeting.get_items(ordered=True)],
                          ['recItem1', 'recItem2', 'item-2', 'item-1', 'item-5', 'item-4', 'item-3'])
@@ -865,7 +881,7 @@ class testMeetingType(PloneMeetingTestCase):
                          ['public', 'public', 'public', 'public', 'public', 'secret', 'secret'])
 
         # on_privacy_secret
-        cfg.selectable_privacies = ('secret', 'public')
+        cfg.setSelectablePrivacies(('secret', 'public'))
         meeting = self._createMeetingWithItems()
         self.assertEqual([item.getId() for item in meeting.get_items(ordered=True)],
                          ['item-4-1', 'item-3-1', 'copy_of_recItem1', 'copy_of_recItem2',
@@ -876,11 +892,12 @@ class testMeetingType(PloneMeetingTestCase):
     def test_pm_InsertItemOnPrivacyUsingHeading(self):
         '''Sort method tested here is "on_privacy" when values '_heading' are used.'''
         cfg = self.meetingConfig
+        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_privacy',
                                            'reverse': '0'}, ))
 
         self.changeUser('pmManager')
         # on_privacy with secret_heading before
-        cfg.selectable_privacies = ('secret_heading', 'public', 'secret')
+        cfg.setSelectablePrivacies(('secret_heading', 'public', 'secret'))
         meeting = self._createMeetingWithItems()
         # insert a 'secret_heading' item
         secret_heading_item = self.create('MeetingItem',
@@ -892,7 +909,7 @@ class testMeetingType(PloneMeetingTestCase):
                           'public', 'public', 'secret', 'secret'])
 
         # on_privacy with public_heading before
-        cfg.selectable_privacies = ('public_heading', 'secret', 'public')
+        cfg.setSelectablePrivacies(('public_heading', 'secret', 'public'))
         meeting2 = self._createMeetingWithItems()
         # insert a 'public_heading' item
         public_heading_item = self.create('MeetingItem',
@@ -909,12 +926,14 @@ class testMeetingType(PloneMeetingTestCase):
         self.changeUser('pmManager')
 
         # on_polltype not reverse
+        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_poll_type',
                                            'reverse': '0'}, ))
         meeting = self._createMeetingWithItems()
         self.assertEqual([item.getPollType() for item in meeting.get_items(ordered=True)],
                          ['freehand', 'freehand', 'freehand', 'freehand',
                           'no_vote', 'secret', 'secret_separated'])
         # on_polltype reverse
+        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_poll_type',
                                            'reverse': '1'}, ))
         meeting = self._createMeetingWithItems()
         self.assertEqual([item.getPollType() for item in meeting.get_items(ordered=True)],
@@ -925,6 +944,7 @@ class testMeetingType(PloneMeetingTestCase):
         '''Sort method tested here is "on_privacy_then_proposing_groups" but
            with a deactivated group used as proposing group.'''
         self.changeUser('pmManager')
+        self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_privacy',
                                                           'reverse': '0'},
                                                          {'insertingMethod': 'on_proposing_groups',
                                                           'reverse': '0'},))
@@ -959,6 +979,7 @@ class testMeetingType(PloneMeetingTestCase):
         self.setMeetingConfig(self.meetingConfig2.getId())
 
         # on_privacy_public
+        self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_privacy',
                                                           'reverse': '0'},
                                                          {'insertingMethod': 'on_categories',
                                                           'reverse': '0'},))
@@ -970,6 +991,7 @@ class testMeetingType(PloneMeetingTestCase):
                           ('secret', 'development'),
                           ('secret', 'events')])
         # on_privacy_secret
+        self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_privacy',
                                                           'reverse': '1'},
                                                          {'insertingMethod': 'on_categories',
                                                           'reverse': '0'},))
@@ -1003,6 +1025,7 @@ class testMeetingType(PloneMeetingTestCase):
         self.changeUser('pmManager')
         self.setMeetingConfig(self.meetingConfig2.getId())
         self._enableField('category')
+        self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_privacy',
                                                           'reverse': '0'},
                                                          {'insertingMethod': 'on_categories',
                                                           'reverse': '0'},))
@@ -1035,6 +1058,7 @@ class testMeetingType(PloneMeetingTestCase):
 
     def test_pm_InsertItemByCategoriesThenProposingGroups(self):
         '''Sort method tested here is "on_categories" then "on_proposing_groups".'''
+        self.meetingConfig2.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_categories',
                                                           'reverse': '0'},
                                                           {'insertingMethod': 'on_proposing_groups',
                                                            'reverse': '0'},))
@@ -1094,9 +1118,10 @@ class testMeetingType(PloneMeetingTestCase):
     def test_pm_InsertItemOnToDiscuss(self):
         '''Sort method tested here is "on_to_discuss".'''
         cfg = self.meetingConfig
+        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_to_discuss',
                                            'reverse': '0'}, ))
         # make sure toDiscuss is not set on item insertion in a meeting
-        cfg.to_discuss_set_on_item_insert = False
+        cfg.setToDiscussSetOnItemInsert(False)
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
         data = ({'proposingGroup': self.developers_uid,
@@ -1130,6 +1155,7 @@ class testMeetingType(PloneMeetingTestCase):
                           True, False, False, False, False])
 
         # now if 'reverse' is activated
+        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_to_discuss',
                                            'reverse': '1'}, ))
 
         itemsToPresent = []
@@ -1145,11 +1171,12 @@ class testMeetingType(PloneMeetingTestCase):
 
     def test_pm_InsertItemInToDiscussThenProposingGroup(self):
         '''Test when inserting first 'on_to_discuss' then 'on_proposing_group'.'''
+        self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_to_discuss',
                                                           'reverse': '0'},
                                                          {'insertingMethod': 'on_proposing_groups',
                                                           'reverse': '0'},))
         # make sure toDiscuss is not set on item insertion in a meeting
-        self.meetingConfig.to_discuss_set_on_item_insert = False
+        self.meetingConfig.setToDiscussSetOnItemInsert(False)
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
         data = ({'proposingGroup': self.developers_uid,
@@ -1191,6 +1218,7 @@ class testMeetingType(PloneMeetingTestCase):
 
     def test_pm_InsertItemOnToOtherMCToCloneTo(self):
         '''Sort method tested here is "on_other_mc_to_clone_to".'''
+        self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_other_mc_to_clone_to',
                                                           'reverse': '0'}, ))
         # items of mc1 are clonable to mc2
         cfg2Id = self.meetingConfig2.getId()
@@ -1227,8 +1255,10 @@ class testMeetingType(PloneMeetingTestCase):
         cfg1Id = cfg.getId()
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
+        cfg2.setMeetingConfigsToCloneTo(
             ({'meeting_config': cfg1Id,
               'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}, ))
+        cfg2.setInsertingMethodsOnAddItem(
             ({'insertingMethod': 'on_categories',
               'reverse': '0'},
              {'insertingMethod': 'on_other_mc_to_clone_to',
@@ -1289,6 +1319,7 @@ class testMeetingType(PloneMeetingTestCase):
            - proposing groups.'''
         cfg = self.meetingConfig
         self.changeUser('siteadmin')
+        cfg.setInsertingMethodsOnAddItem(
             ({'insertingMethod': 'on_groups_in_charge',
              'reverse': '0'},
              {'insertingMethod': 'on_categories',
@@ -1465,6 +1496,7 @@ class testMeetingType(PloneMeetingTestCase):
     def test_pm_InsertItemForceNormal(self):
         '''Test that we may insert an item in a frozen meeting among normal items.'''
         cfg = self.meetingConfig
+        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_list_type',
                                            'reverse': '0'}, ))
         self._removeConfigObjectsFor(cfg)
         self.changeUser('pmManager')
@@ -1495,7 +1527,7 @@ class testMeetingType(PloneMeetingTestCase):
     def test_pm_InsertItemOnItemTitle(self):
         """Test when inserting item in a meeting using 'on_item_title' insertion method."""
         cfg = self.meetingConfig
-        cfg.inserting_methods_on_add_item = ({'insertingMethod': 'on_item_title', 'reverse': '0'},)
+        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_item_title', 'reverse': '0'}, ))
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
         data = ({'title': 'Émettre une annonce : changement'},
@@ -1553,7 +1585,7 @@ class testMeetingType(PloneMeetingTestCase):
         """Test when inserting item in a meeting using
            'on_item_decision_first_words' insertion method."""
         cfg = self.meetingConfig
-        cfg.inserting_methods_on_add_item = ({'insertingMethod': 'on_item_decision_first_words', 'reverse': '0'},)
+        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_item_decision_first_words', 'reverse': '0'}, ))
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
         data = ({'decision': "<p>DÉCIDE d'engager Madame Untell Anne au poste proposé</p>"},
@@ -1592,7 +1624,7 @@ class testMeetingType(PloneMeetingTestCase):
     def test_pm_InsertItemOnItemCreator(self):
         """Test when inserting item in a meeting using 'on_item_creator' insertion method."""
         cfg = self.meetingConfig
-        cfg.inserting_methods_on_add_item = ({'insertingMethod': 'on_item_creator', 'reverse': '0'},)
+        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_item_creator', 'reverse': '0'}, ))
         self.changeUser('pmCreator1')
         item1 = self.create('MeetingItem')
         item2 = self.create('MeetingItem')
@@ -1637,7 +1669,7 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertEqual(meeting.get_item_insert_order(item, cfg), [1])
         # edit MeetingConfig
         item.setProposingGroup(self.developers_uid)
-        cfg.selectable_privacies = ('secret', 'public',)
+        cfg.setSelectablePrivacies(('secret', 'public', ))
         self.assertEqual(meeting.get_item_insert_order(item, cfg), [2])
         # remove item from meeting
         self.backToState(item, 'validated')
@@ -1655,6 +1687,7 @@ class testMeetingType(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self._removeConfigObjectsFor(cfg, folders=['itemtemplates'])
         self._enableField('category')
+        cfg.setInsertingMethodsOnAddItem(
             ({'insertingMethod': 'on_categories',
               'reverse': '0'}, ))
         self.assertEqual(
@@ -1684,7 +1717,7 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertEqual(meeting.get_item_insert_order(item, cfg), [0])
         # edit MeetingConfig
         item.setCategory('research')
-        cfg.selectable_privacies = ('secret', 'public',)
+        cfg.setSelectablePrivacies(('secret', 'public', ))
         self.assertEqual(meeting.get_item_insert_order(item, cfg), [1])
 
     def test_pm_GetItemInsertOrderByOrderedAssociatedOrganizations(self):
@@ -1694,6 +1727,7 @@ class testMeetingType(PloneMeetingTestCase):
         self.changeUser('pmManager')
         cfg = self.meetingConfig
         cfg.setOrderedAssociatedOrganizations((self.developers_uid, self.vendors_uid))
+        cfg.setInsertingMethodsOnAddItem(
             ({'insertingMethod': 'on_all_associated_groups',
               'reverse': '0'}, ))
         meeting = self.create('Meeting')
@@ -1719,6 +1753,7 @@ class testMeetingType(PloneMeetingTestCase):
         self.changeUser('pmManager')
         cfg = self.meetingConfig
         cfg.setOrderedGroupsInCharge((self.developers_uid, self.vendors_uid))
+        cfg.setInsertingMethodsOnAddItem(
             ({'insertingMethod': 'on_groups_in_charge',
               'reverse': '0'}, ))
         meeting = self.create('Meeting')
@@ -1740,6 +1775,7 @@ class testMeetingType(PloneMeetingTestCase):
     def test_pm_NormalAndLateItem(self):
         """Test the normal/late mechanism when presenting items in a meeting."""
         cfg = self.meetingConfig
+        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_list_type',
                                            'reverse': '0'}, ))
         self._removeConfigObjectsFor(cfg)
         self.changeUser('pmManager')
@@ -1899,7 +1935,7 @@ class testMeetingType(PloneMeetingTestCase):
         self.deleteAsManager(m1.UID())
         self.assertEqual(cfg.last_meeting_number, 2)
         # when activated, a new year meeting_number is reinit to 1
-        cfg.yearly_init_meeting_numbers = ('meeting_number',)
+        cfg.setYearlyInitMeetingNumbers(('meeting_number', ))
         next_year = datetime.now().year + 1
         m4 = self.create('Meeting', date=datetime(next_year, 1, 2))
         self.publishMeeting(m4)
@@ -2124,17 +2160,20 @@ class testMeetingType(PloneMeetingTestCase):
         # configure
         cfg = self.meetingConfig
         self._enableField('category', enable=False)
+        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_proposing_groups',
                                            'reverse': '0'},))
         cfgId = cfg.getId()
         cfg2 = self.meetingConfig2
         self._enableField('category', cfg=cfg2, enable=False)
+        cfg2.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_proposing_groups',
                                             'reverse': '0'},))
         cfg2Id = cfg2.getId()
         # when items are sent to cfg2, it will be 'presented'
+        cfg.setMeetingConfigsToCloneTo(
             ({'meeting_config': cfg2Id,
               'trigger_workflow_transitions_until': '%s.%s' % (cfg2Id, 'present')}, ))
         # items of cfg1 are automatically sent to cfg2 when in state 'presented'
-        cfg.item_auto_sent_to_other_mc_states = ('presented',)
+        cfg.setItemAutoSentToOtherMCStates(('presented', ))
 
         # create a meeting with items, unpresent presented items
         self.changeUser('pmManager')
@@ -2304,7 +2343,7 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertEqual(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting)
 
         # define meetingPresentItemWhenNoCurrentMeetingStates to ('created', )
-        cfg.meeting_present_item_when_no_current_meeting_states = ('created',)
+        cfg.setMeetingPresentItemWhenNoCurrentMeetingStates(('created', ))
         notify(ObjectEditedEvent(cfg))
         self.cleanMemoize()
         # meeting is found because it is 'created'
@@ -2331,7 +2370,7 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertEqual(item2.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting)
 
         # make frozen meetings accept items
-        cfg.meeting_present_item_when_no_current_meeting_states = ('created', 'frozen',)
+        cfg.setMeetingPresentItemWhenNoCurrentMeetingStates(('created', 'frozen', ))
         notify(ObjectEditedEvent(cfg))
         self.cleanMemoize()
         self.assertEqual(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting)
@@ -2344,7 +2383,7 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertEqual(item2.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting)
 
         # except if no meetingPresentItemWhenNoCurrentMeetingStates
-        cfg.meeting_present_item_when_no_current_meeting_states = ()
+        cfg.setMeetingPresentItemWhenNoCurrentMeetingStates(())
         notify(ObjectEditedEvent(cfg))
         self.cleanMemoize()
         self.assertEqual(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting)
@@ -2562,6 +2601,7 @@ class testMeetingType(PloneMeetingTestCase):
         '''User only receives items he may see.'''
         # create a meeting with items then try to get unreachable items
         cfg = self.meetingConfig
+        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'at_the_end',
                                            'reverse': '0'}, ))
 
         self.changeUser('pmManager')
@@ -2588,6 +2628,7 @@ class testMeetingType(PloneMeetingTestCase):
     def test_pm_GetItemByNumber(self):
         '''Test the Meeting.get_item_by_number method.'''
         # make items inserted in a meeting inserted in this order
+        self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'at_the_end',
                                                           'reverse': '0'}, ))
         self.changeUser('pmManager')
         meeting = self._createMeetingWithItems()
@@ -2612,9 +2653,9 @@ class testMeetingType(PloneMeetingTestCase):
            including every items that are presented into it.
            The functionnality is only available to role 'Manager'.'''
         cfg = self.meetingConfig
-        cfg.item_advice_states = (self._stateMappingFor('presented', ))
-        cfg.item_advice_edit_states = (self._stateMappingFor('presented', ))
-        cfg.item_advice_view_states = (self._stateMappingFor('presented', ))
+        cfg.setItemAdviceStates((self._stateMappingFor('presented'), ))
+        cfg.setItemAdviceEditStates((self._stateMappingFor('presented'), ))
+        cfg.setItemAdviceViewStates((self._stateMappingFor('presented'), ))
 
         # create a meeting with several items
         self.changeUser('pmManager')
@@ -2755,7 +2796,7 @@ class testMeetingType(PloneMeetingTestCase):
 
         # invalidated when review state changed
         # just make sure the contained item is not changed
-        cfg.on_meeting_transition_item_action_to_execute = ()
+        cfg.setOnMeetingTransitionItemActionToExecute(())
         itemModified = item.modified()
         itemWFHistory = deepcopy(item.workflow_history)
         self.freezeMeeting(meeting)
@@ -3010,7 +3051,7 @@ class testMeetingType(PloneMeetingTestCase):
         self.decideMeeting(m3)
         self.assertEqual(m3.first_item_number, 135)
         # first meeting of the year first_item_number may be auto reinit
-        self.meetingConfig.yearly_init_meeting_numbers = ('first_item_number',)
+        self.meetingConfig.setYearlyInitMeetingNumbers(('first_item_number', ))
         next_year = datetime.now().year + 1
         m4 = self.create('Meeting', date=datetime(next_year, 1, 2))
         self.assertEqual(m4.first_item_number, -1)
@@ -3261,7 +3302,7 @@ class testMeetingType(PloneMeetingTestCase):
         cfg.setSignatures('Default signatures')
 
         # only done if used
-        cfg.used_meeting_attributes = ('place',)
+        cfg.setUsedMeetingAttributes(('place', ))
         # make sure does not break when configuration uses special characters
         cfg.setPlaces('Place1\r\nPlace2\r\nPlace3\r\nSp\xc3\xa9cial place\r\n')
         meeting_type_name = cfg.getMeetingTypeName()
@@ -3289,7 +3330,7 @@ class testMeetingType(PloneMeetingTestCase):
         add_form_instance = add_form.form_instance
         self.assertEqual(add_form_instance.w['place'].value, [PLACE_OTHER])
         # enable fields and test
-        cfg.used_meeting_attributes = ('assembly', 'assembly_staves', 'signatures')
+        cfg.setUsedMeetingAttributes(('assembly', 'assembly_staves', 'signatures'))
         add_form = pm_folder.restrictedTraverse('++add++{0}'.format(meeting_type_name))
         add_form.update()
         add_form_instance = add_form.form_instance
@@ -3304,7 +3345,7 @@ class testMeetingType(PloneMeetingTestCase):
         """When creating a meeting, attendees, signatories and voters are taken
            from the MeetingConfig."""
         cfg = self.meetingConfig
-        cfg.use_votes = False
+        cfg.setUseVotes(False)
         self._setUpOrderedContacts(
             meeting_attrs=('attendees', 'absents', ))
         self.changeUser('pmManager')
@@ -3318,7 +3359,7 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertFalse("Excused?" in rendered)
         self.assertFalse("Signer?" in rendered)
         self.assertFalse("Voter?" in rendered)
-        cfg.use_votes = True
+        cfg.setUseVotes(True)
         self._setUpOrderedContacts()
         add_form.update()
         rendered = add_form.render()
@@ -3333,9 +3374,9 @@ class testMeetingType(PloneMeetingTestCase):
            so if an advice is added to a presented or frozen item, references are not updated.
            Every item references are updated regardless current user have not access to every items.'''
         cfg = self.meetingConfig
-        cfg.item_advice_states = (self._stateMappingFor('itemfrozen', ))
-        cfg.item_advice_edit_states = (self._stateMappingFor('itemfrozen', ))
-        cfg.item_advice_view_states = (self._stateMappingFor('itemfrozen', ))
+        cfg.setItemAdviceStates((self._stateMappingFor('itemfrozen'), ))
+        cfg.setItemAdviceEditStates((self._stateMappingFor('itemfrozen'), ))
+        cfg.setItemAdviceViewStates((self._stateMappingFor('itemfrozen'), ))
         clean_request = self.portal.REQUEST.clone()
         self.changeUser('pmCreator1')
         item1 = self.create('MeetingItem')
@@ -3357,7 +3398,7 @@ class testMeetingType(PloneMeetingTestCase):
              item in meeting.get_items(ordered=True, the_objects=False, unrestricted=True)],
             ['Ref. 20170418/1', 'Ref. 20170418/2', 'Ref. 20170418/3', 'Ref. 20170418/4'])
         # change itemReferenceFormat to check if references are updated
-        cfg.item_reference_format = 'item/getItemNumber'
+        cfg.setItemReferenceFormat('item/getItemNumber')
         # give an advice
         self.portal.REQUEST = clean_request
         self.assertFalse('need_Meeting_update_item_references' in self.portal.REQUEST)
@@ -3418,7 +3459,7 @@ class testMeetingType(PloneMeetingTestCase):
             inserting_methods.remove('at_the_end')
         inserting_methods = [{'insertingMethod': inserting_method, 'reverse': '0'}
                              for inserting_method in inserting_methods]
-        cfg.inserting_methods_on_add_item = inserting_methods
+        cfg.setInsertingMethodsOnAddItem(inserting_methods)
         self.assertTrue(view())
 
     def test_pm_Show_available_items(self):
@@ -3443,7 +3484,7 @@ class testMeetingType(PloneMeetingTestCase):
         view._init()
         self.assertFalse(view.show_available_items())
         # enable for users
-        cfg.display_available_items_to = ('app_users',)
+        cfg.setDisplayAvailableItemsTo(('app_users', ))
         self.changeUser('pmCreator1')
         view._init()
         self.assertTrue(view.show_available_items())
@@ -3451,7 +3492,7 @@ class testMeetingType(PloneMeetingTestCase):
         view._init()
         self.assertFalse(view.show_available_items())
         # enable for users and powerobservers
-        cfg.display_available_items_to = ('app_users', POWEROBSERVERPREFIX + 'powerobservers')
+        cfg.setDisplayAvailableItemsTo(('app_users', POWEROBSERVERPREFIX + 'powerobservers'))
         self.changeUser('pmCreator1')
         view._init()
         self.assertTrue(view.show_available_items())
@@ -3459,7 +3500,7 @@ class testMeetingType(PloneMeetingTestCase):
         view._init()
         self.assertTrue(view.show_available_items())
         # enable for powerobservers only
-        cfg.display_available_items_to = (POWEROBSERVERPREFIX + 'powerobservers',)
+        cfg.setDisplayAvailableItemsTo((POWEROBSERVERPREFIX + 'powerobservers', ))
         self.changeUser('pmCreator1')
         view._init()
         self.assertFalse(view.show_available_items())
@@ -3469,6 +3510,7 @@ class testMeetingType(PloneMeetingTestCase):
         self.changeUser('powerobserver2')
         self.assertRaises(Unauthorized, view._init)
         # will not be the case for cfg2
+        self.meetingConfig2.setDisplayAvailableItemsTo(
             (POWEROBSERVERPREFIX + 'powerobservers', ))
         self.changeUser('pmManager')
         self.setMeetingConfig(self.meetingConfig2.getId())
@@ -3485,7 +3527,7 @@ class testMeetingType(PloneMeetingTestCase):
         """When available items shown to other users than MeetingManagers,
            MeetingManagers reserved functionnality is not shown."""
         cfg = self.meetingConfig
-        cfg.display_available_items_to = ('app_users',)
+        cfg.setDisplayAvailableItemsTo(('app_users', ))
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
         item_uid = item.UID()
@@ -3752,7 +3794,7 @@ class testMeetingType(PloneMeetingTestCase):
         """Actions panel transitions to confirm is overrided,
            check that it does still work."""
         cfg = self.meetingConfig
-        cfg.transitions_to_confirm = ('Meeting.freeze',)
+        cfg.setTransitionsToConfirm(('Meeting.freeze', ))
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
         actions_panel = meeting.restrictedTraverse('@@actions_panel')
@@ -3768,7 +3810,7 @@ class testMeetingType(PloneMeetingTestCase):
         self.changeUser('siteadmin')
         attrs = [attr for attr in cfg.Vocabulary('usedMeetingAttributes')[0].keys()
                  if "assembly" not in attr and "signatures" not in attr]
-        cfg.used_meeting_attributes = attrs
+        cfg.setUsedMeetingAttributes(attrs)
         self.changeUser('pmManager')
         # add
         meeting_type_name = cfg.getMeetingTypeName()
@@ -3802,7 +3844,7 @@ class testMeetingType(PloneMeetingTestCase):
         for attr in attrs:
             self.assertTrue("row-form-widgets-%s" % attr in rendered_view)
         # now disable most of fields and check that it it is not there anymore
-        cfg.used_meeting_attributes = ()
+        cfg.setUsedMeetingAttributes(())
         # remove dates
         meeting.start_date = None
         meeting.mid_date = None

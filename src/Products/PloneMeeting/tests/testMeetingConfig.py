@@ -1277,6 +1277,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         cfgId = cfg.getId()
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
+        cfg2.setMeetingConfigsToCloneTo(
             ({'meeting_config': cfgId,
               'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL},)
         )
@@ -2263,11 +2264,13 @@ class testMeetingConfig(PloneMeetingTestCase):
                     context=self.request),
                 'other_cfg_title': safe_unicode(cfg2.Title()), },
             context=self.request)
+        cfg2.setMeetingConfigsToCloneTo(
             ({'meeting_config': '%s' % cfg_id,
               'trigger_workflow_transitions_until': '%s.%s' % (cfg_id, tr.id)},))
         self.assertEqual(
             cfg.validate_itemWFValidationLevels(values_disabled_proposed), error_msg)
         # ok if transition not used
+        cfg2.setMeetingConfigsToCloneTo(
             ({'meeting_config': '%s' % cfg_id,
               'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL},))
         self.failIf(cfg.validate_itemWFValidationLevels(values_disabled_proposed))

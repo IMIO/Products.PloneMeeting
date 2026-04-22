@@ -1272,6 +1272,7 @@ class testVotes(PloneMeetingTestCase):
         self.assertEqual(IStatusMessage(self.request).show()[0].message,
                          u'Votes result is not HTML')
         # is_all_count is also available on pm_utils
+        cfg.setVotesResultTALExpr(
             "python: pm_utils.is_all_count(item) and '<p>All OK</p>' or '<p>Not all OK</p>'")
         cleanRamCache()
         self.assertEqual(public_item.getVotesResult(), '<p>Not all OK</p>')

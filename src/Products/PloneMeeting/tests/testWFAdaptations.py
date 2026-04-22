@@ -2111,7 +2111,7 @@ class testWFAdaptations(PloneMeetingTestCase):
 
         # but another user that may see the item but not edit it may not see the decision
         self._enableField('copyGroups')
-        cfg.item_copy_groups_states = (item.query_state(, ))
+        cfg.item_copy_groups_states = (item.query_state(),)
         item.setCopyGroups((self.vendors_reviewers, ))
         item.update_local_roles()
         self.changeUser('pmReviewer2')
@@ -2535,7 +2535,7 @@ class testWFAdaptations(PloneMeetingTestCase):
                                           'waiting_advices_from_before_last_val_level']):
             return
 
-        cfg.item_advice_states = (self._default_waiting_advices_state(, ))
+        cfg.item_advice_states = (self._default_waiting_advices_state(),)
         self._activate_wfas(('waiting_advices',
                              'waiting_advices_proposing_group_send_back',
                              'waiting_advices_from_before_last_val_level'))
@@ -2664,7 +2664,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._activate_wfas(('waiting_advices',
                              'waiting_advices_adviser_send_back',
                              'waiting_advices_from_every_val_levels'))
-        cfg.item_advice_states = (self._default_waiting_advices_state(, ))
+        cfg.item_advice_states = (self._default_waiting_advices_state(),)
 
         # developers
         self.changeUser('pmCreator1')
@@ -2695,7 +2695,7 @@ class testWFAdaptations(PloneMeetingTestCase):
                              'waiting_advices_proposing_group_send_back',
                              'waiting_advices_from_every_val_levels',
                              'waiting_advices_adviser_may_validate'))
-        cfg.item_advice_states = (self._default_waiting_advices_state(, ))
+        cfg.item_advice_states = (self._default_waiting_advices_state(),)
         # developers
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem', optionalAdvisers=(self.vendors_uid, ))
@@ -2783,6 +2783,7 @@ class testWFAdaptations(PloneMeetingTestCase):
             ),
         }
         self._activate_wfas(('waiting_advices', 'waiting_advices_proposing_group_send_back'))
+        cfg.setItemAdviceStates(
             ('itemcreated_waiting_advices', 'proposed_waiting_advices', ))
         # clean MeetingConfig.getItemAdviceStatesForOrg
         notify(ObjectModifiedEvent(self.vendors))
