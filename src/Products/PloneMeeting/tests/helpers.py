@@ -644,3 +644,13 @@ class PloneMeetingTestingHelpers(object):
         new_config['edit_access_on_cache'] = "0"
         config.append(new_config)
         cfg.setLabelsConfig(config)
+
+    def _setupItemFieldsConfig(self, cfg, field_name, view=None, edit=None):
+        """Configure MeetingConfig.itemFieldsConfig."""
+        config = cfg.getItemFieldsConfig()
+        field_config = [row for row in config if row['name'] == field_name]
+        if view is not None:
+            field_config['view'] = view
+        if edit is not None:
+            field_config['edit'] = edit
+        cfg.setItemFields(config)

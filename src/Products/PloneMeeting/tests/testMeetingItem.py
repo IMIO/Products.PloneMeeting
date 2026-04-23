@@ -5838,7 +5838,7 @@ class testMeetingItem(PloneMeetingTestCase):
             'takenOverBy', 'templateUsingGroups',
             'toDiscuss', 'committeeObservations', 'committeeTranscript',
             'votesObservations', 'votesResult',
-            'neededFollowUp', 'providedFollowUp',
+            'neededFollowUp', 'providedFollowUp', 'groupsInChargeNotes',
             'otherMeetingConfigsClonableToEmergency',
             'internalNotes', 'externalIdentifier']
         NEUTRAL_FIELDS += self._extraNeutralFields()
@@ -9183,6 +9183,32 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         self.assertFalse(item.mayQuickEdit('neededFollowUp'))
         self.assertTrue(item.mayQuickEdit('providedFollowUp'))
+
+    def test_pm_groupsInChargeNotes(self):
+        """Test that it uses the MeetingConfig.itemFieldsConfig,
+           test that if edit is refused, it can not be edited."""
+        cfg = self.meetingConfig
+        cfg.setOrderedGroupsInCharge((self.developers_uid, self.vendors_uid))
+        cfg.setItemGroupsInChargeStates([self._stateMappingFor('itemcreated')])
+        self._enableField(['groupsInCharge', 'groupsInChargeNotes'])
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem', groupsInCharge=[self.vendors_uid])
+        # by default proposingGroup can view the field but not edit it
+        self.assertTrue(item.show_field('groupsInChargeNotes'))
+        # even if item editable, field can be not editable if condition if False
+        self.assertFalse(item.mayQuickEdit('groupsInChargeNotes'))
+        # group in charge can view and edit
+        self.changeUser('pmObserver2')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertTrue(item.show_field('groupsInChargeNotes'))
+        self.assertTrue(item.mayQuickEdit('groupsInChargeNotes'))
+        # make proposing group only able to edit
+        self._setupItemFieldsConfig(
+            'groupsInChargeNotes',
+            edit='python: tool.user_is_in_org(org_uid=item.getProposingGroup()')
+        self.assertFalse(item.mayQuickEdit('groupsInChargeNotes'))
+        self.changeUser('pmCreator1')
+        self.assertTrue(item.mayQuickEdit('groupsInChargeNotes'))
 
 
 def test_suite():
