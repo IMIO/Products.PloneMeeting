@@ -256,12 +256,19 @@ class testAnnexes(PloneMeetingTestCase):
                                              annexes_table,
                                              categorized_child):
         """ """
-        # avoid wrong value in cfg.xxxAnnexConfidentialVisibleFor fields
-        for field_name in ('itemAnnexConfidentialVisibleFor',
-                           'adviceAnnexConfidentialVisibleFor',
-                           'meetingAnnexConfidentialVisibleFor'):
-            field = cfg.getField(field_name)
-            self.assertIsNone(field.validate(field.get(cfg), cfg))
+        # avoid wrong value in cfg.xxx_annex_confidential_visible_for fields
+        for snake_name, vocab_name in (
+            ('item_annex_confidential_visible_for',
+             'Products.PloneMeeting.vocabularies.item_attribute_visible_for_vocabulary'),
+            ('advice_annex_confidential_visible_for',
+             'Products.PloneMeeting.vocabularies.advice_annex_confidential_visible_for_vocabulary'),
+            ('meeting_annex_confidential_visible_for',
+             'Products.PloneMeeting.vocabularies.meeting_annex_confidential_visible_for_vocabulary'),
+        ):
+            valid_tokens = set(get_vocab_values(cfg, vocab_name))
+            field_val = getattr(cfg, snake_name, None) or []
+            invalid = [v for v in field_val if v not in valid_tokens]
+            self.assertFalse(invalid, "Invalid values %s in %s" % (invalid, snake_name))
         self.assertTrue(self.hasPermission(View, obj))
         self._checkMayAccessConfidentialAnnexes(obj, annexNotConfidential, annexConfidential,
                                                 annexes_table, categorized_child)
@@ -664,7 +671,7 @@ class testAnnexes(PloneMeetingTestCase):
         # enable every attributes
         self.changeUser('siteadmin')
         cfg = self.meetingConfig
-        cfg.setAnnexRestrictShownAndEditableAttributes(())
+        cfg.annex_restrict_shown_and_editable_attributes = ()
         config = cfg.annexes_types.item_annexes
         annex_attr_names = (
             'confidentiality_activated',
@@ -706,18 +713,17 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertEqual(cfg.annex_restrict_shown_and_editable_attributes, ())
         _check(annexes_table, annex, annex_decision)
         # confidential no more editable but viewable
-        cfg.setAnnexRestrictShownAndEditableAttributes(('confidentiality_edit'))
+        cfg.annex_restrict_shown_and_editable_attributes = ('confidentiality_edit')
         list_editable_annex_attr_change_view_names = list(annex_attr_change_view_names)
         list_editable_annex_attr_change_view_names.remove('@@iconified-confidential')
         _check(annexes_table, annex, annex_decision, editable=list_editable_annex_attr_change_view_names)
         # confidential and signed no more editable but viewable
-        cfg.setAnnexRestrictShownAndEditableAttributes(('confidentiality_edit', 'signed_edit'))
+        cfg.annex_restrict_shown_and_editable_attributes = ('confidentiality_edit', 'signed_edit')
         list_editable_annex_attr_change_view_names.remove('@@iconified-signed')
         _check(annexes_table, annex, annex_decision, editable=list_editable_annex_attr_change_view_names)
         # when someting not displayed, not editable automatically
-        cfg.setAnnexRestrictShownAndEditableAttributes(('confidentiality_edit',
-                                                        'signed_edit',
-                                                        'publishable_display'))
+        cfg.annex_restrict_shown_and_editable_attributes = (
+            'confidentiality_edit', 'signed_edit', 'publishable_display')
         list_editable_annex_attr_change_view_names.remove('@@iconified-publishable')
         list_displayed_annex_attr_change_view_names = list(annex_attr_change_view_names)
         list_displayed_annex_attr_change_view_names.remove('@@iconified-publishable')
@@ -1237,7 +1243,7 @@ class testAnnexes(PloneMeetingTestCase):
         # doable if cfg.ownerMayDeleteAnnexDecision is True
         self.assertFalse(cfg.owner_may_delete_annex_decision)
         self.assertRaises(Unauthorized, item.restrictedTraverse('@@delete_givenuid'), decisionAnnex1.UID())
-        cfg.setOwnerMayDeleteAnnexDecision(True)
+        cfg.owner_may_delete_annex_decision = True
         item.restrictedTraverse('@@delete_givenuid')(decisionAnnex1.UID())
         self.assertFalse(decisionAnnex1 in item.objectValues())
         # add an annex and another user having same groups for item can not remove it
@@ -1669,7 +1675,7 @@ class testAnnexes(PloneMeetingTestCase):
         cfgItemWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
         item_initial_state = self.wfTool[cfgItemWF.getId()].initial_state
         # make pmCreator1 able to change annex confidentiality
-        cfg.setAnnexRestrictShownAndEditableAttributes(())
+        cfg.annex_restrict_shown_and_editable_attributes = ()
         # confidential annexes are visible by pg creators
         cfg.item_annex_confidential_visible_for = ('suffix_proposing_group_creators',)
         # setup item and annexes

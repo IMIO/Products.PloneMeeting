@@ -3,6 +3,7 @@
 from collective.contact.plonegroup.utils import select_organization
 from copy import deepcopy
 from ftw.labels.interfaces import ILabelJar
+from imio.helpers.content import get_vocab_values
 from imio.helpers.content import richtextval
 from plone import api
 from plone.app.testing import logout
@@ -543,7 +544,8 @@ class PloneMeetingTestingHelpers(object):
         cfg = self.meetingConfig
         cfg.used_meeting_attributes = meeting_attrs
         cfg.used_item_attributes = item_attrs
-        ordered_contacts = cfg.getField('orderedContacts').Vocabulary(cfg).keys()
+        ordered_contacts = get_vocab_values(
+            cfg, 'Products.PloneMeeting.vocabularies.selectableassemblymembersvocabulary')
         cfg.setOrderedContacts(ordered_contacts)
         logout()
 
@@ -577,7 +579,7 @@ class PloneMeetingTestingHelpers(object):
             to_disable = ["committees_attendees", "committees_signatories"]
         self._enableField(to_enable, related_to="Meeting")
         self._enableField(to_disable, related_to="Meeting", enable=False)
-        cfg.setOrderedCommitteeContacts((self.hp1_uid, self.hp2_uid, self.hp3_uid))
+        cfg.ordered_committee_contacts = (self.hp1_uid, self.hp2_uid, self.hp3_uid)
         cfg_committees = cfg.getCommittees()
         cfg_committees[0]['default_assembly'] = "Default assembly"
         cfg_committees[0]['default_signatures'] = "Line 1,\r\nLine 2\r\nLine 3,\r\nLine 4"
@@ -614,7 +616,7 @@ class PloneMeetingTestingHelpers(object):
                 'suffix_proposing_group_reviewers']
             labelsConfig[0]['edit_access_on'] = ""
             labelsConfig[0]['edit_access_on_cache'] = '1'
-        cfg.setLabelsConfig(labelsConfig)
+        cfg.labels_config = labelsConfig
 
     def _enable_ftw_labels(self, cfg, add_follow_up=False):
         self._enableField('labels')
@@ -643,4 +645,4 @@ class PloneMeetingTestingHelpers(object):
         new_config['edit_access_on'] = "python: not utils.fieldIsEmpty('providedFollowUp', item)"
         new_config['edit_access_on_cache'] = "0"
         config.append(new_config)
-        cfg.setLabelsConfig(config)
+        cfg.labels_config = config

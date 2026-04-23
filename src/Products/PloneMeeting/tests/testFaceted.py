@@ -454,13 +454,13 @@ class testFaceted(PloneMeetingTestCase):
         # by default when MeetingConfig.groupsHiddenInDashboardFilter is empty, every group are returned
         self.assertEqual(cfg.groups_hidden_in_dashboard_filter, ())
         # remove extra organizations from profiles
-        cfg.setGroupsHiddenInDashboardFilter(self._orgs_to_exclude_from_filter())
+        cfg.groups_hidden_in_dashboard_filter = self._orgs_to_exclude_from_filter()
         notify(ObjectEditedEvent(cfg))
         self.assertEqual(
             [term.title for term in vocab(pmFolder)],
             [u'Developers', u'Vendors', u'End users (Inactive)'])
         # now define values in MeetingConfig.groupsHiddenInDashboardFilter
-        cfg.setGroupsHiddenInDashboardFilter((self.vendors_uid, ) + self._orgs_to_exclude_from_filter())
+        cfg.groups_hidden_in_dashboard_filter = (self.vendors_uid, ) + self._orgs_to_exclude_from_filter()
         notify(ObjectEditedEvent(cfg))
         self.assertEqual(
             [term.title for term in vocab(pmFolder)],
@@ -578,12 +578,12 @@ class testFaceted(PloneMeetingTestCase):
         # cache was cleaned
         self.assertEqual(len(vocab(pmFolder)), 4)
 
-        cfg.setUsersHiddenInDashboardFilter(('pmCreator1',))
+        cfg.users_hidden_in_dashboard_filter = ('pmCreator1',)
         notify(ObjectEditedEvent(cfg))
         # cache was cleaned and pmCreator is not in the list anymore
         self.assertEqual(len(vocab(pmFolder)), 3)
 
-        cfg.setUsersHiddenInDashboardFilter(())
+        cfg.users_hidden_in_dashboard_filter = ()
         notify(ObjectEditedEvent(cfg))
         # cache was cleaned and pmCreator is back in the list
         self.assertEqual(len(vocab(pmFolder)), 4)
@@ -965,8 +965,8 @@ class testFaceted(PloneMeetingTestCase):
     def test_pm_CopyGroupsVocabulary(self):
         """Test, especially when using copyGroups and restrictedCopyGroups."""
         cfg = self.meetingConfig
-        cfg.setSelectableCopyGroups((self.vendors_reviewers, self.developers_reviewers))
-        cfg.setSelectableRestrictedCopyGroups((self.vendors_reviewers, ))
+        cfg.selectable_copy_groups = (self.vendors_reviewers, self.developers_reviewers)
+        cfg.selectable_restricted_copy_groups = (self.vendors_reviewers, )
         self._enableField('copyGroups')
         self._enableField('restrictedCopyGroups')
         self.changeUser('pmManager')

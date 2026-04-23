@@ -265,7 +265,7 @@ class testUtils(PloneMeetingTestCase):
         self.assertEqual(translation_mapping['meetingConfigTitle'],
                          safe_unicode(cfg.Title()))
         # config group but different config title, simple title
-        cfg.setConfigGroup('unique_id_3')
+        cfg.config_group = 'unique_id_3'
         obj, body, recipients, from_address, subject, attachments, translation_mapping = \
             sendMail([], item, '')
         self.assertEqual(translation_mapping['meetingConfigTitle'],

@@ -1589,7 +1589,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         annex = self.addAnnex(item)
         decision_annex = self.addAnnex(item, relatedTo='item_decision')
         self.assertEqual(get_annexes(item), [annex, decision_annex])
-        cfg.setEnabledAnnexesBatchActions(['delete'])
+        cfg.enabled_annexes_batch_actions = ['delete']
         self.request['form.widgets.uids'] = u','.join([annex.UID(), decision_annex.UID()])
         self.request.form['form.widgets.uids'] = self.request['form.widgets.uids']
         self.request.form['ajax_load'] = 'dummy'

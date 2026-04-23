@@ -31,6 +31,7 @@ from plone.app.testing.bbb import _createMemberarea
 from plone.app.testing.helpers import setRoles
 from plone.dexterity.utils import createContentInContainer
 from plone.dexterity.utils import iterSchemata
+from Products.PloneMeeting.content.meetingconfig import _camel_to_snake
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFPlone.utils import base_hasattr
 from Products.Five.browser import BrowserView
@@ -742,8 +743,8 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                          reload=True):
         """Helper to activate a value in the configuration."""
         cfg = cfg or self.meetingConfig
-        field = cfg.getField(field_name)
-        values = list(field.get(cfg))
+        snake_name = _camel_to_snake(field_name)
+        values = list(getattr(cfg, snake_name) or [])
         if remove:
             values.remove(value)
         else:
@@ -751,7 +752,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                 values.append(value)
             else:
                 values = [value]
-        field.getMutator(cfg)(values)
+        setattr(cfg, snake_name, values)
         if reload:
             currentUser = self.member.getId()
             self.changeUser('siteadmin')
@@ -789,8 +790,9 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         for field_name in field_names:
             if related_to == 'MeetingItem':
                 usedItemAttrs = list(cfg.used_item_attributes)
-                # make sure we are not playing with a field_name that does not exist
-                if field_name not in cfg.getField('usedItemAttributes').Vocabulary(cfg):
+                valid_values = get_vocab_values(
+                    cfg, 'Products.PloneMeeting.vocabularies.used_item_attributes_vocabulary')
+                if field_name not in valid_values:
                     raise Exception("\"%s\" does not exist in usedItemAttributes" % field_name)
                 if enable and field_name not in usedItemAttrs:
                     usedItemAttrs.append(field_name)
@@ -799,8 +801,9 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                 cfg.used_item_attributes = usedItemAttrs
             elif related_to == 'Meeting':
                 usedMeetingAttrs = list(cfg.used_meeting_attributes)
-                # make sure we are not playing with a field_name that does not exist
-                if field_name not in cfg.getField('usedMeetingAttributes').Vocabulary(cfg):
+                valid_values = get_vocab_values(
+                    cfg, 'Products.PloneMeeting.vocabularies.used_meeting_attributes_vocabulary')
+                if field_name not in valid_values:
                     raise Exception("\"%s\" does not exist in usedMeetingAttributes" % field_name)
                 if enable and field_name not in usedMeetingAttrs:
                     usedMeetingAttrs.append(field_name)
@@ -841,7 +844,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         cfg = self.meetingConfig
         if related_to == "MeetingItem":
             if enable and action not in cfg.enabled_item_actions:
-                actions = cfg.enabled_item_actions + (action, )
+                actions = list(cfg.enabled_item_actions) + [action]
                 cfg.enabled_item_actions = actions
                 notify(ObjectEditedEvent(cfg))
             elif not enable and action in cfg.enabled_item_actions:

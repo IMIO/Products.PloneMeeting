@@ -1258,7 +1258,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertTrue(itemInConfigBrain.getIcon == getIcon(itemInConfig)())
         otherColor = ITEM_ICON_COLORS[0]
         otherColorIconName = "MeetingItem{0}.png".format(ITEM_ICON_COLORS[0].capitalize())
-        cfg.setItemIconColor(otherColor)
+        cfg.item_icon_color = otherColor
         notify(ObjectEditedEvent(cfg))
         # portal_type was updated
         self.assertTrue(itemType.icon_expr.endswith(otherColorIconName))
@@ -1643,7 +1643,7 @@ class testMeetingConfig(PloneMeetingTestCase):
             self.assertFalse(ploneGroup.getProperty('title').startswith('ConfigGroup1'))
 
         # use a configGroup and check
-        cfg.setConfigGroup('unique_id_1')
+        cfg.config_group = 'unique_id_1'
         notify(ObjectEditedEvent(cfg))
         self.assertEqual(cfg.getConfigGroup(full=True),
                          {'label': 'ConfigGroup1', 'row_id': 'unique_id_1', 'full_label': 'Config Group 1'})
@@ -1653,7 +1653,7 @@ class testMeetingConfig(PloneMeetingTestCase):
             self.assertTrue(ploneGroup.getProperty('title').startswith('ConfigGroup1'))
 
         # remove configGroup, and check
-        cfg.setConfigGroup('')
+        cfg.config_group = ''
         notify(ObjectEditedEvent(cfg))
         for suffix in MC_GROUP_SUFFIXES:
             ploneGroup = self.portal.portal_groups.getGroupById('{0}_{1}'.format(cfgId, suffix))
@@ -1683,7 +1683,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertEqual(cfg2.places, '')
         self.assertEqual(cfg3.places, '')
         places = 'Place1\r\nPlace2\r\nPlace3\r\n'
-        cfg.setPlaces(places)
+        cfg.places = places
         cfg.update_cfgs(field_name='places')
         self.assertEqual(cfg2.places, places)
         self.assertEqual(cfg3.places, places)
@@ -1965,7 +1965,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         new_config = deepcopy(config[0])
         new_config['label_id'] = "label"
         config.insert(0, new_config)
-        cfg.setLabelsConfig(config)
+        cfg.labels_config = config
         # first config must be about "*"
         error_msg = translate(
             u'labels_config_first_row_must_be_default_config',
@@ -1979,12 +1979,12 @@ class testMeetingConfig(PloneMeetingTestCase):
             context=self.request)
         config = list(cfg.getLabelsConfig())
         config[0]['label_id'] = "*"
-        cfg.setLabelsConfig(config)
+        cfg.labels_config = config
         self.assertEqual(cfg.validate_labelsConfig(cfg.getLabelsConfig()), error_msg)
         # workable config
         config = list(cfg.getLabelsConfig())
         config[1]['label_id'] = "label"
-        cfg.setLabelsConfig(config)
+        cfg.labels_config = config
         self.failIf(cfg.validate_labelsConfig(cfg.getLabelsConfig()))
 
     def test_pm_Validate_powerObservers(self):
@@ -2357,7 +2357,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertEqual(infos[annex_decision.UID()]['preview_status'], 'converted')
         self.assertEqual(infos[preview_annex.UID()]['preview_status'], 'converted')
         # removeAnnexesPreviewsOnMeetingClosure=True
-        cfg.setRemoveAnnexesPreviewsOnMeetingClosure(True)
+        cfg.remove_annexes_previews_on_meeting_closure = True
         self.backToState(meeting, 'created')
         self.closeMeeting(meeting)
         self.assertEqual(meeting.query_state(), 'closed')
@@ -2479,16 +2479,16 @@ class testMeetingConfig(PloneMeetingTestCase):
         """If a value in default_attendees/default_signatories is removed
            from orderedCommitteeContacts it must be unselected."""
         cfg = self.meetingConfig
-        cfg.setOrderedCommitteeContacts((self.hp1_uid, self.hp2_uid))
+        cfg.ordered_committee_contacts = (self.hp1_uid, self.hp2_uid)
         self.changeUser('pmManager')
         cfg_committees = cfg.getCommittees()
         cfg_committees[0]['default_attendees'] = [self.hp1_uid]
         cfg_committees[0]['default_signatories'] = [self.hp2_uid]
         self.failIf(cfg.validate_committees(cfg_committees))
         # removing a value used for default_attendees or default_signatories fails
-        cfg.setOrderedCommitteeContacts((self.hp1_uid,))
+        cfg.ordered_committee_contacts = (self.hp1_uid,)
         self.failUnless(cfg_committees)
-        cfg.setOrderedCommitteeContacts((self.hp2_uid,))
+        cfg.ordered_committee_contacts = (self.hp2_uid,)
         self.failUnless(cfg_committees)
         # except if no more used
         cfg_committees[0]['default_attendees'] = []

@@ -873,7 +873,7 @@ class testMeetingType(PloneMeetingTestCase):
 
         self.changeUser('pmManager')
         # on_privacy_public
-        cfg.setSelectablePrivacies(('public', 'secret'))
+        cfg.selectable_privacies = ('public', 'secret')
         meeting = self._createMeetingWithItems()
         self.assertEqual([item.getId() for item in meeting.get_items(ordered=True)],
                          ['recItem1', 'recItem2', 'item-2', 'item-1', 'item-5', 'item-4', 'item-3'])
@@ -881,7 +881,7 @@ class testMeetingType(PloneMeetingTestCase):
                          ['public', 'public', 'public', 'public', 'public', 'secret', 'secret'])
 
         # on_privacy_secret
-        cfg.setSelectablePrivacies(('secret', 'public'))
+        cfg.selectable_privacies = ('secret', 'public')
         meeting = self._createMeetingWithItems()
         self.assertEqual([item.getId() for item in meeting.get_items(ordered=True)],
                          ['item-4-1', 'item-3-1', 'copy_of_recItem1', 'copy_of_recItem2',
@@ -897,7 +897,7 @@ class testMeetingType(PloneMeetingTestCase):
 
         self.changeUser('pmManager')
         # on_privacy with secret_heading before
-        cfg.setSelectablePrivacies(('secret_heading', 'public', 'secret'))
+        cfg.selectable_privacies = ('secret_heading', 'public', 'secret')
         meeting = self._createMeetingWithItems()
         # insert a 'secret_heading' item
         secret_heading_item = self.create('MeetingItem',
@@ -909,7 +909,7 @@ class testMeetingType(PloneMeetingTestCase):
                           'public', 'public', 'secret', 'secret'])
 
         # on_privacy with public_heading before
-        cfg.setSelectablePrivacies(('public_heading', 'secret', 'public'))
+        cfg.selectable_privacies = ('public_heading', 'secret', 'public')
         meeting2 = self._createMeetingWithItems()
         # insert a 'public_heading' item
         public_heading_item = self.create('MeetingItem',
@@ -1121,7 +1121,7 @@ class testMeetingType(PloneMeetingTestCase):
         cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_to_discuss',
                                            'reverse': '0'}, ))
         # make sure toDiscuss is not set on item insertion in a meeting
-        cfg.setToDiscussSetOnItemInsert(False)
+        cfg.to_discuss_set_on_item_insert = False
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
         data = ({'proposingGroup': self.developers_uid,
@@ -1176,7 +1176,7 @@ class testMeetingType(PloneMeetingTestCase):
                                                          {'insertingMethod': 'on_proposing_groups',
                                                           'reverse': '0'},))
         # make sure toDiscuss is not set on item insertion in a meeting
-        self.meetingConfig.setToDiscussSetOnItemInsert(False)
+        self.meetingConfig.to_discuss_set_on_item_insert = False
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
         data = ({'proposingGroup': self.developers_uid,
@@ -1669,7 +1669,7 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertEqual(meeting.get_item_insert_order(item, cfg), [1])
         # edit MeetingConfig
         item.setProposingGroup(self.developers_uid)
-        cfg.setSelectablePrivacies(('secret', 'public', ))
+        cfg.selectable_privacies = ('secret', 'public', )
         self.assertEqual(meeting.get_item_insert_order(item, cfg), [2])
         # remove item from meeting
         self.backToState(item, 'validated')
@@ -1717,7 +1717,7 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertEqual(meeting.get_item_insert_order(item, cfg), [0])
         # edit MeetingConfig
         item.setCategory('research')
-        cfg.setSelectablePrivacies(('secret', 'public', ))
+        cfg.selectable_privacies = ('secret', 'public', )
         self.assertEqual(meeting.get_item_insert_order(item, cfg), [1])
 
     def test_pm_GetItemInsertOrderByOrderedAssociatedOrganizations(self):
@@ -1935,7 +1935,7 @@ class testMeetingType(PloneMeetingTestCase):
         self.deleteAsManager(m1.UID())
         self.assertEqual(cfg.last_meeting_number, 2)
         # when activated, a new year meeting_number is reinit to 1
-        cfg.setYearlyInitMeetingNumbers(('meeting_number', ))
+        cfg.yearly_init_meeting_numbers = ('meeting_number', )
         next_year = datetime.now().year + 1
         m4 = self.create('Meeting', date=datetime(next_year, 1, 2))
         self.publishMeeting(m4)
@@ -2173,7 +2173,7 @@ class testMeetingType(PloneMeetingTestCase):
             ({'meeting_config': cfg2Id,
               'trigger_workflow_transitions_until': '%s.%s' % (cfg2Id, 'present')}, ))
         # items of cfg1 are automatically sent to cfg2 when in state 'presented'
-        cfg.setItemAutoSentToOtherMCStates(('presented', ))
+        cfg.item_auto_sent_to_other_mc_states = ('presented', )
 
         # create a meeting with items, unpresent presented items
         self.changeUser('pmManager')
@@ -2343,7 +2343,7 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertEqual(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting)
 
         # define meetingPresentItemWhenNoCurrentMeetingStates to ('created', )
-        cfg.setMeetingPresentItemWhenNoCurrentMeetingStates(('created', ))
+        cfg.meeting_present_item_when_no_current_meeting_states = ('created', )
         notify(ObjectEditedEvent(cfg))
         self.cleanMemoize()
         # meeting is found because it is 'created'
@@ -2370,7 +2370,7 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertEqual(item2.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting)
 
         # make frozen meetings accept items
-        cfg.setMeetingPresentItemWhenNoCurrentMeetingStates(('created', 'frozen', ))
+        cfg.meeting_present_item_when_no_current_meeting_states = ('created', 'frozen', )
         notify(ObjectEditedEvent(cfg))
         self.cleanMemoize()
         self.assertEqual(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting)
@@ -2383,7 +2383,7 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertEqual(item2.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting)
 
         # except if no meetingPresentItemWhenNoCurrentMeetingStates
-        cfg.setMeetingPresentItemWhenNoCurrentMeetingStates(())
+        cfg.meeting_present_item_when_no_current_meeting_states = ()
         notify(ObjectEditedEvent(cfg))
         self.cleanMemoize()
         self.assertEqual(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting)
@@ -2654,8 +2654,8 @@ class testMeetingType(PloneMeetingTestCase):
            The functionnality is only available to role 'Manager'.'''
         cfg = self.meetingConfig
         cfg.setItemAdviceStates((self._stateMappingFor('presented'), ))
-        cfg.setItemAdviceEditStates((self._stateMappingFor('presented'), ))
-        cfg.setItemAdviceViewStates((self._stateMappingFor('presented'), ))
+        cfg.item_advice_edit_states = (self._stateMappingFor('presented'), )
+        cfg.item_advice_view_states = (self._stateMappingFor('presented'), )
 
         # create a meeting with several items
         self.changeUser('pmManager')
@@ -3051,7 +3051,7 @@ class testMeetingType(PloneMeetingTestCase):
         self.decideMeeting(m3)
         self.assertEqual(m3.first_item_number, 135)
         # first meeting of the year first_item_number may be auto reinit
-        self.meetingConfig.setYearlyInitMeetingNumbers(('first_item_number', ))
+        self.meetingConfig.yearly_init_meeting_numbers = ('first_item_number', )
         next_year = datetime.now().year + 1
         m4 = self.create('Meeting', date=datetime(next_year, 1, 2))
         self.assertEqual(m4.first_item_number, -1)
@@ -3297,14 +3297,14 @@ class testMeetingType(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self.changeUser('pmManager')
         pm_folder = self.getMeetingFolder()
-        cfg.setAssembly('Default assembly')
-        cfg.setAssemblyStaves('Default assembly staves')
-        cfg.setSignatures('Default signatures')
+        cfg.assembly = 'Default assembly'
+        cfg.assembly_staves = 'Default assembly staves'
+        cfg.signatures = 'Default signatures'
 
         # only done if used
-        cfg.setUsedMeetingAttributes(('place', ))
+        cfg.used_meeting_attributes = ('place', )
         # make sure does not break when configuration uses special characters
-        cfg.setPlaces('Place1\r\nPlace2\r\nPlace3\r\nSp\xc3\xa9cial place\r\n')
+        cfg.places = 'Place1\r\nPlace2\r\nPlace3\r\nSp\xc3\xa9cial place\r\n'
         meeting_type_name = cfg.getMeetingTypeName()
         add_form = pm_folder.restrictedTraverse('++add++{0}'.format(meeting_type_name))
         add_form.update()
@@ -3324,13 +3324,13 @@ class testMeetingType(PloneMeetingTestCase):
         # unicode is kept
         self.assertEqual(place_widget.extract(), (u'Sp\xe9cial place',))
         # disable places
-        cfg.setPlaces('')
+        cfg.places = ''
         add_form = pm_folder.restrictedTraverse('++add++{0}'.format(meeting_type_name))
         add_form.update()
         add_form_instance = add_form.form_instance
         self.assertEqual(add_form_instance.w['place'].value, [PLACE_OTHER])
         # enable fields and test
-        cfg.setUsedMeetingAttributes(('assembly', 'assembly_staves', 'signatures'))
+        cfg.used_meeting_attributes = ('assembly', 'assembly_staves', 'signatures')
         add_form = pm_folder.restrictedTraverse('++add++{0}'.format(meeting_type_name))
         add_form.update()
         add_form_instance = add_form.form_instance
@@ -3345,7 +3345,7 @@ class testMeetingType(PloneMeetingTestCase):
         """When creating a meeting, attendees, signatories and voters are taken
            from the MeetingConfig."""
         cfg = self.meetingConfig
-        cfg.setUseVotes(False)
+        cfg.use_votes = False
         self._setUpOrderedContacts(
             meeting_attrs=('attendees', 'absents', ))
         self.changeUser('pmManager')
@@ -3359,7 +3359,7 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertFalse("Excused?" in rendered)
         self.assertFalse("Signer?" in rendered)
         self.assertFalse("Voter?" in rendered)
-        cfg.setUseVotes(True)
+        cfg.use_votes = True
         self._setUpOrderedContacts()
         add_form.update()
         rendered = add_form.render()
@@ -3375,8 +3375,8 @@ class testMeetingType(PloneMeetingTestCase):
            Every item references are updated regardless current user have not access to every items.'''
         cfg = self.meetingConfig
         cfg.setItemAdviceStates((self._stateMappingFor('itemfrozen'), ))
-        cfg.setItemAdviceEditStates((self._stateMappingFor('itemfrozen'), ))
-        cfg.setItemAdviceViewStates((self._stateMappingFor('itemfrozen'), ))
+        cfg.item_advice_edit_states = (self._stateMappingFor('itemfrozen'), )
+        cfg.item_advice_view_states = (self._stateMappingFor('itemfrozen'), )
         clean_request = self.portal.REQUEST.clone()
         self.changeUser('pmCreator1')
         item1 = self.create('MeetingItem')
@@ -3794,7 +3794,7 @@ class testMeetingType(PloneMeetingTestCase):
         """Actions panel transitions to confirm is overrided,
            check that it does still work."""
         cfg = self.meetingConfig
-        cfg.setTransitionsToConfirm(('Meeting.freeze', ))
+        cfg.transitions_to_confirm = ('Meeting.freeze', )
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
         actions_panel = meeting.restrictedTraverse('@@actions_panel')
@@ -3810,7 +3810,7 @@ class testMeetingType(PloneMeetingTestCase):
         self.changeUser('siteadmin')
         attrs = [attr for attr in cfg.Vocabulary('usedMeetingAttributes')[0].keys()
                  if "assembly" not in attr and "signatures" not in attr]
-        cfg.setUsedMeetingAttributes(attrs)
+        cfg.used_meeting_attributes = attrs
         self.changeUser('pmManager')
         # add
         meeting_type_name = cfg.getMeetingTypeName()
@@ -3844,7 +3844,7 @@ class testMeetingType(PloneMeetingTestCase):
         for attr in attrs:
             self.assertTrue("row-form-widgets-%s" % attr in rendered_view)
         # now disable most of fields and check that it it is not there anymore
-        cfg.setUsedMeetingAttributes(())
+        cfg.used_meeting_attributes = ()
         # remove dates
         meeting.start_date = None
         meeting.mid_date = None
@@ -4033,7 +4033,7 @@ class testMeetingType(PloneMeetingTestCase):
         # fill assembly and signatures
         cfg = self.meetingConfig
         four_lines_signatures = "Person 1,\nFunction 1\nPerson 1,\nFunction 1"
-        cfg.setSignatures(four_lines_signatures)
+        cfg.signatures = four_lines_signatures
         meeting.assembly = richtextval("Person 1, Person 2")
         meeting.signatures = richtextval(four_lines_signatures)
         self.assertFalse(view.warn_assembly(using_attendees=False))
@@ -4041,7 +4041,7 @@ class testMeetingType(PloneMeetingTestCase):
         three_lines_signatures = "Person 1,\nFunction 1\nPerson 1"
         meeting.signatures = richtextval(three_lines_signatures)
         self.assertTrue(view.warn_assembly(using_attendees=False))
-        cfg.setSignatures(three_lines_signatures)
+        cfg.signatures = three_lines_signatures
         self.assertFalse(view.warn_assembly(using_attendees=False))
 
     def test_pm_DeadlineFieldsInit(self):

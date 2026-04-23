@@ -229,7 +229,7 @@ class testPerformances(PloneMeetingTestCase):
         cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
                                          'trigger_workflow_transitions_until': '%s.%s' %
                                          (cfg2Id, 'present')},))
-        cfg.setItemAutoSentToOtherMCStates((u'itemfrozen', ))
+        cfg.item_auto_sent_to_other_mc_states = (u'itemfrozen', )
         meeting, items = self._setupMeetingItemsWithAnnexes(50, 5, present_items=True, as_uids=False)
         # make 25 items sendable to another MC
         for item in items[0:25]:
@@ -319,11 +319,11 @@ class testPerformances(PloneMeetingTestCase):
         # remove existing groups and add our own
         # make what necessary for groups to be removable...
         cfg.setOrderedGroupsInCharge(())
-        cfg.setSelectableCopyGroups(())
-        cfg.setSelectableAdvisers(())
+        cfg.selectable_copy_groups = ()
+        cfg.selectable_advisers = ()
         cfg2.setOrderedGroupsInCharge(())
-        cfg2.setSelectableCopyGroups(())
-        cfg2.setSelectableAdvisers(())
+        cfg2.selectable_copy_groups = ()
+        cfg2.selectable_advisers = ()
         orgs = get_organizations(only_selected=True)
         for org in orgs:
             self._select_organization(org.UID(), remove=True)

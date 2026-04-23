@@ -1857,7 +1857,7 @@ class testAdvices(PloneMeetingTestCase):
                              'is_linked_to_previous_row': '1'}, ]
         cfg.setCustomAdvisers(custom_advisers)
         # we need to cleanRamCacheFor _findLinkedRowsFor used by listSelectableDelays
-        cleanRamCacheFor('Products.PloneMeeting.MeetingConfig._findLinkedRowsFor')
+        cleanRamCacheFor('Products.PloneMeeting.content.meetingconfig._findLinkedRowsFor')
         # the delay may still be edited when the user can edit the item
         # except if it is an automatic advice for wich only MeetingManagers may change delay
         self.assertEqual(available_delays_view.listSelectableDelays(),
@@ -1885,7 +1885,7 @@ class testAdvices(PloneMeetingTestCase):
         custom_advisers[0]['gives_auto_advice_on'] = 'python:True'
         cfg.setCustomAdvisers(custom_advisers)
         # MeetingConfig._findLinkedRowsFor is ram cached
-        cleanRamCacheFor('Products.PloneMeeting.MeetingConfig._findLinkedRowsFor')
+        cleanRamCacheFor('Products.PloneMeeting.content.meetingconfig._findLinkedRowsFor')
         item.setOptionalAdvisers(())
         item._update_after_edit()
         self.assertEqual(available_delays_view.listSelectableDelays(), [])
@@ -1917,7 +1917,7 @@ class testAdvices(PloneMeetingTestCase):
         # first step, something that is False
         custom_advisers[2]['available_on'] = 'python:False'
         cfg.setCustomAdvisers(custom_advisers)
-        cleanRamCacheFor('Products.PloneMeeting.MeetingConfig._findLinkedRowsFor')
+        cleanRamCacheFor('Products.PloneMeeting.content.meetingconfig._findLinkedRowsFor')
         self.assertEqual(available_delays_view.listSelectableDelays(),
                          [('unique_id_456', '10', u'', False), ])
         # access to delay changes history
@@ -1925,7 +1925,7 @@ class testAdvices(PloneMeetingTestCase):
         # a wrong TAL expression for 'available_on' does not break anything
         custom_advisers[2]['available_on'] = 'python:here.someUnexistingMethod()'
         cfg.setCustomAdvisers(custom_advisers)
-        cleanRamCacheFor('Products.PloneMeeting.MeetingConfig._findLinkedRowsFor')
+        cleanRamCacheFor('Products.PloneMeeting.content.meetingconfig._findLinkedRowsFor')
         self.assertEqual(available_delays_view.listSelectableDelays(),
                          [('unique_id_456', '10', u'', False), ])
         # access to delay changes history
@@ -1933,7 +1933,7 @@ class testAdvices(PloneMeetingTestCase):
         # second step, something that is True
         custom_advisers[2]['available_on'] = 'python:True'
         cfg.setCustomAdvisers(custom_advisers)
-        cleanRamCacheFor('Products.PloneMeeting.MeetingConfig._findLinkedRowsFor')
+        cleanRamCacheFor('Products.PloneMeeting.content.meetingconfig._findLinkedRowsFor')
         self.assertEqual(available_delays_view.listSelectableDelays(),
                          [('unique_id_456', '10', u'', False), ('unique_id_789', '20', u'', True)])
         # access to delay changes history
@@ -1941,7 +1941,7 @@ class testAdvices(PloneMeetingTestCase):
         # now test the particular expression that makes a custom adviser
         # useable when changing delays but not in other cases
         custom_advisers[2]['available_on'] = "python:item.REQUEST.get('managing_available_delays', False)"
-        cleanRamCacheFor('Products.PloneMeeting.MeetingConfig._findLinkedRowsFor')
+        cleanRamCacheFor('Products.PloneMeeting.content.meetingconfig._findLinkedRowsFor')
         cfg.setCustomAdvisers(custom_advisers)
         self.assertEqual(available_delays_view.listSelectableDelays(),
                          [('unique_id_456', '10', u'', False), ('unique_id_789', '20', u'', True)])
@@ -1951,14 +1951,14 @@ class testAdvices(PloneMeetingTestCase):
         # the mayEdit variable is available in the expression, it is True if current
         # user may edit item, False otherwise
         custom_advisers[2]['available_on'] = "mayEdit"
-        cleanRamCacheFor('Products.PloneMeeting.MeetingConfig._findLinkedRowsFor')
+        cleanRamCacheFor('Products.PloneMeeting.content.meetingconfig._findLinkedRowsFor')
         cfg.setCustomAdvisers(custom_advisers)
         self.assertEqual(available_delays_view.listSelectableDelays(),
                          [('unique_id_456', '10', u'', False), ('unique_id_789', '20', u'', True)])
         # access to delay changes history
         self.assertTrue(available_delays_view._mayAccessDelayChangesHistory())
         custom_advisers[2]['available_on'] = "not:mayEdit"
-        cleanRamCacheFor('Products.PloneMeeting.MeetingConfig._findLinkedRowsFor')
+        cleanRamCacheFor('Products.PloneMeeting.content.meetingconfig._findLinkedRowsFor')
         cfg.setCustomAdvisers(custom_advisers)
         self.assertEqual(available_delays_view.listSelectableDelays(),
                          [('unique_id_456', '10', u'', False), ])

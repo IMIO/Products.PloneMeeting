@@ -221,7 +221,7 @@ class testSearches(PloneMeetingTestCase):
                                   'delay_left_alert': '',
                                   'delay_label': 'Delay label', }
         cfg.setCustomAdvisers([originalCustomAdvisers])
-        cfg.setSelectableAdviserUsers((self.vendors_uid, ))
+        cfg.selectable_adviser_users = (self.vendors_uid, )
         cfg.item_advice_states = (self._stateMappingFor('itemcreated', ))
         cfg.item_advice_edit_states = (self._stateMappingFor('itemcreated', ))
         cfg.item_advice_view_states = (self._stateMappingFor('itemcreated', ))
@@ -1356,8 +1356,8 @@ class testSearches(PloneMeetingTestCase):
            editor for.'''
         self.changeUser('siteadmin')
         cfg = self.meetingConfig
-        cfg.setItemCommitteesStates(['itemcreated'])
-        cfg.setItemCommitteesViewStates(['validated'])
+        cfg.item_committees_states = ['itemcreated']
+        cfg.item_committees_view_states = ['validated']
         itemTypeName = cfg.getItemTypeName()
         # configure committees editors
         self._setUpCommitteeEditor(cfg)

@@ -15,6 +15,7 @@ from datetime import datetime
 from DateTime import DateTime
 from imio.helpers.content import disable_link_integrity_checks
 from imio.helpers.content import get_vocab
+from imio.helpers.content import get_vocab_values
 from imio.helpers.content import validate_fields
 from OFS.ObjectManager import BeforeDeleteException
 from plone import api
@@ -96,7 +97,8 @@ class testContacts(PloneMeetingTestCase):
             meeting.get_all_attendees(the_objects=False),
             get_all_usable_held_positions(meeting, the_objects=False))
         # select new hp
-        ordered_contacts = cfg.getField('orderedContacts').Vocabulary(cfg).keys()
+        ordered_contacts = get_vocab_values(
+            cfg, 'Products.PloneMeeting.vocabularies.selectableassemblymembersvocabulary')
         cfg.setOrderedContacts(ordered_contacts)
         self.assertEqual(
             meeting.get_all_attendees(the_objects=True) + (new_hp, ),
@@ -1335,7 +1337,7 @@ class testContacts(PloneMeetingTestCase):
 
     def test_pm_Print_attendees(self):
         """Basic test for the print_attendees method."""
-        self.meetingConfig.setUseVotes(True)
+        self.meetingConfig.use_votes = True
         meeting, meeting_attendees, item1, item2, item3 = self._setupInAndOutAttendees()
         # item
         view = item1.restrictedTraverse('document-generation')
@@ -1459,7 +1461,7 @@ class testContacts(PloneMeetingTestCase):
 
     def test_pm_Print_attendees_by_type(self):
         """Basic test for the print_attendees method."""
-        self.meetingConfig.setUseVotes(True)
+        self.meetingConfig.use_votes = True
         meeting, meeting_attendees, item1, item2, item3 = self._setupInAndOutAttendees()
         # item
         view = item1.restrictedTraverse('document-generation')
@@ -1736,8 +1738,8 @@ class testContacts(PloneMeetingTestCase):
                 self.developers_uid, catch_before_delete_exception=False)
         self.assertEqual(cm.exception.message, can_not_delete_organization_meetingconfig)
         # so remove selectableCopyGroups from the meetingConfigs
-        cfg.setSelectableCopyGroups(())
-        cfg2.setSelectableCopyGroups(())
+        cfg.selectable_copy_groups = ()
+        cfg2.selectable_copy_groups = ()
 
         # define selectableAdvisers, the exception is also raised
         cfg.selectable_advisers = (self.developers_uid,)
@@ -2046,11 +2048,11 @@ class testContacts(PloneMeetingTestCase):
         cfg.itemtemplates.manage_delObjects(['template2', ])
         # and remove 'vendors_reviewers' from every MeetingConfig.selectableCopyGroups
         # and 'vendors' from every MeetingConfig.selectableAdvisers
-        cfg.setSelectableCopyGroups((self.developers_reviewers, ))
+        cfg.selectable_copy_groups = (self.developers_reviewers, )
         cfg.setOrderedGroupsInCharge(())
         cfg2.setOrderedGroupsInCharge(())
         cfg2.selectable_advisers = (self.developers_uid,)
-        cfg2.setSelectableCopyGroups((self.developers_reviewers, ))
+        cfg2.selectable_copy_groups = (self.developers_reviewers, )
         # and remove users from vendors Plone groups
         for ploneGroup in get_plone_groups(self.vendors_uid):
             for memberId in ploneGroup.getGroupMemberIds():

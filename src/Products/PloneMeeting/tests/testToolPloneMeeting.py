@@ -824,7 +824,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         """Test the update_all_local_roles method that update every items when configuration changed.
            First set copy groups may view items in state 'itemcreated' then change to 'proposed'."""
         cfg = self.meetingConfig
-        cfg.setSelectableCopyGroups((self.developers_reviewers, self.vendors_reviewers))
+        cfg.selectable_copy_groups = (self.developers_reviewers, self.vendors_reviewers)
         self._enableField('copyGroups')
         cfg.setItemCopyGroupsStates(('itemcreated', ))
         # only available to 'Managers'
@@ -1077,7 +1077,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         )))
 
         # but fails if removing used value
-        cfg.setConfigGroup('unique_id_2')
+        cfg.config_group = 'unique_id_2'
         error_msg = translate(
             u'configGroup_removed_in_use_error',
             domain='PloneMeeting',
