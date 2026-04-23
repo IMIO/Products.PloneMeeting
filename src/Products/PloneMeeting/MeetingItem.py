@@ -2287,6 +2287,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            when meeting is 'decided' and user may not edit the item."""
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
+        if cfg is None:
+            return None
         wfas = cfg.wf_adaptations
         # viewable by some power observers?
         acceptable_pos = [wfa.split('hide_decisions_when_under_writing__po__')[1]
@@ -2353,6 +2355,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            a portal_message is displayed to the user."""
         extra_expr_ctx = _base_extra_expr_ctx(self)
         # quick bypass when not used or if item not in a meeting
+        if extra_expr_ctx['cfg'] is None:
+            return ''
         expr = extra_expr_ctx['cfg'].votes_result_tal_expr.strip()
         if not expr or not self.hasMeeting():
             return ''
@@ -2641,7 +2645,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''The default budget info is to be found in the config.'''
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        return cfg.budget_default
+        if cfg is None:
+            return ''
+        budget_default = cfg.budget_default
+        # DX MeetingConfig returns a RichTextValue; AT field default_method needs a string
+        if hasattr(budget_default, 'raw'):
+            return budget_default.raw
+        return budget_default
 
     security.declarePublic('showField')
 
@@ -3530,6 +3540,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Get default value for field 'pollType' from the MeetingConfig.'''
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
+        if cfg is None:
+            return ''
         return cfg.default_poll_type
 
     def _update_meeting_link(self, meeting):
@@ -5714,8 +5726,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if not strippedExprToEvaluate or strippedExprToEvaluate == 'python:False':
                 continue
             # respect 'for_item_created_from' and 'for_item_created_until' defined dates
-            createdFrom = customAdviser['for_item_created_from']
-            createdUntil = customAdviser['for_item_created_until']
+            createdFrom = customAdviser.get('for_item_created_from', '')
+            createdUntil = customAdviser.get('for_item_created_until', '')
             # createdFrom is required but not createdUntil
             if DateTime(createdFrom) > self.created() or \
                (createdUntil and DateTime(createdUntil) < self.created()):
@@ -5738,11 +5750,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                             'org_title': org.get_full_title(),
                             'row_id': customAdviser['row_id'],
                             'gives_auto_advice_on_help_message':
-                                customAdviser['gives_auto_advice_on_help_message'],
-                            'delay': customAdviser['delay'],
-                            'delay_left_alert': customAdviser['delay_left_alert'],
-                            'delay_label': customAdviser['delay_label'],
-                            'is_delay_calendar_days': customAdviser['is_delay_calendar_days'] == '1',
+                                customAdviser.get('gives_auto_advice_on_help_message', ''),
+                            'delay': customAdviser.get('delay', ''),
+                            'delay_left_alert': customAdviser.get('delay_left_alert', ''),
+                            'delay_label': customAdviser.get('delay_label', ''),
+                            'is_delay_calendar_days': customAdviser.get('is_delay_calendar_days', '0') == '1',
                             # userids is unhandled for automatic advisers
                             'userids': []})
                 # check if the found automatic adviser is not already in the self.adviceIndex
@@ -7517,6 +7529,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            really given and is not hidden during redaction."""
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
+        if cfg is None:
+            return
         if cfg.historize_advice_if_given_and_item_modified:
             for advice_id, adviceInfo in self.adviceIndex.items():
                 if not self._advice_is_given(advice_id):

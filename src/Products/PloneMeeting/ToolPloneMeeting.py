@@ -7,6 +7,7 @@
 from AccessControl import ClassSecurityInfo
 from AccessControl import Unauthorized
 from Acquisition import aq_base
+from Acquisition import aq_inner
 from collections import OrderedDict
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organizations
@@ -881,10 +882,34 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''Based on p_context's portal type, we get the corresponding meeting
            config.'''
         try:
-            data = getattr(self, context.aq_acquire(MEETING_CONFIG))
+            # Try DX-compatible attribute first (avoids conflict with DX schema field 'meeting_config')
+            cfg_id = context.aq_acquire('_pm_mc_id')
         except AttributeError:
-            data = None
-        return data
+            try:
+                cfg_id = context.aq_acquire(MEETING_CONFIG)
+            except AttributeError:
+                return None
+        config = getattr(self, cfg_id, None)
+        if config is not None:
+            return config
+        # During portal_factory creation the config is not yet stored in
+        # portal_plonemeeting (cfg_id is a temporary portal_factory ID).
+        # Traverse the acquisition chain from context to find the config directly.
+        from Products.PloneMeeting.interfaces import IMeetingConfig as IMC
+        obj = aq_inner(context)
+        seen = set()
+        while obj is not None:
+            base_id = id(aq_base(obj))
+            if base_id in seen:
+                break
+            seen.add(base_id)
+            if IMC.providedBy(obj):
+                return obj
+            try:
+                obj = aq_inner(obj).aq_parent
+            except AttributeError:
+                break
+        return None
 
     security.declarePublic('getDefaultMeetingConfig')
 

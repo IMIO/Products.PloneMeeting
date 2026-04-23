@@ -523,8 +523,18 @@ def _itemAnnexTypes(cfg):
 def onConfigInitialized(cfg, event):
     '''Trigger when new MeetingConfig added.'''
 
-    # Set a property allowing to know in which MeetingConfig we are
+    # Guard against re-entrant calls: DX fires IObjectAddedEvent and AT may also
+    # fire IObjectInitializedEvent (e.g. via processForm in exportimport) because
+    # the DX class still provides the AT IMeetingConfigMarker interface.
+    if getattr(cfg, '_v_config_initialized', False):
+        return
+    cfg._v_config_initialized = True
+
+    # Set a property allowing to know in which MeetingConfig we are.
+    # For DX MeetingConfig we use '_pm_mc_id' because 'meeting_config' is a DX schema field
+    # name and would shadow the OFS property when accessed via aq_acquire.
     cfg.manage_addProperty(MEETING_CONFIG, cfg.id, 'string')
+    cfg._pm_mc_id = cfg.id
     # Register the portal types that are specific to this meeting config.
     cfg.registerPortalTypes()
     # Create the subfolders
@@ -551,6 +561,10 @@ def onConfigInitialized(cfg, event):
 
 def onConfigEdited(cfg, event):
     '''Trigger upon each MeetingConfig edition (except the first).'''
+    # ContainerModifiedEvent fires when child objects are added/removed inside the config.
+    # That is not a config edit — skip to avoid running full group setup before init completes.
+    if isinstance(event, ContainerModifiedEvent):
+        return
 
     # invalidateAll ram.cache
     cleanRamCache()
@@ -706,6 +720,8 @@ def _check_item_pasted_in_cfg(item):
         # to ensure that copied data are valid : category, opitonal fields, ...
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(item)
+        if cfg is None:
+            return
         # not same cfg manage portal_type
         recurringItemPortalType = cfg.getItemTypeName(configType='MeetingItemRecurring')
         itemTemplatePortalType = cfg.getItemTypeName(configType='MeetingItemTemplate')

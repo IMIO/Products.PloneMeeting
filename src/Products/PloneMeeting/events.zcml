@@ -109,7 +109,7 @@
 
   <!-- DX MeetingConfig lifecycle events -->
   <subscriber for=".content.meetingconfig.IMeetingConfig
-                   zope.lifecycleevent.IObjectCreatedEvent"
+                   zope.lifecycleevent.IObjectAddedEvent"
               handler=".events.onConfigInitialized" />
 
   <subscriber for=".content.meetingconfig.IMeetingConfig

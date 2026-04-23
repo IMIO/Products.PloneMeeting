@@ -218,12 +218,12 @@ class PloneGroupSettingsFunctionsValidator(validator.SimpleFieldValidator):
                set(advisers_removed_plonegroups).intersection(cfg.selectable_adviser_users):
                 raise Invalid(msg)
             # suffixes, values are like 'suffix_proposing_group_level1reviewers'
-            composed_values_attributes = ['itemAnnexConfidentialVisibleFor',
-                                          'adviceAnnexConfidentialVisibleFor',
-                                          'meetingAnnexConfidentialVisibleFor',
-                                          'itemInternalNotesEditableBy']
+            composed_values_attributes = ['item_annex_confidential_visible_for',
+                                          'advice_annex_confidential_visible_for',
+                                          'meeting_annex_confidential_visible_for',
+                                          'item_internal_notes_editable_by']
             for composed_values_attr in composed_values_attributes:
-                values = cfg.getField(composed_values_attr).getAccessor(cfg)()
+                values = getattr(cfg, composed_values_attr) or []
                 values = [v for v in values
                           for r in removed_suffixes if r in v]
                 if values:

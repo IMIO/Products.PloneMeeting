@@ -5,6 +5,7 @@
 
 from AccessControl import ClassSecurityInfo
 from AccessControl import Unauthorized
+from Acquisition import aq_base
 from collections import OrderedDict
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.plonegroup.utils import get_organization
@@ -52,18 +53,40 @@ from plone.restapi.deserializer import boolean_value
 from plone.supermodel import model
 from Products.Archetypes.atapi import DisplayList
 from Products.Archetypes.atapi import IntDisplayList
+from Products.CMFCore.Expression import Expression
 from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFCore.permissions import View
+from Products.CMFPlone.interfaces.constrains import IConstrainTypes
 from Products.CMFPlone.utils import base_hasattr
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import ADVICE_TYPES
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
+from Products.PloneMeeting.config import CLONE_TO_OTHER_MC_ACTION_SUFFIX
+from Products.PloneMeeting.config import CLONE_TO_OTHER_MC_EMERGENCY_ACTION_SUFFIX
+from Products.PloneMeeting.config import DEFAULT_ITEM_COLUMNS
+from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
+from Products.PloneMeeting.config import DEFAULT_MEETING_COLUMNS
 from Products.PloneMeeting.config import EXECUTE_EXPR_VALUE
+from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import ITEM_ICON_COLORS
 from Products.PloneMeeting.config import ITEM_INSERT_METHODS
+from Products.PloneMeeting.config import ITEMTEMPLATESMANAGERS_GROUP_SUFFIX
+from Products.PloneMeeting.config import ManageItemCategoryFields
+from Products.PloneMeeting.config import MEETING_REMOVE_MOG_WFA
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
+from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import READER_USECASES
+from Products.PloneMeeting.config import TOOL_FOLDER_ANNEX_TYPES
+from Products.PloneMeeting.config import TOOL_FOLDER_CATEGORIES
+from Products.PloneMeeting.config import TOOL_FOLDER_CLASSIFIERS
+from Products.PloneMeeting.config import TOOL_FOLDER_ITEM_TEMPLATES
+from Products.PloneMeeting.config import TOOL_FOLDER_MEETING_CATEGORIES
+from Products.PloneMeeting.config import TOOL_FOLDER_POD_TEMPLATES
+from Products.PloneMeeting.config import TOOL_FOLDER_RECURRING_ITEMS
+from Products.PloneMeeting.config import TOOL_FOLDER_SEARCHES
+from Products.PloneMeeting.config import WriteBudgetInfos
 from Products.PloneMeeting.config import WriteHarmlessConfig
 from Products.PloneMeeting.config import WriteRiskyConfig
 from Products.PloneMeeting.interfaces import IConfigElement
@@ -77,7 +100,10 @@ from Products.PloneMeeting.interfaces import IMeetingItemWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowConditions
 from Products.PloneMeeting.interfaces import IMeetingWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingWorkflowConditions
+from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
+from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
 from Products.PloneMeeting.MeetingConfig import CONFIGGROUPPREFIX
+from Products.PloneMeeting.MeetingConfig import DUPLICATE_SHORT_NAME
 from Products.PloneMeeting.MeetingConfig import ITEM_WF_STATE_ATTRS
 from Products.PloneMeeting.MeetingConfig import ITEM_WF_TRANSITION_ATTRS
 from Products.PloneMeeting.MeetingConfig import MEETING_WF_STATE_ATTRS
@@ -86,7 +112,7 @@ from Products.PloneMeeting.MeetingConfig import POWEROBSERVERPREFIX
 from Products.PloneMeeting.MeetingConfig import PROPOSINGGROUPPREFIX
 from Products.PloneMeeting.MeetingConfig import READERPREFIX
 from Products.PloneMeeting.MeetingConfig import SUFFIXPROFILEPREFIX
-from Products.PloneMeeting.Meeting import Meeting
+from Products.PloneMeeting.content.meeting import Meeting
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.model.adaptations import _getValidationReturnedStates
 from Products.PloneMeeting.model.adaptations import _performWorkflowAdaptations
@@ -124,6 +150,7 @@ from zope.container.interfaces import INameChooser
 from zope.event import notify
 from zope.i18n import translate
 from zope.i18nmessageid.message import Message
+from zope.globalrequest import getRequest
 from zope.interface import alsoProvides
 from zope.interface import implements
 from zope.interface import Interface
@@ -136,6 +163,9 @@ import itertools
 import logging
 import os
 import re
+
+
+logger = logging.getLogger('PloneMeeting')
 
 
 # ---------------------------------------------------------------------------
@@ -1325,7 +1355,7 @@ class IMeetingConfig(IMeetingConfigMarker):
         fields=[
             'item_workflow', 'item_conditions_interface', 'item_actions_interface',
             'meeting_workflow', 'meeting_conditions_interface', 'meeting_actions_interface',
-            'workflow_adaptations', 'item_wf_validation_levels', 'transitions_to_confirm',
+            'wf_adaptations', 'item_wf_validation_levels', 'transitions_to_confirm',
             'on_transition_field_transforms', 'on_meeting_transition_item_action_to_execute',
             'meeting_present_item_when_no_current_meeting_states', 'item_preferred_meeting_states',
         ],
@@ -1383,9 +1413,9 @@ class IMeetingConfig(IMeetingConfigMarker):
         default=defValues.meetingActionsInterface,
     )
 
-    form.widget('workflow_adaptations', CheckBoxFieldWidget)
-    form.write_permission(workflow_adaptations=WriteRiskyConfig)
-    workflow_adaptations = schema.List(
+    form.widget('wf_adaptations', CheckBoxFieldWidget)
+    form.write_permission(wf_adaptations=WriteRiskyConfig)
+    wf_adaptations = schema.List(
         title=_(u'PloneMeeting_label_workflowAdaptations', default=u'Workflowadaptations'),
         description=_(u'workflow_adaptations_descr', default=u'WorkflowAdaptations'),
         value_type=schema.Choice(vocabulary=u'WorkflowAdaptations'),
@@ -2474,6 +2504,17 @@ class MeetingConfigSchemaPolicy(DexteritySchemaPolicy):
 # Content class
 # ---------------------------------------------------------------------------
 
+def _camel_to_snake(name):
+    """Convert a camelCase identifier to snake_case.
+
+    Used to translate AT-style field names from MeetingConfigDescriptor.getData()
+    into DX snake_case attribute names so that DX schema fields are correctly
+    initialised when invokeFactory passes the full cData dict as **kwargs.
+    """
+    s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
+    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
+
+
 class MeetingConfig(Container):
     """Meeting configuration content type (migrated from Archetypes OrderedBaseFolder).
 
@@ -2485,10 +2526,64 @@ class MeetingConfig(Container):
 
     meta_type = 'MeetingConfig'
 
+    def __init__(self, id=None, **kw):
+        # importers (exportimport/content.py) pass AT-style camelCase kwargs from
+        # MeetingConfigDescriptor.getData(). Translate them to snake_case so that DX
+        # schema fields are properly set before lifecycle events (e.g. onConfigInitialized)
+        # fire during invokeFactory.
+        translated = {}
+        for key, value in kw.items():
+            translated[_camel_to_snake(key)] = value
+        super(MeetingConfig, self).__init__(id, **translated)
+
     # Class-level constants carried over from the AT class
     metaTypes = ('MeetingItem', 'MeetingItemTemplate', 'MeetingItemRecurring', 'Meeting')
     metaNames = ('Item', 'ItemTemplate', 'ItemRecurring', 'Meeting')
     defaultWorkflows = ('meetingitem_workflow', 'meeting_workflow')
+
+    subFoldersInfo = {
+        TOOL_FOLDER_CATEGORIES: (('Categories', 'Folder'),
+                                 ('meetingcategory', ),
+                                 ()
+                                 ),
+        TOOL_FOLDER_CLASSIFIERS: (('Classifiers', 'Folder'),
+                                  ('meetingcategory', ),
+                                  ()
+                                  ),
+        TOOL_FOLDER_MEETING_CATEGORIES: (('Meeting categories', 'Folder'),
+                                         ('meetingcategory', ),
+                                         ()
+                                         ),
+        TOOL_FOLDER_SEARCHES: (('Searches', 'Folder'),
+                               ('Folder', ),
+                               (('searches_items', 'Meeting items', 'Folder', ('DashboardCollection', )),
+                                ('searches_meetings', 'Meetings', 'Folder', ('DashboardCollection', )),
+                                ('searches_decisions', 'Decisions', 'Folder', ('DashboardCollection', )))
+                               ),
+        TOOL_FOLDER_RECURRING_ITEMS: (('RecurringItems', 'Folder'),
+                                      ('itemTypeRecurring', ),
+                                      ()
+                                      ),
+        TOOL_FOLDER_ITEM_TEMPLATES: (('Item templates', 'Folder'),
+                                     ('Folder', 'itemTypeTemplate'),
+                                     ()
+                                     ),
+        TOOL_FOLDER_ANNEX_TYPES: (('Annex types', 'ContentCategoryConfiguration'),
+                                  (),
+                                  (('item_annexes', 'Item annexes',
+                                    'ContentCategoryGroup', ('ItemAnnexContentCategory', )),
+                                   ('item_decision_annexes', 'Item decision annexes',
+                                    'ContentCategoryGroup', ('ItemAnnexContentCategory', )),
+                                   ('advice_annexes', 'Advice annexes',
+                                    'ContentCategoryGroup', ('ContentCategory', )),
+                                   ('meeting_annexes', 'Meeting annexes',
+                                    'ContentCategoryGroup', ('ContentCategory', )))
+                                  ),
+        TOOL_FOLDER_POD_TEMPLATES: (('Document templates', 'Folder'),
+                                    ('ConfigurablePODTemplate', 'DashboardPODTemplate', 'StyleTemplate'),
+                                    ()
+                                    ),
+    }
 
     # ---------------------------------------------------------------
     # Business methods migrated from Archetypes MeetingConfig class
@@ -3123,11 +3218,11 @@ class MeetingConfig(Container):
 
     security.declarePrivate('setAllItemTagsField')
     def setAllItemTagsField(self):
-        '''Sets the correct value for the field "allItemTags".'''
-        tags = [t.strip() for t in self.all_item_tags.split('\n')]
+        '''Sets the correct value for the field "all_item_tags".'''
+        tags = [t.strip() for t in (self.all_item_tags or u'').split('\n')]
         if self.sort_all_item_tags:
             tags.sort()
-        self.setAllItemTags('\n'.join(tags))
+        self.all_item_tags = u'\n'.join(tags)
 
 
     security.declareProtected(WriteRiskyConfig, 'setCustomAdvisers')
@@ -3487,8 +3582,9 @@ class MeetingConfig(Container):
         if return_state_singleton and len(states) == 1:
             res = res and res[0] or res
         # when displayed, append translated values to elements title
-        if self.REQUEST.get('translated_itemWFValidationLevels',
-                            translated_itemWFValidationLevels) and not data:
+        request = getRequest()
+        if (request and request.get('translated_itemWFValidationLevels',
+                                    translated_itemWFValidationLevels)) and not data:
             translated_res = deepcopy(res)
             translated_titles = ('state_title',
                                  'leading_transition_title',
@@ -3498,7 +3594,7 @@ class MeetingConfig(Container):
                     line_translated_title = safe_unicode(line[translated_title])
                     translated_value = translate(line_translated_title,
                                                  domain='plone',
-                                                 context=self.REQUEST)
+                                                 context=request)
                     line[translated_title] = u"{0} ({1})".format(
                         translated_value, line_translated_title)
             res = translated_res
@@ -4900,6 +4996,50 @@ class MeetingConfig(Container):
         '''See doc in interfaces.py.'''
         return IMeetingAdviceWorkflowActions.__identifier__
 
+    def getItemConditionsInterface(self, **kwargs):
+        '''Return the interface to use to adapt a meetingitem regarding the WF conditions.'''
+        return self.item_conditions_interface
+
+    def getItemActionsInterface(self, **kwargs):
+        '''Return the interface to use to adapt a meetingitem regarding the WF actions.'''
+        return self.item_actions_interface
+
+    def getMeetingConditionsInterface(self, **kwargs):
+        '''Return the interface to use to adapt a meeting regarding the WF conditions.'''
+        return self.meeting_conditions_interface
+
+    def getMeetingActionsInterface(self, **kwargs):
+        '''Return the interface to use to adapt a meeting regarding the WF actions.'''
+        return self.meeting_actions_interface
+
+    def setWorkflowAdaptations(self, value):
+        '''Set wf_adaptations field value.'''
+        self.wf_adaptations = list(value) if isinstance(value, tuple) else value
+
+    def setItemWFValidationLevels(self, value):
+        '''Set item_wf_validation_levels field value.'''
+        self.item_wf_validation_levels = value
+
+    def setCertifiedSignatures(self, value):
+        '''Set certified_signatures field value.'''
+        self.certified_signatures = value
+
+    def setOrderedAssociatedOrganizations(self, value):
+        '''Set ordered_associated_organizations field value.'''
+        self.ordered_associated_organizations = list(value) if isinstance(value, tuple) else value
+
+    def setOrderedContacts(self, value):
+        '''Set ordered_contacts field value.'''
+        self.ordered_contacts = list(value) if isinstance(value, tuple) else value
+
+    def setOrderedGroupsInCharge(self, value):
+        '''Set ordered_groups_in_charge field value.'''
+        self.ordered_groups_in_charge = list(value) if isinstance(value, tuple) else value
+
+    def setOrderedItemInitiators(self, value):
+        '''Set ordered_item_initiators field value.'''
+        self.ordered_item_initiators = list(value) if isinstance(value, tuple) else value
+
     def getAdviceConditionsInterface(self, **kwargs):
         '''Return the interface to use to adapt a meetingadvice
            regarding the WF conditions.'''
@@ -4910,11 +5050,21 @@ class MeetingConfig(Container):
            regarding the WF actions.'''
         return self.adapted()._adviceActionsInterfaceFor(kwargs['obj'])
 
+    _CUSTOM_ADVISER_DEFAULTS = {
+        'row_id': '', 'org': '', 'gives_auto_advice_on': '',
+        'gives_auto_advice_on_help_message': '', 'for_item_created_from': '',
+        'for_item_created_until': '', 'delay': '', 'delay_left_alert': '',
+        'delay_label': '', 'available_on': '', 'is_linked_to_previous_row': '0',
+        'is_delay_calendar_days': '0',
+    }
+
     def _dataForCustomAdviserRowId(self, row_id):
         '''Returns the data for the given p_row_id from the field 'customAdvisers'.'''
         for adviser in self.custom_advisers:
             if adviser['row_id'] == row_id:
-                return dict(adviser)
+                result = dict(self._CUSTOM_ADVISER_DEFAULTS)
+                result.update(adviser)
+                return result
 
     def _findLinkedRowsFor_cachekey(method, self, row_id):
         '''cachekey method for self._findLinkedRowsFor.'''
@@ -4929,7 +5079,8 @@ class MeetingConfig(Container):
         currentRowData = self._dataForCustomAdviserRowId(row_id)
         if currentRowData['gives_auto_advice_on']:
             isAutomaticAdvice = True
-        currentRowIndex = self.custom_advisers.index(currentRowData)
+        currentRowIndex = next(
+            (i for i, a in enumerate(self.custom_advisers) if a['row_id'] == row_id), -1)
         # if the current row is not linked to previous row or the next row
         # is not linked the current row, return nothing
         if not currentRowData['is_linked_to_previous_row'] == '1' and \
@@ -5098,7 +5249,7 @@ class MeetingConfig(Container):
             if metaTypeName in registeredFactoryTypes and \
                portalTypeName not in registeredFactoryTypes:
                 factoryTypesToRegister.append(portalTypeName)
-            if not hasattr(self.portal_types, portalTypeName):
+            if not hasattr(portal_types, portalTypeName):
                 typeInfoName = "PloneMeeting: %s (%s)" % (
                     metaTypeName, metaTypeName)
                 realMetaType = 'MeetingItem' if metaTypeName.startswith('MeetingItem') \
@@ -5139,7 +5290,7 @@ class MeetingConfig(Container):
             portalType = getattr(typesTool, portalTypeName)
             basePortalType = getattr(typesTool, metaTypeName)
             portalType.title = "{0} {1}".format(
-                translate(metaTypeName, domain='plone', context=self.REQUEST).encode('utf-8'),
+                translate(metaTypeName, domain='plone', context=getRequest()).encode('utf-8'),
                 self.Title(include_config_group=True))
             portalType.i18n_domain = basePortalType.i18n_domain
             # base portal_types 'Meeting' and 'MeetingItem' are global_allow=False
@@ -5230,7 +5381,8 @@ class MeetingConfig(Container):
            the 'send to other mc' functionnality exist.  Either, call updatePortalTypes that
            actually remove every existing actions on the portal_type then call this submethod'''
         tool = api.portal.get_tool('portal_plonemeeting')
-        item_portal_type = self.portal_types[self.getItemTypeName()]
+        portal_types = api.portal.get_tool('portal_types')
+        item_portal_type = portal_types[self.getItemTypeName()]
         for mctct in self.meeting_configs_to_clone_to:
             configId = mctct['meeting_config']
             actionId = self._getCloneToOtherMCActionId(configId, self.getId())
@@ -5556,13 +5708,21 @@ class MeetingConfig(Container):
             if folderId in self.objectIds():
                 continue
 
+            # The DX Container constructor sets all kwargs as plain attributes
+            # (via setattr) when invokeFactory passes the full cData dict.
+            # OFS.ObjectManager.checkValidId uses hasattr(), so a plain attribute
+            # with the same name would raise BadRequest. Remove it first.
+            if hasattr(aq_base(self), folderId):
+                delattr(self, folderId)
+
             self.invokeFactory(folderType, folderId)
             folder = getattr(self, folderId)
 
             if folderId == TOOL_FOLDER_SEARCHES:
                 enableFacetedDashboardFor(folder,
-                                          xmlpath=os.path.dirname(__file__) +
-                                          '/faceted_conf/default_dashboard_widgets.xml')
+                                          xmlpath=os.path.join(
+                                              os.path.dirname(os.path.dirname(__file__)),
+                                              'faceted_conf', 'default_dashboard_widgets.xml'))
 
             # special case for folder 'itemtemplates' for which we want
             # to display the 'navigation' portlet and use the 'folder_contents' layout
@@ -5627,20 +5787,24 @@ class MeetingConfig(Container):
                     constrain.setLocallyAllowedTypes(allowedTypes)
                     constrain.setImmediatelyAddableTypes(allowedTypes)
 
+                _pm_path = os.path.dirname(os.path.dirname(__file__))
                 if subFolderId == 'searches_items':
                     enableFacetedDashboardFor(subFolder,
-                                              xmlpath=os.path.dirname(__file__) +
-                                              '/faceted_conf/default_dashboard_items_widgets.xml')
+                                              xmlpath=os.path.join(
+                                                  _pm_path,
+                                                  'faceted_conf', 'default_dashboard_items_widgets.xml'))
                     # synch value between self.maxShownListings and the 'resultsperpage' widget
                     self.setMaxShownListings(self.max_shown_listings)
                 elif subFolderId == 'searches_meetings':
                     enableFacetedDashboardFor(subFolder,
-                                              xmlpath=os.path.dirname(__file__) +
-                                              '/faceted_conf/default_dashboard_meetings_widgets.xml')
+                                              xmlpath=os.path.join(
+                                                  _pm_path,
+                                                  'faceted_conf', 'default_dashboard_meetings_widgets.xml'))
                 elif subFolderId == 'searches_decisions':
                     enableFacetedDashboardFor(subFolder,
-                                              xmlpath=os.path.dirname(__file__) +
-                                              '/faceted_conf/default_dashboard_meetings_widgets.xml')
+                                              xmlpath=os.path.join(
+                                                  _pm_path,
+                                                  'faceted_conf', 'default_dashboard_meetings_widgets.xml'))
                 subFolder.setTitle(translate(subFolderTitle,
                                              domain="PloneMeeting",
                                              context=self.REQUEST,
@@ -6325,12 +6489,14 @@ class MeetingConfig(Container):
         else:
             folders = self._get_all_meeting_folders()
 
+        _pm_path = os.path.dirname(os.path.dirname(__file__))
         for folder in folders:
             logger.info("Synchronizing searches with folder at '{0}'".format(
                 '/'.join(folder.getPhysicalPath())))
             enableFacetedDashboardFor(folder,
-                                      xmlpath=os.path.dirname(__file__) +
-                                      '/faceted_conf/default_dashboard_widgets.xml')
+                                      xmlpath=os.path.join(
+                                          _pm_path,
+                                          'faceted_conf', 'default_dashboard_widgets.xml'))
 
             # subFolders to create
             subFolderInfos = [(cfgFolder.getId(), cfgFolder.Title()) for cfgFolder in
@@ -6348,8 +6514,9 @@ class MeetingConfig(Container):
                                      **{'title': subFolderTitle})
                 subFolderObj = getattr(folder, subFolderId)
                 enableFacetedDashboardFor(subFolderObj,
-                                          xmlpath=os.path.dirname(__file__) +
-                                          '/faceted_conf/default_dashboard_widgets.xml')
+                                          xmlpath=os.path.join(
+                                              _pm_path,
+                                              'faceted_conf', 'default_dashboard_widgets.xml'))
                 if subFolderObj.getId() == "searches_items":
                     # item related searches
                     alsoProvides(subFolderObj, IMeetingItemDashboardBatchActionsMarker)
@@ -6449,22 +6616,22 @@ class MeetingConfig(Container):
         res = []
         for customAdviserConfig in self.custom_advisers:
             # first check that the customAdviser is actually optional
-            if customAdviserConfig['gives_auto_advice_on']:
+            if customAdviserConfig.get('gives_auto_advice_on', ''):
                 continue
             # and check that it is not an advice linked to
             # an automatic advice ('is_linked_to_previous_row')
-            if customAdviserConfig['is_linked_to_previous_row'] == '1':
+            if customAdviserConfig.get('is_linked_to_previous_row', '') == '1':
                 isAutomatic, linkedRows = self._findLinkedRowsFor(customAdviserConfig['row_id'])
                 # is the first row an automatic adviser?
                 if isAutomatic:
                     continue
             # then check if it is a delay-aware advice
-            if not customAdviserConfig['delay']:
+            if not customAdviserConfig.get('delay', ''):
                 continue
 
             # respect 'for_item_created_from' and 'for_item_created_until' defined dates
-            createdFrom = customAdviserConfig['for_item_created_from']
-            createdUntil = customAdviserConfig['for_item_created_until']
+            createdFrom = customAdviserConfig.get('for_item_created_from', '')
+            createdUntil = customAdviserConfig.get('for_item_created_until', '')
             # createdFrom is required but not createdUntil
             if DateTime(createdFrom) > validity_date or \
                (createdUntil and DateTime(createdUntil) < validity_date):
@@ -6473,7 +6640,7 @@ class MeetingConfig(Container):
             # check the 'available_on' TAL expression when an item is provided
             eRes = True
             if item:
-                eRes = item._evalAdviceAvailableOn(customAdviserConfig['available_on'])
+                eRes = item._evalAdviceAvailableOn(customAdviserConfig.get('available_on', ''))
 
             if not eRes:
                 continue
@@ -6482,10 +6649,10 @@ class MeetingConfig(Container):
             org = get_organization(customAdviserConfig['org'])
             res.append({'org_uid': customAdviserConfig['org'],
                         'org_title': org.get_full_title(),
-                        'delay': customAdviserConfig['delay'],
-                        'delay_label': customAdviserConfig['delay_label'],
+                        'delay': customAdviserConfig.get('delay', ''),
+                        'delay_label': customAdviserConfig.get('delay_label', ''),
                         'is_delay_calendar_days': boolean_value(
-                            customAdviserConfig['is_delay_calendar_days']),
+                            customAdviserConfig.get('is_delay_calendar_days', '')),
                         'row_id': customAdviserConfig['row_id']})
         return res
 

@@ -1771,12 +1771,12 @@ class Meeting(Container):
 
     def _insert_order_cache_cfg_attrs(self, cfg):
         '''See doc in interfaces.py.'''
-        return ['insertingMethodsOnAddItem',
-                'listTypes',
-                'selectablePrivacies',
-                'usedPollTypes',
-                'orderedAssociatedOrganizations',
-                'orderedGroupsInCharge',
+        return ['inserting_methods_on_add_item',
+                'list_types',
+                'selectable_privacies',
+                'used_poll_types',
+                'ordered_associated_organizations',
+                'ordered_groups_in_charge',
                 'committees']
 
     def _init_insert_order_cache(self, cfg):

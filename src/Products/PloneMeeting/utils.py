@@ -905,6 +905,8 @@ def rememberPreviousData(obj, name=None):
     res = {}
     tool = api.portal.get_tool(TOOL_ID)
     cfg = tool.getMeetingConfig(obj)
+    if cfg is None:
+        return res
     # Do nothing if the object is not in a state when historization is enabled.
     if obj.query_state() not in cfg.record_item_history_states:
         return res
@@ -1310,7 +1312,10 @@ def forceHTMLContentTypeForEmptyRichFields(obj, field_name=None):
       While saving an empty Rich field ('text/html'),
       the contentType is set back to 'text/plain'...
       Force it to 'text/html' if the field is empty.
+      DX RichText fields manage content type natively — no-op for DX objects.
     '''
+    if IDexterityContent.providedBy(obj):
+        return
     if field_name:
         fields = obj.Schema().filterFields(default_content_type='text/html', __name__=field_name)
     else:
@@ -2235,7 +2240,7 @@ def duplicate_workflow(workflowName, duplicatedWFId, portalTypeNames=[]):
     # do that as a Manager because it is needed to copy/paste workflows
     with api.env.adopt_roles(['Manager', ]):
         wfTool = api.portal.get_tool('portal_workflow')
-        copyInfos = wfTool.manage_copyObjects(workflowName)
+        copyInfos = wfTool.manage_copyObjects([str(workflowName)])
         newWFId = wfTool.manage_pasteObjects(copyInfos)[0]['new_id']
         # if already exists, delete it, so we are on a clean copy
         # before applying workflow_adaptations
@@ -2251,7 +2256,7 @@ def duplicate_workflow(workflowName, duplicatedWFId, portalTypeNames=[]):
 def duplicate_portal_type(portalTypeName, duplicatedPortalTypeId):
     """Duplicate p_portalTypeName and use duplicatedPortalTypeId for new portal_type."""
     portal_types = api.portal.get_tool('portal_types')
-    copyInfos = portal_types.manage_copyObjects(portalTypeName)
+    copyInfos = portal_types.manage_copyObjects([str(portalTypeName)])
     newPortalTypeId = portal_types.manage_pasteObjects(copyInfos)[0]['new_id']
     # if already exists, delete it, so we are up to date with original portal_type
     if duplicatedPortalTypeId in portal_types:

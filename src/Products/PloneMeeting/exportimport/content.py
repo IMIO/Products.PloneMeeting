@@ -13,11 +13,13 @@ from collective.contact.plonegroup.utils import get_plone_group
 from collective.iconifiedcategory import CAT_SEPARATOR
 from copy import deepcopy
 from ftw.labels.interfaces import ILabelJar
+from imio.helpers.content import get_vocab
 from imio.helpers.content import uuidToObject
 from imio.helpers.content import validate_fields
 from imio.helpers.security import generate_password
 from imio.helpers.security import is_develop_environment
 from plone import api
+from plone.dexterity.interfaces import IDexterityContent
 from plone.namedfile.file import NamedBlobFile
 from plone.namedfile.file import NamedBlobImage
 from plone.namedfile.file import NamedImage
@@ -271,20 +273,26 @@ class ToolInitializer:
             raise PloneMeetingError(MEETING_CONFIG_ERROR % (cfg.Title(), cfg.getId(), error))
 
         # now we can set values for dashboard...Filters fields as the 'searches' folder has been created
-        for fieldName in ('dashboardItemsListingsFilters',
-                          'dashboardMeetingAvailableItemsFilters',
-                          'dashboardMeetingLinkedItemsFilters'):
-            field = cfg.getField(fieldName)
-            # we want to validate the vocabulay, as if enforceVocabulary was True
-            error = field.validate_vocabulary(cfg, cfg.getField(field.getName()).get(cfg), {})
-            if error:
-                raise PloneMeetingError(MEETING_CONFIG_ERROR % (cfg.Title(), cfg.getId(), error))
+        if not IDexterityContent.providedBy(cfg):
+            # AT-only: validate dashboard filter vocabularies via AT schema
+            for fieldName in ('dashboardItemsListingsFilters',
+                              'dashboardMeetingAvailableItemsFilters',
+                              'dashboardMeetingLinkedItemsFilters'):
+                field = cfg.getField(fieldName)
+                # we want to validate the vocabulay, as if enforceVocabulary was True
+                error = field.validate_vocabulary(cfg, cfg.getField(field.getName()).get(cfg), {})
+                if error:
+                    raise PloneMeetingError(MEETING_CONFIG_ERROR % (cfg.Title(), cfg.getId(), error))
 
         if data.addContactsCSV:
             output = import_contacts(self.portal, path=self.profilePath)
             logger.info(output)
-            selectableOrderedContacts = cfg.getField('orderedContacts').Vocabulary(cfg).keys()
-            cfg.setOrderedContacts(selectableOrderedContacts)
+            if IDexterityContent.providedBy(cfg):
+                vocab = get_vocab(cfg, u'Products.PloneMeeting.vocabularies.orderedcontacts_vocabulary')
+                cfg.ordered_contacts = list(vocab.by_value.keys())
+            else:
+                selectableOrderedContacts = cfg.getField('orderedContacts').Vocabulary(cfg).keys()
+                cfg.setOrderedContacts(selectableOrderedContacts)
 
         # turn contact path to uid
         for org_storing_field in ('orderedContacts', ):
@@ -298,7 +306,10 @@ class ToolInitializer:
                     except KeyError:
                         logger.warning('While computing "{0}", could not get contact at "{1}"'.format(
                             org_storing_field, contact_path))
-                cfg.getField(org_storing_field).set(cfg, contact_uids)
+                if IDexterityContent.providedBy(cfg):
+                    cfg.ordered_contacts = contact_uids
+                else:
+                    cfg.getField(org_storing_field).set(cfg, contact_uids)
 
         # set default labels
         if data.defaultLabels:
@@ -404,24 +415,25 @@ class ToolInitializer:
         # for tests where config id is shuffled, save the real id
         if "__real_id__" in cData:
             cfg.__real_id__ = cData["__real_id__"]
-        # TextArea fields are not set properly.
-        for field in cfg.Schema().fields():
-            fieldName = field.getName()
-            widgetName = field.widget.getName()
-            if (widgetName == 'TextAreaWidget') and fieldName in cData:
-                field.set(cfg, cData[fieldName], mimetype='text/html')
-        # call processForm passing dummy values so existing values are not touched
-        cfg.processForm(values={'dummy': None})
-        # Validates meeting config (validation seems not to be triggered
-        # automatically when an object is created from code).
-        errors = []
-        for field in cfg.Schema().fields():
-            error = field.validate(cfg.getField(field.getName()).get(cfg), cfg)
-            if error:
-                errors.append("'%s': %s" % (field.getName(), error))
-        if errors:
-            raise PloneMeetingError(MEETING_CONFIG_ERROR % (
-                safe_unicode(cfg.Title()), cfg.getId(), u'\n'.join(errors)))
+        if not IDexterityContent.providedBy(cfg):
+            # AT-only: TextArea fields are not set properly via invokeFactory.
+            for field in cfg.Schema().fields():
+                fieldName = field.getName()
+                widgetName = field.widget.getName()
+                if (widgetName == 'TextAreaWidget') and fieldName in cData:
+                    field.set(cfg, cData[fieldName], mimetype='text/html')
+            # call processForm passing dummy values so existing values are not touched
+            cfg.processForm(values={'dummy': None})
+            # Validates meeting config (validation seems not to be triggered
+            # automatically when an object is created from code).
+            errors = []
+            for field in cfg.Schema().fields():
+                error = field.validate(cfg.getField(field.getName()).get(cfg), cfg)
+                if error:
+                    errors.append("'%s': %s" % (field.getName(), error))
+            if errors:
+                raise PloneMeetingError(MEETING_CONFIG_ERROR % (
+                    safe_unicode(cfg.Title()), cfg.getId(), u'\n'.join(errors)))
 
         if not configData.active:
             self.portal.portal_workflow.doActionFor(cfg, 'deactivate')
@@ -650,10 +662,14 @@ class ToolInitializer:
             podType = pt.dashboard and 'DashboardPODTemplate' or 'ConfigurablePODTemplate'
 
             # turn the pod_portal_types from MeetingItem to MeetingItemShortname
+            if cfg is not None:
+                cfg_short_name = cfg.short_name if IDexterityContent.providedBy(cfg) else cfg.shortName
+            else:
+                cfg_short_name = ''
             adapted_pod_portal_types = []
             for pod_portal_type in data['pod_portal_types']:
                 if pod_portal_type.startswith('Meeting'):
-                    pod_portal_type = pod_portal_type + cfg.shortName
+                    pod_portal_type = pod_portal_type + cfg_short_name
                 adapted_pod_portal_types.append(pod_portal_type)
             data['pod_portal_types'] = adapted_pod_portal_types
 
