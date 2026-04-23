@@ -9205,7 +9205,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # make proposing group only able to edit
         self._setupItemFieldsConfig(
             'groupsInChargeNotes',
-            edit='python: tool.user_is_in_org(org_uid=item.getProposingGroup()')
+            edit='python: tool.user_is_in_org(org_uid=item.getProposingGroup())')
         self.assertFalse(item.mayQuickEdit('groupsInChargeNotes'))
         self.changeUser('pmCreator1')
         self.assertTrue(item.mayQuickEdit('groupsInChargeNotes'))

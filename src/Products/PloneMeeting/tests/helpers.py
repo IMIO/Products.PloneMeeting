@@ -645,12 +645,13 @@ class PloneMeetingTestingHelpers(object):
         config.append(new_config)
         cfg.setLabelsConfig(config)
 
-    def _setupItemFieldsConfig(self, cfg, field_name, view=None, edit=None):
+    def _setupItemFieldsConfig(self, field_name, cfg=None, view=None, edit=None):
         """Configure MeetingConfig.itemFieldsConfig."""
+        cfg = cfg or self.meetingConfig
         config = cfg.getItemFieldsConfig()
-        field_config = [row for row in config if row['name'] == field_name]
+        field_config = [row for row in config if row['name'] == field_name][0]
         if view is not None:
             field_config['view'] = view
         if edit is not None:
             field_config['edit'] = edit
-        cfg.setItemFields(config)
+        cfg.setItemFieldsConfig(config)
