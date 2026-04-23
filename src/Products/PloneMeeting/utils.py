@@ -2374,7 +2374,8 @@ def compute_item_roles_to_assign_to_suffixes(cfg, item, item_state, org_uid=None
 
 
 def is_proposing_group_editor(org_uid, cfg, suffixes=[]):
-    """ """
+    """Check if user is editor for given org_uid by getting editor suffixes from
+       MeetingConfig.itemWFValidationLevels."""
     suffixes = suffixes or cfg.getItemWFValidationLevels(data='suffix', only_enabled=True)
     return cfg.aq_parent.user_is_in_org(org_uid=org_uid, suffixes=suffixes)
 
