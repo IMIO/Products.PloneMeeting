@@ -300,7 +300,7 @@ document.location.reload(true);
   This macro displays the previous advice_type of an advice that is 'asked_again'.
 </tal:comment>
 <metal:previousAdviceType define-macro="previousAdviceType" i18n:domain="PloneMeeting">
-  <tal:defines define="adviceStyle python: context.portal_plonemeeting.getMeetingConfig(context).getAdviceStyle();
+  <tal:defines define="adviceStyle python: context.portal_plonemeeting.getMeetingConfig(context).advice_style;
                        previous_advice_type python: context.get_previous_advice_type()">
     (<img tal:attributes="src string:$portal_url/advice_${adviceStyle}_${previous_advice_type}.png;
                           title string:${previous_advice_type};"

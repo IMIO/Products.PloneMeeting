@@ -39,6 +39,7 @@ from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import REINDEX_NEEDED_MARKER
 from Products.PloneMeeting.content.meeting import IMeeting
+from Products.PloneMeeting.content.meetingconfig import _camel_to_snake
 from Products.PloneMeeting.indexes import _to_coded_adviser_index
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
@@ -104,7 +105,7 @@ class ItemMoreInfosView(BrowserView):
 
     def __call__(self, fieldsConfigAttr='itemsListVisibleFields', currentCfgId=None):
         """ """
-        self.visibleFields = self.cfg.getField(fieldsConfigAttr).get(self.cfg)
+        self.visibleFields = getattr(self.cfg, _camel_to_snake(fieldsConfigAttr))
         # if current user may not see the item, use another fieldsConfigAttr
         if not _checkPermission(View, self.context):
             # check it item fields should be visible nevertheless
@@ -120,7 +121,7 @@ class ItemMoreInfosView(BrowserView):
                 roles_bypassing_expression=[],
                 extra_expr_ctx=extra_expr_ctx)
             if res:
-                self.visibleFields = self.cfg.getField('itemsNotViewableVisibleFields').get(self.cfg)
+                self.visibleFields = self.cfg.items_not_viewable_visible_fields
                 with api.env.adopt_roles(roles=['Manager']):
                     return super(ItemMoreInfosView, self).__call__()
             else:
