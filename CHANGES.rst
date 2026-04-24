@@ -33,6 +33,9 @@ Changelog
 - Adapted `ToolPloneMeeting.user_is_in_org` to be able to pass a list of
   `org_id` or `org_uid`.
   [gbastien]
+- Fixed JS code passing `external_user_id` to `@@load-external-infos`
+  to avoid JS injection.
+  [gbastien]
 
 4.2.28.10 (2026-03-13)
 ----------------------
