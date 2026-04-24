@@ -1167,7 +1167,7 @@ class testAnnexes(PloneMeetingTestCase):
         wfAdaptations = cfg.wf_adaptations
         if 'only_creator_may_delete' in get_vocab_values(cfg, 'WorkflowAdaptations') and \
            'only_creator_may_delete' not in wfAdaptations:
-            wfAdaptations = wfAdaptations + ('only_creator_may_delete', )
+            wfAdaptations = list(wfAdaptations) + ['only_creator_may_delete']
             cfg.setWorkflowAdaptations(wfAdaptations)
             notify(ObjectEditedEvent(cfg))
         self.changeUser('pmCreator1')

@@ -1055,7 +1055,7 @@ class testViews(PloneMeetingTestCase):
         self.assertTrue("@@load-linked-items-infos?fieldsConfigAttr=itemsVisibleFields" in view())
         infos_view = linked_item.restrictedTraverse('@@load-linked-items-infos')
         infos_view("itemsNotViewableVisibleFields", cfg_id)
-        self.assertEqual(cfg.items_not_viewable_visible_fields, ())
+        self.assertEqual(cfg.items_not_viewable_visible_fields, [])
         cfg.items_not_viewable_visible_fields = ('MeetingItem.description', )
         self.cleanMemoize()
         # when field is empty, it is not displayed

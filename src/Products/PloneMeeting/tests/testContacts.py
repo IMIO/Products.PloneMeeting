@@ -65,7 +65,7 @@ class testContacts(PloneMeetingTestCase):
         # create meeting and select attendees on it
         meeting = self.create('Meeting')
         # contacts are still in correct order
-        self.assertEqual(cfg.ordered_contacts, meeting.get_attendees())
+        self.assertEqual(tuple(cfg.ordered_contacts), meeting.get_attendees())
 
     def test_pm_Get_all_usable_held_positions(self):
         ''' '''

@@ -749,8 +749,8 @@ class testWorkflows(PloneMeetingTestCase):
         self.changeUser('siteadmin')
         cfg = self.meetingConfig
         if 'meetingmanager_correct_closed_meeting' in get_vocab_values(cfg, 'WorkflowAdaptations'):
-            cfg.setWorkflowAdaptations(cfg.wf_adaptations +
-                                       ('meetingmanager_correct_closed_meeting', ))
+            cfg.setWorkflowAdaptations(list(cfg.wf_adaptations) +
+                                       ['meetingmanager_correct_closed_meeting'])
         # call.update_local_roles on item only if it not already decided
         # as.update_local_roles is called when item review_state changed
         self.assertTrue('accepted' in cfg.getItemDecidedStates())

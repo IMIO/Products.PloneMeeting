@@ -908,8 +908,8 @@ class testAdvices(PloneMeetingTestCase):
         '''Test the indexAdvisers 'combined idnex' functionnality that makes it possible
            to query items having advice of a given group using a given advice_type.'''
         # an advice can be given when an item is 'proposed' or 'validated'
-        self.assertEqual(self.meetingConfig.item_advice_states,
-                         (self._stateMappingFor('proposed'), ))
+        self.assertEqual(list(self.meetingConfig.item_advice_states),
+                         [self._stateMappingFor('proposed')])
         # create 3 items with various advices
         self.changeUser('pmCreator1')
         item1 = self.create('MeetingItem')
@@ -1492,9 +1492,9 @@ class testAdvices(PloneMeetingTestCase):
         self.assertFalse(self.vendors.get_item_advice_states())
         # make advice giveable when item is proposed
         cfg = self.meetingConfig
-        cfg.item_advice_states = (self._stateMappingFor('proposed', ))
-        cfg.item_advice_edit_states = (self._stateMappingFor('proposed', ))
-        cfg.item_advice_view_states = (self._stateMappingFor('proposed', ))
+        cfg.item_advice_states = [self._stateMappingFor('proposed')]
+        cfg.item_advice_edit_states = [self._stateMappingFor('proposed')]
+        cfg.item_advice_view_states = [self._stateMappingFor('proposed')]
         self.assertEqual(self.vendors.get_item_advice_states(cfg), cfg.item_advice_states)
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
@@ -1551,9 +1551,9 @@ class testAdvices(PloneMeetingTestCase):
         self.vendors.item_advice_view_states = \
             ("%s__state__%s" % (cfg_id, self._stateMappingFor('proposed')), )
         cfg2 = self.meetingConfig2
-        cfg2.item_advice_states = (self._stateMappingFor('itemcreated', ))
-        cfg2.item_advice_edit_states = (self._stateMappingFor('itemcreated', ))
-        cfg2.item_advice_view_states = (self._stateMappingFor('itemcreated', ))
+        cfg2.item_advice_states = [self._stateMappingFor('itemcreated')]
+        cfg2.item_advice_edit_states = [self._stateMappingFor('itemcreated')]
+        cfg2.item_advice_view_states = [self._stateMappingFor('itemcreated')]
 
         # getting states for cfg2 will get states on the cfg2
         self.assertEqual(self.vendors.get_item_advice_states(cfg2), cfg2.item_advice_states)
@@ -2073,14 +2073,14 @@ class testAdvices(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self._removeConfigObjectsFor(cfg)
         # make advice addable when item is itemcreated and give access to copyGroups
-        cfg.item_advice_states = (self._stateMappingFor('itemcreated',
-                                 self._stateMappingFor('proposed'), ))
-        cfg.item_advice_edit_states = (self._stateMappingFor('itemcreated',
-                                     self._stateMappingFor('proposed'), ))
+        cfg.item_advice_states = [self._stateMappingFor('itemcreated'),
+                                  self._stateMappingFor('proposed')]
+        cfg.item_advice_edit_states = [self._stateMappingFor('itemcreated'),
+                                       self._stateMappingFor('proposed')]
         cfg.keep_access_to_item_when_advice = "was_giveable"
         self._enableField('copyGroups')
-        cfg.item_copy_groups_states = (self._stateMappingFor('itemcreated',
-                                     self._stateMappingFor('proposed'), ))
+        cfg.item_copy_groups_states = [self._stateMappingFor('itemcreated'),
+                                       self._stateMappingFor('proposed')]
         cfg.enable_advice_proposing_group_comment = True
         # create item and ask advices
         self.changeUser('pmCreator1')
@@ -3273,8 +3273,8 @@ class testAdvices(PloneMeetingTestCase):
         selected_orgs.append(self.endUsers_uid)
         api.portal.set_registry_record(ORGANIZATIONS_REGISTRY, selected_orgs)
         self._addPrincipalToGroup('pmAdviser1', '{0}_advisers'.format(self.endUsers_uid))
-        cfg.selectable_advisers = cfg.selectable_advisers + (self.endUsers_uid,)
-        cfg.power_advisers_groups = (self.endUsers_uid,)
+        cfg.selectable_advisers = list(cfg.selectable_advisers) + [self.endUsers_uid]
+        cfg.power_advisers_groups = [self.endUsers_uid]
 
     def test_pm_InheritedAdviceNotAskedAdvice(self):
         """Check that not_asked advices are inherited as well."""

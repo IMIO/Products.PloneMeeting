@@ -1223,8 +1223,8 @@ class testMeetingType(PloneMeetingTestCase):
         # items of mc1 are clonable to mc2
         cfg2Id = self.meetingConfig2.getId()
         self.assertEqual(self.meetingConfig.meeting_configs_to_clone_to,
-                         ({'meeting_config': cfg2Id,
-                           'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}, ))
+                         [{'meeting_config': cfg2Id,
+                           'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}])
         self.changeUser('pmManager')
         self._removeConfigObjectsFor(self.meetingConfig)
         meeting = self.create('Meeting')
@@ -2410,7 +2410,7 @@ class testMeetingType(PloneMeetingTestCase):
            the next receivable meeting is used, aka None if not or next created meeting.
         '''
         cfg = self.meetingConfig
-        self.assertEqual(cfg.meeting_present_item_when_no_current_meeting_states, tuple())
+        self.assertEqual(cfg.meeting_present_item_when_no_current_meeting_states, [])
 
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
@@ -2438,7 +2438,7 @@ class testMeetingType(PloneMeetingTestCase):
            it is not used, but the next meeting in the future, aka None if not or next created meeting.
         '''
         cfg = self.meetingConfig
-        self.assertEqual(cfg.meeting_present_item_when_no_current_meeting_states, tuple())
+        self.assertEqual(cfg.meeting_present_item_when_no_current_meeting_states, [])
 
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
@@ -3476,7 +3476,7 @@ class testMeetingType(PloneMeetingTestCase):
         view._init()
         self.assertTrue(view.show_available_items())
         # for users and powerobservers
-        self.assertEqual(cfg.display_available_items_to, ())
+        self.assertEqual(cfg.display_available_items_to, [])
         self.changeUser('pmCreator1')
         view._init()
         self.assertFalse(view.show_available_items())
@@ -3808,7 +3808,8 @@ class testMeetingType(PloneMeetingTestCase):
         cfg = self.meetingConfig
         # enable as much field as possible
         self.changeUser('siteadmin')
-        attrs = [attr for attr in cfg.Vocabulary('usedMeetingAttributes')[0].keys()
+        attrs = [attr for attr in get_vocab_values(
+                     cfg, 'Products.PloneMeeting.vocabularies.used_meeting_attributes_vocabulary')
                  if "assembly" not in attr and "signatures" not in attr]
         cfg.used_meeting_attributes = attrs
         self.changeUser('pmManager')

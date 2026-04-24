@@ -714,7 +714,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             cfg.setWorkflowAdaptations(())
             notify(ObjectEditedEvent(cfg))
         else:
-            wfas = tuple(set(tuple(wfas) + cfg.wf_adaptations))
+            wfas = tuple(set(tuple(wfas) + tuple(cfg.wf_adaptations)))
         if wfas:
             cfg.setWorkflowAdaptations(wfas)
             notify(ObjectEditedEvent(cfg))

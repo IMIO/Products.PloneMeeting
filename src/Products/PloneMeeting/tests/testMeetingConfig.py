@@ -27,6 +27,7 @@ from imio.helpers.content import get_vocab_values
 from imio.helpers.workflow import get_leading_transitions
 from OFS.ObjectManager import BeforeDeleteException
 from plone import api
+from plone.dexterity.interfaces import IDexterityContent
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
@@ -1160,15 +1161,15 @@ class testMeetingConfig(PloneMeetingTestCase):
                        'item_action': EXECUTE_EXPR_VALUE,
                        'tal_expression': ''})
         self.failIf(cfg.validate_onMeetingTransitionItemActionToExecute(values))
-        # 'template_row_marker' is ignored by datagridfield
-        cfg.on_meeting_transition_item_action_to_execute = values
-        self.assertEqual(cfg.on_meeting_transition_item_action_to_execute,
-                         ({'item_action': EXECUTE_EXPR_VALUE,
+        # 'template_row_marker' is ignored by datagridfield setter
+        cfg.setOnMeetingTransitionItemActionToExecute(values)
+        self.assertEqual(list(cfg.on_meeting_transition_item_action_to_execute),
+                         [{'item_action': EXECUTE_EXPR_VALUE,
                            'meeting_transition': 'close',
                            'tal_expression': 'item/Title'},
                           {'item_action': 'accept',
                            'meeting_transition': 'close',
-                           'tal_expression': ''}))
+                           'tal_expression': ''}])
 
     def test_pm_AddingExistingSearchDoesNotBreak(self):
         '''
@@ -1193,10 +1194,18 @@ class testMeetingConfig(PloneMeetingTestCase):
         # a MeetingManager is able to edit a MeetingConfig
         self.assertTrue(self.hasPermission(ModifyPortalContent, cfg))
         # every editable fields are protected by the 'PloneMeeting: Write harmless config' permission
-        for field in cfg.Schema().editableFields(cfg):
-            if field.getName() in ('showinsearch', 'searchwords'):
+        from plone.autoform.interfaces import WRITE_PERMISSIONS_KEY
+        from plone.supermodel.utils import mergedTaggedValueDict
+        from Products.PloneMeeting.content.meetingconfig import IMeetingConfig as IMeetingConfigDX
+        write_perms = mergedTaggedValueDict(IMeetingConfigDX, WRITE_PERMISSIONS_KEY)
+        for field_name, permission in write_perms.items():
+            if field_name in ('showinsearch', 'searchwords'):
                 continue
-            self.assertTrue(field.write_permission == WriteHarmlessConfig)
+            if self.hasPermission(permission, cfg):
+                self.assertEqual(
+                    permission, WriteHarmlessConfig,
+                    "Field '{0}' is editable by pmManager but has permission '{1}' instead of "
+                    "WriteHarmlessConfig".format(field_name, permission))
 
     def test_pm_LinkedGroupsCreatedCorrectly(self):
         '''When a meetingConfig is created, some groups are created and configured,
@@ -1689,28 +1698,28 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertEqual(cfg3.places, places)
 
         # test with dict and cfg_ids parameter
-        cfg_value = ({'meeting_config': cfg2.getId(),
-                      'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL},)
-        self.assertEqual(cfg.meetingConfigsToCloneTo, cfg_value)
-        self.assertEqual(cfg2.meetingConfigsToCloneTo, ())
-        self.assertEqual(cfg3.meetingConfigsToCloneTo, ())
+        cfg_value = [{'meeting_config': cfg2.getId(),
+                      'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}]
+        self.assertEqual(list(cfg.meeting_configs_to_clone_to), cfg_value)
+        self.assertEqual(list(cfg2.meeting_configs_to_clone_to), [])
+        self.assertEqual(list(cfg3.meeting_configs_to_clone_to), [])
         cfg.update_cfgs(field_name='meetingConfigsToCloneTo', cfg_ids=[cfg3.getId()])
-        self.assertEqual(cfg.meetingConfigsToCloneTo, cfg_value)
-        self.assertEqual(cfg2.meetingConfigsToCloneTo, ())
-        self.assertEqual(cfg.meetingConfigsToCloneTo, cfg_value)
+        self.assertEqual(list(cfg.meeting_configs_to_clone_to), cfg_value)
+        self.assertEqual(list(cfg2.meeting_configs_to_clone_to), [])
+        self.assertEqual(list(cfg.meeting_configs_to_clone_to), cfg_value)
         # dict are copy
-        cfg.meetingConfigsToCloneTo[0]['meeting_config'] = 'dummy'
-        self.assertEqual(cfg.meetingConfigsToCloneTo[0]['meeting_config'], 'dummy')
-        self.assertEqual(cfg3.meetingConfigsToCloneTo[0]['meeting_config'], cfg2.getId())
-        cfg.meetingConfigsToCloneTo[0]['meeting_config'] = cfg2.getId()
+        cfg.meeting_configs_to_clone_to[0]['meeting_config'] = 'dummy'
+        self.assertEqual(cfg.meeting_configs_to_clone_to[0]['meeting_config'], 'dummy')
+        self.assertEqual(cfg3.meeting_configs_to_clone_to[0]['meeting_config'], cfg2.getId())
+        cfg.meeting_configs_to_clone_to[0]['meeting_config'] = cfg2.getId()
 
         # if reload=True, at_post_edit_script is called
         # useful to reapply WFAdaptations for example
         # enable 'mark_not_applicable' WFAdaptation that adds the
         # 'marked_not_applicable' state to the item WF
-        self.assertEqual(cfg.wf_adaptations, ())
-        self.assertEqual(cfg2.wf_adaptations, ())
-        self.assertEqual(cfg3.wf_adaptations, ())
+        self.assertEqual(list(cfg.wf_adaptations), [])
+        self.assertEqual(list(cfg2.wf_adaptations), [])
+        self.assertEqual(list(cfg3.wf_adaptations), [])
         cfg_item_type_name = cfg.getItemTypeName()
         cfg2_item_type_name = cfg2.getItemTypeName()
         cfg3_item_type_name = cfg3.getItemTypeName()
@@ -1721,7 +1730,7 @@ class testMeetingConfig(PloneMeetingTestCase):
             self.assertFalse('returned_to_proposing_group' in wfFor(cfg_item_type_name)[0].states)
             self.assertFalse('returned_to_proposing_group' in wfFor(cfg2_item_type_name)[0].states)
             self.assertFalse('returned_to_proposing_group' in wfFor(cfg3_item_type_name)[0].states)
-            cfg3.setWorkflowAdaptations(('return_to_proposing_group', ))
+            cfg3.wf_adaptations = ['return_to_proposing_group']
             notify(ObjectEditedEvent(cfg3))
             cfg3.update_cfgs(field_name='workflowAdaptations', reload=False)
             self.assertFalse('returned_to_proposing_group' in wfFor(cfg_item_type_name)[0].states)
@@ -2425,9 +2434,10 @@ class testMeetingConfig(PloneMeetingTestCase):
             self.failUnless(cfg.validate_usedMeetingAttributes([k, v]))
         required_values = {"assembly": ["assembly_excused", "assembly_absents"],
                            "attendees": ["excused", "absents"],
-                           "committees": [v for v in cfg.Vocabulary('usedMeetingAttributes')[0]
-                                          if v.startswith("committees_") and
-                                          v not in ('committees_observations', )]}
+                           "committees": [v for v in get_vocab_values(
+                               cfg, 'Products.PloneMeeting.vocabularies.used_meeting_attributes_vocabulary')
+                               if v.startswith("committees_") and
+                               v not in ('committees_observations', )]}
         for k, values in required_values.items():
             for v in values:
                 self.failUnless(cfg.validate_usedMeetingAttributes([v]))
@@ -2578,6 +2588,9 @@ class testMeetingConfig(PloneMeetingTestCase):
     def test_pm_ConfigEditAndView(self):
         """Just call the edit and view to check it is displayed correctly."""
         cfg = self.meetingConfig
+        if IDexterityContent.providedBy(cfg):
+            # DX: AT-specific Schemata/base_view/base_edit not applicable
+            return
         self.changeUser('siteadmin')
         fieldsets = cfg.Schemata().keys()
         for fieldset in fieldsets:
@@ -2802,6 +2815,21 @@ class testMeetingConfig(PloneMeetingTestCase):
                          ['decide', 'close'])
         self._activate_wfas(['no_freeze', 'no_publication', 'no_decide'])
         self.assertEqual(cfg.get_transitions_to_close_a_meeting(), ['close'])
+
+
+    def test_pm_VocabulariesNoValueContext(self):
+        """DGF row rendering passes NO_VALUE as context; vocabulary factories must not crash."""
+        from z3c.form.interfaces import NO_VALUE
+        from Products.PloneMeeting.vocabularies import AdviceWorkflowAdaptationsVocabularyFactory
+        from Products.PloneMeeting.vocabularies import ItemFieldsConfigVocabularyFactory
+        from Products.PloneMeeting.vocabularies import WorkflowAdaptationsVocabularyFactory
+        cfg = self.meetingConfig
+        self.request['PUBLISHED'] = cfg
+        for factory in (ItemFieldsConfigVocabularyFactory,
+                        WorkflowAdaptationsVocabularyFactory,
+                        AdviceWorkflowAdaptationsVocabularyFactory):
+            voc = factory(NO_VALUE)
+            self.assertTrue(hasattr(voc, 'by_token'))
 
 
 def test_suite():

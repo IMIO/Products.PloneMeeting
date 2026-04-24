@@ -81,7 +81,7 @@ class testSearches(PloneMeetingTestCase):
            a user has to give an advice for.'''
         self.changeUser('admin')
         cfg = self.meetingConfig
-        cfg.used_advice_types = cfg.getUsedAdviceTypes( + ('asked_again', ))
+        cfg.used_advice_types = list(cfg.used_advice_types) + ['asked_again']
         cfg.setCustomAdvisers(
             [{'row_id': 'unique_id_123',
               'org': self.vendors_uid,
@@ -117,7 +117,7 @@ class testSearches(PloneMeetingTestCase):
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstoadvice')
         self.failIf(collection.results())
         # an advice can be given when an item is 'proposed'
-        self.assertEqual(cfg.item_advice_states, (self._stateMappingFor('proposed'), ))
+        self.assertEqual(list(cfg.item_advice_states), [self._stateMappingFor('proposed')])
         # create an item to advice
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -210,7 +210,7 @@ class testSearches(PloneMeetingTestCase):
            Advice asked to another user will not be returned.'''
         self.changeUser('admin')
         cfg = self.meetingConfig
-        cfg.used_advice_types = cfg.getUsedAdviceTypes( + ('asked_again', ))
+        cfg.used_advice_types = list(cfg.used_advice_types) + ['asked_again']
         originalCustomAdvisers = {'row_id': 'unique_id_123',
                                   'org': self.vendors_uid,
                                   'gives_auto_advice_on': '',
@@ -302,7 +302,7 @@ class testSearches(PloneMeetingTestCase):
         self.changeUser('admin')
         cfg = self.meetingConfig
         itemTypeName = cfg.getItemTypeName()
-        cfg.used_advice_types = cfg.getUsedAdviceTypes( + ('asked_again', ))
+        cfg.used_advice_types = list(cfg.used_advice_types) + ['asked_again']
 
         # first test the generated query
         adapter = getAdapter(cfg,
@@ -338,7 +338,7 @@ class testSearches(PloneMeetingTestCase):
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_adviseditems')
         self.failIf(collection.results())
         # an advice can be given when an item is 'proposed'
-        self.assertEqual(cfg.item_advice_states, (self._stateMappingFor('proposed'), ))
+        self.assertEqual(list(cfg.item_advice_states), [self._stateMappingFor('proposed')])
         # create an item to advice
         self.changeUser('pmCreator1')
         item1 = self.create('MeetingItem')
@@ -433,7 +433,7 @@ class testSearches(PloneMeetingTestCase):
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_adviseditemswithdelay')
         self.failIf(collection.results())
         # an advice can be given when an item is 'proposed'
-        self.assertEqual(cfg.item_advice_states, (self._stateMappingFor('proposed'), ))
+        self.assertEqual(list(cfg.item_advice_states), [self._stateMappingFor('proposed')])
         # create an item to advice
         self.changeUser('pmCreator1')
         item1 = self.create('MeetingItem')
@@ -550,8 +550,8 @@ class testSearches(PloneMeetingTestCase):
         """Test MeetingConfig.show_copy_groups_search used to show items in copy searches."""
         cfg = self.meetingConfig
         self._enableField('copyGroups')
-        self.assertEqual(cfg.selectable_copy_groups,
-                         (self.developers_reviewers, self.vendors_reviewers))
+        self.assertEqual(list(cfg.selectable_copy_groups),
+                         [self.developers_reviewers, self.vendors_reviewers])
         self.changeUser('pmCreator1')
         self.assertFalse(cfg.show_copy_groups_search())
         self.changeUser('pmReviewer2')
@@ -1397,7 +1397,7 @@ class testSearches(PloneMeetingTestCase):
         self.assertEqual(adapter.query,
                          {'committees_index': {'query': ['committee_1']},
                           'portal_type': {'query': itemTypeName},
-                          'review_state': {'query': ('itemcreated', )}})
+                          'review_state': {'query': ['itemcreated']}})
         collection = cfg.searches.searches_items.searchitemsofmycommitteeseditable
         res = collection.results()
         self.assertEqual(len(res), 1)

@@ -57,7 +57,7 @@ class testPerformances(PloneMeetingTestCase):
                                       present_items=False,
                                       as_uids=True):
         cfg = self.meetingConfig
-        wfAdaptations = list(cfg.getWorkflowAdaptations())
+        wfAdaptations = list(cfg.wf_adaptations)
         if 'no_publication' not in wfAdaptations:
             self.changeUser('siteadmin')
             wfAdaptations.append('no_publication')

@@ -81,7 +81,7 @@ class testFaceted(PloneMeetingTestCase):
         """When selected, some user profiles will be redirected to the next meeting if it exists
            instead a dashboard displaying items (my items, ...)."""
         cfg = self.meetingConfig
-        self.assertEqual(cfg.redirect_to_next_meeting, ())
+        self.assertEqual(cfg.redirect_to_next_meeting, [])
         cfgId = cfg.getId()
         # get the pmCreator1 pmFolder
         self.changeUser('pmCreator1')
@@ -452,7 +452,7 @@ class testFaceted(PloneMeetingTestCase):
                           "Products.PloneMeeting.vocabularies.proposinggroupsforfacetedfiltervocabulary",
                           only_factory=True)
         # by default when MeetingConfig.groupsHiddenInDashboardFilter is empty, every group are returned
-        self.assertEqual(cfg.groups_hidden_in_dashboard_filter, ())
+        self.assertEqual(cfg.groups_hidden_in_dashboard_filter, [])
         # remove extra organizations from profiles
         cfg.groups_hidden_in_dashboard_filter = self._orgs_to_exclude_from_filter()
         notify(ObjectEditedEvent(cfg))
@@ -633,7 +633,7 @@ class testFaceted(PloneMeetingTestCase):
         # add an organization
         new_org = self.create('organization', title='New organization', acronym='N.G.')
         new_org_uid = new_org.UID()
-        cfg.selectable_advisers = cfg.selectable_advisers + (new_org_uid,)
+        cfg.selectable_advisers = list(cfg.selectable_advisers) + [new_org_uid]
         notify(ObjectEditedEvent(cfg))
         # cache was cleaned
         self.assertEqual(len(vocab(pmFolder)), 7)

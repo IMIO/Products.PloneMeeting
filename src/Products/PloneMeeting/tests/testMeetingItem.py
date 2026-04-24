@@ -1111,8 +1111,8 @@ class testMeetingItem(PloneMeetingTestCase):
         item_initial_state = self.wfTool[wf_name].initial_state
         self.assertEqual(newItem.query_state(), item_initial_state)
         self.assertEqual(cfg.meeting_configs_to_clone_to,
-                         ({'meeting_config': '%s' % cfg2Id,
-                           'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL},))
+                         [{'meeting_config': '%s' % cfg2Id,
+                           'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}])
         # remove the items and define that we want the item to be 'validated' when sent
         cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
                                          'trigger_workflow_transitions_until': '%s.%s' %
@@ -1675,7 +1675,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg2Id = cfg2.getId()
         self._enableField('category', cfg=cfg2, enable=False)
         if 'privacy' not in cfg2.used_item_attributes:
-            cfg2.setUsedItemAttributes(cfg2.used_item_attributes + ('privacy', ))
+            cfg2.setUsedItemAttributes(list(cfg2.used_item_attributes) + ['privacy'])
         cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
                                          'trigger_workflow_transitions_until': '%s.%s' %
                                          (cfg2Id, 'present')},))
@@ -2125,7 +2125,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failIf(i1.getCopyGroups())
         # If we create an item with copyGroups, the copyGroups are there...
         i2 = self.create('MeetingItem', copyGroups=cfg.selectable_copy_groups)
-        self.assertEqual(i2.getCopyGroups(), cfg.selectable_copy_groups)
+        self.assertEqual(i2.getCopyGroups(), tuple(cfg.selectable_copy_groups))
         # Now, define on an organization of the config that it will returns a particular suffixed group
         self.changeUser('admin')
         # If an item with proposing group 'vendors' is created, the 'reviewers' and 'advisers' of
@@ -4174,7 +4174,7 @@ class testMeetingItem(PloneMeetingTestCase):
             item.getField('optionalAdvisers').vocabulary_factory,
             only_factory=True)
         # relies on MeetingConfig.selectableAdvisers
-        self.assertEqual(cfg.selectable_advisers, (self.developers_uid, self.vendors_uid))
+        self.assertEqual(cfg.selectable_advisers, [self.developers_uid, self.vendors_uid])
         cfg.selectable_advisers = [self.developers_uid]
         vocab_keys = [term.token for term in vocab_factory(item)._terms]
         self.assertEqual(vocab_keys, [self.developers_uid])
@@ -4188,7 +4188,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # if a group is disabled, it is automatically removed from MeetingConfig.selectableAdvisers
         self.changeUser('admin')
         self._select_organization(self.developers_uid, remove=True)
-        self.assertEqual(cfg.selectable_advisers, (self.vendors_uid, ))
+        self.assertEqual(list(cfg.selectable_advisers), [self.vendors_uid])
         self.changeUser('pmManager')
         # still in the vocabulary because selected on the item
         vocab_keys = [term.token for term in vocab_factory(item)._terms]
@@ -7597,7 +7597,7 @@ class testMeetingItem(PloneMeetingTestCase):
             usedItemAttrs.append('privacy')
             cfg2.setUsedItemAttributes(usedItemAttrs)
         cfg2Id = cfg2.getId()
-        cfg.setItemManualSentToOtherMCStates((self._stateMappingFor('itemcreated')))
+        cfg.setItemManualSentToOtherMCStates([self._stateMappingFor('itemcreated')])
         # create an item in cfg, send it to cfg2 and check
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
@@ -7647,7 +7647,7 @@ class testMeetingItem(PloneMeetingTestCase):
         if 'privacy' in usedItemAttributes:
             usedItemAttributes.remove('privacy')
             cfg2.setUsedItemAttributes(usedItemAttributes)
-        cfg.setItemManualSentToOtherMCStates((self._stateMappingFor('itemcreated')))
+        cfg.setItemManualSentToOtherMCStates([self._stateMappingFor('itemcreated')])
         # create an item in cfg, send it to cfg2 and check
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
@@ -8610,8 +8610,9 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg = self.meetingConfig
         # enable as much field as possible
         self.changeUser('siteadmin')
-        attrs = cfg.Vocabulary('usedItemAttributes')[0].keys()
-        attrs.remove('proposingGroupWithGroupInCharge')
+        attrs = [term.value for term in get_vocab(
+            cfg, 'Products.PloneMeeting.vocabularies.used_item_attributes_vocabulary',
+            only_factory=True)(cfg) if term.value != 'proposingGroupWithGroupInCharge']
         cfg.setUsedItemAttributes(attrs)
         self.changeUser('pmManager')
         item = self.create('MeetingItem', decision=self.decisionText)

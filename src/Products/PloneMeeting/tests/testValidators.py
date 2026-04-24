@@ -319,7 +319,7 @@ class testValidators(PloneMeetingTestCase):
         dev_samplers_id = dev_samplers.getId()
         self.assertTrue(dev_samplers in api.group.get_groups())
         # use samplers in MeetingConfig
-        cfg.selectable_copy_groups = cfg.selectable_copy_groups + (dev_samplers_id, )
+        cfg.selectable_copy_groups = list(cfg.selectable_copy_groups) + [dev_samplers_id]
         validation_error_msg = _('can_not_delete_plone_group_meetingconfig',
                                  mapping={'cfg_url': cfg.absolute_url()})
         _check(validation_error_msg)
