@@ -5722,7 +5722,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         res = []
         for customAdviser in cfg.custom_advisers:
             # check if there is something to evaluate...
-            strippedExprToEvaluate = customAdviser['gives_auto_advice_on'].replace(' ', '')
+            strippedExprToEvaluate = customAdviser.get('gives_auto_advice_on', '').replace(' ', '')
             if not strippedExprToEvaluate or strippedExprToEvaluate == 'python:False':
                 continue
             # respect 'for_item_created_from' and 'for_item_created_until' defined dates
@@ -5739,7 +5739,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             extra_expr_ctx.update({'org': org, 'org_uid': customAdviser['org']})
             eRes = _evaluateExpression(
                 self,
-                expression=customAdviser['gives_auto_advice_on'],
+                expression=customAdviser.get('gives_auto_advice_on', ''),
                 roles_bypassing_expression=[],
                 extra_expr_ctx=extra_expr_ctx,
                 empty_expr_is_true=False,

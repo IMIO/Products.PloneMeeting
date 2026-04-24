@@ -1725,8 +1725,7 @@ body.template-facetednavigation_view div#viewlet-above-content-body {
    padding-top: 0em;
 }
 
-/* remove margin for fields itemWorkflow and meetingWorkflow on the meetingconfig_view
- * so really used workflow is displayed just under selected workflow */
+/* (legacy AT rule — kept for reference; archetypes-fieldname-* selectors no longer fire on DX) */
 body.template-base_view.portaltype-meetingconfig div[id^="archetypes-fieldname-itemWorkflow"],
 body.template-base_view.portaltype-meetingconfig div[id^="archetypes-fieldname-meetingWorkflow"] {
     margin-bottom: 0;

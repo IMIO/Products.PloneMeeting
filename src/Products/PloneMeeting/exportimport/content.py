@@ -415,7 +415,10 @@ class ToolInitializer:
         # for tests where config id is shuffled, save the real id
         if "__real_id__" in cData:
             cfg.__real_id__ = cData["__real_id__"]
-        if not IDexterityContent.providedBy(cfg):
+        if IDexterityContent.providedBy(cfg):
+            # DX: call processForm to set _at_creation_flag to False
+            cfg.processForm()
+        else:
             # AT-only: TextArea fields are not set properly via invokeFactory.
             for field in cfg.Schema().fields():
                 fieldName = field.getName()

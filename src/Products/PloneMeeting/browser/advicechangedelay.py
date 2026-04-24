@@ -98,13 +98,13 @@ class AdviceDelaysView(BrowserView):
             return res
 
         for linkedRow in availableLinkedRows:
-            if linkedRow['row_id'] == self.row_id:
+            if linkedRow.get('row_id', u'') == self.row_id:
                 continue
             res.append(
-                (linkedRow['row_id'],
-                 linkedRow['delay'],
-                 safe_unicode(linkedRow['delay_label']),
-                 linkedRow['is_delay_calendar_days'] == '1'))
+                (linkedRow.get('row_id', u''),
+                 linkedRow.get('delay', u''),
+                 safe_unicode(linkedRow.get('delay_label', u'')),
+                 linkedRow.get('is_delay_calendar_days', '0') == '1'))
         return res
 
     def _mayAccessDelayChangesHistory(self):
