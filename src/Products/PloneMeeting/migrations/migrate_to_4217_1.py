@@ -39,12 +39,14 @@ class Migrate_To_4217_1(Migrator):
         # update MeetingConfig.itemFieldsConfig default for "groupsInChargeNotes"
         for cfg in self.tool.objectValues('MeetingConfig'):
             item_fields_config = cfg.getItemFieldsConfig()
-            if not "groupsInChargeNotes" in [row['name'] for row in item_fields_config]:
+            if "groupsInChargeNotes" not in [row['name'] for row in item_fields_config]:
                 # use default value
                 default_value = cfg.Schema()['itemFieldsConfig'].getDefault(cfg)
-                gic_notes_config = [row for row in default_value if row['name'] == "groupsInChargeNotes"][0]
-                item_fields_config += (gic_notes_config, )
-                cfg.setItemFieldsConfig(item_fields_config)
+                gic_notes_config = [row for row in default_value if row['name'] == "groupsInChargeNotes"]
+                if gic_notes_config:
+                    gic_notes_config = gic_notes_config[0]
+                    item_fields_config += (gic_notes_config, )
+                    cfg.setItemFieldsConfig(item_fields_config)
         # update new fields groupsInChargeNotes on items
         self.initNewHTMLFields(
             query={'meta_type': ('MeetingItem')},
