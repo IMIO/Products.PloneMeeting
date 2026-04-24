@@ -2344,6 +2344,16 @@ class MeetingHeaderView(BrowserView):
     """ """
 
 
+class MeetingConfigDefaultView(BrowserView):
+    """Default view for DX MeetingConfig — redirects to the edit form.
+
+    Replaces the AT base_view skin template which relied on AT schema rendering.
+    """
+
+    def __call__(self):
+        return self.request.response.redirect(self.context.absolute_url() + '/edit')
+
+
 class DisplayMeetingConfigsOfConfigGroup(BrowserView):
     """This view will display the MeetingConfigs of a ConfigGroup."""
 

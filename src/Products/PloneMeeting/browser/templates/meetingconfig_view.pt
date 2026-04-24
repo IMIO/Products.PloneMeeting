@@ -1,0 +1,1115 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xml:lang="en"
+      lang="en"
+      xmlns:tal="http://xml.zope.org/namespaces/tal"
+      xmlns:metal="http://xml.zope.org/namespaces/metal"
+      xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+      metal:use-macro="context/main_template/macros/master"
+      i18n:domain="PloneMeeting">
+
+<body>
+
+  <metal:title fill-slot="content-title">
+    <h1 class="documentFirstHeading" tal:content="context/Title"></h1>
+  </metal:title>
+
+  <metal:description fill-slot="content-description">
+    <tal:comment replace="nothing">Hide the default description slot</tal:comment>
+  </metal:description>
+
+  <metal:main fill-slot="content-core"
+              tal:define="tool nocall:view/tool;
+                          context_url context/absolute_url;
+                          portal_url context/@@plone_portal_state/portal_url;
+                          isManager view/is_manager;
+                          isRealManager view/is_real_manager;
+                          pageName view/page_name;
+                          toLocalizedTime python: context.restrictedTraverse('@@plone').toLocalizedTime">
+
+    <tal:hideToNonManagers condition="nocall:isManager">
+
+    <!-- Tab bar -->
+    <span tal:repeat="pane view/pane_names">
+      [
+      <tal:currentPane condition="python: pageName == pane">
+        <b><span tal:content="pane" i18n:translate=""></span></b>
+      </tal:currentPane>
+      <tal:otherPane condition="python: pageName != pane">
+        <a tal:attributes="href string:${context_url}?pageName=${pane}">
+          <span tal:content="pane" i18n:translate=""></span>
+        </a>
+      </tal:otherPane>
+      ]
+    </span>
+    <a tal:attributes="href string:${context_url}/edit" i18n:translate="">Edit</a>
+    <br/><br/>
+
+    <!-- ============================================================ -->
+    <!-- Pane: default                                                -->
+    <!-- ============================================================ -->
+    <tal:mainConfig condition="python: pageName == 'default'">
+      <table width="100%" class="discreet">
+        <tal:widgets repeat="widget python: view.default_pane_widgets()">
+          <tr valign="top"
+              tal:define="is_rich python: widget.field.__class__.__name__ == 'RichText'"
+              tal:attributes="id string:row-${widget/id}">
+            <tal:is_rich condition="is_rich">
+              <td colspan="2">
+                <tal:render tal:content="structure widget/render">Value</tal:render>
+              </td>
+            </tal:is_rich>
+            <tal:not_rich condition="not: is_rich">
+              <tal:item_icon_color condition="python: widget.name == 'form.widgets.item_icon_color'">
+                <td class="table_widget_label"><label tal:content="widget/label">Label</label></td>
+                <td class="table_widget_value">
+                  <img class="itemIconColor"
+                       tal:attributes="src string:${portal_url}/${context/getItemIconColorName}" />
+                  <tal:render tal:content="structure widget/render">Value</tal:render>
+                </td>
+              </tal:item_icon_color>
+              <tal:not_item_icon_color condition="python: widget.name != 'form.widgets.item_icon_color'">
+                <td class="table_widget_label"><label tal:content="widget/label">Label</label></td>
+                <td class="table_widget_value">
+                  <tal:render tal:content="structure widget/render">Value</tal:render>
+                </td>
+              </tal:not_item_icon_color>
+            </tal:not_rich>
+          </tr>
+        </tal:widgets>
+      </table>
+
+      <!-- legacy AT getCustomFields fieldset removed in DX migration -->
+
+      <div class="configActions">
+        <table tal:condition="isManager" class="discreet">
+          <tr valign="top">
+            <td>
+              <fieldset>
+                <legend i18n:translate="" i18n:domain="collective.contact.plonegroup">Groups and users</legend>
+                <p i18n:translate="meetingconfig_display_groups_and_users_descr" class="pageNameDescr"></p>
+                <tal:groupsAndUsers tal:replace="structure python: context.displayGroupsAndUsers()" />
+                <tal:using_groups_widget tal:define="using_groups_widget python: view.widget('using_groups')"
+                                         tal:condition="using_groups_widget">
+                  <tal:render tal:content="structure using_groups_widget/render">Using groups</tal:render>
+                </tal:using_groups_widget>
+              </fieldset>
+            </td>
+            <td tal:condition="isRealManager" style="padding-left: 0.75em;">
+              <fieldset>
+                <legend i18n:translate="heading_actions">Actions</legend>
+                <p class="discreet" style="color: red; font-weight: bold;" i18n:translate="pm_tool_updates_warning">
+                  Warning: take care that launching these proceedings may take time, depending on the number of existing elements!  Do not launch during period of high use!
+                </p>
+                <form name="updateAllLocalRolesForm"
+                      tal:attributes="action string:${tool/absolute_url}/update_all_local_roles">
+                  <p class="discreet" style="color: red;" i18n:translate="mc_update_all_local_roles_warning">
+                    Warning: this will update every items and meetings of this configuration, it is only relevant if the field of the configuration that you changed specifies that you need to use this action.  If you only made little changes like adding or removing a state in a field, as an administrator, it is possible to update items and meetings from the dashboards.  To do this, select elements that need to be updated and use the "Update from configuration" batch action.
+                  </p>
+                  <input type="hidden" tal:attributes="value context/getMeetingTypeName" name="portal_type:list" />
+                  <input type="hidden" tal:attributes="value context/getItemTypeName" name="portal_type:list" />
+                  <input class="context" type="submit" name="updateAllLocalRoles"
+                         onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {this.form.submit();}"
+                         value="mc_update_all_local_roles" i18n:attributes="value"/>
+                </form>
+                <form name="updateAnnexConfidentialityForm" action="updateAnnexConfidentiality">
+                  <p class="discreet" style="color: red;" i18n:translate="pm_update_annex_confidentiality_warning">
+                    Warning: the action 'Initialize existing annexes confidentiality' will initialize every existing annex confidentiality to what is defined as default value in this meeting configuration (check the 'Advices and access' tab).
+                  </p>
+                  <input class="context"
+                         type="submit" name="updateAnnexConfidentiality"
+                         value="pm_update_annex_confidentiality"
+                         onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {this.form.submit();}"
+                         i18n:attributes="value"/>
+                </form>
+                <form name="updateAdviceConfidentialityForm" action="updateAdviceConfidentiality">
+                  <p class="discreet" style="color: red;" i18n:translate="pm_update_advice_confidentiality_warning">
+                    Warning: the action 'Initialize existing advices confidentiality' will initialize every existing advice confidentiality to what is defined as default value in this meeting configuration (check the 'Advices and access' tab).
+                  </p>
+                  <input class="context"
+                         type="submit"
+                         name="updateAdviceConfidentiality"
+                         value="pm_update_advice_confidentiality"
+                         onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {this.form.submit();}"
+                         i18n:attributes="value"/>
+                </form>
+                <form name="updateLabelsAccessCacheForm" action="update_labels_access_cache">
+                  <p class="discreet" style="color: red;" i18n:translate="pm_update_labels_access_cache_warning">
+                    Warning: the action 'Update labels access cache' will update every items labels access, this needs to be done when labels are activated or when labels config changed.
+                  </p>
+                  <input class="apButton apButtonAction apButtonAction_update_labels_access_cache"
+                         type="submit"
+                         name="updateLabelsAccessCache"
+                         value="pm_update_labels_access_cache"
+                         onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {this.form.submit();}"
+                         i18n:attributes="value"/>
+                </form>
+                <form name="updatePersonalLabelsForm" action="updatePersonalLabels">
+                  <p class="discreet" style="color: red;" i18n:translate="pm_update_personal_labels_warning">
+                    Warning: the action 'Initialize personal labels' will activate selected labels on every existing items that were last modified before given number of days for every users able to see these items.
+                  </p>
+                  <select name="personal_labels:list">
+                    <option value="" i18n:translate="">Select a label</option>
+                    <option tal:repeat="term context/get_labels_vocab"
+                            tal:attributes="value term/value"
+                            tal:content="term/title">Label title</option>
+                  </select>
+                  <br />
+                  <select name="modified_since_days:int">
+                    <option value="30" i18n:translate="">Modified since (in days, default to 30 days)</option>
+                    <option tal:repeat="value python: range(0, 100, 5)"
+                            tal:attributes="value value"
+                            tal:content="value">0</option>
+                  </select>
+                  <br />
+                  <input class="context"
+                         type="submit"
+                         name="updatePersonalLabels"
+                         value="pm_update_personal_labels"
+                         onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {this.form.submit();}"
+                         i18n:attributes="value"/>
+                </form>
+                <form name="checkPodTemplatesForm" action="checkPodTemplates">
+                  <p class="discreet" style="color: red;" i18n:translate="pm_check_pod_templates_warning">
+                    Warning: the action 'Check Pod templates' will check that every Pod templates defined in the configuration are working correctly.
+                  </p>
+                  <input class="context"
+                         type="submit" name="checkPodTemplates"
+                         value="pm_check_pod_templates"
+                         onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {this.form.submit();}"
+                         i18n:attributes="value"/>
+                </form>
+              </fieldset>
+            </td>
+          </tr>
+        </table>
+      </div>
+    </tal:mainConfig>
+
+    <!-- ============================================================ -->
+    <!-- Pane: assembly_and_signatures                                -->
+    <!-- ============================================================ -->
+    <tal:assembly_and_signatures condition="python: pageName == 'assembly_and_signatures'">
+      <p i18n:translate="meetingconfig_assembly_and_signatures_descr" class="pageNameDescr"></p><br />
+
+      <tal:defines define="usedMeetingAttributes context/getUsedMeetingAttributes">
+        <fieldset>
+          <legend class="warningInMeetingConfig" i18n:translate="">This meeting configuration uses following fields to manage assemblies and signatures</legend>
+          <p class="warningInMeetingConfig"><span i18n:translate="">Free text fields</span> :</p>
+          <ul>
+            <li tal:condition="python: 'assembly' in usedMeetingAttributes" i18n:translate="title_assembly">Assembly</li>
+            <li tal:condition="python: 'assembly_excused' in usedMeetingAttributes" i18n:translate="title_assembly_excused">Assembly excused</li>
+            <li tal:condition="python: 'assembly_absents' in usedMeetingAttributes" i18n:translate="title_assembly_absents">Assembly absents</li>
+            <li tal:condition="python: 'assembly_guests' in usedMeetingAttributes" i18n:translate="title_assembly_guests">Assembly guests</li>
+            <li tal:condition="python: 'assembly_proxies' in usedMeetingAttributes" i18n:translate="title_assembly_proxies">Assembly proxies</li>
+            <li tal:condition="python: 'assembly_staves' in usedMeetingAttributes" i18n:translate="title_assembly_staves">Assembly staves</li>
+            <li tal:condition="python: 'signatures' in usedMeetingAttributes" i18n:translate="title_signatures">Signatures</li>
+            <li tal:condition="python: 'assembly' not in usedMeetingAttributes and 'assembly_excused' not in usedMeetingAttributes and 'assembly_absents' not in usedMeetingAttributes and 'assembly_guests' not in usedMeetingAttributes and 'assembly_proxies' not in usedMeetingAttributes and 'assembly_staves' not in usedMeetingAttributes and 'signatures' not in usedMeetingAttributes" i18n:translate="None">None</li>
+          </ul>
+          <p class="warningInMeetingConfig"><span i18n:translate="">Contacts fields</span> :</p>
+          <ul>
+            <li tal:condition="python: 'attendees' in usedMeetingAttributes" i18n:translate="title_attendees">Attendees</li>
+            <li tal:condition="python: 'excused' in usedMeetingAttributes" i18n:translate="title_excused">Excused</li>
+            <li tal:condition="python: 'absents' in usedMeetingAttributes" i18n:translate="title_absents">Absents</li>
+            <li tal:condition="python: 'replacements' in usedMeetingAttributes" i18n:translate="title_replacements">Replacements</li>
+            <li tal:condition="python: 'signatories' in usedMeetingAttributes" i18n:translate="title_signatories">Signatories</li>
+            <li tal:condition="python: 'attendees' not in usedMeetingAttributes and 'excused' not in usedMeetingAttributes and 'absents' not in usedMeetingAttributes and 'replacements' not in usedMeetingAttributes and 'signatories' not in usedMeetingAttributes" i18n:translate="None">None</li>
+          </ul>
+        </fieldset>
+      </tal:defines>
+
+      <br />
+
+      <table width="100%" class="discreet">
+        <tal:widgets repeat="widget python: view.group_widgets('assembly_and_signatures')">
+          <tr valign="top"
+              tal:define="is_rich python: widget.field.__class__.__name__ in ('RichText', 'Text')"
+              tal:attributes="id string:row-${widget/id}">
+            <tal:is_rich condition="is_rich">
+              <td colspan="2">
+                <tal:render tal:content="structure widget/render">Value</tal:render>
+              </td>
+            </tal:is_rich>
+            <tal:not_rich condition="not: is_rich">
+              <td class="table_widget_label"><label tal:content="widget/label">Label</label></td>
+              <td class="table_widget_value">
+                <tal:render tal:content="structure widget/render">Value</tal:render>
+              </td>
+            </tal:not_rich>
+          </tr>
+        </tal:widgets>
+      </table>
+
+      <fieldset>
+        <legend i18n:translate="meetingconfig_contacts">Contacts management</legend>
+        <p i18n:translate="meetingconfig_contacts_descr" class="pageNameDescr">Contacts are a way to use representation of real attendees to manage assembly of meetings.</p><br />
+        <h4>
+          <img src="manage.png"
+               style="vertical-align: baseline;"
+               tal:attributes="src string:${portal_url}/manage.png;"/>
+          <a href="" tal:attributes="href string:${portal_url}/contacts" i18n:translate="">Manage contacts</a>
+        </h4>
+      </fieldset>
+    </tal:assembly_and_signatures>
+
+    <!-- ============================================================ -->
+    <!-- Pane: data                                                   -->
+    <!-- ============================================================ -->
+    <tal:data condition="python: pageName == 'data'">
+      <p i18n:translate="meetingconfig_data_descr" class="pageNameDescr"></p><br />
+      <table width="100%" class="discreet">
+        <tal:widgets repeat="widget python: view.group_widgets('data')">
+          <tr valign="top"
+              tal:define="is_rich python: widget.field.__class__.__name__ == 'RichText'"
+              tal:attributes="id string:row-${widget/id}">
+            <tal:is_rich condition="is_rich">
+              <td colspan="2">
+                <tal:render tal:content="structure widget/render">Value</tal:render>
+              </td>
+            </tal:is_rich>
+            <tal:not_rich condition="not: is_rich">
+              <td class="table_widget_label"><label tal:content="widget/label">Label</label></td>
+              <td class="table_widget_value">
+                <tal:render tal:content="structure widget/render">Value</tal:render>
+              </td>
+            </tal:not_rich>
+          </tr>
+        </tal:widgets>
+      </table>
+
+      <!-- Annex types -->
+      <p>&nbsp;</p>
+      <a name="annexes_types"></a>
+      <fieldset>
+        <legend>
+          <span i18n:translate="">Annex types</span>
+        </legend>
+        <p class="discreet" i18n:translate="annex_types_descr"></p><br />
+        <tal:annexesCategories repeat="cat_group context/annexes_types/objectValues"
+                               define="show_annexes_types python: view.show_annexes_types()">
+          <a name="#"
+             tal:attributes="name cat_group/getId"></a>
+          <table class="listing nosort" style="text-align: right;" width="100%"
+                 tal:define="cat_group_url cat_group/absolute_url">
+            <tr>
+              <th class="nosort">
+                <h2 style="display: inline;">
+                  <a href=""
+                     tal:attributes="href cat_group/absolute_url"
+                     tal:content="cat_group/Title">Group category title</a>
+                </h2>
+                <tal:forRealManagers condition="isRealManager">
+                  <a href="#"
+                     title="add_object"
+                     i18n:attributes="title"
+                     tal:define="addable_content_category_type python: cat_group.allowedContentTypes()[0].id"
+                     tal:attributes="href string:${cat_group_url}/++add++${addable_content_category_type}">
+                    <img src="#" tal:attributes="src string:$portal_url/new.png" />
+                  </a>
+                  <a href="#"
+                     title="Edit attributes of this group of categories"
+                     i18n:attributes="title"
+                     tal:attributes="href string:${cat_group_url}/edit">
+                    <img src="#" tal:attributes="src string:$portal_url/edit.png" />
+                  </a>
+                </tal:forRealManagers>
+                <tal:additionalInformations
+                  define="obj python: cat_group;
+                          excludedFields python: ('id', 'description', 'title')">
+                  <metal:additionalInformations use-macro="context/@@pm-macros/additionalInformations" />
+                </tal:additionalInformations>
+              </th>
+              <th class="nosort" width="50px" i18n:translate="heading_is_active">Active?</th>
+              <th class="nosort" width="130px" i18n:translate="heading_actions">Actions</th>
+            </tr>
+            <tr tal:condition="not: cat_group/objectValues">
+              <td colspan="5" align="center" i18n:translate="">No annex types.</td>
+            </tr>
+            <tr tal:condition="not: show_annexes_types">
+              <td colspan="5" align="center" i18n:translate="annexes_types_force_display_descr">
+                Annexes types are hidden by default, you can <a i18n:name="force_display" i18n:translate="force_display" href=".?pageName=data&amp;show_annexes_types=1#annexes_types">force display</a>.
+              </td>
+            </tr>
+            <tal:loop repeat="cat python: cat_group.objectValues()" condition="show_annexes_types">
+              <tr tal:define="isActive cat/enabled;
+                              oddrow repeat/cat/odd;
+                              classOddEven python: oddrow and 'even' or 'odd';"
+                  tal:attributes="class classOddEven"
+                  valign="top">
+                <td>
+                  <h5>
+                    <a tal:attributes="href cat/absolute_url;
+                                       class python: not isActive and 'state-inactive' or ''"
+                       tal:content="cat/Title">Annex category title</a>
+                  </h5>
+                  <div class="discreet" tal:define="descr cat/Description" tal:condition="descr" tal:content="descr">Category description</div>
+                  <tal:additionalInformations
+                    define="obj python: cat;
+                            excludedFields python: ('id', 'description', 'title')">
+                    <metal:additionalInformations use-macro="context/@@pm-macros/additionalInformations" />
+                  </tal:additionalInformations>
+                  <div class="config_sub_categories">
+                    <table class="listing nosort" style="text-align: right;" width="100%">
+                      <tr>
+                        <th class="nosort" width="200px">
+                          <span i18n:translate="heading_subtypes">Sub types</span>
+                          <tal:forRealManagers condition="isRealManager">
+                            <a href="#"
+                               title="add_object"
+                               i18n:attributes="title"
+                               tal:define="cat_url cat/absolute_url;
+                                           addable_content_category_type python: cat.allowedContentTypes()[0].id"
+                               tal:attributes="href string:${cat_url}/++add++${addable_content_category_type}">
+                              <img src="#" tal:attributes="src string:$portal_url/new.png" />
+                            </a>
+                          </tal:forRealManagers>
+                        </th>
+                        <th class="nosort" width="50px" i18n:translate="heading_is_active">Active?</th>
+                        <th class="nosort" width="130px" i18n:translate="heading_actions">Actions</th>
+                      </tr>
+                      <tr tal:condition="python: not cat.objectValues()">
+                        <td colspan="5" align="center" i18n:translate="">No annex subtypes.</td>
+                      </tr>
+                      <tal:loop repeat="sub_cat python: cat.objectValues()">
+                        <tr tal:define="isActive sub_cat/enabled;
+                                        oddrow repeat/sub_cat/odd;
+                                        classOddEven python: oddrow and 'even' or 'odd';"
+                            tal:attributes="class classOddEven"
+                            valign="top">
+                          <td>
+                            <h5>
+                              <a tal:attributes="href sub_cat/absolute_url;
+                                                 class python: not isActive and 'state-inactive' or ''"
+                                 tal:content="sub_cat/Title">Subcategory title</a>
+                            </h5>
+                            <div class="discreet" tal:define="descr sub_cat/Description" tal:condition="descr" tal:content="descr">Sub category description</div>
+                            <tal:additionalInformations
+                              define="obj python: sub_cat;
+                                      excludedFields python: ('id', 'description', 'title')">
+                              <metal:additionalInformations use-macro="context/@@pm-macros/additionalInformations" />
+                            </tal:additionalInformations>
+                          </td>
+                          <td i18n:domain="plone">
+                            <span tal:condition="isActive" i18n:translate="">Yes</span>
+                            <span class="state-inactive" tal:condition="not: isActive" i18n:translate="">No</span>
+                          </td>
+                          <td align="right">
+                            <tal:actions replace="structure python: sub_cat.restrictedTraverse('@@actions_panel')(showActions=False, showTransitions=False, showArrows=True)" />
+                          </td>
+                        </tr>
+                      </tal:loop>
+                    </table>
+                  </div>
+                </td>
+                <td i18n:domain="plone">
+                  <span tal:condition="isActive" i18n:translate="">Yes</span>
+                  <span class="state-inactive" tal:condition="not: isActive" i18n:translate="">No</span>
+                </td>
+                <td align="right">
+                  <tal:actions replace="structure python: cat.restrictedTraverse('@@actions_panel')(showActions=False, showTransitions=False, showArrows=True)" />
+                </td>
+              </tr>
+            </tal:loop>
+          </table>
+          <p>&nbsp;</p>
+        </tal:annexesCategories>
+      </fieldset>
+
+      <!-- Categories -->
+      <a name="categories"></a>
+      <fieldset>
+        <legend>
+          <span i18n:translate="Categories"></span>
+          <a href="#"
+             class="link-overlay-pm"
+             title="add_object"
+             i18n:attributes="title"
+             tal:condition="isRealManager"
+             tal:attributes="href string:${context_url}/categories/++add++meetingcategory">
+            <img src="#" tal:attributes="src string:$portal_url/new.png" />
+          </a>
+        </legend>
+        <p class="discreet" i18n:translate="categories_descr"></p><br />
+        <tal:defines define="cFolder python: context.categories;">
+          <metal:categoriesInConfig use-macro="context/@@pm-macros/categoriesInConfig" />
+        </tal:defines>
+      </fieldset>
+
+      <!-- Classifiers -->
+      <a name="classifiers"></a>
+      <fieldset>
+        <legend>
+          <span i18n:translate="Classifiers"></span>
+          <a href="#"
+             class="link-overlay-pm"
+             title="add_object"
+             i18n:attributes="title"
+             tal:condition="isRealManager"
+             tal:attributes="href string:${context_url}/classifiers/++add++meetingcategory">
+            <img src="#" tal:attributes="src string:$portal_url/new.png" />
+          </a>
+        </legend>
+        <p class="discreet" i18n:translate="classifiers_descr"></p><br />
+        <tal:defines define="cFolder python: context.classifiers;">
+          <metal:categoriesInConfig use-macro="context/@@pm-macros/categoriesInConfig" />
+        </tal:defines>
+      </fieldset>
+
+      <!-- Meeting categories -->
+      <a name="meetingcategories"></a>
+      <fieldset>
+        <legend>
+          <span i18n:translate="Meeting categories"></span>
+          <a href="#"
+             class="link-overlay-pm"
+             title="add_object"
+             i18n:attributes="title"
+             tal:condition="isRealManager"
+             tal:attributes="href string:${context_url}/meetingcategories/++add++meetingcategory">
+            <img src="#" tal:attributes="src string:$portal_url/new.png" />
+          </a>
+        </legend>
+        <p class="discreet" i18n:translate="meeting_categories_descr"></p><br />
+        <tal:defines define="cFolder python: context.meetingcategories;">
+          <metal:categoriesInConfig use-macro="context/@@pm-macros/categoriesInConfig" />
+        </tal:defines>
+      </fieldset>
+
+      <!-- Recurring items -->
+      <a name="recurringitems"></a>
+      <fieldset>
+        <legend>
+          <span i18n:translate="RecurringItems"></span>
+          <a href="#"
+             title="add_object"
+             i18n:attributes="title"
+             tal:condition="isRealManager"
+             tal:define="itemType python: context.getItemTypeName(configType='MeetingItemRecurring')"
+             tal:attributes="href string:${context_url}/recurringitems/createObject?type_name=${itemType}">
+            <img src="#" tal:attributes="src string:$portal_url/new.png" />
+          </a>
+        </legend>
+        <p class="discreet" i18n:translate="recurring_items_descr"></p><br />
+        <table class="listing nosort" align="right" width="100%"
+               tal:define="rFolder python: context.recurringitems;
+                           rFolderUrl python: rFolder.absolute_url();">
+          <tr>
+            <th class="nosort" width="50%" i18n:translate="listingheader_title">Title</th>
+            <th class="nosort" i18n:translate="header_CreationDate" i18n:domain="collective.eeafaceted.z3ctable">Created</th>
+            <th class="nosort" i18n:translate="header_ModificationDate" i18n:domain="collective.eeafaceted.z3ctable">Modified</th>
+            <th class="nosort" i18n:translate="PloneMeeting_label_meetingTransitionInsertingMe">Meeting transition inserting me</th>
+            <th class="nosort" width="130px" i18n:translate="heading_actions">Actions</th>
+          </tr>
+          <tr tal:condition="python: not rFolder.objectValues('MeetingItem')">
+            <td colspan="5" align="center" i18n:translate="">no_recurring_item</td>
+          </tr>
+          <tal:loop repeat="obj python: context.getRecurringItems(onlyActive=False)">
+            <tr tal:define="isActive python: context.portal_workflow.getInfoFor(obj, 'review_state') == 'active';
+                            oddrow repeat/obj/odd;
+                            classOddEven python: oddrow and 'even' or 'odd';"
+                tal:attributes="class python: not isActive and classOddEven+' state-inactive' or classOddEven"
+                valign="top">
+              <td><h5><a tal:attributes="href python: obj.absolute_url()" tal:content="python: obj.Title()"></a></h5></td>
+              <td>
+                <span tal:content="python: toLocalizedTime(obj.created(), long_format=True)">Created</span>
+              </td>
+              <td>
+                <span tal:content="python: toLocalizedTime(obj.modified(), long_format=True)">Modified</span>
+              </td>
+              <td><span tal:content="python: obj.getMeetingTransitionInsertingMe() or '-'">Transition</span></td>
+              <td align="right">
+                <tal:actions replace="structure python: obj.restrictedTraverse('@@config_actions_panel')(showActions=False, showTransitions=True, showArrows=True)" />
+              </td>
+            </tr>
+          </tal:loop>
+        </table>
+      </fieldset>
+
+      <!-- Item templates -->
+      <a name="itemtemplates"></a>
+      <fieldset>
+        <legend>
+          <span i18n:translate="Item templates"></span>
+        </legend>
+        <p class="discreet" i18n:translate="item_templates_descr"></p>
+        <h4>
+          <img src="manage.png"
+               style="vertical-align: baseline;"
+               tal:attributes="src string:${portal_url}/manage.png;"/>
+          <a href="itemtemplates" i18n:translate="">Manage item templates</a>
+        </h4>
+        <p tal:define="default_template python: context.get_default_item_template(only_active=False);
+                       default_template_review_state default_template/query_state"
+           i18n:translate="">The default item template <span i18n:name="default_template_title"><img tal:attributes="src default_template/getIconURL" />
+          <a tal:attributes="href default_template/absolute_url;
+                             class string:contenttype-${default_template/portal_type} state-${default_template_review_state}"
+             tal:content="default_template/Title">Default item template title</a></span> is <span i18n:name="default_template_review_state"
+              tal:content="default_template_review_state"
+              tal:attributes="class string:state-${default_template_review_state}"
+              i18n:domain="plone"
+              i18n:translate="">review_state</span>.</p>
+      </fieldset>
+    </tal:data>
+
+    <!-- ============================================================ -->
+    <!-- Pane: workflow                                               -->
+    <!-- ============================================================ -->
+    <tal:workflow condition="python: pageName == 'workflow'">
+      <p i18n:translate="meetingconfig_workflow_descr" class="pageNameDescr"></p><br />
+      <p i18n:translate="warning_meetingconfig_edit_section_descr" style="color: red;">
+        DO NOT CHANGE PARAMETERS DEFINED IN THIS SECTION UNLESS YOU ARE REALLY SURE WHAT YOU ARE DOING!
+      </p><br />
+
+      <table width="100%" class="discreet">
+        <tal:widgets repeat="widget python: view.group_widgets('workflow')">
+          <tr valign="top"
+              tal:define="is_rich python: widget.field.__class__.__name__ == 'RichText'"
+              tal:attributes="id string:row-${widget/id}">
+            <tal:is_rich condition="is_rich">
+              <td colspan="2">
+                <tal:render tal:content="structure widget/render">Value</tal:render>
+              </td>
+            </tal:is_rich>
+            <tal:not_rich condition="not: is_rich">
+              <td class="table_widget_label"><label tal:content="widget/label">Label</label></td>
+              <td class="table_widget_value">
+                <tal:render tal:content="structure widget/render">Value</tal:render>
+                <!-- Append red wf-id annotation next to workflow field -->
+                <tal:item_wf condition="python: widget.name == 'form.widgets.item_workflow'">
+                  <span style="color: red;" tal:content="python: view.wf_id('item')"></span>
+                </tal:item_wf>
+                <tal:meeting_wf condition="python: widget.name == 'form.widgets.meeting_workflow'">
+                  <span style="color: red;" tal:content="python: view.wf_id('meeting')"></span>
+                </tal:meeting_wf>
+              </td>
+            </tal:not_rich>
+          </tr>
+        </tal:widgets>
+      </table>
+    </tal:workflow>
+
+    <!-- ============================================================ -->
+    <!-- Pane: gui                                                    -->
+    <!-- ============================================================ -->
+    <tal:gui condition="python: pageName == 'gui'">
+      <p i18n:translate="meetingconfig_gui_descr" class="pageNameDescr"></p><br />
+      <table width="100%" class="discreet">
+        <tal:widgets repeat="widget python: view.group_widgets('gui')">
+          <tr valign="top"
+              tal:define="is_rich python: widget.field.__class__.__name__ == 'RichText'"
+              tal:attributes="id string:row-${widget/id}">
+            <tal:is_rich condition="is_rich">
+              <td colspan="2">
+                <tal:render tal:content="structure widget/render">Value</tal:render>
+              </td>
+            </tal:is_rich>
+            <tal:not_rich condition="not: is_rich">
+              <td class="table_widget_label"><label tal:content="widget/label">Label</label></td>
+              <td class="table_widget_value">
+                <tal:render tal:content="structure widget/render">Value</tal:render>
+              </td>
+            </tal:not_rich>
+          </tr>
+        </tal:widgets>
+      </table>
+
+      <!-- Searches -->
+      <a name="searches"></a>
+      <fieldset>
+        <legend>
+          <span i18n:translate="Searches">Searches</span>
+        </legend>
+        <p class="discreet" i18n:translate="searches_descr"></p>
+        <tal:isRealManager condition="isRealManager">
+          <p i18n:translate="warning_meetingconfig_edit_section_descr" style="color: red;">
+            DO NOT CHANGE PARAMETERS DEFINED IN THIS SECTION UNLESS YOU ARE REALLY SURE WHAT YOU ARE DOING!
+          </p>
+          <h4>
+            <img src="manage.png"
+                 style="vertical-align: baseline;"
+                 tal:attributes="src string:${portal_url}/manage.png;"/>
+            <a href="searches/folder_contents" i18n:translate="">Manage dashboard</a>
+          </h4>
+        </tal:isRealManager>
+        <p>&nbsp;</p>
+
+        <tal:searchesCategories repeat="cFolder python: context.searches.objectValues()">
+          <table class="listing nosort" style="text-align: right;" width="100%"
+                 tal:define="cFolderUrl cFolder/absolute_url">
+            <tr>
+              <th class="nosort" width="200px">
+                <span i18n:translate="config_search_title">Searches
+                  <span i18n:name="search_title" tal:content="cFolder/Title">Folder title</span>
+                </span>
+                <input type="image"
+                       style="cursor:pointer"
+                       class="imageInput"
+                       tal:attributes="onClick python: 'href: window.location=\'%s/++add++DashboardCollection\'' % cFolderUrl;
+                                       src string:$portal_url/new.png"
+                       title="add_object" i18n:attributes="title"
+                       tal:condition="isRealManager"/>
+              </th>
+              <th class="nosort" i18n:translate="header_CreationDate" i18n:domain="collective.eeafaceted.z3ctable">Created</th>
+              <th class="nosort" i18n:translate="header_ModificationDate" i18n:domain="collective.eeafaceted.z3ctable">Modified</th>
+              <th class="nosort" width="400px" i18n:translate="heading_criteria">Criteria</th>
+              <th class="nosort" i18n:translate="">Condition</th>
+              <th class="nosort" width="50px" i18n:translate="heading_is_active">Active?</th>
+              <th class="nosort" width="130px" i18n:translate="heading_actions">Actions</th>
+            </tr>
+            <tr tal:condition="python: not cFolder.objectValues()">
+              <td colspan="5" align="center" i18n:translate="">no_collection_folder</td>
+            </tr>
+            <tal:loop repeat="obj python: cFolder.objectValues()">
+              <tr tal:define="isActive obj/enabled;
+                              oddrow repeat/obj/odd;
+                              classOddEven python: oddrow and 'even' or 'odd';"
+                  tal:attributes="class python: not isActive and classOddEven+' state-inactive' or classOddEven"
+                  valign="top">
+                <td>
+                  <h5><a tal:attributes="href python: obj.absolute_url()" tal:content="python: obj.Title()">Collection title</a></h5>
+                  (<span tal:content="python: obj.getId()">Collection id</span>)
+                  <div class="discreet" tal:define="descr python: obj.Description()" tal:condition="descr" tal:content="descr">Collection description</div>
+                </td>
+                <td>
+                  <span tal:content="python: toLocalizedTime(obj.created(), long_format=True)">Created</span>
+                </td>
+                <td>
+                  <span tal:content="python: toLocalizedTime(obj.modified(), long_format=True)">Modified</span>
+                </td>
+                <td>
+                  <span tal:content="python: obj.query">Criteria</span>
+                  <div>
+                    <label class="formQuestion">
+                      <span i18n:translate="" i18n:domain="plone">Sort the collection on this index</span>
+                    </label> :
+                    <span tal:content="obj/sort_on|nothing" i18n:domain="plone" i18n:translate="">Sort on</span>
+                  </div>
+                  <div>
+                    <label class="formQuestion">
+                      <span i18n:translate="" i18n:domain="plone">Sort the results in reversed order</span>
+                    </label> :
+                    <span tal:content="python: obj.sort_reversed and 'boolean_value_true' or 'boolean_value_false'"
+                          i18n:translate="">Sort reversed</span>
+                  </div>
+                  <div>
+                    <label class="formQuestion">
+                      <span i18n:translate="" i18n:domain="collective.eeafaceted.collectionwidget">Show number of items in filter</span>
+                    </label> :
+                    <span tal:content="python: obj.showNumberOfItems and 'boolean_value_true' or 'boolean_value_false'"
+                          i18n:translate="">Show number of items in filter</span>
+                  </div>
+                  <div>
+                    <label class="formQuestion">
+                      <span>UID</span>
+                    </label> :
+                    <span tal:content="obj/UID">UID</span>
+                  </div>
+                </td>
+                <td>
+                  <span tal:content="obj/tal_condition">TAL Condition</span>
+                </td>
+                <td i18n:domain="plone">
+                  <span tal:condition="isActive" i18n:translate="">Yes</span>
+                  <span tal:condition="not: isActive" i18n:translate="">No</span>
+                </td>
+                <td align="right">
+                  <tal:actions replace="structure python: obj.restrictedTraverse('@@actions_panel')(showActions=False, showTransitions=False, showArrows=True)" />
+                </td>
+              </tr>
+            </tal:loop>
+          </table>
+          <p>&nbsp;</p>
+        </tal:searchesCategories>
+      </fieldset>
+
+      <!-- Topics (legacy, kept for migration purpose) -->
+      <a name="topics"></a>
+      <fieldset tal:condition="python: 'topics' in context.objectIds('ATFolder')">
+        <legend>
+          <span i18n:translate="Topics" style="color: red;">Old topics</span>
+        </legend>
+        <p class="discreet" style="color: red;">This is kept for migration purpose, do not use anymore.</p><br />
+        <table class="listing nosort" align="right" width="100%"
+               tal:define="tFolder python: context.topics;
+                           tFolderUrl tFolder/absolute_url">
+          <tr>
+            <th class="nosort" i18n:translate="listingheader_title">Title</th>
+            <th class="nosort" i18n:translate="topic_linked_to_type">Linked to Meeting or MeetingItem?</th>
+            <th class="nosort" i18n:translate="topic_search_script">Topic search script</th>
+            <th class="nosort" i18n:translate="topic_tal_expression">Topic tal expression</th>
+            <th class="nosort" width="50px" i18n:translate="heading_is_active">Active?</th>
+            <th class="nosort" width="130px" i18n:translate="heading_actions">Actions</th>
+          </tr>
+          <tr tal:condition="python: not tFolder.objectValues('ATTopic')">
+            <td colspan="5" align="center" i18n:translate="">no_topic_folder</td>
+          </tr>
+          <tal:loop repeat="obj python: tFolder.objectValues('ATTopic')">
+            <tr tal:define="isActive python: context.portal_workflow.getInfoFor(obj, 'review_state') == 'active';
+                            oddrow repeat/obj/odd;
+                            classOddEven python: oddrow and 'even' or 'odd';"
+                tal:attributes="class python: not isActive and classOddEven+' state-inactive' or classOddEven"
+                valign="top">
+              <td>
+                <a i18n:translate="" tal:attributes="href obj/absolute_url" tal:content="obj/Title"></a>
+                <div class="discreet" tal:define="descr obj/Description" tal:condition="descr" tal:content="descr"></div>
+              </td>
+              <td><p i18n:translate="" i18n:domain="plone" tal:content="python: obj.getProperty('meeting_topic_type')">Meeting or Item</p></td>
+              <td><p i18n:translate="" tal:content="python: obj.getProperty('topic_search_script')">Topic search script Id</p></td>
+              <td><p i18n:translate="" tal:content="python: obj.getProperty('topic_tal_expression')">Meeting or Item</p></td>
+              <td i18n:domain="plone">
+                <span tal:condition="isActive" i18n:translate="">Yes</span>
+                <span tal:condition="not: isActive" i18n:translate="">No</span>
+              </td>
+              <td align="right">-</td>
+            </tr>
+          </tal:loop>
+        </table>
+      </fieldset>
+    </tal:gui>
+
+    <!-- ============================================================ -->
+    <!-- Pane: mail                                                   -->
+    <!-- ============================================================ -->
+    <tal:mail condition="python: pageName == 'mail'">
+      <p i18n:translate="meetingconfig_mail_descr" class="pageNameDescr"></p><br />
+      <table width="100%" class="discreet">
+        <tal:widgets repeat="widget python: view.group_widgets('mail')">
+          <tr valign="top"
+              tal:define="is_rich python: widget.field.__class__.__name__ == 'RichText'"
+              tal:attributes="id string:row-${widget/id}">
+            <tal:is_rich condition="is_rich">
+              <td colspan="2">
+                <tal:render tal:content="structure widget/render">Value</tal:render>
+              </td>
+            </tal:is_rich>
+            <tal:not_rich condition="not: is_rich">
+              <td class="table_widget_label"><label tal:content="widget/label">Label</label></td>
+              <td class="table_widget_value">
+                <tal:render tal:content="structure widget/render">Value</tal:render>
+              </td>
+            </tal:not_rich>
+          </tr>
+        </tal:widgets>
+      </table>
+    </tal:mail>
+
+    <!-- ============================================================ -->
+    <!-- Pane: advices                                                -->
+    <!-- ============================================================ -->
+    <tal:advices condition="python: pageName == 'advices'">
+      <p i18n:translate="meetingconfig_advice_descr" class="pageNameDescr"></p><br />
+      <table width="100%" class="discreet">
+        <tal:widgets repeat="widget python: view.group_widgets('advices')">
+          <tr valign="top"
+              tal:define="is_rich python: widget.field.__class__.__name__ == 'RichText';
+                          is_custom_advisers python: widget.name == 'form.widgets.custom_advisers'"
+              tal:attributes="id string:row-${widget/id}">
+            <tal:is_rich condition="is_rich">
+              <td colspan="2">
+                <tal:render tal:content="structure widget/render">Value</tal:render>
+              </td>
+            </tal:is_rich>
+            <tal:custom_advisers condition="is_custom_advisers">
+              <td colspan="2">
+                <fieldset>
+                  <legend>
+                    <span i18n:translate="PloneMeeting_label_customAdvisers"></span>
+                    <span class="fa fa-question-circle help-doc" onClick="toggleDetails('customAdvisersDoc', toggle_parent_active=false);"></span>
+                  </legend>
+                  <div id="customAdvisersDoc" style="display:none">
+                    <p class="discreet" i18n:translate="custom_advisers_full_descr" />
+                  </div>
+                  <tal:render tal:content="structure widget/render">Value</tal:render>
+                </fieldset>
+              </td>
+            </tal:custom_advisers>
+            <tal:plain condition="python: not is_rich and not is_custom_advisers">
+              <td class="table_widget_label"><label tal:content="widget/label">Label</label></td>
+              <td class="table_widget_value">
+                <tal:render tal:content="structure widget/render">Value</tal:render>
+              </td>
+            </tal:plain>
+          </tr>
+        </tal:widgets>
+      </table>
+    </tal:advices>
+
+    <!-- ============================================================ -->
+    <!-- Pane: committees                                             -->
+    <!-- ============================================================ -->
+    <tal:committees condition="python: pageName == 'committees'">
+      <p i18n:translate="meetingconfig_committees_descr" class="pageNameDescr"></p><br />
+      <table width="100%" class="discreet">
+        <tal:widgets repeat="widget python: view.group_widgets('committees')">
+          <tr valign="top"
+              tal:define="is_rich python: widget.field.__class__.__name__ == 'RichText'"
+              tal:attributes="id string:row-${widget/id}">
+            <tal:is_rich condition="is_rich">
+              <td colspan="2">
+                <tal:render tal:content="structure widget/render">Value</tal:render>
+              </td>
+            </tal:is_rich>
+            <tal:not_rich condition="not: is_rich">
+              <td class="table_widget_label"><label tal:content="widget/label">Label</label></td>
+              <td class="table_widget_value">
+                <tal:render tal:content="structure widget/render">Value</tal:render>
+              </td>
+            </tal:not_rich>
+          </tr>
+        </tal:widgets>
+      </table>
+    </tal:committees>
+
+    <!-- ============================================================ -->
+    <!-- Pane: votes                                                  -->
+    <!-- ============================================================ -->
+    <tal:votes condition="python: pageName == 'votes'">
+      <p i18n:translate="meetingconfig_votes_descr" class="pageNameDescr"></p><br />
+      <table width="100%" class="discreet">
+        <tal:widgets repeat="widget python: view.group_widgets('votes')">
+          <tr valign="top"
+              tal:define="is_rich python: widget.field.__class__.__name__ == 'RichText'"
+              tal:attributes="id string:row-${widget/id}">
+            <tal:is_rich condition="is_rich">
+              <td colspan="2">
+                <tal:render tal:content="structure widget/render">Value</tal:render>
+              </td>
+            </tal:is_rich>
+            <tal:not_rich condition="not: is_rich">
+              <td class="table_widget_label"><label tal:content="widget/label">Label</label></td>
+              <td class="table_widget_value">
+                <tal:render tal:content="structure widget/render">Value</tal:render>
+              </td>
+            </tal:not_rich>
+          </tr>
+        </tal:widgets>
+      </table>
+    </tal:votes>
+
+    <!-- ============================================================ -->
+    <!-- Pane: doc                                                    -->
+    <!-- ============================================================ -->
+    <tal:doc condition="python: pageName == 'doc'">
+      <p i18n:translate="meetingconfig_doc_descr" class="pageNameDescr"></p><br />
+
+      <table width="100%" class="discreet">
+        <tal:widgets repeat="widget python: view.group_widgets('doc')">
+          <tr valign="top"
+              tal:define="is_rich python: widget.field.__class__.__name__ == 'RichText'"
+              tal:attributes="id string:row-${widget/id}">
+            <tal:is_rich condition="is_rich">
+              <td colspan="2">
+                <tal:render tal:content="structure widget/render">Value</tal:render>
+              </td>
+            </tal:is_rich>
+            <tal:not_rich condition="not: is_rich">
+              <td class="table_widget_label"><label tal:content="widget/label">Label</label></td>
+              <td class="table_widget_value">
+                <tal:render tal:content="structure widget/render">Value</tal:render>
+              </td>
+            </tal:not_rich>
+          </tr>
+        </tal:widgets>
+      </table>
+
+      <a name="podtemplates"></a>
+      <fieldset tal:define="pFolder view/podtemplates_folder;
+                            pFolderUrl python: pFolder.absolute_url() if pFolder else '';
+                            show_details view/show_details"
+                tal:condition="pFolder">
+        <legend>
+          <span i18n:translate="PodTemplates"></span>
+          <a href="#"
+             class="link-overlay-pm"
+             tal:condition="python: tool.is_zope_admin()"
+             tal:attributes="href string:${context/podtemplates/absolute_url}/folder_factories">
+            <img src="#" tal:attributes="src string:$portal_url/new.png;" />
+          </a>
+        </legend>
+        <p class="discreet" i18n:translate="pod_templates_descr"></p>
+        <p i18n:translate="warning_meetingconfig_edit_section_descr" style="color: red;">
+          DO NOT CHANGE PARAMETERS DEFINED IN THIS SECTION UNLESS YOU ARE REALLY SURE WHAT YOU ARE DOING!
+        </p>
+        <p i18n:translate="warning_meetingconfig_edit_podtemplate_descr" style="color: red;">
+          POD TEMPLATES MUST BE EDITED USING LIBREOFFICE ONLY, DO NOT USE MICROSOFT WORD TO EDIT THESE TEMPLATES!
+        </p>
+
+        <h3 i18n:translate="">Style templates</h3>
+        <table class="listing nosort"
+               align="right"
+               width="100%"
+               tal:define="templates python: view.style_templates()">
+          <tr>
+            <th class="nosort" width="20px"></th>
+            <th class="nosort" i18n:translate="listingheader_title">Title</th>
+            <th class="nosort" i18n:translate="header_CreationDate" i18n:domain="collective.eeafaceted.z3ctable">Created</th>
+            <th class="nosort" i18n:translate="header_ModificationDate" i18n:domain="collective.eeafaceted.z3ctable">Modified</th>
+            <th class="nosort" width="130px" i18n:translate="heading_actions">Actions</th>
+          </tr>
+          <tr tal:condition="python: not templates">
+            <td colspan="4" align="center" i18n:translate="">no_style_pod_folder</td>
+          </tr>
+          <tal:loop repeat="obj templates">
+            <tr tal:define="oddrow repeat/obj/odd;
+                            classOddEven python: oddrow and 'even' or 'odd';"
+                tal:attributes="class python: classOddEven"
+                valign="top">
+              <td align="center">
+                <img title="Format"
+                     class="svg-icon"
+                     tal:attributes="src string:$portal_url/++resource++collective.documentgenerator/style.svg"/>
+              </td>
+              <td>
+                <h5>
+                  <a tal:attributes="href python: obj.absolute_url();">
+                    <span tal:content="python: obj.Title()" />
+                  </a>
+                </h5>
+                <tal:additionalInformations
+                    condition="show_details"
+                    define="obj python: obj;
+                            excludedFields python: ()">
+                  <metal:additionalInformations use-macro="context/@@pm-macros/additionalInformations" />
+                </tal:additionalInformations>
+              </td>
+              <td>
+                <span tal:content="python: toLocalizedTime(obj.created(), long_format=True)">Created</span>
+              </td>
+              <td>
+                <span tal:content="python: toLocalizedTime(obj.modified(), long_format=True)">Modified</span>
+              </td>
+              <td align="right">
+                <tal:actions replace="structure python: obj.restrictedTraverse('@@actions_panel')(showActions=False, showTransitions=False, showArrows=False)" />
+              </td>
+            </tr>
+          </tal:loop>
+        </table>
+
+        <h3 i18n:translate="">Document templates</h3>
+        <table class="listing nosort" align="right" width="100%"
+               tal:define="templates python: view.document_templates()">
+          <tr>
+            <th class="nosort" width="20px"></th>
+            <th class="nosort" i18n:translate="listingheader_title">Title</th>
+            <th class="nosort" i18n:translate="header_CreationDate" i18n:domain="collective.eeafaceted.z3ctable">Created</th>
+            <th class="nosort" i18n:translate="header_ModificationDate" i18n:domain="collective.eeafaceted.z3ctable">Modified</th>
+            <th class="nosort" width="200px" i18n:translate="listingheader_pod_template_or_odt_file">POD template or odt_file</th>
+            <th class="nosort" width="50px" i18n:translate="heading_is_active">Active?</th>
+            <th class="nosort" width="130px" i18n:translate="heading_actions">Actions</th>
+          </tr>
+          <tr tal:condition="python: not templates">
+            <td colspan="6" align="center" i18n:translate="">no_pod_folder</td>
+          </tr>
+          <tal:loop repeat="obj templates">
+            <tr tal:define="oddrow repeat/obj/odd;
+                            classOddEven python: oddrow and 'even' or 'odd';"
+                tal:attributes="class python: not obj.enabled and classOddEven+' state-inactive' or classOddEven"
+                valign="top">
+              <td align="center">
+                <img tal:repeat="fmt obj/pod_formats"
+                     title="Format"
+                     class="svg-icon"
+                     tal:attributes="title fmt;
+                                     src string:$portal_url/++resource++collective.documentgenerator/$fmt.svg"/>
+              </td>
+              <td>
+                <h5>
+                  <a tal:attributes="href python: obj.absolute_url();">
+                    <img src="#"
+                         i18n:attributes="title"
+                         i18n:domain="collective.eeafaceted.dashboard"
+                         title="DashboardPODTemplate"
+                         tal:condition="python: obj.portal_type == 'DashboardPODTemplate'"
+                         tal:attributes="src string:${portal_url}/++resource++collective.eeafaceted.dashboard/dashboardpodtemplate.png" />
+                    <span tal:content="obj/Title" />
+                  </a>
+                </h5>
+                <tal:baseInformations condition="not: show_details">
+                  <div class="discreet"
+                       tal:define="descr python: obj.Description()"
+                       tal:condition="descr" tal:content="descr"></div>
+                  <div class="discreet">
+                    <label class="horizontal">Uid</label>
+                    <div>
+                      <span class="text-widget textline-field"
+                            tal:content="python: obj.UID()">Uid</span>
+                    </div>
+                  </div>
+                  <div class="discreet">
+                    <label class="horizontal" i18n:domain="plone" i18n:translate="">File</label>
+                    <div>
+                      <span class="text-widget textline-field"
+                            tal:content="python: obj.get_filename()"
+                            tal:on-error="structure python: '&lt;strong class=\'highlightValue\'&gt;NOT FOUND?&lt;/strong&gt;'"
+                            >Filename</span>
+                    </div>
+                  </div>
+                  <div class="discreet"
+                       tal:define="mailing_lists python: obj.mailing_lists"
+                       tal:condition="mailing_lists">
+                    <label i18n:translate="mailing_lists"
+                           i18n:domain="collective.documentgenerator"
+                           class="horizontal">Mailing lists</label>
+                    <div>
+                      <span class="text-widget textline-field"
+                            tal:content="mailing_lists">mailing_lists</span>
+                    </div>
+                  </div>
+                  <div class="discreet"
+                       tal:define="tal_condition python: obj.tal_condition"
+                       tal:condition="tal_condition">
+                    <label i18n:translate=""
+                           i18n:domain="collective.behavior.talcondition"
+                           class="horizontal">TAL condition expression</label>
+                    <div>
+                      <span class="text-widget textline-field"
+                            tal:content="tal_condition">TAL condition</span>
+                    </div>
+                  </div>
+                </tal:baseInformations>
+                <tal:additionalInformations
+                    condition="show_details"
+                    define="obj python: obj;
+                            excludedFields python: ('pod_formats', 'enabled', 'tal_condition')">
+                  <metal:additionalInformations use-macro="context/@@pm-macros/additionalInformations" />
+                </tal:additionalInformations>
+              </td>
+              <td>
+                <span tal:content="python: toLocalizedTime(obj.created(), long_format=True)">Created</span>
+              </td>
+              <td>
+                <span tal:content="python: toLocalizedTime(obj.modified(), long_format=True)">Modified</span>
+              </td>
+              <td>
+                <a tal:attributes="href string:${obj/absolute_url}/view/++widget++form.widgets.odt_file/@@download"
+                   tal:condition="python: obj.odt_file">
+                  <img tal:attributes="src string:${portal_url}/download_icon.png;
+                                       title string:Download"
+                       i18n:domain="plone"
+                       i18n:attributes="title" />
+                </a>
+                <a tal:define="podTemplateHolder python: obj.get_pod_template_to_use();
+                               otherCfg python: tool.getMeetingConfig(podTemplateHolder)"
+                   tal:attributes="href python: podTemplateHolder.absolute_url()"
+                   tal:on-error="python: obj.pod_template_to_use"
+                   tal:condition="python: obj.odt_file is None"
+                   tal:content="python: otherCfg.Title(include_config_group=True) + ' ➔ ' + podTemplateHolder.Title()">File holder</a>
+              </td>
+              <td i18n:domain="plone">
+                <span tal:condition="obj/enabled" i18n:translate="">Yes</span>
+                <span tal:condition="not: obj/enabled" i18n:translate="">No</span>
+              </td>
+              <td align="right">
+                <tal:actions replace="structure python: obj.restrictedTraverse('@@actions_panel')(showActions=False, showTransitions=False, showArrows=True)" />
+              </td>
+            </tr>
+          </tal:loop>
+        </table>
+      </fieldset>
+    </tal:doc>
+
+    </tal:hideToNonManagers>
+
+  </metal:main>
+
+</body>
+</html>

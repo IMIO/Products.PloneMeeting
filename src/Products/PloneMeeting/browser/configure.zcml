@@ -426,6 +426,19 @@
       permission="zope2.View" />
 
     <browser:page
+      for="Products.PloneMeeting.interfaces.IMeetingConfig"
+      name="base_view"
+      class=".views.MeetingConfigDefaultView"
+      permission="zope2.View" />
+
+    <browser:page
+      for="Products.PloneMeeting.interfaces.IMeetingConfig"
+      name="view"
+      class=".meetingconfig.MeetingConfigView"
+      template="templates/meetingconfig_view.pt"
+      permission="zope2.View" />
+
+    <browser:page
       for="*"
       name="display-grouped-configs"
       template="templates/grouped_configs.pt"
