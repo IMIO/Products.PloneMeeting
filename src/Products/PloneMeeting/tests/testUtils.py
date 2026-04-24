@@ -485,6 +485,9 @@ class testUtils(PloneMeetingTestCase):
         self.changeUser('pmReviewer1')
         self.assertTrue(is_proposing_group_editor(self.developers_uid, cfg))
         self.assertFalse(is_proposing_group_editor(self.vendors_uid, cfg))
+        # org_uid can be a list of org_uids
+        self.assertTrue(is_proposing_group_editor([self.developers_uid, self.vendors_uid], cfg))
+        self.assertFalse(is_proposing_group_editor([self.endUsers_uid, self.vendors_uid], cfg))
 
 
 def test_suite():

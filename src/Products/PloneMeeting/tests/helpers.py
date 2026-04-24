@@ -649,7 +649,10 @@ class PloneMeetingTestingHelpers(object):
         """Configure MeetingConfig.itemFieldsConfig."""
         cfg = cfg or self.meetingConfig
         config = cfg.getItemFieldsConfig()
-        field_config = [row for row in config if row['name'] == field_name][0]
+        field_config = [row for row in config if row['name'] == field_name]
+        if not field_config:
+            raise ValueError("field_name {0} config does not exist".format(field_name))
+        field_config = field_config[0]
         if view is not None:
             field_config['view'] = view
         if edit is not None:

@@ -9184,9 +9184,10 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(item.mayQuickEdit('neededFollowUp'))
         self.assertTrue(item.mayQuickEdit('providedFollowUp'))
 
-    def test_pm_groupsInChargeNotes(self):
-        """Test that it uses the MeetingConfig.itemFieldsConfig,
-           test that if edit is refused, it can not be edited."""
+    def test_pm_groups_in_charge_notes(self):
+        """Test that MeetingItem.groupsInChargeNotes uses
+           MeetingConfig.itemFieldsConfig.
+           Moreover, test that if edit condition is False, it can not be edited."""
         cfg = self.meetingConfig
         cfg.setOrderedGroupsInCharge((self.developers_uid, self.vendors_uid))
         cfg.setItemGroupsInChargeStates([self._stateMappingFor('itemcreated')])

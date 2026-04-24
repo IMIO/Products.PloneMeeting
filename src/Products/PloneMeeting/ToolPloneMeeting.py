@@ -795,10 +795,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            Other parameters from p_user_id=None to p_the_objects=True
            are default values passed to get_orgs_for_user."""
         if not org_uid:
-            if not hasattr(org_id, '__iter__'):
+            # then we have an "org_id"
+            if isinstance(org_id, str):
                 org_id = [org_id]
-                org_uid = [org_id_to_uid(_org_id) for _org_id in org_id]
-        if not hasattr(org_uid, '__iter__'):
+            org_uid = [org_id_to_uid(_org_id) for _org_id in org_id]
+        if isinstance(org_uid, str):
             org_uid = [org_uid]
         return bool(set(org_uid).intersection(self.get_orgs_for_user(
             user_id=user_id,

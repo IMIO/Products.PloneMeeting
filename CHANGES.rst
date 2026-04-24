@@ -27,6 +27,12 @@ Changelog
   action that was failing when using WFA `only_creator_may_delete` and item was
   no more in state `itemcreated`.
   [gbastien]
+- Added new field `MeetingItem.groupsInChargeNotes` configurable in
+  `MeetingConfig.itemFieldsConfig`.
+  [gbastien]
+- Adapted `ToolPloneMeeting.user_is_in_org` to be able to pass a list of
+  `org_id` or `org_uid`.
+  [gbastien]
 
 4.2.28.10 (2026-03-13)
 ----------------------

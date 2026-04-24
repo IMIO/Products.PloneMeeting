@@ -589,9 +589,9 @@ class MeetingConfigDescriptor(Descriptor):
              'view': "python: item.may_view_follow_up()",
              'edit': "python: item.may_edit_follow_up('providedFollowUp')"},
             {'name': "groupsInChargeNotes",
-             'view': "python: tool.user_is_in_org(org_uid=[item.getProposingGroup()] + "
+             'view': "python: tool.isManager(cfg) or tool.user_is_in_org(org_uid=[item.getProposingGroup()] + "
                 "item.getGroupsInCharge())",
-             'edit': "python: tool.user_is_in_org(org_uid=item.getGroupsInCharge())"},
+             'edit': "python: tool.isManager(cfg) or tool.user_is_in_org(org_uid=item.getGroupsInCharge())"},
         )
         self.votesResultTALExpr = ''
 
