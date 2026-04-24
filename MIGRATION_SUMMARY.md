@@ -412,3 +412,49 @@ These files contain AT accessor calls (`cfg.getXxx()`, `cfg.getField('xxx')`) th
 The DX schema interface `content.meetingconfig.IMeetingConfig` now extends the marker
 interface `interfaces.IMeetingConfig`, so existing subscribers wired to the marker
 automatically apply to DX instances.
+
+---
+
+## View migration
+
+### Default view
+
+The legacy AT skin-layer template `skins/plonemeeting_templates/meetingconfig_view.pt`
+(1559 lines, AT-widget-dependent) has been **deleted**. It relied on
+`here.Schemata()`, `here.getField(...)`, and `here/widgets/field/macros/view` — all
+of which are unavailable on Dexterity objects.
+
+Replacement: `browser/meetingconfig.py::MeetingConfigView(DefaultView)`, registered as
+`name="view"` for `Products.PloneMeeting.interfaces.IMeetingConfig`. The new view
+replicates the original tab-based layout via a hardcoded `PANE_NAMES` tuple and
+`request.get('pageName')` routing. All ten panes are preserved:
+`default`, `data`, `assembly_and_signatures`, `workflow`, `gui`, `mail`,
+`advices`, `committees`, `votes`, `doc`.
+
+DX field widgets are rendered via `view.group_widgets(pane_name)` (backed by
+`view.groups` from `DefaultView`) and `view.default_pane_widgets()` (top-level
+schema fields). Per-pane extras — annex types, categories, recurring items, item
+templates, searches, podtemplates tables, admin action forms — are reproduced
+verbatim from the old template.
+
+FTI change: `immediate_view`, `default_view`, and `view_methods` now point to `view`
+instead of `@@edit`. Browsing to a MeetingConfig URL lands on the DX view; editing is
+reached via the `Edit` link in the tab bar.
+
+⚠️ **`getCustomFields(2)` pane not ported.** The AT template contained a dynamic
+fieldset rendered by `here.getCustomFields(2)` which surfaced schema fields added by
+downstream packages via AT-style `pm_updates.py` modifications. There is no DX
+equivalent. Packages that extended `MeetingConfig` via AT schema injection will no
+longer see those fields on the view. They should migrate to a DX behavior or a
+`plone.supermodel` schema extension policy registered for
+`schema_policy_meetingconfig`.
+
+⚠️ Downstream add-ons that override `meetingconfig_view` via skin layers
+(`Products.MeetingCommunes`, `Products.MeetingCollege`, etc.) must switch their
+override to a `<browser:page name="view">` ZCML registration targeting
+`Products.PloneMeeting.interfaces.IMeetingConfig`.
+
+### Unchanged
+
+`@@base_view` (registered in configure.zcml, class `.views.MeetingConfigDefaultView`)
+is kept as-is — it is called from the test suite and redirects to `/edit`.
