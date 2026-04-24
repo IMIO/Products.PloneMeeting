@@ -588,6 +588,10 @@ class MeetingConfigDescriptor(Descriptor):
             {'name': "providedFollowUp",
              'view': "python: item.may_view_follow_up()",
              'edit': "python: item.may_edit_follow_up('providedFollowUp')"},
+            {'name': "groupsInChargeNotes",
+             'view': "python: tool.isManager(cfg) or tool.user_is_in_org(org_uid=[item.getProposingGroup()] + "
+                "item.getGroupsInCharge())",
+             'edit': "python: tool.isManager(cfg) or tool.user_is_in_org(org_uid=item.getGroupsInCharge())"},
         )
         self.votesResultTALExpr = ''
 

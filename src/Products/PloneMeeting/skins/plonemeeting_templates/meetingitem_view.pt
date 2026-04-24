@@ -470,7 +470,8 @@
     <tal:external-infos condition="python: context.restrictedTraverse('@@load-external-infos').show_section()">
         <div id="external-infos"
              class="collapsible discreet not-auto-collapsible-activable"
-             tal:attributes="onclick python: 'toggleDetails(\'collapsible-external-infos\', toggle_parent_active=true, parent_tag=null, load_view=\'@@load-external-infos?external_user_id=%s\');;' % request.get('external_user_id', '');">
+             tal:attributes="data-external-user-id python: request.get('external_user_id', '');
+                             onclick string:toggleDetails('collapsible-external-infos', toggle_parent_active=true, parent_tag=null, load_view='@@load-external-infos?external_user_id=' + encodeURIComponent(this.getAttribute('data-external-user-id')));;">
           <span class="item_attribute_label" i18n:translate="external_linked_elements">
               External linked elements
           </span>
@@ -635,6 +636,11 @@
         </div>
       </div>
     </tal:textCheckList>
+
+    <tal:comment replace="nothing">Groups in charge notes</tal:comment>
+    <tal:field define="fieldName python: 'groupsInChargeNotes'; ajaxEdit python:True">
+       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+    </tal:field>
 
     <tal:comment replace="nothing">In and out moves</tal:comment>
     <tal:field define="fieldName python: 'inAndOutMoves'; ajaxEdit python:True">

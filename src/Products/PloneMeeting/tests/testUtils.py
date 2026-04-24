@@ -19,6 +19,7 @@ from Products.PloneMeeting.ftw_labels.utils import get_labels
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.utils import duplicate_portal_type
 from Products.PloneMeeting.utils import escape
+from Products.PloneMeeting.utils import is_proposing_group_editor
 from Products.PloneMeeting.utils import isPowerObserverForCfg
 from Products.PloneMeeting.utils import org_id_to_uid
 from Products.PloneMeeting.utils import sendMail
@@ -463,6 +464,30 @@ class testUtils(PloneMeetingTestCase):
             cfg, power_observer_types=['powerobservers', 'restrictedpowerobservers']))
         self.assertFalse(isPowerObserverForCfg(
             cfg, power_observer_types=['unknown']))
+
+    def test_pm_is_proposing_group_editor(self):
+        """Check if a user is an editor for a given org_uid."""
+        cfg = self.meetingConfig
+        self._setUpDefaultItemWFValidationLevels(cfg)
+        self.assertFalse(is_proposing_group_editor(self.developers_uid, cfg))
+        self.changeUser('pmCreator1')
+        self.assertTrue(is_proposing_group_editor(self.developers_uid, cfg))
+        self.assertFalse(is_proposing_group_editor(self.developers_uid, cfg, suffixes=['reviewers']))
+        self.assertFalse(is_proposing_group_editor(self.developers_uid, cfg, suffixes=['unknown']))
+        self.assertTrue(is_proposing_group_editor([self.developers_uid, self.vendors_uid], cfg))
+        self.assertFalse(is_proposing_group_editor([self.endUsers_uid, self.vendors_uid], cfg))
+        self.changeUser('pmCreator2')
+        self.assertFalse(is_proposing_group_editor(self.developers_uid, cfg))
+        self.assertTrue(is_proposing_group_editor(self.vendors_uid, cfg))
+        self.changeUser('pmObserver1')
+        self.assertFalse(is_proposing_group_editor(self.developers_uid, cfg))
+        self.assertFalse(is_proposing_group_editor(self.vendors_uid, cfg))
+        self.changeUser('pmReviewer1')
+        self.assertTrue(is_proposing_group_editor(self.developers_uid, cfg))
+        self.assertFalse(is_proposing_group_editor(self.vendors_uid, cfg))
+        # org_uid can be a list of org_uids
+        self.assertTrue(is_proposing_group_editor([self.developers_uid, self.vendors_uid], cfg))
+        self.assertFalse(is_proposing_group_editor([self.endUsers_uid, self.vendors_uid], cfg))
 
 
 def test_suite():

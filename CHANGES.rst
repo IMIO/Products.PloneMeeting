@@ -2,7 +2,27 @@ Changelog
 =========
 
 
-4.2.28.11 (unreleased)
+4.2.28.14 (unreleased)
+----------------------
+
+- Nothing changed yet.
+
+
+4.2.28.13 (2026-04-24)
+----------------------
+
+- In `Migrate_To_4217_1`, use `upgradeAll` to upgrade especially
+  `collective.dms.scanbehavior`.
+  [gbastien]
+
+4.2.28.12 (2026-04-24)
+----------------------
+
+- Fixed version overview not in last version warning when current version
+  uses a `.` in the version.
+  [gbastien]
+
+4.2.28.11 (2026-04-24)
 ----------------------
 
 - Ported `MeetingConfig` default view from the legacy AT skin-layer template
@@ -43,6 +63,15 @@ Changelog
   `collective.eeafaceted.batchactions`, this fixed the delete annexes batch
   action that was failing when using WFA `only_creator_may_delete` and item was
   no more in state `itemcreated`.
+  [gbastien]
+- Added new field `MeetingItem.groupsInChargeNotes` configurable in
+  `MeetingConfig.itemFieldsConfig`.
+  [gbastien]
+- Adapted `ToolPloneMeeting.user_is_in_org` to be able to pass a list of
+  `org_id` or `org_uid`.
+  [gbastien]
+- Fixed JS code passing `external_user_id` to `@@load-external-infos`
+  to avoid JS injection.
   [gbastien]
 
 4.2.28.10 (2026-03-13)

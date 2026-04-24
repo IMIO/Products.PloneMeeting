@@ -5837,7 +5837,7 @@ class testMeetingItem(PloneMeetingTestCase):
             'takenOverBy', 'templateUsingGroups',
             'toDiscuss', 'committeeObservations', 'committeeTranscript',
             'votesObservations', 'votesResult',
-            'neededFollowUp', 'providedFollowUp',
+            'neededFollowUp', 'providedFollowUp', 'groupsInChargeNotes',
             'otherMeetingConfigsClonableToEmergency',
             'internalNotes', 'externalIdentifier']
         NEUTRAL_FIELDS += self._extraNeutralFields()
@@ -9145,7 +9145,7 @@ class testMeetingItem(PloneMeetingTestCase):
             '{"criterionId": "c1", "countByCollection": [{"count": 1, "uid": "%s"}]}' % neededfollowup_uid)
         self.assertEqual(len(neededfollowup.results()), 1)
         self.assertEqual(len(providedfollowup.results()), 0)
-        # provided-follow-up is available to MeetingManagerswhen field providedFollowUp is not empty
+        # provided-follow-up is available to MeetingManagers when field providedFollowUp is not empty
         self.assertFalse(
             'provided-follow-up' in
             [label['label_id'] for label in labelingview.available_labels()[1]])
@@ -9182,6 +9182,33 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         self.assertFalse(item.mayQuickEdit('neededFollowUp'))
         self.assertTrue(item.mayQuickEdit('providedFollowUp'))
+
+    def test_pm_groups_in_charge_notes(self):
+        """Test that MeetingItem.groupsInChargeNotes uses
+           MeetingConfig.itemFieldsConfig.
+           Moreover, test that if edit condition is False, it can not be edited."""
+        cfg = self.meetingConfig
+        cfg.setOrderedGroupsInCharge((self.developers_uid, self.vendors_uid))
+        cfg.setItemGroupsInChargeStates([self._stateMappingFor('itemcreated')])
+        self._enableField(['groupsInCharge', 'groupsInChargeNotes'])
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem', groupsInCharge=[self.vendors_uid])
+        # by default proposingGroup can view the field but not edit it
+        self.assertTrue(item.show_field('groupsInChargeNotes'))
+        # even if item editable, field can be not editable if condition if False
+        self.assertFalse(item.mayQuickEdit('groupsInChargeNotes'))
+        # group in charge can view and edit
+        self.changeUser('pmObserver2')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertTrue(item.show_field('groupsInChargeNotes'))
+        self.assertTrue(item.mayQuickEdit('groupsInChargeNotes'))
+        # make proposing group only able to edit
+        self._setupItemFieldsConfig(
+            'groupsInChargeNotes',
+            edit='python: tool.user_is_in_org(org_uid=item.getProposingGroup())')
+        self.assertFalse(item.mayQuickEdit('groupsInChargeNotes'))
+        self.changeUser('pmCreator1')
+        self.assertTrue(item.mayQuickEdit('groupsInChargeNotes'))
 
 
 def test_suite():
