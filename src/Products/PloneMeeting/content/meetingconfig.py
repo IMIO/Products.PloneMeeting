@@ -21,8 +21,11 @@ from collective.eeafaceted.collectionwidget.utils import _get_criterion
 from collective.eeafaceted.collectionwidget.utils import _updateDefaultCollectionFor
 from collective.eeafaceted.dashboard.utils import enableFacetedDashboardFor
 from collective.iconifiedcategory.utils import get_category_object
-from collective.z3cform.datagridfield import BlockDataGridFieldFactory
+from collective.z3cform.datagridfield import DataGridField
 from collective.z3cform.datagridfield import DictRow
+from z3c.form.interfaces import IFieldWidget
+from z3c.form.interfaces import IFormLayer
+from z3c.form.widget import FieldWidget
 from copy import deepcopy
 from datetime import datetime
 from DateTime import DateTime
@@ -53,6 +56,7 @@ from plone.restapi.deserializer import boolean_value
 from plone.supermodel import model
 from Products.Archetypes.atapi import DisplayList
 from Products.Archetypes.atapi import IntDisplayList
+from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.Expression import Expression
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
@@ -144,6 +148,7 @@ from z3c.form.browser.radio import RadioFieldWidget
 from z3c.form.i18n import MessageFactory as _z3c_form
 from zope import schema
 from zope.annotation import IAnnotations
+from zope.component import adapter
 from zope.component import getMultiAdapter
 from zope.component import getUtility
 from zope.container.interfaces import INameChooser
@@ -152,8 +157,10 @@ from zope.i18n import translate
 from zope.i18nmessageid.message import Message
 from zope.globalrequest import getRequest
 from zope.interface import alsoProvides
+from zope.interface import implementer
 from zope.interface import implements
 from zope.interface import Interface
+from zope.schema.interfaces import IField
 from zope.schema.interfaces import IVocabularyFactory
 from zope.schema.vocabulary import SimpleVocabulary
 
@@ -230,6 +237,43 @@ def _at_to_dx(camel_name):
     name = re.sub(r'([A-Z]+)([A-Z][a-z])', r'\1_\2', camel_name)
     name = re.sub(r'([a-z\d])([A-Z])', r'\1_\2', name)
     return name.lower()
+
+
+# ---------------------------------------------------------------------------
+# DataGridField widget with context propagation
+# ---------------------------------------------------------------------------
+
+class PMDataGridField(DataGridField):
+    """DataGridField that propagates context to row widgets.
+
+    collective.z3cform.datagridfield's DataGridField.getWidget() does not set
+    widget.context on the created row widget.  Vocabulary factories therefore
+    receive None as context and return an empty SimpleVocabulary, which triggers
+    spurious "Constraint not satisfied" errors in display mode.  Overriding
+    createObjectWidget() and setting the context there (before update() is
+    called) fixes all row-level vocabularies at once.
+    """
+
+    def createObjectWidget(self, idx):
+        widget = super(PMDataGridField, self).createObjectWidget(idx)
+        widget.context = self.context
+        return widget
+
+
+@adapter(IField, IFormLayer)
+@implementer(IFieldWidget)
+def PMDataGridFieldFactory(field, request):
+    """IFieldWidget factory for PMDataGridField."""
+    return FieldWidget(field, PMDataGridField(request))
+
+
+# Maps DX DataGrid field name → {AT_col_key: dx_col_key}.
+# Only entries whose AT column name does not already match the DX field name
+# (snake_case) are listed here.
+_DATAGRID_COL_KEY_MAP = {
+    'inserting_methods_on_add_item': {'insertingMethod': 'inserting_method'},
+    'certified_signatures': {'signatureNumber': 'signature_number'},
+}
 
 
 # ---------------------------------------------------------------------------
@@ -961,7 +1005,7 @@ class IMeetingConfig(IMeetingConfigMarker):
         required=False,
     )
 
-    form.widget('certified_signatures', BlockDataGridFieldFactory)
+    form.widget('certified_signatures', PMDataGridFieldFactory)
     form.write_permission(certified_signatures=WriteHarmlessConfig)
     certified_signatures = schema.List(
         title=_(u'PloneMeeting_label_certifiedSignatures', default=u'Certifiedsignatures'),
@@ -1150,7 +1194,7 @@ class IMeetingConfig(IMeetingConfigMarker):
         default=defValues.computeItemReferenceForItemsOutOfMeeting,
     )
 
-    form.widget('inserting_methods_on_add_item', BlockDataGridFieldFactory)
+    form.widget('inserting_methods_on_add_item', PMDataGridFieldFactory)
     form.write_permission(inserting_methods_on_add_item=WriteRiskyConfig)
     inserting_methods_on_add_item = schema.List(
         title=_(u'PloneMeeting_label_insertingMethodsOnAddItem', default=u'Insertingmethodsonadditem'),
@@ -1199,7 +1243,7 @@ class IMeetingConfig(IMeetingConfigMarker):
         default=defValues.itemFieldsToKeepConfigSortingFor,
     )
 
-    form.widget('list_types', BlockDataGridFieldFactory)
+    form.widget('list_types', PMDataGridFieldFactory)
     form.write_permission(list_types=WriteRiskyConfig)
     list_types = schema.List(
         title=_(u'PloneMeeting_label_listTypes', default=u'Listtypes'),
@@ -1247,7 +1291,7 @@ class IMeetingConfig(IMeetingConfigMarker):
         default=defValues.freezeDeadlineDefault,
     )
 
-    form.widget('meeting_configs_to_clone_to', BlockDataGridFieldFactory)
+    form.widget('meeting_configs_to_clone_to', PMDataGridFieldFactory)
     form.write_permission(meeting_configs_to_clone_to=WriteRiskyConfig)
     meeting_configs_to_clone_to = schema.List(
         title=_(u'PloneMeeting_label_meetingConfigsToCloneTo', default=u'Meetingconfigstocloneto'),
@@ -1337,7 +1381,7 @@ class IMeetingConfig(IMeetingConfigMarker):
         default=defValues.removeAnnexesPreviewsOnMeetingClosure,
     )
 
-    form.widget('css_transforms', BlockDataGridFieldFactory)
+    form.widget('css_transforms', PMDataGridFieldFactory)
     form.write_permission(css_transforms=WriteRiskyConfig)
     css_transforms = schema.List(
         title=_(u'PloneMeeting_label_cssTransforms', default=u'Csstransforms'),
@@ -1423,7 +1467,7 @@ class IMeetingConfig(IMeetingConfigMarker):
         default=defValues.workflowAdaptations,
     )
 
-    form.widget('item_wf_validation_levels', BlockDataGridFieldFactory)
+    form.widget('item_wf_validation_levels', PMDataGridFieldFactory)
     form.write_permission(item_wf_validation_levels=WriteRiskyConfig)
     item_wf_validation_levels = schema.List(
         title=_(u'PloneMeeting_label_itemWFValidationLevels', default=u'Itemwfvalidationlevels'),
@@ -1444,7 +1488,7 @@ class IMeetingConfig(IMeetingConfigMarker):
         default=defValues.transitionsToConfirm,
     )
 
-    form.widget('on_transition_field_transforms', BlockDataGridFieldFactory)
+    form.widget('on_transition_field_transforms', PMDataGridFieldFactory)
     form.write_permission(on_transition_field_transforms=WriteRiskyConfig)
     on_transition_field_transforms = schema.List(
         title=_(u'PloneMeeting_label_onTransitionFieldTransforms', default=u'Ontransitionfieldtransforms'),
@@ -1454,7 +1498,7 @@ class IMeetingConfig(IMeetingConfigMarker):
         default=defValues.onTransitionFieldTransforms,
     )
 
-    form.widget('on_meeting_transition_item_action_to_execute', BlockDataGridFieldFactory)
+    form.widget('on_meeting_transition_item_action_to_execute', PMDataGridFieldFactory)
     form.write_permission(on_meeting_transition_item_action_to_execute=WriteRiskyConfig)
     on_meeting_transition_item_action_to_execute = schema.List(
         title=_(u'PloneMeeting_label_onMeetingTransitionItemActionToExecute', default=u'Onmeetingtransitionitemactiontoexecute'),
@@ -2020,7 +2064,7 @@ class IMeetingConfig(IMeetingConfigMarker):
         default=defValues.enableAddQuickAdvice,
     )
 
-    form.widget('custom_advisers', BlockDataGridFieldFactory)
+    form.widget('custom_advisers', PMDataGridFieldFactory)
     form.write_permission(custom_advisers=WriteRiskyConfig)
     custom_advisers = schema.List(
         title=_(u'PloneMeeting_label_customAdvisers', default=u'Customadvisers'),
@@ -2041,7 +2085,7 @@ class IMeetingConfig(IMeetingConfigMarker):
         default=defValues.powerAdvisersGroups,
     )
 
-    form.widget('power_observers', BlockDataGridFieldFactory)
+    form.widget('power_observers', PMDataGridFieldFactory)
     form.write_permission(power_observers=WriteRiskyConfig)
     power_observers = schema.List(
         title=_(u'PloneMeeting_label_powerObservers', default=u'Powerobservers'),
@@ -2264,7 +2308,7 @@ class IMeetingConfig(IMeetingConfigMarker):
         default=defValues.adviceConfidentialFor,
     )
 
-    form.widget('labels_config', BlockDataGridFieldFactory)
+    form.widget('labels_config', PMDataGridFieldFactory)
     form.write_permission(labels_config=WriteRiskyConfig)
     labels_config = schema.List(
         title=_(u'PloneMeeting_label_labelsConfig', default=u'Labelsconfig'),
@@ -2285,7 +2329,7 @@ class IMeetingConfig(IMeetingConfigMarker):
         default=defValues.itemInternalNotesEditableBy,
     )
 
-    form.widget('item_fields_config', BlockDataGridFieldFactory)
+    form.widget('item_fields_config', PMDataGridFieldFactory)
     form.write_permission(item_fields_config=WriteRiskyConfig)
     item_fields_config = schema.List(
         title=_(u'PloneMeeting_label_itemFieldsConfig', default=u'Itemfieldsconfig'),
@@ -2349,7 +2393,7 @@ class IMeetingConfig(IMeetingConfigMarker):
         default=defValues.itemCommitteesViewStates,
     )
 
-    form.widget('committees', BlockDataGridFieldFactory)
+    form.widget('committees', PMDataGridFieldFactory)
     form.write_permission(committees=WriteRiskyConfig)
     committees = schema.List(
         title=_(u'PloneMeeting_label_committees', default=u'Committees'),
@@ -2533,8 +2577,41 @@ class MeetingConfig(Container):
         # fire during invokeFactory.
         translated = {}
         for key, value in kw.items():
-            translated[_camel_to_snake(key)] = value
+            dx_key = _at_to_dx(key)
+            if dx_key in _DATAGRID_COL_KEY_MAP and isinstance(value, (list, tuple)):
+                col_map = _DATAGRID_COL_KEY_MAP[dx_key]
+                value = [{col_map.get(k, k): v for k, v in row.items()} for row in value]
+            translated[dx_key] = value
         super(MeetingConfig, self).__init__(id, **translated)
+
+    def processForm(self, data=1, metadata=0, REQUEST=None, values=None):
+        """AT compatibility shim: update modification_date so ram caches keyed on
+        self.modified() are properly invalidated after field changes."""
+        self.modification_date = DateTime()
+        self._at_creation_flag = False
+
+    def getField(self, field_name, wrapped=False):
+        """AT compatibility shim: return None so AT widget macros are skipped in templates.
+
+        AT templates call cfg.getField(name) to get field objects for widget rendering.
+        Without this method, Zope acquisition would resolve getField from the parent
+        portal_plonemeeting AT tool, returning unexpected results that trigger AT macros
+        which fail on DX objects.
+        """
+        return None
+
+    def validate(self, REQUEST=None, errors=None, data=None):
+        """AT compatibility shim: call per-field validators for fields present in data."""
+        if data is None:
+            data = {}
+        result = {}
+        for field_name, value in data.items():
+            validator = getattr(self, 'validate_{0}'.format(field_name), None)
+            if validator is not None:
+                error = validator(value)
+                if error:
+                    result[field_name] = error
+        return result
 
     # Class-level constants carried over from the AT class
     metaTypes = ('MeetingItem', 'MeetingItemTemplate', 'MeetingItemRecurring', 'Meeting')
@@ -3238,7 +3315,8 @@ class MeetingConfig(Container):
                 continue
             if not v.get('row_id', None):
                 v.row_id = self.generateUniqueId()
-        self.custom_advisers = value
+        self.custom_advisers = [dict(v) for v in value]
+        self.modification_date = DateTime()
 
 
     security.declareProtected(WriteRiskyConfig, 'setPowerObservers')
@@ -3303,7 +3381,7 @@ class MeetingConfig(Container):
             plone_group_id = '{0}_{1}'.format(self.getId(), row_id_to_remove)
             api.group.delete(plone_group_id)
 
-        self.committees = value
+        self.committees = [dict(v) for v in value]
 
 
     security.declareProtected(WriteRiskyConfig, 'setMaxShownListings')
@@ -3387,7 +3465,9 @@ class MeetingConfig(Container):
 
     security.declareProtected(WriteRiskyConfig, 'setOnMeetingTransitionItemActionToExecute')
     def setOnMeetingTransitionItemActionToExecute(self, value, **kwargs):
-        self.on_meeting_transition_item_action_to_execute = list(value)
+        self.on_meeting_transition_item_action_to_execute = [
+            v for v in value if v.get('orderindex_', None) != 'template_row_marker'
+        ]
 
     security.declareProtected(WriteRiskyConfig, 'setMeetingConfigsToCloneTo')
     def setMeetingConfigsToCloneTo(self, value, **kwargs):
@@ -3488,6 +3568,20 @@ class MeetingConfig(Container):
     security.declareProtected(WriteRiskyConfig, 'setItemAnnexConfidentialVisibleFor')
     def setItemAnnexConfidentialVisibleFor(self, value, **kwargs):
         self.item_annex_confidential_visible_for = list(value)
+
+    security.declareProtected(WriteRiskyConfig, 'setToDoListSearches')
+    def setToDoListSearches(self, value, **kwargs):
+        self.to_do_list_searches = list(value)
+
+    security.declarePublic('getUsedItemAttributes')
+    def getUsedItemAttributes(self, **kwargs):
+        '''AT compatibility shim for templates using meetingConfig/getUsedItemAttributes.'''
+        return self.used_item_attributes
+
+    security.declarePublic('getUsedMeetingAttributes')
+    def getUsedMeetingAttributes(self, **kwargs):
+        '''AT compatibility shim for templates using meetingConfig/getUsedMeetingAttributes.'''
+        return self.used_meeting_attributes
 
     security.declarePublic('getUsedVoteValues')
     def getUsedVoteValues(self,
@@ -3931,10 +4025,21 @@ class MeetingConfig(Container):
                          if storedRowId not in rowIds]
 
         for removedRowId in removedRowIds:
-            # check if used in another MeetingConfig field
-            fields_using_power_observers = self.Schema().filterFields(vocabulary='listPowerObserversTypes')
-            for field in fields_using_power_observers:
-                if removedRowId in field.get(self):
+            # check if used in another MeetingConfig field (DX: hardcoded list of fields
+            # that reference power observer row_ids, equivalent to AT filterFields(vocabulary='listPowerObserversTypes'))
+            fields_using_power_observers = [
+                self.hide_not_viewable_linked_items_to,
+                self.restrict_access_to_secret_items_to,
+                self.advice_confidential_for,
+            ]
+            for field_value in fields_using_power_observers:
+                if removedRowId in (field_value or []):
+                    return translate('power_observer_removed_used_in_fields',
+                                     domain='PloneMeeting',
+                                     context=self.REQUEST)
+            # also check css_transforms rows for the 'powerobservers' column
+            for css_row in (self.css_transforms or []):
+                if removedRowId in (css_row.get('powerobservers') or []):
                     return translate('power_observer_removed_used_in_fields',
                                      domain='PloneMeeting',
                                      context=self.REQUEST)
@@ -4224,15 +4329,20 @@ class MeetingConfig(Container):
                                 an_item_url = _checkIfConfigIsUsed(row_id)
                                 if an_item_url:
                                     org = get_organization(customAdviser['org'])
-                                    columnName = self.Schema()['customAdvisers'].widget.columns[k].label
+                                    col_schema_field = ICustomAdvisersRowSchema.get(k)
+                                    if col_schema_field is not None:
+                                        column_display_name = translate(
+                                            col_schema_field.title,
+                                            domain='PloneMeeting',
+                                            context=self.REQUEST)
+                                    else:
+                                        column_display_name = k
                                     return translate(
                                         'custom_adviser_can_not_edit_used_row',
                                         domain='PloneMeeting',
                                         mapping={'item_url': an_item_url,
                                                  'adviser_group': org.get_full_title(),
-                                                 'column_name': translate(columnName,
-                                                                          domain='datagridfield',
-                                                                          context=self.REQUEST),
+                                                 'column_name': column_display_name,
                                                  'column_old_data': v, },
                                         context=self.REQUEST)
                                 elif k == 'is_linked_to_previous_row':
@@ -4245,7 +4355,7 @@ class MeetingConfig(Container):
                                         an_item_url = _checkIfConfigIsUsed(linkedRow['row_id'])
                                         if an_item_url:
                                             org = get_organization(customAdviser['org'])
-                                            columnName = self.Schema()['customAdvisers'].widget.columns[k].label
+                                            columnName = k
                                             return translate(
                                                 'custom_adviser_can_not_change_is_linked_'
                                                 'to_previous_row_isolating_used_rows',
@@ -4396,6 +4506,9 @@ class MeetingConfig(Container):
             # manage case where item state direclty equal value
             # or value contains item state, like 'suffix_profile_prereviewers'
             values = getattr(self, dx_attr) or []
+            # guard against string value (AT LinesField coerced strings to tuples; DX stores as-is)
+            if isinstance(values, basestring):
+                values = [values]
             if "/" in attr:
                 col_name = attr.split("/")[1]
                 values = [row[col_name] for row in values]
@@ -4431,7 +4544,7 @@ class MeetingConfig(Container):
                             domain="plone",
                             context=self.REQUEST),
                         'cfg_field_name': translate(
-                            msgid='PloneMeeting_label_{0}'.format(field.getName()),
+                            msgid='PloneMeeting_label_{0}'.format(attr.split("/")[0]),
                             domain='PloneMeeting',
                             context=self.REQUEST)},
                     context=self.REQUEST)
@@ -4576,8 +4689,9 @@ class MeetingConfig(Container):
                 return msg
 
         # dependecies, some adaptations will complete already select ones
+        from Products.PloneMeeting.MeetingConfig import MeetingConfig as ATMeetingConfig
         dependencies = {
-            'waiting_advices': [v for v in self.wfAdaptations
+            'waiting_advices': [v for v in ATMeetingConfig.wfAdaptations
                                 if v.startswith('waiting_advices_')],
             'item_validation_shortcuts': ['item_validation_no_validate_shortcuts'],
             'waiting_advices_given_advices_required_to_validate':
@@ -4863,9 +4977,11 @@ class MeetingConfig(Container):
 
         # conflicts
         if 'adviceToGive' in values and 'adviceToGiveByUser' in values:
-            vocab = self.Vocabulary('mailItemEvents')[0]
+            vocab_factory = getUtility(IVocabularyFactory,
+                                       name=u'Products.PloneMeeting.vocabularies.item_events_vocabulary')
+            vocab = vocab_factory(self)
             conflicts = u", ".join(
-                [vocab.getValue('adviceToGive'), vocab.getValue('adviceToGiveByUser')])
+                [vocab.getTerm('adviceToGive').title, vocab.getTerm('adviceToGiveByUser').title])
             msg = translate('mail_item_events_conflicts',
                             mapping={"conflicting_notifications": conflicts},
                             domain='PloneMeeting', context=self.REQUEST)
@@ -5083,34 +5199,36 @@ class MeetingConfig(Container):
             (i for i, a in enumerate(self.custom_advisers) if a['row_id'] == row_id), -1)
         # if the current row is not linked to previous row or the next row
         # is not linked the current row, return nothing
-        if not currentRowData['is_linked_to_previous_row'] == '1' and \
+        if not currentRowData.get('is_linked_to_previous_row', '0') == '1' and \
            (currentRowIndex == len(self.custom_advisers) - 1 or not
-                self.custom_advisers[currentRowIndex + 1]['is_linked_to_previous_row'] == '1'):
+                self.custom_advisers[currentRowIndex + 1].get('is_linked_to_previous_row', '0') == '1'):
             return isAutomaticAdvice, res
         res.append(currentRowData)
 
         # find previous and next rows linked to row_id row
         i = currentRowIndex
-        if currentRowData['is_linked_to_previous_row'] == '1':
+        if currentRowData.get('is_linked_to_previous_row', '0') == '1':
             while i > 0:
                 i = i - 1
                 # loop until the first row is found, aka a row for wich
                 # is_linked_to_previous_row == '0'
-                previousRow = self.custom_advisers[i]
+                previousRow = dict(self._CUSTOM_ADVISER_DEFAULTS)
+                previousRow.update(self.custom_advisers[i])
                 res.insert(0, previousRow)
-                if previousRow['gives_auto_advice_on']:
+                if previousRow.get('gives_auto_advice_on', ''):
                     isAutomaticAdvice = True
-                if previousRow['is_linked_to_previous_row'] == '0':
+                if previousRow.get('is_linked_to_previous_row', '0') == '0':
                     break
         i = currentRowIndex
         while i < len(self.custom_advisers) - 1:
             i = i + 1
             # loop until the last row is found, aka end of customAdvisers
             # or row after has 'is_linked_to_previous_row' == '0'
-            nextRow = self.custom_advisers[i]
-            if nextRow['is_linked_to_previous_row'] == '1':
+            nextRow = dict(self._CUSTOM_ADVISER_DEFAULTS)
+            nextRow.update(self.custom_advisers[i])
+            if nextRow.get('is_linked_to_previous_row', '0') == '1':
                 res.append(nextRow)
-                if nextRow['gives_auto_advice_on']:
+                if nextRow.get('gives_auto_advice_on', ''):
                     isAutomaticAdvice = True
             else:
                 break

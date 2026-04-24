@@ -228,7 +228,10 @@ class PMOrganization(Organization):
                     tmpres.append(state)
             # if nothing redefined for given p_cfg in this organization,
             # use value defined on the cfg
-            res = tmpres or list(cfg.item_advice_states or [])
+            cfg_states = cfg.item_advice_states
+            if isinstance(cfg_states, basestring):
+                cfg_states = [cfg_states] if cfg_states else []
+            res = tmpres or list(cfg_states or [])
         return res
 
     def get_item_advice_edit_states(self, cfg=None):
@@ -242,7 +245,10 @@ class PMOrganization(Organization):
                     tmpres.append(state)
             # if nothing redefined for given p_cfg in this organization,
             # use value defined on the cfg
-            res = tmpres or list(cfg.item_advice_edit_states or [])
+            cfg_states = cfg.item_advice_edit_states
+            if isinstance(cfg_states, basestring):
+                cfg_states = [cfg_states] if cfg_states else []
+            res = tmpres or list(cfg_states or [])
         return res
 
     def get_item_advice_view_states(self, cfg=None):
@@ -256,7 +262,10 @@ class PMOrganization(Organization):
                     tmpres.append(state)
             # if nothing redefined for given p_cfg in this organization,
             # use value defined on the cfg
-            res = tmpres or list(cfg.item_advice_view_states or [])
+            cfg_states = cfg.item_advice_view_states
+            if isinstance(cfg_states, basestring):
+                cfg_states = [cfg_states] if cfg_states else []
+            res = tmpres or list(cfg_states or [])
         return res
 
     def get_keep_access_to_item_when_advice(self, cfg=None):
