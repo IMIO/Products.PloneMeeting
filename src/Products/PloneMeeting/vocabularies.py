@@ -87,6 +87,20 @@ import html
 import itertools
 
 
+def _resolve_dgf_context(context):
+    """Resolve a real context when a vocabulary is bound inside a DataGridField row.
+
+    When z3c.form / collective.z3cform.datagridfield renders the empty
+    template row, the Choice subfield is bound with ``NO_VALUE`` (z3c.form
+    sentinel) or a plain dict.  Fall back to ``get_context_with_request``
+    which resolves the real context via PUBLISHED / HTTP_REFERER.
+    Returns ``None`` if the real context cannot be resolved.
+    """
+    if context is NO_VALUE or not hasattr(context, "REQUEST"):
+        return get_context_with_request(context)
+    return context
+
+
 class PMConditionAwareCollectionVocabulary(CachedCollectionVocabulary):
     implements(IVocabularyFactory)
 
@@ -870,16 +884,16 @@ class AskedAdvicesVocabulary(object):
         # customAdvisers
         customAdvisers = self.cfg and self.cfg.custom_advisers or []
         for customAdviser in customAdvisers:
-            created_until = customAdviser['for_item_created_until']
+            created_until = customAdviser.get('for_item_created_until', u'')
             if (active and created_until and DateTime(created_until).isPast()) or \
                (not active and (not created_until or DateTime(created_until).isFuture())):
                 continue
-            if customAdviser['delay']:
+            if customAdviser.get('delay', u''):
                 # build using DELAYAWARE_ROW_ID_PATTERN
-                res.append(DELAYAWARE_ROW_ID_PATTERN.format(customAdviser['row_id']))
+                res.append(DELAYAWARE_ROW_ID_PATTERN.format(customAdviser.get('row_id', u'')))
             else:
                 # build using REAL_ORG_UID_PATTERN
-                res.append(REAL_ORG_UID_PATTERN.format(customAdviser['org']))
+                res.append(REAL_ORG_UID_PATTERN.format(customAdviser.get('org', u'')))
 
         # classic advisers
         org_uids = [org_uid for org_uid in get_organizations(only_selected=True, the_objects=False)
@@ -3301,8 +3315,12 @@ class WorkflowAdaptationsVocabulary(object):
 
     def __call__(self, context, sorted=True):
         """Received "context" is a MeetingConfig."""
+        context = _resolve_dgf_context(context)
+        if context is None:
+            return SimpleVocabulary([])
+        from Products.PloneMeeting.MeetingConfig import MeetingConfig as ATMeetingConfig
         terms = []
-        for adaptation in context.wf_adaptations:
+        for adaptation in ATMeetingConfig.wfAdaptations:
             # generate a WFA by MeetingConfig.powerObservers in addition to the base one
             if adaptation == 'hide_decisions_when_under_writing':
                 tool = api.portal.get_tool('portal_plonemeeting')
@@ -3352,6 +3370,9 @@ class AdviceWorkflowAdaptationsVocabulary(object):
 
     def __call__(self, context):
         """ """
+        context = _resolve_dgf_context(context)
+        if context is None:
+            return SimpleVocabulary([])
         tool = api.portal.get_tool("portal_plonemeeting")
         terms = []
         for adaptation in tool.advice_wf_adaptations:
@@ -3414,6 +3435,9 @@ class ItemFieldsConfigVocabulary(object):
 
     def __call__(self, context):
         """ """
+        context = _resolve_dgf_context(context)
+        if context is None:
+            return SimpleVocabulary([])
         terms = []
         item_attrs = context.listAttributes(MeetingItem.schema)
         # for now, only followUp related fields are configurable
@@ -3434,11 +3458,12 @@ class ConfigCssTransformsActionsVocabulary(object):
 
     def __call__(self, context):
         """ """
+        request = getattr(context, 'REQUEST', getRequest())
         terms = []
         for v in ['remove', 'replace']:
             term_title = translate('css_transform_action_' + v,
                                    domain='PloneMeeting',
-                                   context=context.REQUEST)
+                                   context=request)
             terms.append(SimpleTerm(v, v, term_title))
         return SimpleVocabulary(terms)
 
@@ -4218,9 +4243,10 @@ class UsedMeetingAttributesVocabulary(object):
 
     def __call__(self, context):
         """context is a MeetingConfig."""
-        if not hasattr(context, 'listUsedMeetingAttributes'):
+        try:
+            return _dl_to_vocabulary(context.listUsedMeetingAttributes())
+        except (AttributeError, TypeError):
             return SimpleVocabulary([])
-        return _dl_to_vocabulary(context.listUsedMeetingAttributes())
 
 
 UsedMeetingAttributesVocabularyFactory = UsedMeetingAttributesVocabulary()

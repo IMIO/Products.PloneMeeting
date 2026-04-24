@@ -2175,7 +2175,8 @@ def checkMayQuickEdit(obj,
     from Products.PloneMeeting.content.meeting import Meeting
     tool = api.portal.get_tool('portal_plonemeeting')
     res = False
-    meeting = obj.getTagName() == "Meeting" and obj or (obj.hasMeeting() and obj.getMeeting())
+    meeting = obj.getTagName() == "Meeting" and obj or (
+        hasattr(obj, 'hasMeeting') and obj.hasMeeting() and obj.getMeeting())
     if (not onlyForManagers or (onlyForManagers and tool.isManager(tool.getMeetingConfig(obj)))) and \
        (bypassWritePermissionCheck or _checkPermission(permission, obj)) and \
        (_evaluateExpression(obj, expression)) and \
