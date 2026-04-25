@@ -8,6 +8,7 @@ from plone import api
 from plone.memoize import ram
 from Products.PloneMeeting.ftw_labels.utils import filter_access_global_labels
 from Products.PloneMeeting.utils import get_context_with_request
+from zope.globalrequest import getRequest
 from zope.i18n import translate
 from zope.interface import implements
 from zope.schema.interfaces import IVocabularyFactory
@@ -34,7 +35,7 @@ class FTWLabelsVocabulary(object):
         except Exception:
             return SimpleVocabulary(res)
 
-        if cfg and 'labels' in cfg.getUsedItemAttributes():
+        if cfg and 'labels' in cfg.used_item_attributes:
             labels = ILabelJar(cfg).list()
             for label in labels:
                 if label['by_user']:
@@ -68,7 +69,7 @@ class ConfigFTWLabelsVocabulary(FTWLabelsVocabulary):
                        '{0} (*)'.format(
                         translate('default_for_all_labels',
                                   domain='PloneMeeting',
-                                  context=context.REQUEST).encode('utf-8'))))
+                                  context=getattr(context, 'REQUEST', getRequest())).encode('utf-8'))))
         return res
 
 

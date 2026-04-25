@@ -184,7 +184,7 @@ class DisplayAssemblyFromMeetingProvider(ContentProviderBase):
         """
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
-        usedMeetingAttributes = cfg.getUsedMeetingAttributes()
+        usedMeetingAttributes = cfg.used_meeting_attributes
         if 'assembly_excused' in usedMeetingAttributes or \
            'assembly_absents' in usedMeetingAttributes:
             return 'display_meeting_attendees_legend'
@@ -352,7 +352,7 @@ class ManageItemAssemblyForm(form.Form):
         # show only relevant fields
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
-        usedMeetingAttributes = cfg.getUsedMeetingAttributes()
+        usedMeetingAttributes = cfg.used_meeting_attributes
         self.fields['item_assembly'].mode = 'hidden'
         self.fields['item_excused'].mode = 'hidden'
         self.fields['item_absents'].mode = 'hidden'

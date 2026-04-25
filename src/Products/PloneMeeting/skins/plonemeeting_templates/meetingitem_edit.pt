@@ -14,7 +14,7 @@
                        tool python: context.portal_plonemeeting;
                        portal context/portal_url/getPortalObject;
                        cfg python: tool.getMeetingConfig(context);
-                       usedAttrs cfg/getUsedItemAttributes;
+                       usedAttrs cfg/used_item_attributes;
                        showClonableToOtherMCs context/showClonableToOtherMCs;
                        showAdvancedClonableToOtherMCs python: context.adapted().showAdvancedClonableToOtherMCs(showClonableToOtherMCs);">
 

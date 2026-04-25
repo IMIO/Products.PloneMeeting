@@ -54,7 +54,7 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
     def available(self):
         """ """
         # super() will check for self.available_permission
-        if self.cfg.getMeetingItemTemplatesToStoreAsAnnex() and \
+        if self.cfg.meeting_item_templates_to_store_as_annex and \
            super(MeetingStoreItemsPodTemplateAsAnnexBatchActionForm, self).available():
             return True
 
@@ -131,7 +131,7 @@ class PMBaseARUOBatchActionForm(BaseARUOBatchActionForm):
            and to non MeetingManagers on the meeting_view."""
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
-        return self.modified_attr_name in self.cfg.getUsedItemAttributes() and \
+        return self.modified_attr_name in self.cfg.used_item_attributes and \
             is_operational_user(self.context)
 
     def _apply(self, **data):
@@ -154,8 +154,8 @@ class UpdateGroupsInChargeBatchActionForm(PMBaseARUOBatchActionForm):
         MeetingConfig.includeGroupsInChargeDefinedOnCategory."""
         res = super(UpdateGroupsInChargeBatchActionForm, self).available()
         if not res:
-            if (self.cfg.getIncludeGroupsInChargeDefinedOnProposingGroup() or
-                self.cfg.getIncludeGroupsInChargeDefinedOnCategory()) and \
+            if (self.cfg.include_groups_in_charge_defined_on_proposing_group or
+                self.cfg.include_groups_in_charge_defined_on_category) and \
                self.tool.isManager(self.cfg):
                 res = True
         return res
@@ -189,7 +189,7 @@ class UpdateCommitteesBatchActionForm(PMBaseARUOBatchActionForm):
            Make it available only to MeetingManagers."""
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
-        return self.modified_attr_name in cfg.getUsedMeetingAttributes() and \
+        return self.modified_attr_name in cfg.used_meeting_attributes and \
             tool.isManager(cfg)
 
     def _validate(self, obj, values):
@@ -235,7 +235,7 @@ class AddAdviceBatchActionForm(BaseBatchActionForm):
            able to add a self.advice_portal_type."""
         # super() will check for self.available_permission
         res = super(AddAdviceBatchActionForm, self).available() and \
-            self.cfg.getUseAdvices()
+            self.cfg.use_advices
         if res:
             # check if user can add a "meetingadvice" portal_type
             # so it is not displayed to advisers able to add other
@@ -350,7 +350,7 @@ class PMDeleteBatchActionForm(DeleteBatchActionForm):
     def available(self):
         """ """
         # super() will check for self.available_permission
-        return "delete" in self.cfg.getEnabledAnnexesBatchActions() and \
+        return "delete" in self.cfg.enabled_annexes_batch_actions and \
             super(PMDeleteBatchActionForm, self).available()
 
 
@@ -387,7 +387,7 @@ class PMDownloadAnnexesBatchActionForm(DownloadAnnexesBatchActionForm):
 
     def available(self):
         """ """
-        return "download-annexes" in self.cfg.getEnabledAnnexesBatchActions()
+        return "download-annexes" in self.cfg.enabled_annexes_batch_actions
 
 
 class PMLabelsBatchActionForm(LabelsBatchActionForm):
@@ -397,7 +397,7 @@ class PMLabelsBatchActionForm(LabelsBatchActionForm):
         """Only available when labels are enabled."""
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
-        return 'labels' in cfg.getUsedItemAttributes()
+        return 'labels' in cfg.used_item_attributes
 
     def _filter_labels_vocabulary(self, jar):
         return filter_access_global_labels(jar, mode='edit')

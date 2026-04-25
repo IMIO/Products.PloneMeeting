@@ -88,6 +88,20 @@ import html
 import itertools
 
 
+def _resolve_dgf_context(context):
+    """Resolve a real context when a vocabulary is bound inside a DataGridField row.
+
+    When z3c.form / collective.z3cform.datagridfield renders the empty
+    template row, the Choice subfield is bound with ``NO_VALUE`` (z3c.form
+    sentinel) or a plain dict.  Fall back to ``get_context_with_request``
+    which resolves the real context via PUBLISHED / HTTP_REFERER.
+    Returns ``None`` if the real context cannot be resolved.
+    """
+    if context is NO_VALUE or not hasattr(context, "REQUEST"):
+        return get_context_with_request(context)
+    return context
+
+
 class PMConditionAwareCollectionVocabulary(CachedCollectionVocabulary):
     implements(IVocabularyFactory)
 
@@ -295,7 +309,7 @@ class ItemProposingGroupsForFacetedFilterVocabulary(object):
         not_active_orgs = [org for org in get_organizations(only_selected=False)
                            if org not in active_orgs]
         res_active = []
-        groupsToHide = cfg.getGroupsHiddenInDashboardFilter()
+        groupsToHide = cfg.groups_hidden_in_dashboard_filter
         res_active = []
         for active_org in active_orgs:
             org_uid = active_org.UID()
@@ -396,7 +410,7 @@ class UserProposingGroupsVocabulary(object):
         if include_stored:
             terms = self._handle_include_stored(context, term_values, terms)
         # sort correctly
-        if 'proposingGroup' not in cfg.getItemFieldsToKeepConfigSortingFor():
+        if 'proposingGroup' not in cfg.item_fields_to_keep_config_sorting_for:
             terms = humansorted(terms, key=attrgetter('title'))
         # add a 'make_a_choice' value when used on an itemtemplate
         if context.isDefinedInTool(item_type='itemtemplate'):
@@ -488,7 +502,7 @@ class GroupsInChargeVocabulary(object):
         cfg = tool.getMeetingConfig(context)
         res = []
         is_using_cfg_order = False
-        used_item_attrs = cfg.getUsedItemAttributes()
+        used_item_attrs = cfg.used_item_attributes
         if 'groupsInCharge' not in used_item_attrs:
             # groups in charge are defined on organizations or categories
             # organizations
@@ -553,7 +567,7 @@ class ItemGroupsInChargeVocabulary(GroupsInChargeVocabulary):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         sort = True
-        if 'groupsInCharge' in cfg.getItemFieldsToKeepConfigSortingFor():
+        if 'groupsInCharge' in cfg.item_fields_to_keep_config_sorting_for:
             sort = False
         terms = list(super(ItemGroupsInChargeVocabulary, self).__call__(
             context, sort=sort)._terms)
@@ -778,7 +792,7 @@ class CreatorsForFacetedFilterVocabulary(object):
 
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        creatorsToHide = cfg.getUsersHiddenInDashboardFilter()
+        creatorsToHide = cfg.users_hidden_in_dashboard_filter
         creators = catalog.uniqueValuesFor('Creator')
         filteredCreators = [creator for creator in creators
                             if creator not in creatorsToHide]
@@ -869,31 +883,31 @@ class AskedAdvicesVocabulary(object):
         """ """
         res = []
         # customAdvisers
-        customAdvisers = self.cfg and self.cfg.getCustomAdvisers() or []
+        customAdvisers = self.cfg and self.cfg.custom_advisers or []
         for customAdviser in customAdvisers:
-            created_until = customAdviser['for_item_created_until']
+            created_until = customAdviser.get('for_item_created_until', u'')
             if (active and created_until and DateTime(created_until).isPast()) or \
                (not active and (not created_until or DateTime(created_until).isFuture())):
                 continue
-            if customAdviser['delay']:
+            if customAdviser.get('delay', u''):
                 # build using DELAYAWARE_ROW_ID_PATTERN
-                res.append(DELAYAWARE_ROW_ID_PATTERN.format(customAdviser['row_id']))
+                res.append(DELAYAWARE_ROW_ID_PATTERN.format(customAdviser.get('row_id', u'')))
             else:
                 # build using REAL_ORG_UID_PATTERN
-                res.append(REAL_ORG_UID_PATTERN.format(customAdviser['org']))
+                res.append(REAL_ORG_UID_PATTERN.format(customAdviser.get('org', u'')))
 
         # classic advisers
         org_uids = [org_uid for org_uid in get_organizations(only_selected=True, the_objects=False)
-                    if org_uid in self.cfg.getSelectableAdvisers()]
+                    if org_uid in self.cfg.selectable_advisers]
         if not active:
             org_uids = [org_uid for org_uid in get_organizations(only_selected=False, the_objects=False)
-                        if org_uid not in org_uids and org_uid in self.cfg.getSelectableAdvisers()]
+                        if org_uid not in org_uids and org_uid in self.cfg.selectable_advisers]
         for org_uid in org_uids:
             formatted = REAL_ORG_UID_PATTERN.format(org_uid)
             res.append(formatted)
 
         # power advisers
-        power_adviser_uids = self.cfg.getPowerAdvisersGroups()
+        power_adviser_uids = self.cfg.power_advisers_groups
         for power_adviser_uid in power_adviser_uids:
             formatted = REAL_ORG_UID_PATTERN.format(power_adviser_uid)
             res.append(formatted)
@@ -1117,7 +1131,7 @@ class ItemOptionalAdvicesVocabulary(object):
             """Separated so it can be cached."""
             resNonDelayAwareAdvisers = []
             selectableAdviserOrgs = uuidsToObjects(
-                cfg.getSelectableAdvisers(), ordered=True, unrestricted=True)
+                cfg.selectable_advisers, ordered=True, unrestricted=True)
             for org in selectableAdviserOrgs:
                 _insert_term_and_users(
                     resNonDelayAwareAdvisers, org.UID(), org.get_full_title())
@@ -1125,7 +1139,7 @@ class ItemOptionalAdvicesVocabulary(object):
 
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        selectableAdviserUsers = cfg.getSelectableAdviserUsers()
+        selectableAdviserUsers = cfg.selectable_adviser_users
         resDelayAwareAdvisers = []
         delayAwareAdvisers = self._getDelayAwareAdvisers(context, cfg)
         # a delay-aware adviser has a special id so we can handle it specifically after
@@ -1286,7 +1300,7 @@ class AdviceTypesVocabulary(object):
         res["asked_again"] = translate(
             "asked_again", domain='PloneMeeting', context=context.REQUEST)
         # MeetingConfig.usedAdviceTypes
-        for advice_type in cfg.getUsedAdviceTypes():
+        for advice_type in cfg.used_advice_types:
             res[advice_type] = translate(
                 advice_type, domain='PloneMeeting', context=context.REQUEST)
         # ToolPloneMeeting.advisersConfig.advice_types
@@ -1326,7 +1340,7 @@ class SentToInfosVocabulary(object):
                        safe_unicode(translate('not_to_be_cloned_to_term',
                                               domain='PloneMeeting',
                                               context=context.REQUEST))))
-        for cfgInfo in cfg.getMeetingConfigsToCloneTo():
+        for cfgInfo in cfg.meeting_configs_to_clone_to:
             cfgId = cfgInfo['meeting_config']
             cfgTitle = getattr(tool, cfgId).Title(include_config_group=True)
             # add 'clonable to' and 'cloned to' options
@@ -1466,7 +1480,7 @@ class ListTypesVocabulary(object):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         res = []
-        for listType in cfg.getListTypes():
+        for listType in cfg.list_types:
             res.append(SimpleTerm(listType['identifier'],
                                   listType['identifier'],
                                   translate(safe_unicode(listType['label']),
@@ -1586,7 +1600,7 @@ class PrivaciesVocabulary(object):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         res = []
-        keys = cfg.getSelectablePrivacies()
+        keys = cfg.selectable_privacies
         for key in keys:
             res.append(SimpleTerm(
                 key,
@@ -1608,7 +1622,7 @@ class PollTypesVocabulary(object):
         res = []
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        usedPollTypes = list(cfg.getUsedPollTypes())
+        usedPollTypes = list(cfg.used_poll_types)
         # if on an item, include values not unselected in config
         if context.meta_type == 'MeetingItem' and context.getPollType() not in usedPollTypes:
             usedPollTypes.append(context.getPollType())
@@ -1712,7 +1726,7 @@ class ItemTemplatesStorableAsAnnexVocabulary(object):
         # get every POD templates that have a defined 'store_as_annex'
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        meetingItemTemplatesToStoreAsAnnex = cfg.getMeetingItemTemplatesToStoreAsAnnex()
+        meetingItemTemplatesToStoreAsAnnex = cfg.meeting_item_templates_to_store_as_annex
         for pod_template in cfg.podtemplates.objectValues():
             store_as_annex = getattr(pod_template, 'store_as_annex', None)
             if store_as_annex:
@@ -2031,7 +2045,7 @@ class ItemNotPresentTypeVocabulary(object):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         res = []
-        usedMeetingAttributes = cfg.getUsedMeetingAttributes()
+        usedMeetingAttributes = cfg.used_meeting_attributes
         if 'absents' in usedMeetingAttributes:
             res.append(SimpleTerm('absent', 'absent', _(u"absent")))
         if 'excused' in usedMeetingAttributes:
@@ -2319,7 +2333,7 @@ class SelectableCommitteeAttendeesVocabulary(BaseSimplifiedHeldPositionsVocabula
                     itertools.chain.from_iterable(
                         [data.get('attendees') or []
                          for data in context.committees or []]))
-            cfg_values = list(cfg.getOrderedCommitteeContacts())
+            cfg_values = list(cfg.ordered_committee_contacts)
             missing_values = list(current_values.difference(cfg_values))
             uids = cfg_values + missing_values
         return super(SelectableCommitteeAttendeesVocabulary, self).__call__(
@@ -2338,7 +2352,7 @@ class SelectableAssemblyMembersVocabulary(BaseHeldPositionsVocabulary):
             context, usage='assemblyMember')
         stored_terms = []
         if IMeetingConfig.providedBy(context):
-            stored_terms = context.getOrderedContacts()
+            stored_terms = context.ordered_contacts
         else:
             # IOrganization or the datagrid field of it...
             # stored in datagridfield 'certified_signatures'
@@ -2427,7 +2441,7 @@ class ItemVotersVocabulary(BaseHeldPositionsVocabulary):
             include_usages=False,
             include_defaults=False,
             include_signature_number=False,
-            include_voting_group=cfg.getDisplayVotingGroup(),
+            include_voting_group=cfg.display_voting_group,
             review_state=[], )
         # do not modify original terms
         terms = list(terms._terms)
@@ -2528,7 +2542,7 @@ class ItemAssociatedGroupsVocabulary(AssociatedGroupsVocabulary):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         sort = True
-        if 'associatedGroups' in cfg.getItemFieldsToKeepConfigSortingFor():
+        if 'associatedGroups' in cfg.item_fields_to_keep_config_sorting_for:
             sort = False
         terms = super(ItemAssociatedGroupsVocabulary, self).__call__(context, sort=sort)._terms
         # make sure we have a copy of _terms because we will add some
@@ -2573,12 +2587,12 @@ class BaseCopyGroupsVocabulary(object):
         portal_groups = api.portal.get_tool('portal_groups')
         terms = []
         if include_both:
-            groupIds = cfg.getSelectableCopyGroups() + cfg.getSelectableRestrictedCopyGroups()
+            groupIds = cfg.selectable_copy_groups + cfg.selectable_restricted_copy_groups
             # remove duplicates
             groupIds = list(set(groupIds))
         else:
-            groupIds = cfg.getSelectableRestrictedCopyGroups() if restricted \
-                else cfg.getSelectableCopyGroups()
+            groupIds = cfg.selectable_restricted_copy_groups if restricted \
+                else cfg.selectable_copy_groups
         for groupId in groupIds:
             group = portal_groups.getGroupById(groupId)
             terms.append(SimpleTerm(groupId, groupId, safe_unicode(group.getProperty('title'))))
@@ -2928,7 +2942,7 @@ class OtherMCsClonableToVocabulary(object):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         terms = []
-        cfg_ids = [mc['meeting_config'] for mc in cfg.getMeetingConfigsToCloneTo()]
+        cfg_ids = [mc['meeting_config'] for mc in cfg.meeting_configs_to_clone_to]
         cfg_ids = list(set(cfg_ids).union(self._get_stored_values(context)))
         for cfg_id in cfg_ids:
             terms.append(
@@ -3263,7 +3277,7 @@ class PMAttendeeRedefinePositionTypesVocabulary(PMPositionTypesVocabulary):
             _get_base_terms(context)
         tool = api.portal.get_tool("portal_plonemeeting")
         cfg = tool.getMeetingConfig(context)
-        selectableRedefinedPositionTypes = cfg.getSelectableRedefinedPositionTypes()
+        selectableRedefinedPositionTypes = cfg.selectable_redefined_position_types
         hp = self._get_current_hp(context)
         res._terms = [term for term in res._terms
                       if not selectableRedefinedPositionTypes or
@@ -3302,13 +3316,17 @@ class WorkflowAdaptationsVocabulary(object):
 
     def __call__(self, context, sorted=True):
         """Received "context" is a MeetingConfig."""
+        context = _resolve_dgf_context(context)
+        if context is None:
+            return SimpleVocabulary([])
+        from Products.PloneMeeting.MeetingConfig import MeetingConfig as ATMeetingConfig
         terms = []
-        for adaptation in context.wfAdaptations:
+        for adaptation in ATMeetingConfig.wfAdaptations:
             # generate a WFA by MeetingConfig.powerObservers in addition to the base one
             if adaptation == 'hide_decisions_when_under_writing':
                 tool = api.portal.get_tool('portal_plonemeeting')
                 cfg = tool.getMeetingConfig(context)
-                for po in cfg.getPowerObservers():
+                for po in cfg.power_observers:
                     term_id = 'hide_decisions_when_under_writing__po__{0}'.format(po['row_id'])
                     title = translate(
                         'wa_hide_decisions_when_under_writing_excepted_po',
@@ -3353,6 +3371,9 @@ class AdviceWorkflowAdaptationsVocabulary(object):
 
     def __call__(self, context):
         """ """
+        context = _resolve_dgf_context(context)
+        if context is None:
+            return SimpleVocabulary([])
         tool = api.portal.get_tool("portal_plonemeeting")
         terms = []
         for adaptation in tool.advice_wf_adaptations:
@@ -3387,7 +3408,7 @@ class ConfigHideHistoryTosVocabulary(object):
                 portal_type.title,
                 domain=portal_type.i18n_domain,
                 context=context.REQUEST)
-            for po_infos in context.getPowerObservers():
+            for po_infos in context.power_observers:
                 terms.append(
                     SimpleTerm(
                         "{0}.{1}".format(content_type, po_infos['row_id']),
@@ -3415,6 +3436,9 @@ class ItemFieldsConfigVocabulary(object):
 
     def __call__(self, context):
         """ """
+        context = _resolve_dgf_context(context)
+        if context is None:
+            return SimpleVocabulary([])
         terms = []
         item_attrs = context.listAttributes(MeetingItem.schema)
         for k, v in item_attrs.items():
@@ -3433,11 +3457,12 @@ class ConfigCssTransformsActionsVocabulary(object):
 
     def __call__(self, context):
         """ """
+        request = getattr(context, 'REQUEST', getRequest())
         terms = []
         for v in ['remove', 'replace']:
             term_title = translate('css_transform_action_' + v,
                                    domain='PloneMeeting',
-                                   context=context.REQUEST)
+                                   context=request)
             terms.append(SimpleTerm(v, v, term_title))
         return SimpleVocabulary(terms)
 
@@ -3467,3 +3492,927 @@ class EveryConfigsVocabulary(object):
 
 
 EveryConfigsVocabularyFactory = EveryConfigsVocabulary()
+
+
+# ============================================================================
+# MeetingConfig vocabulary factories
+# (delegates to MeetingConfig list* methods for config-dependent vocabularies)
+# ============================================================================
+
+def _dl_to_vocabulary(display_list):
+    """Convert an AT DisplayList to a zope.schema SimpleVocabulary."""
+    terms = []
+    for value in display_list:
+        label = display_list.getValue(value)
+        if not isinstance(value, basestring):
+            token = str(value)
+        elif isinstance(value, unicode):
+            token = value.encode('utf-8')
+        else:
+            token = value
+        terms.append(SimpleTerm(value, token, label))
+    return SimpleVocabulary(terms)
+
+
+class BooleanVocabulary(object):
+    """Boolean vocabulary (0/1) for DataGridField columns.
+    Replaces AT instance method: MeetingConfig.listBooleanVocabulary
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listBooleanVocabulary'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listBooleanVocabulary())
+
+
+BooleanVocabularyFactory = BooleanVocabulary()
+
+
+class CommitteesEnabledVocabulary(object):
+    """Vocabulary for committees.enabled column.
+    Replaces AT instance method: MeetingConfig.listCommitteesEnabled
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listCommitteesEnabled'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listCommitteesEnabled())
+
+
+CommitteesEnabledVocabularyFactory = CommitteesEnabledVocabulary()
+
+
+class AnnexesBatchActionsVocabulary(object):
+    """Vocabulary for enabledAnnexesBatchActions field.
+    Replaces AT instance method: MeetingConfig.listAnnexesBatchActions
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listAnnexesBatchActions'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listAnnexesBatchActions())
+
+
+AnnexesBatchActionsVocabularyFactory = AnnexesBatchActionsVocabulary()
+
+
+class AnnexToPrintModesVocabulary(object):
+    """Vocabulary for annexToPrintMode field.
+    Replaces AT instance method: MeetingConfig.listAnnexToPrintModes
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listAnnexToPrintModes'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listAnnexToPrintModes())
+
+
+AnnexToPrintModesVocabularyFactory = AnnexToPrintModesVocabulary()
+
+
+class ContentsKeptOnSentToOtherMCVocabulary(object):
+    """Vocabulary for contentsKeptOnSentToOtherMC field.
+    Replaces AT instance method: MeetingConfig.listContentsKeptOnSentToOtherMCs
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listContentsKeptOnSentToOtherMCs'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listContentsKeptOnSentToOtherMCs())
+
+
+ContentsKeptOnSentToOtherMCVocabularyFactory = ContentsKeptOnSentToOtherMCVocabulary()
+
+
+class ItemIconColorsVocabulary(object):
+    """Vocabulary for itemIconColor field.
+    Replaces AT instance method: MeetingConfig.listItemIconColors
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listItemIconColors'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listItemIconColors())
+
+
+ItemIconColorsVocabularyFactory = ItemIconColorsVocabulary()
+
+
+class ItemFieldsToKeepConfigSortingForVocabulary(object):
+    """Vocabulary for itemFieldsToKeepConfigSortingFor field.
+    Replaces AT instance method: MeetingConfig.listItemFieldsToKeepConfigSortingFor
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listItemFieldsToKeepConfigSortingFor'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listItemFieldsToKeepConfigSortingFor())
+
+
+ItemFieldsToKeepConfigSortingForVocabularyFactory = ItemFieldsToKeepConfigSortingForVocabulary()
+
+
+class ResultsPerPageVocabulary(object):
+    """Vocabulary for maxShownListings, maxShownAvailableItems and maxShownMeetingItems fields.
+    Replaces AT instance method: MeetingConfig.listResultsPerPage
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listResultsPerPage'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listResultsPerPage())
+
+
+ResultsPerPageVocabularyFactory = ResultsPerPageVocabulary()
+
+
+class AdviceStylesVocabulary(object):
+    """Vocabulary for adviceStyle field.
+    Replaces AT instance method: MeetingConfig.listAdviceStyles
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listAdviceStyles'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listAdviceStyles())
+
+
+AdviceStylesVocabularyFactory = AdviceStylesVocabulary()
+
+
+class VotesEncodersVocabulary(object):
+    """Vocabulary for votesEncoder field.
+    Replaces AT instance method: MeetingConfig.listVotesEncoders
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listVotesEncoders'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listVotesEncoders())
+
+
+VotesEncodersVocabularyFactory = VotesEncodersVocabulary()
+
+
+class TransformTypesVocabulary(object):
+    """Vocabulary for cssTransforms transform_type column.
+    Replaces AT instance method: MeetingConfig.listTransformTypes
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listTransformTypes'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listTransformTypes())
+
+
+TransformTypesVocabularyFactory = TransformTypesVocabulary()
+
+
+class MailModesVocabulary(object):
+    """Vocabulary for mailMode field.
+    Replaces AT instance method: MeetingConfig.listMailModes
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listMailModes'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listMailModes())
+
+
+MailModesVocabularyFactory = MailModesVocabulary()
+
+
+class ItemActionsColumnConfigVocabulary(object):
+    """Vocabulary for itemActionsColumnConfig field.
+    Replaces AT instance method: MeetingConfig.listItemActionsColumnConfig
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listItemActionsColumnConfig'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listItemActionsColumnConfig())
+
+
+ItemActionsColumnConfigVocabularyFactory = ItemActionsColumnConfigVocabulary()
+
+
+class DisplayAvailableItemsToVocabulary(object):
+    """Vocabulary for displayAvailableItemsTo field.
+    Replaces AT instance method: MeetingConfig.listDisplayAvailableItemsTo
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listDisplayAvailableItemsTo'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listDisplayAvailableItemsTo())
+
+
+DisplayAvailableItemsToVocabularyFactory = DisplayAvailableItemsToVocabulary()
+
+
+class RedirectToNextMeetingVocabulary(object):
+    """Vocabulary for redirectToNextMeeting field.
+    Replaces AT instance method: MeetingConfig.listRedirectToNextMeeting
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listRedirectToNextMeeting'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listRedirectToNextMeeting())
+
+
+RedirectToNextMeetingVocabularyFactory = RedirectToNextMeetingVocabulary()
+
+
+class ConfigGroupsVocabulary(object):
+    """Vocabulary for configGroup field.
+    Replaces AT instance method: MeetingConfig.listConfigGroups
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listConfigGroups'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listConfigGroups())
+
+
+ConfigGroupsVocabularyFactory = ConfigGroupsVocabulary()
+
+
+class PowerObserversTypesVocabulary(object):
+    """Vocabulary for power observer types.
+    Replaces AT instance method: MeetingConfig.listPowerObserversTypes
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listPowerObserversTypes'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listPowerObserversTypes())
+
+
+PowerObserversTypesVocabularyFactory = PowerObserversTypesVocabulary()
+
+
+class ItemAttributeVisibleForVocabulary(object):
+    """Vocabulary for itemAttributeVisibleFor-based fields.
+    Replaces AT instance method: MeetingConfig.listItemAttributeVisibleFor
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listItemAttributeVisibleFor'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listItemAttributeVisibleFor())
+
+
+ItemAttributeVisibleForVocabularyFactory = ItemAttributeVisibleForVocabulary()
+
+
+class ItemAttributeVisibleForWithMeetingManagersVocabulary(object):
+    """Vocabulary including meetingmanagers profile.
+    Replaces AT instance method: MeetingConfig.listItemAttributeVisibleForWithMeetingManagers
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listItemAttributeVisibleForWithMeetingManagers'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listItemAttributeVisibleForWithMeetingManagers())
+
+
+ItemAttributeVisibleForWithMeetingManagersVocabularyFactory = ItemAttributeVisibleForWithMeetingManagersVocabulary()
+
+
+class AdviceAnnexConfidentialVisibleForVocabulary(object):
+    """Vocabulary for adviceAnnexConfidentialVisibleFor field.
+    Replaces AT instance method: MeetingConfig.listAdviceAnnexConfidentialVisibleFor
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listAdviceAnnexConfidentialVisibleFor'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listAdviceAnnexConfidentialVisibleFor())
+
+
+AdviceAnnexConfidentialVisibleForVocabularyFactory = AdviceAnnexConfidentialVisibleForVocabulary()
+
+
+class MeetingAnnexConfidentialVisibleForVocabulary(object):
+    """Vocabulary for meetingAnnexConfidentialVisibleFor field.
+    Replaces AT instance method: MeetingConfig.listMeetingAnnexConfidentialVisibleFor
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listMeetingAnnexConfidentialVisibleFor'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listMeetingAnnexConfidentialVisibleFor())
+
+
+MeetingAnnexConfidentialVisibleForVocabularyFactory = MeetingAnnexConfidentialVisibleForVocabulary()
+
+
+class ActiveOrgsForPowerAdvisersVocabulary(object):
+    """Vocabulary for powerAdvisersGroups field.
+    Replaces AT instance method: MeetingConfig.listActiveOrgsForPowerAdvisers
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listActiveOrgsForPowerAdvisers'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listActiveOrgsForPowerAdvisers())
+
+
+ActiveOrgsForPowerAdvisersVocabularyFactory = ActiveOrgsForPowerAdvisersVocabulary()
+
+
+class ActiveOrgsForCustomAdvisersVocabulary(object):
+    """Vocabulary for customAdvisers.org column.
+    Replaces AT instance method: MeetingConfig.listActiveOrgsForCustomAdvisers
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listActiveOrgsForCustomAdvisers'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listActiveOrgsForCustomAdvisers())
+
+
+ActiveOrgsForCustomAdvisersVocabularyFactory = ActiveOrgsForCustomAdvisersVocabulary()
+
+
+class SelectableContactsVocabulary(object):
+    """Vocabulary for certifiedSignatures.held_position column.
+    Replaces AT instance method: MeetingConfig.listSelectableContacts
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listSelectableContacts'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listSelectableContacts())
+
+
+SelectableContactsVocabularyFactory = SelectableContactsVocabulary()
+
+
+class SelectableCommitteeAutoFromVocabulary(object):
+    """Vocabulary for committees.auto_from column.
+    Replaces AT instance method: MeetingConfig.listSelectableCommitteeAutoFrom
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listSelectableCommitteeAutoFrom'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listSelectableCommitteeAutoFrom())
+
+
+SelectableCommitteeAutoFromVocabularyFactory = SelectableCommitteeAutoFromVocabulary()
+
+
+class SelectableAdvisersVocabulary(object):
+    """Vocabulary for selectableAdvisers field.
+    Replaces AT instance method: MeetingConfig.listSelectableAdvisers
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listSelectableAdvisers'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listSelectableAdvisers())
+
+
+SelectableAdvisersVocabularyFactory = SelectableAdvisersVocabulary()
+
+
+class SelectableProposingGroupsVocabulary(object):
+    """Vocabulary for committees.using_groups column.
+    Replaces AT instance method: MeetingConfig.listSelectableProposingGroups
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listSelectableProposingGroups'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listSelectableProposingGroups())
+
+
+SelectableProposingGroupsVocabularyFactory = SelectableProposingGroupsVocabulary()
+
+
+class SelectableCopyGroupsVocabulary(object):
+    """Vocabulary for selectableCopyGroups field.
+    Replaces AT instance method: MeetingConfig.listSelectableCopyGroups
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listSelectableCopyGroups'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listSelectableCopyGroups())
+
+
+SelectableCopyGroupsVocabularyFactory = SelectableCopyGroupsVocabulary()
+
+
+class ToDoListSearchesVocabulary(object):
+    """Vocabulary for toDoListSearches field.
+    Replaces AT instance method: MeetingConfig.listToDoListSearches
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listToDoListSearches'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listToDoListSearches())
+
+
+ToDoListSearchesVocabularyFactory = ToDoListSearchesVocabulary()
+
+
+class DashboardItemsListingsFiltersVocabulary(object):
+    """Vocabulary for dashboardItemsListingsFilters field.
+    Replaces AT instance method: MeetingConfig.listDashboardItemsListingsFilters
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listDashboardItemsListingsFilters'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listDashboardItemsListingsFilters())
+
+
+DashboardItemsListingsFiltersVocabularyFactory = DashboardItemsListingsFiltersVocabulary()
+
+
+class DashboardMeetingsListingsFiltersVocabulary(object):
+    """Vocabulary for dashboardMeetingsListingsFilters field.
+    Replaces AT instance method: MeetingConfig.listDashboardMeetingsListingsFilters
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listDashboardMeetingsListingsFilters'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listDashboardMeetingsListingsFilters())
+
+
+DashboardMeetingsListingsFiltersVocabularyFactory = DashboardMeetingsListingsFiltersVocabulary()
+
+
+class MeetingConfigsToCloneToVocabulary(object):
+    """Vocabulary for otherMeetingConfigsClonableTo field.
+    Replaces AT instance method: MeetingConfig.listMeetingConfigsToCloneTo
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listMeetingConfigsToCloneTo'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listMeetingConfigsToCloneTo())
+
+
+MeetingConfigsToCloneToVocabularyFactory = MeetingConfigsToCloneToVocabulary()
+
+
+class TransitionsUntilPresentedVocabulary(object):
+    """Vocabulary for onMeetingTransitionItemActionToExecute item_wf_val column.
+    Replaces AT instance method: MeetingConfig.listTransitionsUntilPresented
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listTransitionsUntilPresented'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listTransitionsUntilPresented())
+
+
+TransitionsUntilPresentedVocabularyFactory = TransitionsUntilPresentedVocabulary()
+
+
+class ExecutableItemActionsVocabulary(object):
+    """Vocabulary for onMeetingTransitionItemActionToExecute item_action column.
+    Replaces AT instance method: MeetingConfig.listExecutableItemActions
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listExecutableItemActions'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listExecutableItemActions())
+
+
+ExecutableItemActionsVocabularyFactory = ExecutableItemActionsVocabulary()
+
+
+class ItemTransitionsVocabulary(object):
+    """Vocabulary listing every item WF transitions.
+    Replaces AT instance method: MeetingConfig.listItemTransitions
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listItemTransitions'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listItemTransitions())
+
+
+ItemTransitionsVocabularyFactory = ItemTransitionsVocabulary()
+
+
+class MeetingTransitionsVocabulary(object):
+    """Vocabulary listing every meeting WF transitions.
+    Replaces AT instance method: MeetingConfig.listMeetingTransitions
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listMeetingTransitions'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listMeetingTransitions())
+
+
+MeetingTransitionsVocabularyFactory = MeetingTransitionsVocabulary()
+
+
+class ItemStatesVocabulary(object):
+    """Vocabulary listing every item WF states.
+    Replaces AT instance method: MeetingConfig.listItemStates
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listItemStates'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listItemStates())
+
+
+ItemStatesVocabularyFactory = ItemStatesVocabulary()
+
+
+class ItemAutoSentToOtherMCStatesVocabulary(object):
+    """Vocabulary for itemAutoSentToOtherMCStates field.
+    Replaces AT instance method: MeetingConfig.listItemAutoSentToOtherMCStates
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listItemAutoSentToOtherMCStates'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listItemAutoSentToOtherMCStates())
+
+
+ItemAutoSentToOtherMCStatesVocabularyFactory = ItemAutoSentToOtherMCStatesVocabulary()
+
+
+class MeetingStatesVocabulary(object):
+    """Vocabulary listing every meeting WF states.
+    Replaces AT instance method: MeetingConfig.listMeetingStates
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listMeetingStates'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listMeetingStates())
+
+
+MeetingStatesVocabularyFactory = MeetingStatesVocabulary()
+
+
+class AllTransitionsVocabulary(object):
+    """Vocabulary listing all transitions (item + meeting).
+    Replaces AT instance method: MeetingConfig.listAllTransitions
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listAllTransitions'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listAllTransitions())
+
+
+AllTransitionsVocabularyFactory = AllTransitionsVocabulary()
+
+
+class ItemEventsVocabulary(object):
+    """Vocabulary for itemMailNotifications field.
+    Replaces AT instance method: MeetingConfig.listItemEvents
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listItemEvents'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listItemEvents())
+
+
+ItemEventsVocabularyFactory = ItemEventsVocabulary()
+
+
+class MeetingEventsVocabulary(object):
+    """Vocabulary for meetingMailNotifications field.
+    Replaces AT instance method: MeetingConfig.listMeetingEvents
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listMeetingEvents'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listMeetingEvents())
+
+
+MeetingEventsVocabularyFactory = MeetingEventsVocabulary()
+
+
+class InsertingMethodsVocabulary(object):
+    """Vocabulary for insertingMethodOnGroups field.
+    Replaces AT instance method: MeetingConfig.listInsertingMethods
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listInsertingMethods'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listInsertingMethods())
+
+
+InsertingMethodsVocabularyFactory = InsertingMethodsVocabulary()
+
+
+class UsedItemAttributesVocabulary(object):
+    """Vocabulary for usedItemAttributes field.
+    Replaces AT instance method: MeetingConfig.listUsedItemAttributes
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listUsedItemAttributes'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listUsedItemAttributes())
+
+
+UsedItemAttributesVocabularyFactory = UsedItemAttributesVocabulary()
+
+
+class ItemAttributesVocabulary(object):
+    """Vocabulary for all item attributes.
+    Replaces AT instance method: MeetingConfig.listItemAttributes
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listItemAttributes'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listItemAttributes())
+
+
+ItemAttributesVocabularyFactory = ItemAttributesVocabulary()
+
+
+class UsedMeetingAttributesVocabulary(object):
+    """Vocabulary for usedMeetingAttributes field.
+    Replaces AT instance method: MeetingConfig.listUsedMeetingAttributes
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        try:
+            return _dl_to_vocabulary(context.listUsedMeetingAttributes())
+        except (AttributeError, TypeError):
+            return SimpleVocabulary([])
+
+
+UsedMeetingAttributesVocabularyFactory = UsedMeetingAttributesVocabulary()
+
+
+class ItemColumnsVocabulary(object):
+    """Vocabulary for itemColumns field.
+    Replaces AT instance method: MeetingConfig.listItemColumns
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listItemColumns'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listItemColumns())
+
+
+ItemColumnsVocabularyFactory = ItemColumnsVocabulary()
+
+
+class MeetingColumnsVocabulary(object):
+    """Vocabulary for meetingColumns field.
+    Replaces AT instance method: MeetingConfig.listMeetingColumns
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listMeetingColumns'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listMeetingColumns())
+
+
+MeetingColumnsVocabularyFactory = MeetingColumnsVocabulary()
+
+
+class AvailableItemsListVisibleColumnsVocabulary(object):
+    """Vocabulary for availableItemsListVisibleColumns field.
+    Replaces AT instance method: MeetingConfig.listAvailableItemsListVisibleColumns
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listAvailableItemsListVisibleColumns'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listAvailableItemsListVisibleColumns())
+
+
+AvailableItemsListVisibleColumnsVocabularyFactory = AvailableItemsListVisibleColumnsVocabulary()
+
+
+class ItemsListVisibleColumnsVocabulary(object):
+    """Vocabulary for itemsListVisibleColumns field.
+    Replaces AT instance method: MeetingConfig.listItemsListVisibleColumns
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listItemsListVisibleColumns'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listItemsListVisibleColumns())
+
+
+ItemsListVisibleColumnsVocabularyFactory = ItemsListVisibleColumnsVocabulary()
+
+
+class ItemsVisibleFieldsVocabulary(object):
+    """Vocabulary for itemsVisibleFields field.
+    Replaces AT instance method: MeetingConfig.listItemsVisibleFields
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listItemsVisibleFields'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listItemsVisibleFields())
+
+
+ItemsVisibleFieldsVocabularyFactory = ItemsVisibleFieldsVocabulary()
+
+
+class ItemsNotViewableVisibleFieldsVocabulary(object):
+    """Vocabulary for itemsNotViewableVisibleFields field.
+    Replaces AT instance method: MeetingConfig.listItemsNotViewableVisibleFields
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listItemsNotViewableVisibleFields'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listItemsNotViewableVisibleFields())
+
+
+ItemsNotViewableVisibleFieldsVocabularyFactory = ItemsNotViewableVisibleFieldsVocabulary()
+
+
+class ItemsListVisibleFieldsVocabulary(object):
+    """Vocabulary for itemsListVisibleFields field.
+    Replaces AT instance method: MeetingConfig.listItemsListVisibleFields
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listItemsListVisibleFields'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listItemsListVisibleFields())
+
+
+ItemsListVisibleFieldsVocabularyFactory = ItemsListVisibleFieldsVocabulary()
+
+
+class AllRichTextFieldsVocabulary(object):
+    """Vocabulary for cssTransforms field (all rich text fields).
+    Replaces AT instance method: MeetingConfig.listAllRichTextFields
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listAllRichTextFields'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listAllRichTextFields())
+
+
+AllRichTextFieldsVocabularyFactory = AllRichTextFieldsVocabulary()
+
+
+class ItemRichTextFieldsVocabulary(object):
+    """Vocabulary for cssTransforms field (item rich text fields only).
+    Replaces AT instance method: MeetingConfig.listItemRichTextFields
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """context is a MeetingConfig."""
+        if not hasattr(context, 'listItemRichTextFields'):
+            return SimpleVocabulary([])
+        return _dl_to_vocabulary(context.listItemRichTextFields())
+
+
+ItemRichTextFieldsVocabularyFactory = ItemRichTextFieldsVocabulary()
+
+
+# Simple re-registrations: existing factories with new snake_case names
+
+class NumbersVocabularyAlias(NumbersVocabulary):
+    """Alias for numbers_vocabulary (snake_case name for DX schema)."""
+
+
+NumbersVocabularyAliasFactory = NumbersVocabularyAlias()
+
+
+class NumbersFromZeroVocabularyAlias(NumbersFromZeroVocabulary):
+    """Alias for numbers_from_zero_vocabulary (snake_case name for DX schema)."""
+
+
+NumbersFromZeroVocabularyAliasFactory = NumbersFromZeroVocabularyAlias()
+
+
+class PollTypesVocabularyAlias(PollTypesVocabulary):
+    """Alias for poll_types_vocabulary (snake_case name for DX schema)."""
+
+
+PollTypesVocabularyAliasFactory = PollTypesVocabularyAlias()

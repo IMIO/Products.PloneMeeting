@@ -1,54 +1,53 @@
 <?xml version="1.0"?>
-<object name="MeetingConfig"
-        meta_type="Factory-based Type Information with dynamic views"
-        xmlns:i18n="http://xml.zope.org/namespaces/i18n"
-        i18n:domain="plone">
-
+<object name="MeetingConfig" meta_type="Dexterity FTI" i18n:domain="PloneMeeting"
+   xmlns:i18n="http://xml.zope.org/namespaces/i18n" purge="True">
  <property name="title" i18n:translate="">MeetingConfig</property>
  <property name="description" i18n:translate=""></property>
- <property name="icon_expr"></property>
- <property name="content_meta_type">MeetingConfig</property>
- <property name="product">PloneMeeting</property>
- <property name="factory">addMeetingConfig</property>
- <property name="immediate_view">folder_listing</property>
+ <property name="i18n_domain">Products.PloneMeeting</property>
+ <property name="icon_expr">string:${portal_url}/MeetingConfig.png</property>
+ <property name="factory">meetingconfig</property>
+ <property name="add_view_expr">string:${folder_url}/++add++MeetingConfig</property>
+ <property name="link_target"></property>
+ <property name="immediate_view">view</property>
  <property name="global_allow">True</property>
  <property name="filter_content_types">True</property>
  <property name="allowed_content_types">
-   <element value="Folder"/>
-   <element value="ContentCategoryConfiguration"/>
+  <element value="Folder"/>
+  <element value="ContentCategoryConfiguration"/>
  </property>
  <property name="allow_discussion">False</property>
- <property name="default_view">base_view</property>
+ <property name="default_view">view</property>
  <property name="view_methods">
-  <element value="folder_summary_view"/>
-  <element value="folder_tabular_view"/>
-  <element value="atct_album_view"/>
-  <element value="folder_listing"/>
-  <element value="base_view"/>
+  <element value="view"/>
  </property>
  <property name="default_view_fallback">False</property>
+ <property name="add_permission">PloneMeeting.AddMeetingConfig</property>
+ <property name="schema_policy">schema_policy_meetingconfig</property>
+ <property name="klass">Products.PloneMeeting.content.meetingconfig.MeetingConfig</property>
+ <property name="behaviors">
+  <element value="plone.app.lockingbehavior.behaviors.ILocking" />
+ </property>
+ <property name="schema"></property>
+ <property name="model_source">
+     &lt;model xmlns="http://namespaces.plone.org/supermodel/schema"&gt;
+       &lt;schema/&gt;
+     &lt;/model&gt;
+ </property>
+
  <alias from="(Default)" to="(dynamic view)"/>
- <alias from="view" to="(selected layout)"/>
- <alias from="edit" to="base_edit"/>
+ <alias from="edit" to="@@edit"/>
  <alias from="sharing" to="@@sharing"/>
- <action title="View"
-         action_id="view"
-         category="object"
-         condition_expr=""
-         icon_expr=""
-         url_expr="string:${object_url}/view"
-         visible="True">
+ <alias from="view" to="(selected layout)"/>
+
+ <action title="View" action_id="view" category="object" condition_expr=""
+    description="" icon_expr="" link_target="" url_expr="string:${object_url}"
+    visible="True">
   <permission value="View"/>
  </action>
- <action title="Edit"
-         action_id="edit"
-         category="object"
-         condition_expr="python:not object.restrictedTraverse('@@plone_lock_info').is_locked_for_current_user() and object.Schema().editableFields(object.Schema())"
-         icon_expr=""
-         url_expr="string:${object_url}/edit"
-         visible="True">
+ <action title="Edit" action_id="edit" category="object"
+    condition_expr="not:object/@@plone_lock_info/is_locked_for_current_user|python:True"
+    description="" icon_expr="" link_target=""
+    url_expr="string:${object_url}/edit" visible="True">
   <permission value="Modify portal content"/>
  </action>
-<!-- ##code-section FOOT -->
-<!-- ##/code-section FOOT -->
 </object>

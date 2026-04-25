@@ -668,8 +668,8 @@ def default_assembly(data):
     tool = api.portal.get_tool('portal_plonemeeting')
     cfg = tool.getMeetingConfig(data.context)
     res = u""
-    if "assembly" in cfg.getUsedMeetingAttributes():
-        res = safe_unicode(cfg.getAssembly())
+    if "assembly" in cfg.used_meeting_attributes:
+        res = safe_unicode(cfg.assembly)
     return res
 
 
@@ -678,8 +678,8 @@ def default_assembly_staves(data):
     tool = api.portal.get_tool('portal_plonemeeting')
     cfg = tool.getMeetingConfig(data.context)
     res = u""
-    if "assembly_staves" in cfg.getUsedMeetingAttributes():
-        res = safe_unicode(cfg.getAssemblyStaves())
+    if "assembly_staves" in cfg.used_meeting_attributes:
+        res = safe_unicode(cfg.assembly_staves)
     return res
 
 
@@ -688,8 +688,8 @@ def default_signatures(data):
     tool = api.portal.get_tool('portal_plonemeeting')
     cfg = tool.getMeetingConfig(data.context)
     res = u""
-    if "signatures" in cfg.getUsedMeetingAttributes():
-        res = safe_unicode(cfg.getSignatures())
+    if "signatures" in cfg.used_meeting_attributes:
+        res = safe_unicode(cfg.signatures)
     return res
 
 
@@ -698,8 +698,8 @@ def default_place(data):
     tool = api.portal.get_tool('portal_plonemeeting')
     cfg = tool.getMeetingConfig(data.context)
     res = PLACE_OTHER
-    if cfg.getPlaces():
-        res = safe_unicode(cfg.getPlaces().split('\r\n')[0].strip())
+    if cfg.places:
+        res = safe_unicode(cfg.places.split('\r\n')[0].strip())
     return res
 
 
@@ -707,7 +707,7 @@ def default_place(data):
 def default_committees(data):
     tool = api.portal.get_tool('portal_plonemeeting')
     cfg = tool.getMeetingConfig(data.context)
-    used_attrs = cfg.getUsedMeetingAttributes()
+    used_attrs = cfg.used_meeting_attributes
     res = []
     if "committees" in used_attrs:
         for committee in cfg.getCommittees():
@@ -747,7 +747,7 @@ def get_all_usable_held_positions(obj, the_objects=True):
     # append every selectable hp selected in MeetingConfig
     tool = api.portal.get_tool('portal_plonemeeting')
     cfg = tool.getMeetingConfig(obj)
-    selectable_contacts = cfg.getOrderedContacts()
+    selectable_contacts = cfg.ordered_contacts
     new_selectable_contacts = [c for c in selectable_contacts if c not in contacts]
     contacts = contacts + new_selectable_contacts
     if contacts and the_objects:
@@ -1286,9 +1286,9 @@ class Meeting(Container):
         cfg = tool.getMeetingConfig(self)
         # some columns are displayed in the 'Purpose' column
         if displaying_available_items(self):
-            visibleCols = cfg.getAvailableItemsListVisibleColumns()
+            visibleCols = cfg.available_items_list_visible_columns
         else:
-            visibleCols = cfg.getItemsListVisibleColumns()
+            visibleCols = cfg.items_list_visible_columns
         itemsListVisibleColumns = [col for col in visibleCols if not col.startswith('static_')]
         itemsListVisibleColumns.insert(0, u'pretty_link')
         if not displaying_available_items(self):
@@ -1771,12 +1771,12 @@ class Meeting(Container):
 
     def _insert_order_cache_cfg_attrs(self, cfg):
         '''See doc in interfaces.py.'''
-        return ['insertingMethodsOnAddItem',
-                'listTypes',
-                'selectablePrivacies',
-                'usedPollTypes',
-                'orderedAssociatedOrganizations',
-                'orderedGroupsInCharge',
+        return ['inserting_methods_on_add_item',
+                'list_types',
+                'selectable_privacies',
+                'used_poll_types',
+                'ordered_associated_organizations',
+                'ordered_groups_in_charge',
                 'committees']
 
     def _init_insert_order_cache(self, cfg):
@@ -1824,16 +1824,16 @@ class Meeting(Container):
         is_late = not force_normal and item.wfConditions().isLateFor(self)
         if is_late:
             item.setListType(item.adapted().getListTypeLateValue(self))
-            to_discuss_value = cfg.getToDiscussLateDefault()
+            to_discuss_value = cfg.to_discuss_late_default
         else:
             item.setListType(item.adapted().getListTypeNormalValue(self))
-            to_discuss_value = cfg.getToDiscussDefault()
+            to_discuss_value = cfg.to_discuss_default
         items = self.get_items(ordered=True, unrestricted=True)
         # Set the correct value for the 'toDiscuss' field if required
-        if cfg.getToDiscussSetOnItemInsert():
+        if cfg.to_discuss_set_on_item_insert:
             item.setToDiscuss(to_discuss_value)
         # At what place must we insert the item in the list ?
-        insert_methods = cfg.getInsertingMethodsOnAddItem()
+        insert_methods = cfg.inserting_methods_on_add_item
         # wipe out insert methods as stored value is a DataGridField
         # and we only need a tuple of insert methods
         insert_at_the_end = False
@@ -1994,7 +1994,7 @@ class Meeting(Container):
         if not may_update:
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(meeting)
-            may_update = cfg.getComputeItemReferenceForItemsOutOfMeeting()
+            may_update = cfg.compute_item_reference_for_items_out_of_meeting
         return may_update
 
     def update_item_references(self, start_number=0, check_needed=False, clear=False):
@@ -2048,7 +2048,7 @@ class Meeting(Container):
            meeting date when relevant.'''
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        used_attrs = cfg.getUsedMeetingAttributes()
+        used_attrs = cfg.used_meeting_attributes
         # Initialize the effective start date with the meeting date
         if 'start_date' in used_attrs and not self.start_date:
             self.start_date = self.date
@@ -2063,11 +2063,11 @@ class Meeting(Container):
             self.end_date = self.date + timedelta(hours=2)
         # Compute the deadlines
         if 'validation_deadline' in used_attrs and not getattr(self, 'validation_deadline', None):
-            delta = cfg.getValidationDeadlineDefault()
+            delta = cfg.validation_deadline_default
             if not delta.strip() in ('', '0',):
                 self.validation_deadline = getDateFromDelta(self.date, '-' + delta)
         if 'freeze_deadline' in used_attrs and not getattr(self, 'freeze_deadline', None):
-            delta = cfg.getFreezeDeadlineDefault()
+            delta = cfg.freeze_deadline_default
             if not delta.strip() in ('', '0',):
                 self.freeze_deadline = getDateFromDelta(self.date, '-' + delta)
 
@@ -2085,7 +2085,7 @@ class Meeting(Container):
             if not tool.isManager(cfg):
                 raise Unauthorized
             updated = False
-            if "first_item_number" in cfg.getYearlyInitMeetingNumbers():
+            if "first_item_number" in cfg.yearly_init_meeting_numbers:
                 # I must reinit the first_item_number to 1 if it is the first
                 # meeting of this year.
                 prev = self.get_previous_meeting(interval=365)
@@ -2269,7 +2269,7 @@ class Meeting(Container):
         cfg = extra_expr_ctx['cfg']
         cfg_id = cfg.getId()
         meeting_state = self.query_state()
-        for po_infos in cfg.getPowerObservers():
+        for po_infos in cfg.power_observers:
             if meeting_state in po_infos['meeting_states'] and \
                _evaluateExpression(self,
                                    expression=po_infos['meeting_access_on'],
@@ -2322,7 +2322,7 @@ class Meeting(Container):
         '''Is the attribute named p_name used in this meeting config ?'''
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        return (name in cfg.getUsedMeetingAttributes())
+        return (name in cfg.used_meeting_attributes)
 
     def query_state_cachekey(method, self):
         '''cachekey method for self.query_state.'''
@@ -2422,7 +2422,7 @@ class Meeting(Container):
         meeting = self.get_self()
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(meeting)
-        if cfg.getUseVotes() or meeting.get_voters():
+        if cfg.use_votes or meeting.get_voters():
             res = True
         return res
 
@@ -2548,7 +2548,7 @@ class PlacesVocabulary(object):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         # XXX with MeetingConfig AT, place is stored as utf-8, we need unicode
-        places = [safe_unicode(place) for place in cfg.getPlaces().strip().split('\r\n')
+        places = [safe_unicode(place) for place in cfg.places.strip().split('\r\n')
                   if place.strip()]
         # history when context is a Meeting
         if context.getTagName() == "Meeting" and \

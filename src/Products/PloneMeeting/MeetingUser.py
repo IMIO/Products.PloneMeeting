@@ -361,7 +361,7 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
             return False
         else:
             cfg = tool.getMeetingConfig(item)
-            votesEncoder = cfg.getVotesEncoder()
+            votesEncoder = cfg.votes_encoder
             if (loggedUser.id == mUser.getId()) and \
                ('theVoterHimself' in votesEncoder):
                 return True
@@ -382,30 +382,30 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
         return self.config().listAdviceStyles()
 
     def getDefaultAdviceStyle(self):
-        return self.config().getAdviceStyle()
+        return self.config().advice_style
 
     def listItemsListVisibleColumns(self):
         return self.config().listItemsListVisibleColumns()
 
     def getDefaultVisibleColumns(self):
-        return self.config().getItemsListVisibleColumns()
+        return self.config().items_list_visible_columns
 
     def listItemColumns(self):
         return self.config().listItemColumns()
 
     def getDefaultItemColumns(self):
-        return self.config().getItemColumns()
+        return self.config().item_columns
 
     def listMeetingColumns(self):
         return self.config().listMeetingColumns()
 
     def getDefaultMeetingColumns(self):
-        return self.config().getMeetingColumns()
+        return self.config().meeting_columns
 
     def listItemEvents(self):
         config = self.config()
         allEvents = config.listItemEvents()
-        selectedEvents = config.getMailItemEvents()
+        selectedEvents = config.mail_item_events
         # From the list of all events that are selectable in the config
         # (=configItemEvents), the user may only (de)activate events
         # that are selected in the config (=selectedEvents). Among
@@ -443,7 +443,7 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
         # On an archive site, there may be no transition defined on a meeting.
         if not allEvents.keys():
             return DisplayList()
-        selectedEvents = config.getMailMeetingEvents()
+        selectedEvents = config.mail_meeting_events
         res = []
         # Here, I could only keep transitions for which the user has the
         # permission to View the meeting at its end state. But in most cases,

@@ -266,7 +266,7 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         # get every other MC the items of this MC can be sent to
-        otherMCs = cfg.getMeetingConfigsToCloneTo()
+        otherMCs = cfg.meeting_configs_to_clone_to
         for otherMC in otherMCs:
             otherMCObj = getattr(tool, otherMC['meeting_config'])
             if otherMCObj.getUseGroupsAsCategories():

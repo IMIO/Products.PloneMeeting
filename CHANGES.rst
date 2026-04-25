@@ -38,6 +38,23 @@ Changelog
 4.2.28.11 (2026-04-24)
 ----------------------
 
+- Ported `MeetingConfig` default view from the legacy AT skin-layer template
+  (`skins/plonemeeting_templates/meetingconfig_view.pt`, 1559 lines) to a
+  Dexterity browser view (`browser/meetingconfig.py::MeetingConfigView`).
+  The new view reproduces the full tab-based layout: ten panes
+  (`default`, `data`, `assembly_and_signatures`, `workflow`, `gui`, `mail`,
+  `advices`, `committees`, `votes`, `doc`) keyed on `request.pageName`, the
+  manager-only guard, admin action forms, annex types, categories, recurring
+  items, item templates, searches/topics, and podtemplates tables. DX schema
+  fields are rendered via z3c.form widgets from `view.groups`. The AT-only
+  `getCustomFields(2)` fieldset is not reproduced (see `MIGRATION_SUMMARY.md`).
+  [duchenean]
+- Fixed `AttributeError: 'NO_VALUE' object has no attribute ...` raised by
+  `item_fields_config_vocabulary`, `workflow_adaptations_vocabulary` and
+  `advice_workflow_adaptations_vocabulary` when rendering the Dexterity
+  `MeetingConfig` edit form, by resolving the real context via a new
+  `_resolve_dgf_context` helper.
+  [duchenean]
 - Fixed `actions_panel` cache that was causing `reviewers` sometimes not seeing
   the `backToProposed` action on a `validated` item when
   `reviewers_take_back_validated_item` is used.

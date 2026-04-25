@@ -440,7 +440,7 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
     # combinations of adaptations exist, wrong combination of adaptations is
     # performed in meetingConfig.validate_workflowAdaptations.
     # If p_specificAdaptation is passed, just the relevant wfAdaptation is applied.
-    wfAdaptations = meetingConfig.getWorkflowAdaptations()
+    wfAdaptations = meetingConfig.wf_adaptations
     # make sure given wfAdaptations are in the right order
     # import MeetingConfig only here so we are sure that the 'wfAdaptations' attr
     # has been updated by subplugins if any
@@ -683,7 +683,7 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
             addState(itemWorkflow.id, **level)
 
         # manage item_validation_shortcuts when every states and transitions are created
-        if 'item_validation_shortcuts' in meetingConfig.getWorkflowAdaptations():
+        if 'item_validation_shortcuts' in meetingConfig.wf_adaptations:
             # every transitions exist, we just need to add it to every item validation states
             back_shortcuts = {}
             # add back transitions
@@ -866,11 +866,11 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
                     decisions_published.setPermission(permission, 0, roles)
                 # Transition "backToPublished" must be protected by a popup, like
                 # any other "correct"-like transition.
-                toConfirm = meetingConfig.getTransitionsToConfirm()
+                toConfirm = meetingConfig.transitions_to_confirm
                 if 'Meeting.backToDecisionsPublished' not in toConfirm:
                     toConfirm = list(toConfirm)
                     toConfirm.append('Meeting.backToDecisionsPublished')
-                    meetingConfig.setTransitionsToConfirm(toConfirm)
+                    meetingConfig.transitions_to_confirm = toConfirm
                 # State "decisions_published" must be selected in decisions DashboardCollections
                 for collection in object_values(meetingConfig.searches.searches_decisions, 'DashboardCollection'):
                     for criterion in collection.query:

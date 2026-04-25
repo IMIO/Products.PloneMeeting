@@ -242,7 +242,7 @@ class testColumns(PloneMeetingTestCase):
         self.assertTrue("c0=sortable_title" in column.renderHeadCell())
         self.assertFalse('static-infos' in column.renderCell(meeting_brain))
         # enable static_end_date without enabled in used_attrs
-        cfg.setMeetingColumns(('static_end_date', ))
+        cfg.meeting_columns = ('static_end_date',)
         self.assertFalse('static-infos' in column.renderCell(meeting_brain))
         # now if end_date contains something, it will be displayed
         meeting.end_date = meeting.date

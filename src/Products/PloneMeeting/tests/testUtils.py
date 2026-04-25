@@ -66,9 +66,9 @@ class testUtils(PloneMeetingTestCase):
     def test_pm_Set_field_from_ajax(self):
         """Work on AT and DX."""
         cfg = self.meetingConfig
-        cfg.setItemAdviceStates((self._stateMappingFor('proposed'), ))
-        cfg.setItemAdviceEditStates((self._stateMappingFor('proposed'), ))
-        cfg.setItemAdviceViewStates((self._stateMappingFor('proposed'), ))
+        cfg.item_advice_states = (self._stateMappingFor('proposed', ))
+        cfg.item_advice_edit_states = (self._stateMappingFor('proposed', ))
+        cfg.item_advice_view_states = (self._stateMappingFor('proposed', ))
 
         # item
         self.changeUser('pmCreator1')
@@ -114,7 +114,7 @@ class testUtils(PloneMeetingTestCase):
     def test_pm_SendMailIfRelevant(self):
         """ """
         cfg = self.meetingConfig
-        cfg.setMailMode("deactivated")
+        cfg.mail_mode = "deactivated"
         self.changeUser('pmManager')
         item = self.create("MeetingItem", title="My item")
         params = {"obj": item,
@@ -126,10 +126,10 @@ class testUtils(PloneMeetingTestCase):
         # deactivated
         self.assertIsNone(sendMailIfRelevant(**params))
         # enabled but not selected
-        cfg.setMailMode("activated")
+        cfg.mail_mode = "activated"
         self.assertIsNone(sendMailIfRelevant(**params))
         # enabled and selected
-        cfg.setMailItemEvents(("itemPresented", ))
+        cfg.mail_item_events = ("itemPresented",)
         recipients, subject, body = sendMailIfRelevant(**params)
         dev_creators = get_plone_group(self.developers_uid, 'creators')
         self.assertEqual(dev_creators.getMemberIds(),
@@ -151,8 +151,8 @@ class testUtils(PloneMeetingTestCase):
     def test_pm_SendMailIfRelevantIsGroupIds(self):
         """ """
         cfg = self.meetingConfig
-        cfg.setMailMode("activated")
-        cfg.setMailItemEvents(("item_state_changed_validate", ))
+        cfg.mail_mode = "activated"
+        cfg.mail_item_events = ("item_state_changed_validate",)
         # test also that custom state/transition title works
         self._updateItemValidationLevel(
             cfg,
@@ -187,8 +187,8 @@ class testUtils(PloneMeetingTestCase):
     def test_pm_SendMailIfRelevantIsUserIds(self):
         """ """
         cfg = self.meetingConfig
-        cfg.setMailMode("activated")
-        cfg.setMailItemEvents(("item_state_changed_validate", ))
+        cfg.mail_mode = "activated"
+        cfg.mail_item_events = ("item_state_changed_validate",)
 
         self.changeUser('pmManager')
         item = self.create("MeetingItem", title="My item")
@@ -221,8 +221,8 @@ class testUtils(PloneMeetingTestCase):
     def test_pm_SendMailIfRelevantIsPermission(self):
         """ """
         cfg = self.meetingConfig
-        cfg.setMailMode("activated")
-        cfg.setMailItemEvents(("item_state_changed_validate", ))
+        cfg.mail_mode = "activated"
+        cfg.mail_item_events = ("item_state_changed_validate",)
 
         self.changeUser('pmManager')
         item = self.create("MeetingItem", title="My item")
@@ -257,7 +257,7 @@ class testUtils(PloneMeetingTestCase):
         self.tool.setConfigGroups(config_groups)
         cfg = self.meetingConfig
         # "test" mailMode will return computed elements
-        cfg.setMailMode('test')
+        cfg.mail_mode = 'test'
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         obj, body, recipients, from_address, subject, attachments, translation_mapping = \
@@ -266,7 +266,7 @@ class testUtils(PloneMeetingTestCase):
         self.assertEqual(translation_mapping['meetingConfigTitle'],
                          safe_unicode(cfg.Title()))
         # config group but different config title, simple title
-        cfg.setConfigGroup('unique_id_3')
+        cfg.config_group = 'unique_id_3'
         obj, body, recipients, from_address, subject, attachments, translation_mapping = \
             sendMail([], item, '')
         self.assertEqual(translation_mapping['meetingConfigTitle'],

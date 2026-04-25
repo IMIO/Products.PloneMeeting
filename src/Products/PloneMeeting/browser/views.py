@@ -39,6 +39,7 @@ from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import REINDEX_NEEDED_MARKER
 from Products.PloneMeeting.content.meeting import IMeeting
+from Products.PloneMeeting.content.meetingconfig import _camel_to_snake
 from Products.PloneMeeting.indexes import _to_coded_adviser_index
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
@@ -104,7 +105,7 @@ class ItemMoreInfosView(BrowserView):
 
     def __call__(self, fieldsConfigAttr='itemsListVisibleFields', currentCfgId=None):
         """ """
-        self.visibleFields = self.cfg.getField(fieldsConfigAttr).get(self.cfg)
+        self.visibleFields = getattr(self.cfg, _camel_to_snake(fieldsConfigAttr))
         # if current user may not see the item, use another fieldsConfigAttr
         if not _checkPermission(View, self.context):
             # check it item fields should be visible nevertheless
@@ -116,11 +117,11 @@ class ItemMoreInfosView(BrowserView):
                  'item_cfg': self.cfg})
             res = _evaluateExpression(
                 self.context,
-                expression=self.cfg.getItemsNotViewableVisibleFieldsTALExpr(),
+                expression=self.cfg.items_not_viewable_visible_fields_tal_expr,
                 roles_bypassing_expression=[],
                 extra_expr_ctx=extra_expr_ctx)
             if res:
-                self.visibleFields = self.cfg.getField('itemsNotViewableVisibleFields').get(self.cfg)
+                self.visibleFields = self.cfg.items_not_viewable_visible_fields
                 with api.env.adopt_roles(roles=['Manager']):
                     return super(ItemMoreInfosView, self).__call__()
             else:
@@ -312,7 +313,7 @@ class ItemToDiscussView(BrowserView):
     def reviewerMayAskDiscussion(self):
         """Do we use the "reviewer may ask item discussion" ?"""
         return not self.context.getToDiscuss() and \
-            "askDiscussItem" in self.cfg.getMailItemEvents() and \
+            "askDiscussItem" in self.cfg.mail_item_events and \
             self.context.hasMeeting() and \
             not self.context.is_decided(self.cfg) and \
             self.userIsReviewer()
@@ -391,7 +392,7 @@ class ObjectGoToView(BrowserView):
             context_uid = self.context.UID()
             # use index position so element 20 index is 19 and is < 20
             item_pos = tuple(item_uids).index(context_uid)
-            items_by_page = cfg.getMaxShownMeetingItems()
+            items_by_page = cfg.max_shown_meeting_items
             page_num = float(item_pos) / items_by_page
             # round 0.85 to 0 or 1.05 to 1
             int_page_num = int(page_num)
@@ -499,7 +500,7 @@ class UpdateDelayAwareAdvicesView(BrowserView):
         tool = api.portal.get_tool('portal_plonemeeting')
         advice_alive_states = get_advice_alive_states()
         for cfg in tool.objectValues('MeetingConfig'):
-            for row in cfg.getCustomAdvisers():
+            for row in cfg.custom_advisers:
                 isDelayAware = bool(row['delay'])
                 if isDelayAware:
                     org_uid = row['org']
@@ -1699,7 +1700,7 @@ class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGH
             _add_attendance(attendances, meeting, absents, 'absent')
 
         attendances = OrderedDict({})
-        for contact in cfg.getOrderedContacts():
+        for contact in cfg.ordered_contacts:
             position = uuidToObject(contact, unrestricted=True)
             attendances[contact] = {'name': position.get_person_title(),
                                     'function': position.get_label(),
@@ -2341,6 +2342,16 @@ class ItemHeaderView(BrowserView):
 
 class MeetingHeaderView(BrowserView):
     """ """
+
+
+class MeetingConfigDefaultView(BrowserView):
+    """Default view for DX MeetingConfig — redirects to the edit form.
+
+    Replaces the AT base_view skin template which relied on AT schema rendering.
+    """
+
+    def __call__(self):
+        return self.request.response.redirect(self.context.absolute_url() + '/edit')
 
 
 class DisplayMeetingConfigsOfConfigGroup(BrowserView):

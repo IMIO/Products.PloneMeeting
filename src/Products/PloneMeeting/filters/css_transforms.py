@@ -25,13 +25,13 @@ class CssTransformer(object):
     def is_enabled(self):
         """Hide if enabled when current user may not edit."""
         return self.cfg and \
-            self.cfg.getCssTransforms() and \
+            self.cfg.css_transforms and \
             not _checkPermission(ModifyPortalContent, self.context)
 
     def _remove_css_classes(self, data):
         """Remove CSS classes the user is powerobserver for."""
         css_classes = []
-        for row in self.cfg.getCssTransforms():
+        for row in self.cfg.css_transforms:
             if row['powerobservers'] and \
                row['action'] == 'remove' and \
                isPowerObserverForCfg(self.cfg, power_observer_types=row['powerobservers']):
@@ -43,7 +43,7 @@ class CssTransformer(object):
     def _replace_content(self, data):
         """Replace content using defined CSS classes the user is powerobserver for."""
         replacements = []
-        for row in self.cfg.getCssTransforms():
+        for row in self.cfg.css_transforms:
             if row['powerobservers'] and \
                row['action'] == 'replace' and \
                isPowerObserverForCfg(self.cfg, power_observer_types=row['powerobservers']):

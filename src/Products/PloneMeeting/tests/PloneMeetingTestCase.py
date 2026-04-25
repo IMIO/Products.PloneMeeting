@@ -31,6 +31,7 @@ from plone.app.testing.bbb import _createMemberarea
 from plone.app.testing.helpers import setRoles
 from plone.dexterity.utils import createContentInContainer
 from plone.dexterity.utils import iterSchemata
+from Products.PloneMeeting.content.meetingconfig import _camel_to_snake
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFPlone.utils import base_hasattr
 from Products.Five.browser import BrowserView
@@ -192,8 +193,8 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         # Disable notifications mechanism. This way, the test suite may be
         # executed even on production sites that contain many real users.
         for cfg in self.tool.objectValues('MeetingConfig'):
-            cfg.setMailItemEvents([])
-            cfg.setMailMeetingEvents([])
+            cfg.mail_item_events = []
+            cfg.mail_meeting_events = []
         logout()
 
         # Set the default meeting config
@@ -314,7 +315,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
            returns the created object. p_attrs is a dict of attributes
            that will be given to invokeFactory.'''
         cfg = self.meetingConfig
-        shortName = cfg.getShortName()
+        shortName = cfg.short_name
         # Some special behaviour occurs if the item to create is
         # a recurring item or an item template
         contentType = objectType
@@ -373,7 +374,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                     field.set(obj, attrs[rich_field])
             # define a category for the item if necessary
             if autoAddCategory and \
-               'category' in cfg.getUsedItemAttributes() and \
+               'category' in cfg.used_item_attributes and \
                not obj.getCategory():
                 aCategory = cfg.getCategories()[0].getId()
                 obj.setCategory(aCategory)
@@ -388,7 +389,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                 obj._at_rename_after_creation = True
         if objectType == 'Meeting':
             # manage attendees if using it
-            usedMeetingAttrs = cfg.getUsedMeetingAttributes()
+            usedMeetingAttrs = cfg.used_meeting_attributes
             if 'attendees' in usedMeetingAttrs:
                 default_attendees = get_default_attendees(cfg)
                 default_attendees = OrderedDict((
@@ -397,7 +398,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                 if 'signatories' in usedMeetingAttrs:
                     signatories = get_default_signatories(cfg)
                 voters = []
-                if cfg.getUseVotes():
+                if cfg.use_votes:
                     voters = get_default_voters(cfg)
                 obj._do_update_contacts(attendees=default_attendees,
                                         signatories=signatories,
@@ -555,7 +556,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         # as it only works while added ttw
         if not advice_hide_during_redaction:
             advice_hide_during_redaction = advice_portal_type in \
-                self.meetingConfig.getDefaultAdviceHiddenDuringRedaction()
+                self.meetingConfig.default_advice_hidden_during_redaction
         return _add_advice(
             item,
             advice_group,
@@ -690,7 +691,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         """Change power observers states for item or meeting."""
         if not cfg:
             cfg = self.meetingConfig
-        power_observers = deepcopy(cfg.getPowerObservers())
+        power_observers = deepcopy(cfg.power_observers)
         for po_infos in power_observers:
             if po_infos['row_id'] == observer_type:
                 po_infos[field_name] = states
@@ -713,7 +714,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             cfg.setWorkflowAdaptations(())
             notify(ObjectEditedEvent(cfg))
         else:
-            wfas = tuple(set(tuple(wfas) + cfg.getWorkflowAdaptations()))
+            wfas = tuple(set(tuple(wfas) + tuple(cfg.wf_adaptations)))
         if wfas:
             cfg.setWorkflowAdaptations(wfas)
             notify(ObjectEditedEvent(cfg))
@@ -727,7 +728,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         self.changeUser('siteadmin')
         if cfg is None:
             cfg = self.meetingConfig
-        wfas = [wfa for wfa in cfg.getWorkflowAdaptations()
+        wfas = [wfa for wfa in cfg.wf_adaptations
                 if wfa not in wfas]
         cfg.setWorkflowAdaptations(wfas)
         notify(ObjectEditedEvent(cfg))
@@ -742,8 +743,8 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                          reload=True):
         """Helper to activate a value in the configuration."""
         cfg = cfg or self.meetingConfig
-        field = cfg.getField(field_name)
-        values = list(field.get(cfg))
+        snake_name = _camel_to_snake(field_name)
+        values = list(getattr(cfg, snake_name) or [])
         if remove:
             values.remove(value)
         else:
@@ -751,7 +752,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                 values.append(value)
             else:
                 values = [value]
-        field.getMutator(cfg)(values)
+        setattr(cfg, snake_name, values)
         if reload:
             currentUser = self.member.getId()
             self.changeUser('siteadmin')
@@ -771,13 +772,13 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
     def _enable_column(self, column_name, cfg=None, related_to='MeetingItem', enable=True):
         """ """
         cfg = cfg or self.meetingConfig
-        column_names = cfg.getItemColumns() if related_to == 'MeetingItem' else cfg.getMeetingColumns()
+        column_names = cfg.item_columns if related_to == 'MeetingItem' else cfg.meeting_columns
         if column_name not in column_names:
             column_names += (column_name, )
             if related_to == 'MeetingItem':
-                cfg.setItemColumns(column_names)
+                cfg.item_columns = column_names
             else:
-                cfg.setMeetingColumns(column_names)
+                cfg.meeting_columns = column_names
             cfg.updateCollectionColumns()
             return True
 
@@ -788,25 +789,27 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         cfg = cfg or self.meetingConfig
         for field_name in field_names:
             if related_to == 'MeetingItem':
-                usedItemAttrs = list(cfg.getUsedItemAttributes())
-                # make sure we are not playing with a field_name that does not exist
-                if field_name not in cfg.getField('usedItemAttributes').Vocabulary(cfg):
+                usedItemAttrs = list(cfg.used_item_attributes)
+                valid_values = get_vocab_values(
+                    cfg, 'Products.PloneMeeting.vocabularies.used_item_attributes_vocabulary')
+                if field_name not in valid_values:
                     raise Exception("\"%s\" does not exist in usedItemAttributes" % field_name)
                 if enable and field_name not in usedItemAttrs:
                     usedItemAttrs.append(field_name)
                 elif not enable and field_name in usedItemAttrs:
                     usedItemAttrs.remove(field_name)
-                cfg.setUsedItemAttributes(usedItemAttrs)
+                cfg.used_item_attributes = usedItemAttrs
             elif related_to == 'Meeting':
-                usedMeetingAttrs = list(cfg.getUsedMeetingAttributes())
-                # make sure we are not playing with a field_name that does not exist
-                if field_name not in cfg.getField('usedMeetingAttributes').Vocabulary(cfg):
+                usedMeetingAttrs = list(cfg.used_meeting_attributes)
+                valid_values = get_vocab_values(
+                    cfg, 'Products.PloneMeeting.vocabularies.used_meeting_attributes_vocabulary')
+                if field_name not in valid_values:
                     raise Exception("\"%s\" does not exist in usedMeetingAttributes" % field_name)
                 if enable and field_name not in usedMeetingAttrs:
                     usedMeetingAttrs.append(field_name)
                 elif not enable and field_name in usedMeetingAttrs:
                     usedMeetingAttrs.remove(field_name)
-                cfg.setUsedMeetingAttributes(tuple(usedMeetingAttrs))
+                cfg.used_meeting_attributes = tuple(usedMeetingAttrs)
         if reload:
             currentUser = self.member.getId()
             self.changeUser('siteadmin')
@@ -840,14 +843,14 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         """Enable an action for given p_related_to element."""
         cfg = self.meetingConfig
         if related_to == "MeetingItem":
-            if enable and action not in cfg.getEnabledItemActions():
-                actions = cfg.getEnabledItemActions() + (action, )
-                cfg.setEnabledItemActions(actions)
+            if enable and action not in cfg.enabled_item_actions:
+                actions = list(cfg.enabled_item_actions) + [action]
+                cfg.enabled_item_actions = actions
                 notify(ObjectEditedEvent(cfg))
-            elif not enable and action in cfg.getEnabledItemActions():
-                actions = list(cfg.getEnabledItemActions())
+            elif not enable and action in cfg.enabled_item_actions:
+                actions = list(cfg.enabled_item_actions)
                 actions.remove(action)
-                cfg.setEnabledItemActions(actions)
+                cfg.enabled_item_actions = actions
                 notify(ObjectEditedEvent(cfg))
 
     def _disableObj(self, obj, notify_event=True):

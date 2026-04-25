@@ -519,9 +519,9 @@ class AsyncLoadItemAssemblyAndSignatures(BrowserView):
         self.tool = api.portal.get_tool('portal_plonemeeting')
         # necessary for the @@pm-macros/viewContentField
         self.cfg = self.tool.getMeetingConfig(self.context)
-        self.used_item_attrs = self.cfg.getUsedItemAttributes()
+        self.used_item_attrs = self.cfg.used_item_attributes
         self.member = api.user.get_current()
-        self.used_meeting_attrs = self.cfg.getUsedMeetingAttributes()
+        self.used_meeting_attrs = self.cfg.used_meeting_attributes
         self.meeting = self.context.getMeeting()
         self.show_votes = self.context.show_votes()
         if self.show_votes:
@@ -590,8 +590,8 @@ class AsyncLoadMeetingAssemblyAndSignatures(BrowserView, BaseMeetingView):
         """ """
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
-        self.used_attrs = self.cfg.getUsedMeetingAttributes()
-        self.show_voters = self.cfg.getUseVotes()
+        self.used_attrs = self.cfg.used_meeting_attributes
+        self.show_voters = self.cfg.use_votes
         self.voters = self.context.get_voters()
         view = self.context.restrictedTraverse('@@view')
         view.update()

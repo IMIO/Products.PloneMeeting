@@ -79,7 +79,7 @@ class MeetingWorkflowConditions(object):
         meeting_state = self.context.query_state()
         if meeting_state == 'closed':
             if self.tool.isManager(realManagers=True) or \
-               'meetingmanager_correct_closed_meeting' in self.cfg.getWorkflowAdaptations():
+               'meetingmanager_correct_closed_meeting' in self.cfg.wf_adaptations:
                 return True
             else:
                 return No(_('closed_meeting_not_correctable_by_config'))
@@ -130,18 +130,18 @@ class MeetingWorkflowActions(object):
            self.context.meeting_number != -1:
             return  # Not used or already computed.
         prev = self.context.get_previous_meeting(interval=365)
-        if "meeting_number" in self.cfg.getYearlyInitMeetingNumbers():
+        if "meeting_number" in self.cfg.yearly_init_meeting_numbers:
             # I must reinit the meeting number to 1 if it is the first
             # meeting of this year.
             if not prev or \
                (prev.date.year != self.context.date.year):
                 self.context.meeting_number = 1
-                self.cfg.setLastMeetingNumber(1)
+                self.cfg.last_meeting_number = 1
                 return
         # If we are here, we must simply increment the meeting number.
-        meeting_number = self.cfg.getLastMeetingNumber() + 1
+        meeting_number = self.cfg.last_meeting_number + 1
         self.context.meeting_number = meeting_number
-        self.cfg.setLastMeetingNumber(meeting_number)
+        self.cfg.last_meeting_number = meeting_number
         api.portal.show_message(_("meeting_number_init",
                                   mapping={"meeting_number": meeting_number}),
                                 request=self.context.REQUEST)
@@ -184,7 +184,7 @@ class MeetingWorkflowActions(object):
         # Set the firstItemNumber
         self.context.update_first_item_number(force=True)
         # remove annex previews of every items if relevant
-        if self.cfg.getRemoveAnnexesPreviewsOnMeetingClosure():
+        if self.cfg.remove_annexes_previews_on_meeting_closure:
             # add logging message to fingerpointing log
             for item in self.context.get_items(ordered=True):
                 annexes = get_annexes(item)

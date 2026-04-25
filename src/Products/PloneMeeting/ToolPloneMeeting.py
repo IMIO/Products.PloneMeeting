@@ -7,6 +7,7 @@
 from AccessControl import ClassSecurityInfo
 from AccessControl import Unauthorized
 from Acquisition import aq_base
+from Acquisition import aq_inner
 from collections import OrderedDict
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organizations
@@ -489,7 +490,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             date_as_datetime = datetime(int(year), int(month), int(day))
             for cfg in cfgs:
                 # compute the indexAdvisers depending on delay aware customAdvisers
-                row_ids = [ca['row_id'] for ca in cfg.getCustomAdvisers()
+                row_ids = [ca['row_id'] for ca in cfg.custom_advisers
                            if ca['delay']]
                 indexAdvisers = [DELAYAWARE_ROW_ID_PATTERN.format(row_id)
                                  for row_id in row_ids]
@@ -845,7 +846,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                               ROOT_FOLDER)
         cfg = getattr(self, meetingConfigId)
         root_folder.invokeFactory('Folder', meetingConfigId,
-                                  title=cfg.getFolderTitle())
+                                  title=cfg.folder_title)
         mc_folder = getattr(root_folder, meetingConfigId)
         # We add the MEETING_CONFIG property to the folder
         mc_folder.manage_addProperty(MEETING_CONFIG, meetingConfigId, 'string')
@@ -889,10 +890,34 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''Based on p_context's portal type, we get the corresponding meeting
            config.'''
         try:
-            data = getattr(self, context.aq_acquire(MEETING_CONFIG))
+            # Try DX-compatible attribute first (avoids conflict with DX schema field 'meeting_config')
+            cfg_id = context.aq_acquire('_pm_mc_id')
         except AttributeError:
-            data = None
-        return data
+            try:
+                cfg_id = context.aq_acquire(MEETING_CONFIG)
+            except AttributeError:
+                return None
+        config = getattr(self, cfg_id, None)
+        if config is not None:
+            return config
+        # During portal_factory creation the config is not yet stored in
+        # portal_plonemeeting (cfg_id is a temporary portal_factory ID).
+        # Traverse the acquisition chain from context to find the config directly.
+        from Products.PloneMeeting.interfaces import IMeetingConfig as IMC
+        obj = aq_inner(context)
+        seen = set()
+        while obj is not None:
+            base_id = id(aq_base(obj))
+            if base_id in seen:
+                break
+            seen.add(base_id)
+            if IMC.providedBy(obj):
+                return obj
+            try:
+                obj = aq_inner(obj).aq_parent
+            except AttributeError:
+                break
+        return None
 
     security.declarePublic('getDefaultMeetingConfig')
 
@@ -901,7 +926,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         res = None
         activeConfigs = self.getActiveConfigs()
         for config in activeConfigs:
-            if config.getIsDefault():
+            if config.is_default:
                 res = config
                 break
         if not res and activeConfigs:
@@ -1206,7 +1231,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 # manage categories mapping, if original and new items use
                 # categories, we check if a mapping is defined in the configuration of the original item
                 originalCategory = copiedItem.getCategory(theObject=True)
-                if originalCategory and "category" in destCfg.getUsedItemAttributes():
+                if originalCategory and "category" in destCfg.used_item_attributes:
                     # find out if something is defined when sending an item to destMeetingConfig
                     for destCat in originalCategory.category_mapping_when_cloning_to_other_mc:
                         if destCat.split('.')[0] == destCfgId:
@@ -1217,8 +1242,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                             break
 
             # Set some default values that could not be initialized properly
-            if 'toDiscuss' in copyFields and destCfg.getToDiscussSetOnItemInsert():
-                toDiscussDefault = destCfg.getToDiscussDefault()
+            if 'toDiscuss' in copyFields and destCfg.to_discuss_set_on_item_insert:
+                toDiscussDefault = destCfg.to_discuss_default
                 newItem.setToDiscuss(toDiscussDefault)
 
             # if we have left annexes, we manage it
@@ -1287,7 +1312,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                         unrestrictedRemoveGivenObject(newAnnex)
 
                     # initialize to_print correctly regarding configuration
-                    if not destCfg.getKeepOriginalToPrintOfClonedItems():
+                    if not destCfg.keep_original_to_print_of_cloned_items:
                         newAnnex.to_print = \
                             get_category_object(newAnnex, newAnnex.content_category).to_print
 
@@ -1513,7 +1538,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 to_be_printed_activated = get_config_root(annex)
                 # convert if auto_convert is enabled or to_print is enabled for printing
                 if (self.auto_convert_annexes() or
-                    (to_be_printed_activated and cfg.getAnnexToPrintMode() == 'enabled_for_printing')) and \
+                    (to_be_printed_activated and cfg.annex_to_print_mode == 'enabled_for_printing')) and \
                    not IIconifiedPreview(annex).converted:
                     queueJob(annex)
         api.portal.show_message('Done.', request=self.REQUEST)

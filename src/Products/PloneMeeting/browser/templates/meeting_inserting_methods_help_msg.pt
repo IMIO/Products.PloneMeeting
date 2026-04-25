@@ -8,12 +8,16 @@
 
   <br />
   <tal:field define="field python:cfg.getField('insertingMethodsOnAddItem')">
-    <span metal:use-macro="context/widgets/field/macros/view" />
+    <tal:show tal:condition="field">
+      <span metal:use-macro="context/widgets/field/macros/view" />
+    </tal:show>
   </tal:field>
 
   <tal:fields repeat="field_name view/fieldsToDisplay">
     <tal:field define="field python:cfg.getField(field_name)">
-      <span metal:use-macro="cfg/widgets/field/macros/view" />
+      <tal:show tal:condition="field">
+        <span metal:use-macro="cfg/widgets/field/macros/view" />
+      </tal:show>
     </tal:field>
   </tal:fields>
 

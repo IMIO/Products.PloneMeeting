@@ -50,6 +50,14 @@
              name="schema_policy_pm_content_category" />
     <utility factory=".content_category.PMContentSubcategorySchemaPolicy"
              name="schema_policy_pm_content_subcategory" />
+    <utility factory=".meetingconfig.MeetingConfigSchemaPolicy"
+             name="schema_policy_meetingconfig" />
+
+    <!-- MeetingConfig DX class interface declarations -->
+    <class class=".meetingconfig.MeetingConfig">
+        <implements interface="plone.portlets.interfaces.ILocalPortletAssignable" />
+        <implements interface="ftw.labels.interfaces.ILabelRoot" />
+    </class>
 
     <!-- Meeting behaves like a PACT ICollection -->
     <adapter for="Products.PloneMeeting.content.meeting.IMeeting"

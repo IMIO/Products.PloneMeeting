@@ -228,7 +228,10 @@ class PMOrganization(Organization):
                     tmpres.append(state)
             # if nothing redefined for given p_cfg in this organization,
             # use value defined on the cfg
-            res = tmpres or cfg.getItemAdviceStates()
+            cfg_states = cfg.item_advice_states
+            if isinstance(cfg_states, basestring):
+                cfg_states = [cfg_states] if cfg_states else []
+            res = tmpres or list(cfg_states or [])
         return res
 
     def get_item_advice_edit_states(self, cfg=None):
@@ -242,7 +245,10 @@ class PMOrganization(Organization):
                     tmpres.append(state)
             # if nothing redefined for given p_cfg in this organization,
             # use value defined on the cfg
-            res = tmpres or cfg.getItemAdviceEditStates()
+            cfg_states = cfg.item_advice_edit_states
+            if isinstance(cfg_states, basestring):
+                cfg_states = [cfg_states] if cfg_states else []
+            res = tmpres or list(cfg_states or [])
         return res
 
     def get_item_advice_view_states(self, cfg=None):
@@ -256,14 +262,17 @@ class PMOrganization(Organization):
                     tmpres.append(state)
             # if nothing redefined for given p_cfg in this organization,
             # use value defined on the cfg
-            res = tmpres or cfg.getItemAdviceViewStates()
+            cfg_states = cfg.item_advice_view_states
+            if isinstance(cfg_states, basestring):
+                cfg_states = [cfg_states] if cfg_states else []
+            res = tmpres or list(cfg_states or [])
         return res
 
     def get_keep_access_to_item_when_advice(self, cfg=None):
         """ """
         res = self.keep_access_to_item_when_advice
         if cfg and res == 'use_meetingconfig_value':
-            res = cfg.getKeepAccessToItemWhenAdvice()
+            res = cfg.keep_access_to_item_when_advice
         return res
 
     def get_certified_signatures(self, computed=False, cfg=None, group_in_charge=None, listify=True, **kwargs):
