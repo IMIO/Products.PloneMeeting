@@ -5,8 +5,9 @@ Changelog
 4.2.28.16 (unreleased)
 ----------------------
 
-- Nothing changed yet.
-
+- Added bypass for `Manager` for `MeetingItem.show_field` so a `Manager` can
+  view and edit any item fields defined in `MeetingConfig.itemFieldsConfig`.
+  [gbastien]
 
 4.2.28.15 (2026-04-24)
 ----------------------

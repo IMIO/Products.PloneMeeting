@@ -2668,6 +2668,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if item.attribute_is_used(field_name):
             # evaluate TAL expression
             tool = api.portal.get_tool('portal_plonemeeting')
+            # bypass for Manager
+            if tool.isManager(realManagers=True):
+                return True
             cfg = tool.getMeetingConfig(item)
             return cfg.eval_tal_expr_for_field(item, field_name, mode=mode)
 
