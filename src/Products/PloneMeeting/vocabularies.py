@@ -57,6 +57,7 @@ from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.browser.itemvotes import next_vote_is_linked
 from Products.PloneMeeting.config import ADVICE_TYPES
 from Products.PloneMeeting.config import ALL_VOTE_VALUES
+from Products.PloneMeeting.config import CONFIGURABLE_FIELD_NAMES
 from Products.PloneMeeting.config import CONSIDERED_NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
@@ -3543,10 +3544,8 @@ class ItemFieldsConfigVocabulary(object):
         """ """
         terms = []
         item_attrs = context.listAttributes(MeetingItem.schema)
-        # for now, only followUp related fields are configurable
-        configurable_field_names = ['neededFollowUp', 'providedFollowUp']
         for k, v in item_attrs.items():
-            if k in configurable_field_names:
+            if k in CONFIGURABLE_FIELD_NAMES:
                 terms.append(SimpleTerm(k, k, v))
         return SimpleVocabulary(terms)
 

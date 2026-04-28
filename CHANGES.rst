@@ -5,6 +5,17 @@ Changelog
 4.2.29rc9 (unreleased)
 ----------------------
 
+- Fixed `MeetingItem._bypass_write_perm_check_for`.
+  [gbastien]
+- Fixed `MeetingItem.show_field` to not evaluate if field not enabled and
+  to raise an error if TAL expression is wrong.
+  [gbastien]
+- In `Migrate_To_4217_1`, use `upgradeAll` to upgrade especially
+  `collective.dms.scanbehavior`.
+  [gbastien]
+- Fixed version overview not in last version warning when current version
+  uses a `.` in the version.
+  [gbastien]
 - Fixed `...-belonging-to-a-given-session` adapters, do not break if no `cfg`
   and use a different ram.cache name.
   [gbastien]
@@ -29,6 +40,15 @@ Changelog
   `collective.eeafaceted.batchactions`, this fixed the delete annexes batch
   action that was failing when using WFA `only_creator_may_delete` and item was
   no more in state `itemcreated`.
+  [gbastien]
+- Added new field `MeetingItem.groupsInChargeNotes` configurable in
+  `MeetingConfig.itemFieldsConfig`.
+  [gbastien]
+- Adapted `ToolPloneMeeting.user_is_in_org` to be able to pass a list of
+  `org_id` or `org_uid`.
+  [gbastien]
+- Fixed JS code passing `external_user_id` to `@@load-external-infos`
+  to avoid JS injection.
   [gbastien]
 
 4.2.29rc8 (2026-04-01)

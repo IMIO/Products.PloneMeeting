@@ -33,6 +33,26 @@ class Migrate_To_4217_1(Migrator):
             delattr(cfg, 'hideCssClassesTo')
         logger.info('Done.')
 
+    def _updateGroupsInChargeNotes(self):
+        """Update config and init new fields related to groupsInChargeNotes."""
+        logger.info('Updating "itemFieldsConfig" about groupsInChargeNotes for every MeetingConfigs...')
+        # update MeetingConfig.itemFieldsConfig default for "groupsInChargeNotes"
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            item_fields_config = cfg.getItemFieldsConfig()
+            if "groupsInChargeNotes" not in [row['name'] for row in item_fields_config]:
+                # use default value
+                default_value = cfg.Schema()['itemFieldsConfig'].getDefault(cfg)
+                gic_notes_config = [row for row in default_value if row['name'] == "groupsInChargeNotes"]
+                if gic_notes_config:
+                    gic_notes_config = gic_notes_config[0]
+                    item_fields_config += (gic_notes_config, )
+                    cfg.setItemFieldsConfig(item_fields_config)
+        # update new fields groupsInChargeNotes on items
+        self.initNewHTMLFields(
+            query={'meta_type': ('MeetingItem')},
+            field_names=('groupsInChargeNotes', ))
+        logger.info('Done.')
+
     def run(self, extra_omitted=[], from_migration_to_4200=False):
 
         logger.info('Migrating to PloneMeeting 4217.1...')
@@ -40,6 +60,11 @@ class Migrate_To_4217_1(Migrator):
         # re-apply annexDecision as insert-barcode permission
         # changed from ModifyPortalContent to View
         load_type_from_package('annexDecision', 'Products.PloneMeeting:default')
+        self._updateGroupsInChargeNotes()
+        if not from_migration_to_4200:
+            # this will upgrade collective.dms.scanbehavior especially
+            self.upgradeAll(omit=['Products.PloneMeeting:default',
+                                  self.profile_name.replace('profile-', '')])
         logger.info('Migrating to PloneMeeting 4217.1... Done.')
 
 
@@ -47,7 +72,8 @@ def migrate(context):
     '''This migration function will:
 
        1) Configure MeetingConfig.cssTransforms;
-       2) Re-apply annexDecision portal_type to update "insert-barcode" permission.
+       2) Re-apply annexDecision portal_type to update "insert-barcode" permission;
+       3) Update config and items for new field MeetingItem.groupsInChargeNotes.
     '''
     migrator = Migrate_To_4217_1(context)
     migrator.run()

@@ -6425,7 +6425,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             expression=tal_expr,
             roles_bypassing_expression=[],
             extra_expr_ctx=extra_expr_ctx,
-            empty_expr_is_true=empty_expr_is_true)
+            empty_expr_is_true=empty_expr_is_true,
+            raise_on_error=True)
 
     def getItemIconColorName(self):
         '''This will return the name of the icon used for MeetingItem portal_type.'''
