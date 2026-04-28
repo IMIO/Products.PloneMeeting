@@ -9,7 +9,6 @@ from collective.eeafaceted.batchactions.browser.views import LabelsBatchActionFo
 from collective.eeafaceted.batchactions.browser.views import TransitionBatchActionForm
 from collective.eeafaceted.batchactions.utils import listify_uids
 from collective.z3cform.select2.widget.widget import SingleSelect2FieldWidget
-from imio.actionspanel.interfaces import IContentDeletable
 from imio.annex.browser.views import ConcatenateAnnexesBatchActionForm
 from imio.annex.browser.views import DownloadAnnexesBatchActionForm
 from imio.helpers.content import get_vocab

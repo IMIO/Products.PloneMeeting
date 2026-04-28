@@ -42,7 +42,8 @@ class PMLabeling(Labeling):
     def filter_manageable_labels(self, labels, modes=("view", "edit", )):
         """Give p_labels is like [[], []]."""
         # do not filter for Managers or for item in the configuration the current user is able to edit
-        if self.tool.isManager(realManagers=True) or (self.context.isDefinedInTool() and _checkPermission(ModifyPortalContent, self.context)):
+        if self.tool.isManager(realManagers=True) or \
+           (self.context.isDefinedInTool() and _checkPermission(ModifyPortalContent, self.context)):
             return labels
         if not hasattr(self.context, ITEM_LABELS_ACCESS_CACHE_ATTR):
             return [[], []]
@@ -58,7 +59,7 @@ class PMLabeling(Labeling):
             extra_expr_ctx = None
             view_expr_result_cache = {}
             edit_expr_result_cache = {}
-            for label in labels[0]+labels[1]:
+            for label in labels[0] + labels[1]:
                 # by_user labels are always editable
                 if not label['by_user']:
                     # optimization if modes == ('view', ) and label not 'active'
@@ -233,8 +234,9 @@ class PMLabeling(Labeling):
                 if label['label_id'] in viewable_not_manageable_label_ids]
             api.portal.show_message(
                 _("You can not manage labels ${not_manageable_label_titles}!",
-                  mapping={'not_manageable_label_titles': safe_unicode(
-                    ', '.join(not_manageable_label_titles))}),
+                  mapping={
+                    'not_manageable_label_titles':
+                        safe_unicode(', '.join(not_manageable_label_titles))}),
                 type='warning',
                 request=self.context.REQUEST)
         label_ids += list(not_manageable_label_ids)
@@ -250,7 +252,7 @@ class PMLabeling(Labeling):
         # or we do not have "0" for every selected elements and
         # default config specify to update local roles
         if ("1" in config[1:]) or \
-           (len(config)-1 != len(added_or_removed) and config[0] == "1"):
+           (len(config) - 1 != len(added_or_removed) and config[0] == "1"):
             self.context.update_local_roles(avoid_reindex=True)
         # invalidate collections counter cache and portlet_todo
         if set(active_label_ids).symmetric_difference(label_ids). \

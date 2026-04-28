@@ -1573,23 +1573,26 @@ class testContacts(PloneMeetingTestCase):
 
         self.assertIn(
             "Monsieur Person1FirstName Person1LastName, Assembly member 1 - except for this item: 1",
-            mhpabt(include_out_count=True,
-                   out_count_patterns={
+            mhpabt(
+                include_out_count=True,
+                out_count_patterns={
                     "*S": " - except for this item: {}",
-                    "*P": " - except for these items: {}"
-                    })
+                    "*P": " - except for these items: {}"}
+                )
         )
 
         self.assertIn(
             "Monsieur Person1FirstName Person1LastName, Assembly member 1 - only for these: 2 to 3",
-            mhpabt(include_in_count=True,
-                   in_out_cluster_format="{} to {}",
-                   in_count_patterns=OrderedDict(
-                    [("MS", " - only for: {}"),
-                     ("MP", " - only for these: {}"),
-                     ("*S", "I'm being ignored"),
-                     ("*", "{}")])
-                   )
+            mhpabt(
+                include_in_count=True,
+                in_out_cluster_format="{} to {}",
+                in_count_patterns=OrderedDict(
+                    [
+                        ("MS", " - only for: {}"),
+                        ("MP", " - only for these: {}"),
+                        ("*S", "I'm being ignored"),
+                        ("*", "{}")])
+                )
         )  # Here we make sure to use an ordered dict to keep the order of the patterns in py2
 
         # is_voter, by default every attendee is voter

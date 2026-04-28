@@ -34,7 +34,6 @@ from imio.zamqp.pm.tests.base import DEFAULT_SCAN_ID
 from os import path
 from persistent.mapping import PersistentMapping
 from plone import api
-from plone.app.testing import logout
 from plone.app.testing.bbb import _createMemberarea
 from plone.dexterity.utils import createContentInContainer
 from plone.memoize.instance import Memojito
@@ -7437,7 +7436,7 @@ class testMeetingItem(PloneMeetingTestCase):
                  'replace_new_content': 'Data were hidden',
                  'replace_new_css_class': 'pm-anonymized',
                  'powerobservers': ['restrictedpowerobservers']},
-             )
+            )
         )
         self._setPowerObserverStates(states=('itemcreated', ))
         self._setPowerObserverStates(observer_type='restrictedpowerobservers',
@@ -8369,7 +8368,6 @@ class testMeetingItem(PloneMeetingTestCase):
              u'M. PMCreator Two <pmcreator2@plonemeeting.org>',
              u'M. PMManager <pmmanager@plonemeeting.org>',
              u'M. PMReviewer Two <pmreviewer2@plonemeeting.org>'])
-
 
     def test_pm__sendAdviceToGiveMailIfRelevant(self):
         """Check mail sent to advisers when they have access to item.

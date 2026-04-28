@@ -3878,7 +3878,6 @@ class testViews(PloneMeetingTestCase):
         self.assertFalse(form.available())
 
 
-
 def test_suite():
     from unittest import makeSuite
     from unittest import TestSuite

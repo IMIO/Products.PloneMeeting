@@ -47,7 +47,7 @@ class ILinkWithVision(Interface):
         required=True,
         defaultFactory=projects_default,
         value_type=schema.Choice(
-          vocabulary=u'Products.PloneMeeting.external.vocabularies.visionprojects'),
+            vocabulary=u'Products.PloneMeeting.external.vocabularies.visionprojects'),
     )
 
     tasks = schema.List(
@@ -56,7 +56,7 @@ class ILinkWithVision(Interface):
         required=True,
         defaultFactory=tasks_default,
         value_type=schema.Choice(
-          vocabulary=u'Products.PloneMeeting.external.vocabularies.visiontasks'),
+            vocabulary=u'Products.PloneMeeting.external.vocabularies.visiontasks'),
     )
 
 
@@ -86,7 +86,7 @@ class LinkWithVisionForm(form.Form):
         # enable filterByName
         self.widgets['quick_filter'].onkeyup = u'filterByName(event)'
         # disable submit on [Enter]
-        self.widgets['quick_filter'].onkeydown=u"return (event.keyCode!=13);"
+        self.widgets['quick_filter'].onkeydown = u"return (event.keyCode!=13);"
 
     @button.buttonAndHandler(_('Apply'), name='apply')
     def handle_apply(self, action):
