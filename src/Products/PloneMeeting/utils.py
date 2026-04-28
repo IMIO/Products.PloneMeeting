@@ -837,7 +837,6 @@ def is_operational_user(obj):
                suffixes=get_all_suffixes(omitted_suffixes=['observers']), cfg=cfg)))))
 
 
-
 def is_transition_before_date(obj, transition, date):
     '''Returns True if this p_obj last p_transition was made before p_date.
        p_date is a python datetime.datetime.'''

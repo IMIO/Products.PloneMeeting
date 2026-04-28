@@ -10,7 +10,6 @@ from collective.eeafaceted.batchactions.browser.views import TransitionBatchActi
 from collective.eeafaceted.batchactions.utils import listify_uids
 from collective.iconifiedcategory.utils import get_categorized_elements
 from collective.z3cform.select2.widget.widget import SingleSelect2FieldWidget
-from imio.actionspanel.interfaces import IContentDeletable
 from imio.annex.browser.views import ConcatenateAnnexesBatchActionForm
 from imio.annex.browser.views import DownloadAnnexesBatchActionForm
 from imio.esign.adapters import ISignable

@@ -63,12 +63,13 @@ class ConfigFTWLabelsVocabulary(FTWLabelsVocabulary):
             context, include_personal_labels=False)
         res._terms.insert(
             0,
-            SimpleTerm("*",
-                       "*",
-                       '{0} (*)'.format(
-                        translate('default_for_all_labels',
-                                  domain='PloneMeeting',
-                                  context=context.REQUEST).encode('utf-8'))))
+            SimpleTerm(
+                "*",
+                "*",
+                '{0} (*)'.format(
+                    translate('default_for_all_labels',
+                              domain='PloneMeeting',
+                              context=context.REQUEST).encode('utf-8'))))
         return res
 
 

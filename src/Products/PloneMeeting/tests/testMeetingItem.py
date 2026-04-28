@@ -34,7 +34,6 @@ from imio.zamqp.pm.tests.base import DEFAULT_SCAN_ID
 from os import path
 from persistent.mapping import PersistentMapping
 from plone import api
-from plone.app.testing import logout
 from plone.app.testing.bbb import _createMemberarea
 from plone.dexterity.utils import createContentInContainer
 from plone.memoize.instance import Memojito
@@ -7443,7 +7442,7 @@ class testMeetingItem(PloneMeetingTestCase):
                  'replace_new_content': 'Data were hidden',
                  'replace_new_css_class': 'pm-anonymized',
                  'powerobservers': ['restrictedpowerobservers']},
-             )
+            )
         )
         self._setPowerObserverStates(states=('itemcreated', ))
         self._setPowerObserverStates(observer_type='restrictedpowerobservers',
@@ -8376,7 +8375,6 @@ class testMeetingItem(PloneMeetingTestCase):
              u'M. PMManager <pmmanager@plonemeeting.org>',
              u'M. PMReviewer Two <pmreviewer2@plonemeeting.org>'])
 
-
     def test_pm__sendAdviceToGiveMailIfRelevant(self):
         """Check mail sent to advisers when they have access to item.
            Mail is not sent twice to same email address."""
@@ -9204,22 +9202,38 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(item.show_field('groupsInChargeNotes'))
         # even if item editable, field can be not editable if condition if False
         self.assertFalse(item.mayQuickEdit('groupsInChargeNotes'))
+        # bypass for Manager
+        self.changeUser('siteadmin')
+        self.assertTrue(item.show_field('groupsInChargeNotes')
+                        and item.mayQuickEdit('groupsInChargeNotes'))
         # group in charge can view and edit
         self.changeUser('pmObserver2')
         self.assertTrue(self.hasPermission(View, item))
         self.assertTrue(item.show_field('groupsInChargeNotes'))
         self.assertTrue(item.mayQuickEdit('groupsInChargeNotes'))
+        # bypass for Manager
+        self.changeUser('siteadmin')
+        self.assertTrue(item.show_field('groupsInChargeNotes')
+                        and item.mayQuickEdit('groupsInChargeNotes'))
         # with no group in charge
         self.changeUser('pmCreator1')
         item.setGroupsInCharge([])
         self.assertTrue(item.show_field('groupsInChargeNotes'))
         self.assertFalse(item.mayQuickEdit('groupsInChargeNotes'))
+        # bypass for Manager
+        self.changeUser('siteadmin')
+        self.assertTrue(item.show_field('groupsInChargeNotes')
+                        and item.mayQuickEdit('groupsInChargeNotes'))
         # make proposing group only able to edit
         self.changeUser('pmObserver2')
         self._setupItemFieldsConfig(
             'groupsInChargeNotes',
             edit='python: tool.user_is_in_org(org_uid=item.getProposingGroup())')
         self.assertFalse(item.mayQuickEdit('groupsInChargeNotes'))
+        # bypass for Manager
+        self.changeUser('siteadmin')
+        self.assertTrue(item.show_field('groupsInChargeNotes')
+                        and item.mayQuickEdit('groupsInChargeNotes'))
         self.changeUser('pmCreator1')
         self.assertTrue(item.mayQuickEdit('groupsInChargeNotes'))
         # wrong condition, will raise if used
@@ -9227,6 +9241,10 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertRaises(NameError, item.mayQuickEdit, 'groupsInChargeNotes')
         # does not raise if not used
         self._enableField(['groupsInChargeNotes'], enable=False)
+        self.assertFalse(item.mayQuickEdit('groupsInChargeNotes'))
+        # bypass for Manager not working if field not enabled
+        self.changeUser('siteadmin')
+        self.assertFalse(item.show_field('groupsInChargeNotes'))
         self.assertFalse(item.mayQuickEdit('groupsInChargeNotes'))
 
 

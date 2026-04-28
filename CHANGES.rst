@@ -5,6 +5,9 @@ Changelog
 4.2.29rc9 (unreleased)
 ----------------------
 
+- Added bypass for `Manager` for `MeetingItem.show_field` so a `Manager` can
+  view and edit any item fields defined in `MeetingConfig.itemFieldsConfig`.
+  [gbastien]
 - Fixed `MeetingItem._bypass_write_perm_check_for`.
   [gbastien]
 - Fixed `MeetingItem.show_field` to not evaluate if field not enabled and

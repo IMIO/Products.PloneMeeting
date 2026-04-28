@@ -75,7 +75,6 @@ from Products.PloneMeeting.browser.itemvotes import next_vote_is_linked
 from Products.PloneMeeting.config import AddAdvice
 from Products.PloneMeeting.config import AUTO_COPY_GROUP_PREFIX
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
-from Products.PloneMeeting.config import CONFIGURABLE_FIELD_NAMES
 from Products.PloneMeeting.config import CONSIDERED_NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import DEFAULT_COPIED_FIELDS
 from Products.PloneMeeting.config import DUPLICATE_AND_KEEP_LINK_EVENT_ACTION
@@ -2669,6 +2668,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if item.attribute_is_used(field_name):
             # evaluate TAL expression
             tool = api.portal.get_tool('portal_plonemeeting')
+            # bypass for Manager
+            if tool.isManager(realManagers=True):
+                return True
             cfg = tool.getMeetingConfig(item)
             return cfg.eval_tal_expr_for_field(item, field_name, mode=mode)
 

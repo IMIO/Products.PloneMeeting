@@ -7,7 +7,6 @@ from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
 from Products.CMFPlone.utils import safe_unicode
 from Products.Five import BrowserView
-from Products.PloneMeeting.external.config import SSO_APPS_USER_USERNAME
 from Products.PloneMeeting.external.utils import send_vision_json_request
 from Products.PloneMeeting.utils import is_proposing_group_editor
 from zope.i18n import translate
