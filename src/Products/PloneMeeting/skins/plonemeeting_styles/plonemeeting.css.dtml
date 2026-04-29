@@ -1074,6 +1074,13 @@ body[class*="itemtemplates"].template-manage-portlets a.link-parent {
     background-image: url("group.png");
 }
 
+button.apButtonAction_backLink::before {
+    font-family: "Font Awesome 5 Free";
+    content: "\f060";
+    font-weight: bold;
+    padding-right: 3px;
+}
+
 .apButtonAction_export_pdf {
     background-image: url("++resource++collective.documentgenerator/pdf.svg");
     background-size: 16px;

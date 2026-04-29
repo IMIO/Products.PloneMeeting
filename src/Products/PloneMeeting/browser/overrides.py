@@ -213,65 +213,6 @@ class PMContentActionsPanelViewlet(ActionsPanelViewlet):
     async = True
 
 
-class PMConfigActionsPanelViewlet(PMContentActionsPanelViewlet):
-    """Render actionspanel viewlet differently for elements of the MeetingConfig.
-       Manage a "back" link."""
-
-    backPages = {'categories': 'data',
-                 'classifiers': 'data',
-                 'meetingcategories': 'data',
-                 'itemtemplates': 'data',
-                 'podtemplates': 'doc',
-                 'recurringitems': 'data', }
-
-    def _findRootSubfolder(self, folder):
-        '''Find the root subfolder in the MeetingConfig.
-           This is necessary when having subfolders in a subfolder of the MeetingConfig,
-           like for item templates for example.'''
-        previous = folder
-        parent = folder.aq_inner.aq_parent
-        while not parent.portal_type == 'MeetingConfig':
-            previous = parent
-            parent = parent.aq_inner.aq_parent
-        return previous
-
-    def getBackUrl(self):
-        '''Computes the URL for "back" links in the tool or in a config.'''
-        url = ''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        tool_url = tool.absolute_url()
-        cfg = tool.getMeetingConfig(self.context)
-        cfg_url = ''
-        if cfg:
-            cfg_url = cfg.absolute_url()
-        parent = self.context.getParentNode()
-        if self.context.portal_type == 'DashboardCollection':
-            url = '{0}?pageName=gui#searches'.format(cfg_url)
-        elif parent.portal_type == 'Folder':
-            # p_context is a sub-object in a sub-folder within a config
-            root_subfolder = self._findRootSubfolder(parent)
-            folderName = root_subfolder.getId()
-            url = '{0}?pageName={1}#{2}'.format(cfg_url, self.backPages[folderName], folderName)
-        elif self.context.portal_type in ('ContentCategoryConfiguration',
-                                          'ContentCategoryGroup',
-                                          'ContentCategory',
-                                          'ContentSubcategory',
-                                          'ItemAnnexContentCategory',
-                                          'ItemAnnexContentSubcategory',
-                                          ):
-            url = '{0}?pageName=data#annexes_types'.format(cfg_url, )
-        elif self.context.portal_type in ('person', 'held_position', 'organization'):
-            url = parent.absolute_url()
-        elif self.context.portal_type == 'DashboardPODTemplate' and not cfg:
-            portal = api.portal.get()
-            url = portal.contacts.absolute_url()
-        else:
-            # We are in a subobject from the tool or on the PLONEGROUP_ORG
-            url = tool_url
-            url += '#%s' % self.context.portal_type
-        return url
-
-
 class BaseGeneratorLinksViewlet(object):
     """ """
 
@@ -1020,6 +961,8 @@ class ConfigActionsPanelView(ActionsPanelView):
             self.SECTIONS_TO_RENDER += ('renderActions', )
             self.ACCEPTABLE_ACTIONS = ('rename', )
 
+        self.SECTIONS_TO_RENDER += ('renderBackUrl', )
+
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
 
@@ -1109,6 +1052,68 @@ class ConfigActionsPanelView(ActionsPanelView):
            PLONEGROUP_ORG in self.context.absolute_url():
             return ViewPageTemplateFile("templates/actions_panel_config_linkedplonegroups.pt")(self)
         return ''
+
+    backPages = {'categories': 'data',
+                 'classifiers': 'data',
+                 'meetingcategories': 'data',
+                 'itemtemplates': 'data',
+                 'podtemplates': 'doc',
+                 'recurringitems': 'data', }
+
+    def _findRootSubfolder(self, folder):
+        '''Find the root subfolder in the MeetingConfig.
+           This is necessary when having subfolders in a subfolder of the MeetingConfig,
+           like for item templates for example.'''
+        previous = folder
+        parent = folder.aq_inner.aq_parent
+        while not parent.portal_type == 'MeetingConfig':
+            previous = parent
+            parent = parent.aq_inner.aq_parent
+        return previous
+
+    def getBackUrl(self):
+        '''Computes the URL for "back" links in the tool or in a config.'''
+        url = ''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        tool_url = tool.absolute_url()
+        cfg = tool.getMeetingConfig(self.context)
+        cfg_url = ''
+        if cfg:
+            cfg_url = cfg.absolute_url()
+        parent = self.context.getParentNode()
+        if self.context.portal_type == 'DashboardCollection':
+            url = '{0}?pageName=gui#searches'.format(cfg_url)
+        elif parent.portal_type == 'Folder':
+            # p_context is a sub-object in a sub-folder within a config
+            root_subfolder = self._findRootSubfolder(parent)
+            folderName = root_subfolder.getId()
+            url = '{0}?pageName={1}#{2}'.format(cfg_url, self.backPages[folderName], folderName)
+        elif self.context.portal_type in ('ContentCategoryConfiguration',
+                                          'ContentCategoryGroup',
+                                          'ContentCategory',
+                                          'ContentSubcategory',
+                                          'ItemAnnexContentCategory',
+                                          'ItemAnnexContentSubcategory',
+                                          ):
+            url = '{0}?pageName=data#annexes_types'.format(cfg_url, )
+        elif self.context.portal_type == 'organization':
+            url = parent.contacts.get('orgs-searches').absolute_url()
+        elif self.context.portal_type == 'person':
+            url = parent.contacts.get('persons-searches').absolute_url()
+        elif self.context.portal_type == 'held_position':
+            url = parent.contacts.get('hps-searches').absolute_url()
+        elif self.context.portal_type == 'DashboardPODTemplate' and not cfg:
+            portal = api.portal.get()
+            url = portal.contacts.absolute_url()
+        else:
+            # We are in a subobject from the tool or on the PLONEGROUP_ORG
+            url = tool_url
+            url += '#%s' % self.context.portal_type
+        return url
+
+    def renderBackUrl(self):
+        """Render the backUrl section."""
+        return ViewPageTemplateFile("templates/actions_panel_config_backlink.pt")(self)
 
 
 class PMDocumentGenerationView(DashboardDocumentGenerationView):

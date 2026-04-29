@@ -1848,8 +1848,8 @@ class testMeetingConfig(PloneMeetingTestCase):
         new_pod_template_removed_cfg_modified = cfg.modified()
         self.assertNotEqual(new_pod_template_cfg_modified, new_pod_template_removed_cfg_modified)
 
-    def test_pm_PODTemplateOnlyCreatedModifiedByZopeAdmin(self):
-        """Only a Zope admin can create or modify a PODTemplate of any kind."""
+    def test_pm_PODTemplateOnlyCreatedModifiedDeletedByZopeAdmin(self):
+        """Only a Zope admin can create/modify/delete a PODTemplate of any kind."""
         cfg = self.meetingConfig
         portal_types = ['ConfigurablePODTemplate', 'StyleTemplate', 'DashboardPODTemplate', 'PODTemplate', 'MailingLoopTemplate', 'SubTemplate']
         containers = [self.portal, cfg.podtemplates]
@@ -1873,6 +1873,9 @@ class testMeetingConfig(PloneMeetingTestCase):
                     pm_logger.info(
                         "Could not find an element with portal_type {0} in "
                         "container at {1}".format(portal_type, container.absolute_url_path()))
+                    continue
+                # delete
+                self.assertRaises(Unauthorized, container.manage_delObjects, [templates[0].getId()])
         # OK as zope admin
         self.changeUser('admin')
         for portal_type in portal_types:
@@ -1894,6 +1897,9 @@ class testMeetingConfig(PloneMeetingTestCase):
                     pm_logger.info(
                         "Could not find an element with portal_type {0} in "
                         "container at {1}".format(portal_type, container.absolute_url_path()))
+                    continue
+                # delete
+                container.manage_delObjects([templates[0].getId()])
 
     def test_pm_UsedLabelCanNotBeRemoved(self):
         """A ftw.labels label that is used on an item can not be removed."""

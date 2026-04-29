@@ -8,6 +8,11 @@ Changelog
 - Added bypass for `Manager` for `MeetingItem.show_field` so a `Manager` can
   view and edit any item fields defined in `MeetingConfig.itemFieldsConfig`.
   [gbastien]
+- Only a Zope admin can delete a POD template of any kind.
+  [gbastien]
+- Use a real section to display `Back` link in `actions_panel`
+  of config elements.
+  [gbastien]
 
 4.2.28.15 (2026-04-24)
 ----------------------
