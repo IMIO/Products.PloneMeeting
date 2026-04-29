@@ -1285,11 +1285,15 @@ class testMeetingConfig(PloneMeetingTestCase):
         # a user can not delete the MeetingConfig
         self.changeUser('pmManager')
         self.assertRaises(Unauthorized, self.tool.manage_delObjects, [cfgId])
+        # only the Zope admin can remove a MeetingConfig because only a Zope admin can remove POD templates
+        self.changeUser('siteadmin')
+        self.assertRaises(Unauthorized, self.tool.manage_delObjects, [cfgId])
 
         # fails if a meeting exists
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
-        self.changeUser('siteadmin')
+        # only the Zope admin can remove a MeetingConfig because only a Zope admin can remove POD templates
+        self.changeUser('admin')
         with self.assertRaises(BeforeDeleteException) as cm:
             self.tool.manage_delObjects([cfgId, ])
         can_not_delete_meetingconfig_meeting = \
@@ -1302,7 +1306,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # fails if an item exists
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
-        self.changeUser('siteadmin')
+        self.changeUser('admin')
         with self.assertRaises(BeforeDeleteException) as cm:
             self.tool.manage_delObjects([cfgId, ])
         can_not_delete_meetingconfig_meetingitem = \
@@ -1317,7 +1321,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         pmFolder = self.tool.getPloneMeetingFolder(cfgId)
         afileId = pmFolder.invokeFactory('File', id='afile')
         afile = getattr(pmFolder, afileId)
-        self.changeUser('siteadmin')
+        self.changeUser('admin')
         with self.assertRaises(BeforeDeleteException) as cm:
             self.tool.manage_delObjects([cfgId, ])
         can_not_delete_meetingconfig_meetingfolder = \
@@ -1395,6 +1399,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                           if groupId.startswith(newCfgId)]
         self.assertEqual(len(created_groups), 5)
         # remove the MeetingConfig, groups are removed as well
+        self.changeUser('admin')
         self.tool.restrictedTraverse('@@delete_givenuid')(newCfg.UID())
         self.assertFalse(newCfgId in self.tool.objectIds())
         created_groups = [groupId for groupId in self.portal.portal_groups.listGroupIds()
