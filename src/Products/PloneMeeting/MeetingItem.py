@@ -75,6 +75,7 @@ from Products.PloneMeeting.browser.itemvotes import next_vote_is_linked
 from Products.PloneMeeting.config import AddAdvice
 from Products.PloneMeeting.config import AUTO_COPY_GROUP_PREFIX
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
+from Products.PloneMeeting.config import CONFIGURABLE_FIELD_NAMES
 from Products.PloneMeeting.config import CONSIDERED_NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import DEFAULT_COPIED_FIELDS
 from Products.PloneMeeting.config import DUPLICATE_AND_KEEP_LINK_EVENT_ACTION
@@ -5007,8 +5008,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _bypass_write_perm_check_for(self, fieldName):
         """See docstring in interfaces.py"""
-        item = self.getSelf()
-        return item.adapted().show_field(fieldName, mode='edit')
+        if fieldName in CONFIGURABLE_FIELD_NAMES:
+            item = self.getSelf()
+            return item.adapted().show_field(fieldName, mode='edit')
 
     def _bypass_quick_edit_notify_modified_for(self, fieldName):
         """See docstring in interfaces.py"""
@@ -8449,6 +8451,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def may_view_follow_up(self,
                            field_name='neededFollowUp',
                            label_ids=('needed-follow-up', 'provided-follow-up'),
+                           restricted=False,
                            suffixes=[]):
         """Helper methods for default view access to followUp related fields."""
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -8457,11 +8460,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return True
         is_manager = tool.isManager(cfg)
         # same condition for any field
-        # must have relevant labels and MeetingManager or proposing group member
+        # must have relevant labels and MeetingManager
+        # or when restricted=True, available to proposing group members
         if (not fieldIsEmpty(field_name, self) or
-            get_labels(self, label_ids=label_ids)) and \
-           (is_manager or tool.user_is_in_org(
-                org_uid=self.getProposingGroup(), suffixes=suffixes)):
+            get_labels(self, label_ids=label_ids, only_viewable=True)) and \
+           (not restricted or (is_manager or tool.user_is_in_org(
+                org_uid=self.getProposingGroup(), suffixes=suffixes))):
             return True
 
     def may_edit_follow_up(self,

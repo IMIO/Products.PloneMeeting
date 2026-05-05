@@ -9114,6 +9114,7 @@ class testMeetingItem(PloneMeetingTestCase):
         neededfollowup_uid = neededfollowup.UID()
         providedfollowup = cfg.searches.searches_items.searchitemswithprovidedfollowup
         self._setupFollowUp(cfg)
+        self._enableField('copyGroups')
 
         self.changeUser("pmCreator1")
         # check that counter is correct when using global labels
@@ -9121,7 +9122,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(
             view(),
             '{"criterionId": "c1", "countByCollection": [{"count": 0, "uid": "%s"}]}' % neededfollowup_uid)
-        item = self.create('MeetingItem', decision=self.decisionText)
+        item = self.create('MeetingItem', decision=self.decisionText, copyGroups=(self.vendors_reviewers, ))
         self.assertEqual(len(neededfollowup.results()), 0)
         self.assertEqual(len(providedfollowup.results()), 0)
         # providedFollowUp is not editable when label "needed-follow-up" is not set
@@ -9181,6 +9182,41 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         self.assertFalse(item.mayQuickEdit('neededFollowUp'))
         self.assertTrue(item.mayQuickEdit('providedFollowUp'))
+        # by default, users able to see the label can see the field
+        # copyGroup can see label and field
+        self.changeUser('pmReviewer2')
+        self.failUnless(self.hasPermission(View, item))
+        self.assertFalse(item.mayQuickEdit('neededFollowUp'))
+        self.assertFalse(item.mayQuickEdit('providedFollowUp'))
+        self.assertTrue('needed-follow-up' in get_labels(item, only_viewable=True))
+        self.assertTrue(item.show_field('neededFollowUp'))
+        self.assertTrue(item.show_field('providedFollowUp'))
+        # powerobserver can not see label so nor field
+        self.changeUser('powerobserver1')
+        self.failUnless(self.hasPermission(View, item))
+        self.assertFalse(item.mayQuickEdit('neededFollowUp'))
+        self.assertFalse(item.mayQuickEdit('providedFollowUp'))
+        self.assertFalse('needed-follow-up' in get_labels(item, only_viewable=True))
+        self.assertFalse(item.show_field('neededFollowUp'))
+        self.assertFalse(item.show_field('providedFollowUp'))
+        # can also be restricted to proposing group
+        self._setupItemFieldsConfig('neededFollowUp', view='python: item.may_view_follow_up(restricted=True)')
+        self.changeUser('pmReviewer2')
+        self.assertFalse(item.show_field('neededFollowUp'))
+        self.assertTrue(item.show_field('providedFollowUp'))
+        self.changeUser('pmCreator1')
+        self.assertTrue(item.show_field('neededFollowUp'))
+        self.assertTrue(item.show_field('providedFollowUp'))
+        self.changeUser('pmReviewer1')
+        self.assertTrue(item.show_field('neededFollowUp'))
+        self.assertTrue(item.show_field('providedFollowUp'))
+        self._setupItemFieldsConfig('neededFollowUp', view='python: item.may_view_follow_up(restricted=True, suffixes=["reviewers"])')
+        self.changeUser('pmCreator1')
+        self.assertFalse(item.show_field('neededFollowUp'))
+        self.assertTrue(item.show_field('providedFollowUp'))
+        self.changeUser('pmReviewer1')
+        self.assertTrue(item.show_field('neededFollowUp'))
+        self.assertTrue(item.show_field('providedFollowUp'))
 
     def test_pm_groups_in_charge_notes(self):
         """Test that MeetingItem.groupsInChargeNotes uses

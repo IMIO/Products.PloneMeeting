@@ -13,6 +13,18 @@ Changelog
 - Use a real section to display `Back` link in `actions_panel`
   of config elements.
   [gbastien]
+- Changed default behavior of `MeetingItem.may_view_follow_up` used in
+  `MeetingConfig.itemFieldsconfig` to manage access to
+  `neededFollowUp/providedFollowUp` fields, now fields are viewable if labels
+  `needed-follow-up/provided-follow-up` are viewable.
+  Added parameters `only_viewable=False` and `only_editable=False` to
+  `ftw_labels.utils.get_labels`.
+  [gbastien]
+- Only compute `MeetingItem._bypass_write_perm_check_for` for
+  `CONFIGURABLE_FIELD_NAMES`.
+  [gbastien]
+- Added `obj` by default to `utils._base_extra_expr_ctx`.
+  [gbastien]
 
 4.2.28.15 (2026-04-24)
 ----------------------

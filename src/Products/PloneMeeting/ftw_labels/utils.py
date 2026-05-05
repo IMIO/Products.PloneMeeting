@@ -12,15 +12,31 @@ from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from zope.component import getAdapter
 
 
-def get_labels(obj, include_personal_labels=True, label_ids=[]):
+def get_labels(obj, include_personal_labels=True, label_ids=[], only_viewable=False, only_editable=False):
     """Return active labels for p_obj.
        p_include_personal_labels may be:
        - True: returns every labels, personal or not;
        - False: personal labels not returned;
-       - "only": only personal labels returned."""
+       - "only": only personal labels returned.
+       If p_label_ids, only consider these labels.
+       If p_only_viewable=True, we will check if label is viewable by current user.
+       """
     res = {}
     labeling = ILabeling(obj)
     labels = labeling.active_labels()
+    modes = []
+    if only_viewable is True:
+        modes.append('view')
+    if only_editable is True:
+        modes.append('edit')
+    if modes:
+        # set active
+        for label in labels:
+            label['active'] = True
+        # need to pass personal labels to filter_manageable_labels, pass empty list
+        labels = labeling.filter_manageable_labels([[], labels], modes=modes)
+        # only keep global labels
+        labels = labels[1]
     for label in labels:
         if (include_personal_labels == "only" and not label['by_user']) or \
            (include_personal_labels is False and label['by_user']) or \
