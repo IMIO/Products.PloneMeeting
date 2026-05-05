@@ -7899,9 +7899,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # While getting the destFolder, it could not exist, in this case
             # we return a clear message
             plone_utils.addPortalMessage(
-                translate('sendto_inexistent_destfolder_error',
-                          mapping={'meetingConfigTitle': destCfg.Title()},
-                          domain="PloneMeeting", context=self.REQUEST),
+                translate(
+                    'sendto_inexistent_destfolder_error',
+                    mapping={'meetingConfigTitle': safe_unicode(destCfg.Title())},
+                    domain="PloneMeeting", context=self.REQUEST),
                 type='error')
             return
         # The owner of the new item will be the same as the owner of the

@@ -28,6 +28,10 @@ Changelog
 - Make sure we store a boolean in `MeetingItem._labels_access_cache`
   `view_access` and `edit_access`.
   [gbastien]
+- Fixed `UnicodeDecodeError` in `MeetingItem.cloneToOtherMeetingConfig`,
+  when managing message `sendto_inexistent_destfolder_error` if destination
+  `MeetingConfig` title contains special characters.
+  [gbastien]
 
 4.2.28.15 (2026-04-24)
 ----------------------
