@@ -25,6 +25,9 @@ Changelog
   [gbastien]
 - Added `obj` by default to `utils._base_extra_expr_ctx`.
   [gbastien]
+- Make sure we store a boolean in `MeetingItem._labels_access_cache`
+  `view_access` and `edit_access`.
+  [gbastien]
 
 4.2.28.15 (2026-04-24)
 ----------------------

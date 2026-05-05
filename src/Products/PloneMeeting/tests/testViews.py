@@ -3723,7 +3723,7 @@ class testViews(PloneMeetingTestCase):
         new_config2 = deepcopy(config[0])
         new_config2['label_id'] = "label2"
         new_config2['edit_access_on'] = "python: item.Title() != 'Label2 not editable'"
-        new_config2['view_access_on'] = "python: False"
+        new_config2['view_access_on'] = "python: 0"
         new_config2['edit_groups'] = []
         config.append(new_config1)
         config.append(new_config2)
@@ -3747,7 +3747,9 @@ class testViews(PloneMeetingTestCase):
         # try to remove 'label1', warning and still there
         item.setTitle('Label1 not editable')
         item._update_after_edit()
-
+        # edit_access and view_access are always stored as boolean values
+        # check view_access for with TAL expr is "python: 0"
+        self.assertTrue(isinstance(item._labels_access_cache['label2']['view_access'], bool))
         self.request.form['activate_labels'] = []
         labelingview.update()
         # set response status to 200 so status message is removed
