@@ -12,13 +12,13 @@ from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from zope.component import getAdapter
 
 
-def get_labels(obj, include_personal_labels=True, label_ids=[], only_viewable=False, only_editable=False):
+def get_labels(obj, include_personal_labels=True, label_ids=None, only_viewable=False, only_editable=False):
     """Return active labels for p_obj.
        p_include_personal_labels may be:
        - True: returns every labels, personal or not;
        - False: personal labels not returned;
        - "only": only personal labels returned.
-       If p_label_ids, only consider these labels.
+       If p_label_ids, only consider these labels (a list of label ids).
        If p_only_viewable=True, we will check if label is viewable by current user.
        """
     res = {}

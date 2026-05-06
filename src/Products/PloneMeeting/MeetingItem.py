@@ -8459,14 +8459,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(self)
         if tool.isManager(realManagers=True):
             return True
-        is_manager = tool.isManager(cfg)
         # same condition for any field
         # must have relevant labels and MeetingManager
         # or when restricted=True, available to proposing group members
+        allowed = tool.isManager(cfg)
+        if restricted:
+            allowed = allowed or tool.user_is_in_org(
+                org_uid=self.getProposingGroup(), suffixes=suffixes)
         if (not fieldIsEmpty(field_name, self) or
-            get_labels(self, label_ids=label_ids, only_viewable=True)) and \
-           (not restricted or (is_manager or tool.user_is_in_org(
-                org_uid=self.getProposingGroup(), suffixes=suffixes))):
+                get_labels(self, label_ids=label_ids, only_viewable=True)) and allowed:
             return True
 
     def may_edit_follow_up(self,

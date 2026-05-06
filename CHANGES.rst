@@ -14,7 +14,7 @@ Changelog
   of config elements.
   [gbastien]
 - Changed default behavior of `MeetingItem.may_view_follow_up` used in
-  `MeetingConfig.itemFieldsconfig` to manage access to
+  `MeetingConfig.itemFieldsConfig` to manage access to
   `neededFollowUp/providedFollowUp` fields, now fields are viewable if labels
   `needed-follow-up/provided-follow-up` are viewable.
   Added parameters `only_viewable=False` and `only_editable=False` to
