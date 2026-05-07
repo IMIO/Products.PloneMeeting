@@ -338,14 +338,11 @@ def createOrUpdatePloneGroup(groupId, groupTitle, groupSuffix):
     return wasCreated
 
 
-def fieldIsEmpty(name, obj, useParamValue=False, value=None):
+def fieldIsEmpty(name, obj, value=None):
     '''If field named p_name on p_obj empty ? The method checks emptyness of
        given p_value if p_useParamValue is True instead.'''
     field = obj.getField(name)
-    if useParamValue:
-        value = value
-    else:
-        value = field.get(obj)
+    value = value or field.get(obj)
     widgetName = field.widget.getName()
     if widgetName == 'RichWidget':
         return xhtmlContentIsEmpty(value)
