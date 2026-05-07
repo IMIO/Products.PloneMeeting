@@ -2577,7 +2577,7 @@ schema = Schema((
                 'update_local_roles': SelectColumn(
                     "Labels config update local roles?",
                     col_description="labels_config_update_local_roles_col_description",
-                    vocabulary="listBooleanVocabulary",
+                    vocabulary_factory="ConfigLabelsConfigUpdateLocalRoles",
                     default='0'),
             },
             label='Labelsconfig',
@@ -6167,6 +6167,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             ('1', translate('boolean_value_true', domain=d, context=self.REQUEST)),
         ))
         return res
+
 
     def listCommitteesEnabled(self):
         '''Vocabulary for committees.enabled datagrid column.'''

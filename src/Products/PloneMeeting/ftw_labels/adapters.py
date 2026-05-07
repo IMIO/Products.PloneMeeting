@@ -248,12 +248,16 @@ class PMLabeling(Labeling):
         # first element of config is related to "*"
         config = self.cfg.getLabelsConfig(('*', ) + added_or_removed, data="update_local_roles")
         # we have:
-        # a config other than the default specifying to update local roles
+        # a config other than the default specifying to update local roles/update labels cache
         # or we do not have "0" for every selected elements and
-        # default config specify to update local roles
+        # default config specify to update local roles/update labels cache
+        # update local roles will update labels cache so we check it first
         if ("1" in config[1:]) or \
            (len(config) - 1 != len(added_or_removed) and config[0] == "1"):
             self.context.update_local_roles(avoid_reindex=True)
+        elif ("2" in config[1:]) or \
+           (len(config) - 1 != len(added_or_removed) and config[0] == "2"):
+            self.context._update_labels_access_cache(self.cfg, self.context.query_state())
         # invalidate collections counter cache and portlet_todo
         if set(active_label_ids).symmetric_difference(label_ids). \
                 intersection(self.get_searches_labels()):

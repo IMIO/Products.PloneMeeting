@@ -7504,7 +7504,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             cache = getattr(self, ITEM_LABELS_ACCESS_CACHE_ATTR)
             cache.update(
                 compute_labels_access(
-                    adapter, cfg, item=self, item_state=self.query_state()))
+                    adapter, cfg, item=self, item_state=item_state))
 
     def _updateCommitteeEditorsLocalRoles(self, cfg, item_state):
         '''Add local roles depending on MeetingConfig.committees.'''
@@ -8460,8 +8460,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if tool.isManager(realManagers=True):
             return True
         # same condition for any field
-        # must have relevant labels and MeetingManager
-        # or when restricted=True, available to proposing group members
+        # MeetingManager have always access
+        # when restricted=True, available to proposing group members
+        # or available if label viewable
         allowed = tool.isManager(cfg)
         if restricted:
             allowed = allowed or tool.user_is_in_org(
