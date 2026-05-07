@@ -3472,7 +3472,9 @@ class BooleanVocabulary(object):
                     context=context.REQUEST)))
         return SimpleVocabulary(terms)
 
+
 BooleanVocabularyFactory = BooleanVocabulary()
+
 
 class ConfigLabelsConfigUpdateLocalRolesVocabulary(BooleanVocabulary):
     """ """
@@ -3482,8 +3484,8 @@ class ConfigLabelsConfigUpdateLocalRolesVocabulary(BooleanVocabulary):
            - '0': no update (default);
            - '1': update local roles;
            - '2': update labels access cache."""
-        vocab = super(ConfigLabelsConfigUpdateLocalRolesVocabulary, self).__call__(context)
-        vocab._terms.append(
+        terms = super(ConfigLabelsConfigUpdateLocalRolesVocabulary, self).__call__(context)._terms
+        terms.append(
             SimpleTerm(
                 '2',
                 '2',
@@ -3491,7 +3493,7 @@ class ConfigLabelsConfigUpdateLocalRolesVocabulary(BooleanVocabulary):
                     'labels_config_update_labels_access_cache',
                     domain="PloneMeeting",
                     context=context.REQUEST)))
-        return vocab
+        return SimpleVocabulary(terms)
 
 
 ConfigLabelsConfigUpdateLocalRolesVocabularyFactory = ConfigLabelsConfigUpdateLocalRolesVocabulary()
