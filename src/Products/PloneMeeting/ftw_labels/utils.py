@@ -76,12 +76,12 @@ def compute_labels_access(adapter,
                         extra_expr_ctx = _base_extra_expr_ctx(
                             item or cfg, {'item': item, })
                     data[config['label_id']]['view_access'] = \
-                        bool(
-                            _evaluateExpression(
-                                item or cfg,
-                                expression=config['view_access_on'],
-                                extra_expr_ctx=extra_expr_ctx,
-                                raise_on_error=True))
+                        _evaluateExpression(
+                            item or cfg,
+                            expression=config['view_access_on'],
+                            extra_expr_ctx=extra_expr_ctx,
+                            raise_on_error=True,
+                            return_bool=True)
         if "edit" in modes:
             # edit
             data[config['label_id']]['edit_groups'] = \
@@ -101,12 +101,12 @@ def compute_labels_access(adapter,
                         extra_expr_ctx = _base_extra_expr_ctx(
                             item or cfg, {'item': item, })
                     data[config['label_id']]['edit_access'] = \
-                        bool(
-                            _evaluateExpression(
-                                item or cfg,
-                                expression=config['edit_access_on'],
-                                extra_expr_ctx=extra_expr_ctx,
-                                raise_on_error=True))
+                        _evaluateExpression(
+                            item or cfg,
+                            expression=config['edit_access_on'],
+                            extra_expr_ctx=extra_expr_ctx,
+                            raise_on_error=True,
+                            return_bool=True)
     return data
 
 

@@ -3817,7 +3817,7 @@ class testViews(PloneMeetingTestCase):
         item.setTitle('Label1 not editable')
         item._update_after_edit()
         # edit_access and view_access are always stored as boolean values
-        # check view_access for with TAL expr is "python: 0"
+        # check view_access for which TAL expr is "python: 0"
         self.assertTrue(isinstance(item._labels_access_cache['label2']['view_access'], bool))
         self.request.form['activate_labels'] = []
         labelingview.update()
@@ -3846,6 +3846,7 @@ class testViews(PloneMeetingTestCase):
         # use global MeetingConfig.update_labels_access_cache to reflect
         # configuration changes, make "label2" viewable
         # for now we have "label" and "label1"
+        self.cleanMemoize()
         self.assertEqual(len(labelingview.available_labels(modes=['edit'])[1]), 2)
         config = list(cfg.getLabelsConfig())
         config[2]["edit_access_on"] = ""
@@ -3854,6 +3855,7 @@ class testViews(PloneMeetingTestCase):
         self.changeUser('siteadmin')
         cfg.update_labels_access_cache()
         self.changeUser('pmCreator1')
+        self.cleanMemoize()
         self.assertEqual(len(labelingview.available_labels(modes=['edit'])[1]), 3)
 
     def test_pm_AddAdviceBatchActionForm(self):
