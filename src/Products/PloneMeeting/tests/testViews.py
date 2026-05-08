@@ -3705,6 +3705,75 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(get_labels(item), {})
         self.assertEqual(item.getAllCopyGroups(True), ())
 
+    def test_pm_LabelsConfigUpdateLocalRolesUpdateLabelsAccess(self):
+        """Test labelsConfig when a configuration specify to update labels access.
+           Here label "label2" is available when "label1" is selected."""
+        cfg = self.meetingConfig
+        self._enable_ftw_labels(cfg)
+        # label2 is available when label1 is selected
+        # for now, do not update labels
+        config = list(cfg.getLabelsConfig())
+        new_config = deepcopy(config[0])
+        new_config['label_id'] = "label2"
+        new_config['edit_access_on'] = \
+            "python: utils.get_labels(item, include_personal_labels=False, label_ids=['label1'])"
+        new_config['edit_groups'] = []
+        config.append(new_config)
+        cfg.setLabelsConfig(config)
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        # label2 is not available
+        labelingview = item.restrictedTraverse('@@labeling')
+        # available_labels is cached
+        self.cleanMemoize()
+        self.assertEqual(
+            [label['label_id'] for label in labelingview.available_labels(modes=['edit'])[1]],
+            ['label', 'label1'])
+        self.request.form['activate_labels'] = ['label1']
+        labelingview.update()
+        # as update_local_roles is "0", labels access was not updated so "label2" is not available
+        self.assertTrue('label1' in get_labels(item))
+        labelingview = item.restrictedTraverse('@@labeling')
+        self.cleanMemoize()
+        self.assertEqual(
+            [label['label_id'] for label in labelingview.available_labels(modes=['edit'])[1]],
+            ['label', 'label1'])
+        # update config so it update labels when label1 is added/removed
+        new_config = deepcopy(config[0])
+        new_config['label_id'] = "label1"
+        new_config['update_local_roles'] = "2"
+        cfg.setLabelsConfig(config)
+        config.append(new_config)
+        cfg.setLabelsConfig(config)
+        # was not updated because updated when changed
+        labelingview.update()
+        labelingview = item.restrictedTraverse('@@labeling')
+        self.cleanMemoize()
+        self.assertEqual(
+            [label['label_id'] for label in labelingview.available_labels(modes=['edit'])[1]],
+            ['label', 'label1'])
+        # remove and add it again, this time labels access is updated
+        labelingview = item.restrictedTraverse('@@labeling')
+        self.request.form['activate_labels'] = []
+        labelingview.update()
+        self.assertEqual(get_labels(item), {})
+        self.request.form['activate_labels'] = ['label1']
+        labelingview = item.restrictedTraverse('@@labeling')
+        labelingview.update()
+        self.cleanMemoize()
+        self.assertEqual(
+            [label['label_id'] for label in labelingview.available_labels(modes=['edit'])[1]],
+            ['label', 'label1', 'label2'])
+        # removing the label will also update labels
+        self.request.form['activate_labels'] = []
+        labelingview = item.restrictedTraverse('@@labeling')
+        labelingview.update()
+        self.assertEqual(get_labels(item), {})
+        self.cleanMemoize()
+        self.assertEqual(
+            [label['label_id'] for label in labelingview.available_labels(modes=['edit'])[1]],
+            ['label', 'label1'])
+
     def test_pm_LabelsConfigWithNotViewableNotEditableLabels(self):
         """Test labelsConfig when editing an item containing labels where
            some are not viewable and/or editable.
@@ -3723,7 +3792,7 @@ class testViews(PloneMeetingTestCase):
         new_config2 = deepcopy(config[0])
         new_config2['label_id'] = "label2"
         new_config2['edit_access_on'] = "python: item.Title() != 'Label2 not editable'"
-        new_config2['view_access_on'] = "python: False"
+        new_config2['view_access_on'] = "python: 0"
         new_config2['edit_groups'] = []
         config.append(new_config1)
         config.append(new_config2)
@@ -3747,7 +3816,9 @@ class testViews(PloneMeetingTestCase):
         # try to remove 'label1', warning and still there
         item.setTitle('Label1 not editable')
         item._update_after_edit()
-
+        # edit_access and view_access are always stored as boolean values
+        # check view_access for which TAL expr is "python: 0"
+        self.assertTrue(isinstance(item._labels_access_cache['label2']['view_access'], bool))
         self.request.form['activate_labels'] = []
         labelingview.update()
         # set response status to 200 so status message is removed
@@ -3772,10 +3843,10 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(IStatusMessage(self.request).show(), [])
         # but 'label2' was kept as it is not viewable
         self.assertEqual(sorted(get_labels(item)), ['label1', 'label2'])
-        self.cleanMemoize()
         # use global MeetingConfig.update_labels_access_cache to reflect
         # configuration changes, make "label2" viewable
         # for now we have "label" and "label1"
+        self.cleanMemoize()
         self.assertEqual(len(labelingview.available_labels(modes=['edit'])[1]), 2)
         config = list(cfg.getLabelsConfig())
         config[2]["edit_access_on"] = ""
@@ -3784,6 +3855,7 @@ class testViews(PloneMeetingTestCase):
         self.changeUser('siteadmin')
         cfg.update_labels_access_cache()
         self.changeUser('pmCreator1')
+        self.cleanMemoize()
         self.assertEqual(len(labelingview.available_labels(modes=['edit'])[1]), 3)
 
     def test_pm_AddAdviceBatchActionForm(self):

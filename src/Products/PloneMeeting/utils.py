@@ -338,14 +338,11 @@ def createOrUpdatePloneGroup(groupId, groupTitle, groupSuffix):
     return wasCreated
 
 
-def fieldIsEmpty(name, obj, useParamValue=False, value=None):
+def fieldIsEmpty(name, obj, value=None):
     '''If field named p_name on p_obj empty ? The method checks emptyness of
        given p_value if p_useParamValue is True instead.'''
     field = obj.getField(name)
-    if useParamValue:
-        value = value
-    else:
-        value = field.get(obj)
+    value = value or field.get(obj)
     widgetName = field.widget.getName()
     if widgetName == 'RichWidget':
         return xhtmlContentIsEmpty(value)
@@ -2006,7 +2003,7 @@ def getAvailableMailingLists(obj, pod_template, include_recipients=False):
     if not mailing_lists:
         return res
     try:
-        extra_expr_ctx = _base_extra_expr_ctx(obj, {'obj': obj, })
+        extra_expr_ctx = _base_extra_expr_ctx(obj)
         for line in mailing_lists.split('\n'):
             name, expression, userIds = line.split(';')
             if not expression or _evaluateExpression(
@@ -2039,7 +2036,7 @@ def extract_recipients(obj, values):
     # compile userIds in case we have a TAL expression
     recipients = []
     userIdsOrEmailAddresses = []
-    extra_expr_ctx = _base_extra_expr_ctx(obj, {'obj': obj, })
+    extra_expr_ctx = _base_extra_expr_ctx(obj)
     for value in values.strip().split(','):
         # value may be a TAL expression returning a list of userIds or email addresses
         # or a group (of users)
@@ -2492,7 +2489,8 @@ def _base_extra_expr_ctx(obj, extra_ctx={}):
     cfg = tool.getMeetingConfig(obj)
     # member, context and portal are managed by
     # collective.behavior.talcondition or collective.documentgenerator
-    data = {'tool': tool,
+    data = {'obj': obj,
+            'tool': tool,
             'cfg': cfg,
             # backward compatibility
             'meetingConfig': cfg,

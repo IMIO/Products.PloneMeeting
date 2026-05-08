@@ -7,6 +7,7 @@
 
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_plone_group
+from copy import deepcopy
 from ftw.labels.interfaces import ILabeling
 from imio.helpers.content import richtextval
 from os import path
@@ -420,6 +421,7 @@ class testUtils(PloneMeetingTestCase):
     def test_pm_get_labels(self):
         """Test the ToolPloneMeeting.get_labels method
            that will return ftw.labels active_labels."""
+        cfg = self.meetingConfig
         self._enableField('labels')
         self.changeUser("pmCreator1")
         item = self.create("MeetingItem")
@@ -430,6 +432,20 @@ class testUtils(PloneMeetingTestCase):
         self.assertEqual(get_labels(item), {'label': 'Label', 'suivi': 'Suivi'})
         self.assertEqual(get_labels(item, False), {'label': 'Label'})
         self.assertEqual(get_labels(item, "only"), {'suivi': 'Suivi'})
+        # for now also viewable by reviewers
+        self.proposeItem(item)
+        self.changeUser("pmReviewer1")
+        self.assertEqual(get_labels(item, False), {'label': 'Label'})
+        config = list(cfg.getLabelsConfig())
+        # make 'label' only viewable by creators
+        new_config = deepcopy(config[0])
+        new_config['label_id'] = "label"
+        new_config['view_groups'] = ["suffix_proposing_group_creators"]
+        config.append(new_config)
+        cfg.setLabelsConfig(config)
+        item._update_labels_access_cache(cfg, item.query_state())
+        self.assertEqual(get_labels(item, False), {'label': 'Label'})
+        self.assertEqual(get_labels(item, False, only_viewable=True), {})
 
     def test_pm_IsPowerObserverForCfg(self):
         """ """

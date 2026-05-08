@@ -636,6 +636,10 @@ class PloneMeetingTestingHelpers(object):
         new_config = deepcopy(config[0])
         new_config['label_id'] = "needed-follow-up"
         new_config['edit_groups'] = ["configgroup_meetingmanagers"]
+        # everyone can see except powerobservers/restrictedpowerobservers
+        new_config['view_groups'] = [
+            "configgroup_powerobservers", "configgroup_restrictedpowerobservers"]
+        new_config['view_groups_excluding'] = '1'
         config.append(new_config)
         # provided-follow-up
         new_config = deepcopy(config[0])

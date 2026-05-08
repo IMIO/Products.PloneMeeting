@@ -390,7 +390,6 @@ function addAdvicesBatchAction(){
                 return true;
             },
             onBeforeClose : function (e) {
-                return
                 // avoid closing overlay when click outside overlay
                 // or when it is closed by WSC
                 if (e.target.id == "exposeMask" ||
@@ -399,6 +398,7 @@ function addAdvicesBatchAction(){
                 // close every opened select2 widgets
                 $('.single-select2-widget').select2("close");
                 $('.multi-select2-widget').select2("close");
+                return true;
             },
         }
   });

@@ -3445,6 +3445,60 @@ class ConfigCssTransformsActionsVocabulary(object):
 ConfigCssTransformsActionsVocabularyFactory = ConfigCssTransformsActionsVocabulary()
 
 
+class BooleanVocabulary(object):
+    """ """
+    implements(IVocabularyFactory)
+    def __call__(self, context):
+        '''Vocabulary generating a boolean behaviour : just 2 values,
+           one yes/True, and the other no/False.
+           This is used in DataGridFields to avoid use of CheckBoxColumn
+           that does not handle validation correctly.'''
+        terms = []
+        terms.append(
+            SimpleTerm(
+                '0',
+                '0',
+                translate(
+                    'boolean_value_false',
+                    domain="PloneMeeting",
+                    context=context.REQUEST)))
+        terms.append(
+            SimpleTerm(
+                '1',
+                '1',
+                translate(
+                    'boolean_value_true',
+                    domain="PloneMeeting",
+                    context=context.REQUEST)))
+        return SimpleVocabulary(terms)
+
+
+BooleanVocabularyFactory = BooleanVocabulary()
+
+
+class ConfigLabelsConfigUpdateLocalRolesVocabulary(BooleanVocabulary):
+    """ """
+
+    def __call__(self, context):
+        """Vocabulary for labelsConfig.update_local_roles column with 3 values:
+           - '0': no update (default);
+           - '1': update local roles;
+           - '2': update labels access cache."""
+        terms = super(ConfigLabelsConfigUpdateLocalRolesVocabulary, self).__call__(context)._terms
+        terms.append(
+            SimpleTerm(
+                '2',
+                '2',
+                translate(
+                    'labels_config_update_labels_access_cache',
+                    domain="PloneMeeting",
+                    context=context.REQUEST)))
+        return SimpleVocabulary(terms)
+
+
+ConfigLabelsConfigUpdateLocalRolesVocabularyFactory = ConfigLabelsConfigUpdateLocalRolesVocabulary()
+
+
 class EveryConfigsVocabulary(object):
     """ """
 

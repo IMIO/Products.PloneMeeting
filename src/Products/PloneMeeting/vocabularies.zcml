@@ -151,6 +151,10 @@
            name="PMEveryConfigs" />
   <utility component=".vocabularies.ConfigCssTransformsActionsVocabularyFactory"
            name="ConfigCssTransformsActions" />
+  <utility component=".vocabularies.BooleanVocabularyFactory"
+           name="BooleanVocabulary" />
+  <utility component=".vocabularies.ConfigLabelsConfigUpdateLocalRolesVocabularyFactory"
+           name="ConfigLabelsConfigUpdateLocalRoles" />
 
   <!-- PMHeldPosition vocabularies -->
   <utility component=".vocabularies.HeldPositionUsagesVocabularyFactory"

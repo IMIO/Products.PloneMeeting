@@ -21,7 +21,7 @@ class Migrate_To_4216(Migrator):
             if not base_hasattr(cfg, 'enableLabels'):
                 continue
             if cfg.enableLabels:
-                logger.info("'labels' was enabled for MeetingConfig %s" % cfg.getId())
+                logger.info("'labels' was enabled for MeetingConfig '%s'" % cfg.getId())
                 used_item_attrs = list(cfg.getUsedItemAttributes())
                 used_item_attrs.append('labels')
                 cfg.setUsedItemAttributes(used_item_attrs)
