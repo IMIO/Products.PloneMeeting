@@ -9200,7 +9200,9 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(item.show_field('neededFollowUp'))
         self.assertFalse(item.show_field('providedFollowUp'))
         # can also be restricted to proposing group
-        self._setupItemFieldsConfig('neededFollowUp', view='python: item.may_view_follow_up(restricted=True)')
+        self._setupItemFieldsConfig(
+            'neededFollowUp',
+            view='python: item.may_view_follow_up(restricted=True)')
         self.changeUser('pmReviewer2')
         self.assertFalse(item.show_field('neededFollowUp'))
         self.assertTrue(item.show_field('providedFollowUp'))
@@ -9210,7 +9212,9 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmReviewer1')
         self.assertTrue(item.show_field('neededFollowUp'))
         self.assertTrue(item.show_field('providedFollowUp'))
-        self._setupItemFieldsConfig('neededFollowUp', view='python: item.may_view_follow_up(restricted=True, suffixes=["reviewers"])')
+        self._setupItemFieldsConfig(
+            'neededFollowUp',
+            view='python: item.may_view_follow_up(restricted=True, suffixes=["reviewers"])')
         self.changeUser('pmCreator1')
         self.assertFalse(item.show_field('neededFollowUp'))
         self.assertTrue(item.show_field('providedFollowUp'))
@@ -9234,8 +9238,8 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(item.mayQuickEdit('groupsInChargeNotes'))
         # bypass for Manager
         self.changeUser('siteadmin')
-        self.assertTrue(item.show_field('groupsInChargeNotes')
-                        and item.mayQuickEdit('groupsInChargeNotes'))
+        self.assertTrue(item.show_field('groupsInChargeNotes') and
+                        item.mayQuickEdit('groupsInChargeNotes'))
         # group in charge can view and edit
         self.changeUser('pmObserver2')
         self.assertTrue(self.hasPermission(View, item))

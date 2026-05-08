@@ -8461,15 +8461,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return True
         # same condition for any field
         # MeetingManager have always access
-        # when restricted=True, available to proposing group members
-        # or available if label viewable
-        allowed = tool.isManager(cfg)
+        # when restricted=True, viewable to proposing group members
+        # when restricted=False, viewable if label viewable
+        is_manager = tool.isManager(cfg)
         if restricted:
-            allowed = allowed or tool.user_is_in_org(
+            return is_manager or tool.user_is_in_org(
                 org_uid=self.getProposingGroup(), suffixes=suffixes)
-        if (not fieldIsEmpty(field_name, self) or
-                get_labels(self, label_ids=label_ids, only_viewable=True)) and allowed:
-            return True
+        else:
+            return is_manager or get_labels(self, label_ids=label_ids, only_viewable=True)
 
     def may_edit_follow_up(self,
                            field_name='neededFollowUp',
