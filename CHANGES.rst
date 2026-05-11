@@ -32,6 +32,14 @@ Changelog
   when managing message `sendto_inexistent_destfolder_error` if destination
   `MeetingConfig` title contains special characters.
   [gbastien]
+- In `MeetingItem.mayAskAdviceAgain`, when using
+  `waiting_advices_proposing_group_send_back`, check that user can actually
+  send back by verifying that WF back transition can be triggered in case
+  it is overrided.
+  [gbastien]
+- In `MeetingItem.getCustomAdviceMessageFor`, display more complete default
+  messages when advice is `hidden during redaction` or `considered not given`.
+  [gbastien]
 
 4.2.28.15 (2026-04-24)
 ----------------------
