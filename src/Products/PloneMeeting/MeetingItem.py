@@ -3116,10 +3116,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 if not found:
                     # make sure we have a list
                     states = [states]
-            suffixes = cfg.getItemWFValidationLevels(
-                states=states, data='suffix', only_enabled=True, return_state_singleton=False)
-            if tool.user_is_in_org(org_uid=org_uid, suffixes=suffixes):
-                return True
+            # make sure user actually able to back to states in case it was overrided
+            states = [state for state in states if item.wfConditions().mayCorrect(state)]
+            if states:
+                suffixes = cfg.getItemWFValidationLevels(
+                    states=states, data='suffix', only_enabled=True, return_state_singleton=False)
+                if tool.user_is_in_org(org_uid=org_uid, suffixes=suffixes):
+                    return True
         return False
 
     security.declarePublic('mayBackToPreviousAdvice')
@@ -5080,12 +5083,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             context = self.getSelf()
             if advice['advice_editable']:
                 customAdviceMessage = translate(
-                    'hidden_during_redaction',
+                    'advice_hidden_during_redaction_help',
                     domain='PloneMeeting',
                     context=context.REQUEST)
             else:
                 customAdviceMessage = translate(
-                    'considered_not_given_hidden_during_redaction',
+                    'advice_hidden_during_redaction_considered_not_given_help',
                     domain='PloneMeeting',
                     context=context.REQUEST)
         return {'displayDefaultComplementaryMessage': True,
