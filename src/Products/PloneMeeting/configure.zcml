@@ -237,6 +237,15 @@
   <adapter for="Products.PloneMeeting.content.organization.IPMOrganization"
            factory=".adapters.OrgContentDeletableAdapter"
            provides="imio.actionspanel.interfaces.IContentDeletable" />
+  <adapter for="collective.documentgenerator.content.pod_template.IPODTemplate"
+           factory=".adapters.PODTemplateContentDeletableAdapter"
+           provides="imio.actionspanel.interfaces.IContentDeletable" />
+  <adapter for="collective.documentgenerator.content.style_template.IStyleTemplate"
+           factory=".adapters.PODTemplateContentDeletableAdapter"
+           provides="imio.actionspanel.interfaces.IContentDeletable" />
+  <adapter for="Products.PloneMeeting.interfaces.IMeetingConfig"
+           factory=".adapters.MeetingConfigContentDeletableAdapter"
+           provides="imio.actionspanel.interfaces.IContentDeletable" />
 
   <!-- Indexes -->
   <adapter name="annexes_index" factory=".indexes.annexes_index" />

@@ -75,6 +75,7 @@ from Products.PloneMeeting.browser.itemvotes import next_vote_is_linked
 from Products.PloneMeeting.config import AddAdvice
 from Products.PloneMeeting.config import AUTO_COPY_GROUP_PREFIX
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
+from Products.PloneMeeting.config import CONFIGURABLE_FIELD_NAMES
 from Products.PloneMeeting.config import CONSIDERED_NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import DEFAULT_COPIED_FIELDS
 from Products.PloneMeeting.config import DUPLICATE_AND_KEEP_LINK_EVENT_ACTION
@@ -3115,10 +3116,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 if not found:
                     # make sure we have a list
                     states = [states]
-            suffixes = cfg.getItemWFValidationLevels(
-                states=states, data='suffix', only_enabled=True, return_state_singleton=False)
-            if tool.user_is_in_org(org_uid=org_uid, suffixes=suffixes):
-                return True
+            # make sure user actually able to back to states in case it was overrided
+            states = [state for state in states if item.wfConditions().mayCorrect(state)]
+            if states:
+                suffixes = cfg.getItemWFValidationLevels(
+                    states=states, data='suffix', only_enabled=True, return_state_singleton=False)
+                if tool.user_is_in_org(org_uid=org_uid, suffixes=suffixes):
+                    return True
         return False
 
     security.declarePublic('mayBackToPreviousAdvice')
@@ -5013,8 +5017,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _bypass_write_perm_check_for(self, fieldName):
         """See docstring in interfaces.py"""
-        item = self.getSelf()
-        return item.adapted().show_field(fieldName, mode='edit')
+        if fieldName in CONFIGURABLE_FIELD_NAMES:
+            item = self.getSelf()
+            return item.adapted().show_field(fieldName, mode='edit')
 
     def _bypass_quick_edit_notify_modified_for(self, fieldName):
         """See docstring in interfaces.py"""
@@ -5084,12 +5089,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             context = self.getSelf()
             if advice['advice_editable']:
                 customAdviceMessage = translate(
-                    'hidden_during_redaction',
+                    'advice_hidden_during_redaction_help',
                     domain='PloneMeeting',
                     context=context.REQUEST)
             else:
                 customAdviceMessage = translate(
-                    'considered_not_given_hidden_during_redaction',
+                    'advice_hidden_during_redaction_considered_not_given_help',
                     domain='PloneMeeting',
                     context=context.REQUEST)
         return {'displayDefaultComplementaryMessage': True,
@@ -7510,7 +7515,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             cache = getattr(self, ITEM_LABELS_ACCESS_CACHE_ATTR)
             cache.update(
                 compute_labels_access(
-                    adapter, cfg, item=self, item_state=self.query_state()))
+                    adapter, cfg, item=self, item_state=item_state))
 
     def _updateCommitteeEditorsLocalRoles(self, cfg, item_state):
         '''Add local roles depending on MeetingConfig.committees.'''
@@ -7905,9 +7910,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # While getting the destFolder, it could not exist, in this case
             # we return a clear message
             plone_utils.addPortalMessage(
-                translate('sendto_inexistent_destfolder_error',
-                          mapping={'meetingConfigTitle': destCfg.Title()},
-                          domain="PloneMeeting", context=self.REQUEST),
+                translate(
+                    'sendto_inexistent_destfolder_error',
+                    mapping={'meetingConfigTitle': safe_unicode(destCfg.Title())},
+                    domain="PloneMeeting", context=self.REQUEST),
                 type='error')
             return
         # The owner of the new item will be the same as the owner of the
@@ -8457,20 +8463,23 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def may_view_follow_up(self,
                            field_name='neededFollowUp',
                            label_ids=('needed-follow-up', 'provided-follow-up'),
+                           restricted=False,
                            suffixes=[]):
         """Helper methods for default view access to followUp related fields."""
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         if tool.isManager(realManagers=True):
             return True
-        is_manager = tool.isManager(cfg)
         # same condition for any field
-        # must have relevant labels and MeetingManager or proposing group member
-        if (not fieldIsEmpty(field_name, self) or
-            get_labels(self, label_ids=label_ids)) and \
-           (is_manager or tool.user_is_in_org(
-                org_uid=self.getProposingGroup(), suffixes=suffixes)):
-            return True
+        # MeetingManager have always access
+        # when restricted=True, viewable to proposing group members
+        # when restricted=False, viewable if label viewable
+        is_manager = tool.isManager(cfg)
+        if restricted:
+            return is_manager or tool.user_is_in_org(
+                org_uid=self.getProposingGroup(), suffixes=suffixes)
+        else:
+            return is_manager or get_labels(self, label_ids=label_ids, only_viewable=True)
 
     def may_edit_follow_up(self,
                            field_name='neededFollowUp',

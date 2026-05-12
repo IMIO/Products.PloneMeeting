@@ -8,6 +8,42 @@ Changelog
 - Added bypass for `Manager` for `MeetingItem.show_field` so a `Manager` can
   view and edit any item fields defined in `MeetingConfig.itemFieldsConfig`.
   [gbastien]
+- Only a Zope admin can delete a POD template of any kind.
+  [gbastien]
+- Use a real section to display `Back` link in `actions_panel`
+  of config elements.
+  [gbastien]
+- Changed default behavior of `MeetingItem.may_view_follow_up` used in
+  `MeetingConfig.itemFieldsConfig` to manage access to
+  `neededFollowUp/providedFollowUp` fields, now fields are viewable if labels
+  `needed-follow-up/provided-follow-up` are viewable.
+  Added parameters `only_viewable=False` and `only_editable=False` to
+  `ftw_labels.utils.get_labels`.
+  [gbastien]
+- Only compute `MeetingItem._bypass_write_perm_check_for` for
+  `CONFIGURABLE_FIELD_NAMES`.
+  [gbastien]
+- Added `obj` by default to `utils._base_extra_expr_ctx`.
+  [gbastien]
+- Make sure we store a boolean in `MeetingItem._labels_access_cache`
+  `view_access` and `edit_access`.
+  [gbastien]
+- Fixed `UnicodeDecodeError` in `MeetingItem.cloneToOtherMeetingConfig`,
+  when managing message `sendto_inexistent_destfolder_error` if destination
+  `MeetingConfig` title contains special characters.
+  [gbastien]
+- In `MeetingItem.mayAskAdviceAgain`, when using
+  `waiting_advices_proposing_group_send_back`, check that user can actually
+  send back by verifying that WF back transition can be triggered in case
+  it is overrided.
+  [gbastien]
+- In `MeetingItem.getCustomAdviceMessageFor`, display more complete default
+  messages when advice is `hidden during redaction` or `considered not given`.
+  [gbastien]
+
+4.2.28.15 (2026-04-24)
+----------------------
+
 - Fixed `MeetingItem._bypass_write_perm_check_for`.
   [gbastien]
 - Fixed `MeetingItem.show_field` to not evaluate if field not enabled and

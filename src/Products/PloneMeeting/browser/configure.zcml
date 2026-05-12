@@ -79,6 +79,70 @@
             class="Products.PloneMeeting.browser.overrides.PMContentActionsPanelViewlet"
             template="browser/actions_panel_viewlet.pt"
             permission="zope2.View"/>
+        <browser:viewlet
+            name="plonemeeting.actionspanel"
+            for="Products.PloneMeeting.interfaces.IConfigElement"
+            manager="plone.app.layout.viewlets.interfaces.IBelowContentBody"
+            layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+            class="Products.PloneMeeting.browser.overrides.PMContentActionsPanelViewlet"
+            template="browser/actions_panel_viewlet.pt"
+            permission="zope2.View"/>
+        <browser:viewlet
+            name="plonemeeting.actionspanel"
+            for="collective.documentgenerator.content.pod_template.IConfigurablePODTemplate"
+            manager="plone.app.layout.viewlets.interfaces.IBelowContentBody"
+            layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+            class="Products.PloneMeeting.browser.overrides.PMContentActionsPanelViewlet"
+            template="browser/actions_panel_viewlet.pt"
+            permission="zope2.View"/>
+        <browser:viewlet
+            name="plonemeeting.actionspanel"
+            for="collective.documentgenerator.content.style_template.IStyleTemplate"
+            manager="plone.app.layout.viewlets.interfaces.IBelowContentBody"
+            layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+            class="Products.PloneMeeting.browser.overrides.PMContentActionsPanelViewlet"
+            template="browser/actions_panel_viewlet.pt"
+            permission="zope2.View"/>
+        <browser:viewlet
+            name="plonemeeting.actionspanel"
+            for="plone.app.contenttypes.interfaces.ICollection"
+            manager="plone.app.layout.viewlets.interfaces.IBelowContentBody"
+            layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+            class="Products.PloneMeeting.browser.overrides.PMContentActionsPanelViewlet"
+            template="browser/actions_panel_viewlet.pt"
+            permission="zope2.View"/>
+        <browser:viewlet
+            name="plonemeeting.actionspanel"
+            for="collective.contact.core.content.directory.IDirectory"
+            manager="plone.app.layout.viewlets.interfaces.IBelowContentBody"
+            layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+            class="Products.PloneMeeting.browser.overrides.PMContentActionsPanelViewlet"
+            template="browser/actions_panel_viewlet.pt"
+            permission="zope2.View"/>
+        <browser:viewlet
+            name="plonemeeting.actionspanel"
+            for="collective.contact.core.content.person.IPerson"
+            manager="plone.app.layout.viewlets.interfaces.IBelowContentBody"
+            layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+            class="Products.PloneMeeting.browser.overrides.PMContentActionsPanelViewlet"
+            template="browser/actions_panel_viewlet.pt"
+            permission="zope2.View"/>
+        <browser:viewlet
+            name="plonemeeting.actionspanel"
+            for="Products.PloneMeeting.content.held_position.IPMHeldPosition"
+            manager="plone.app.layout.viewlets.interfaces.IBelowContentBody"
+            layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+            class="Products.PloneMeeting.browser.overrides.PMContentActionsPanelViewlet"
+            template="browser/actions_panel_viewlet.pt"
+            permission="zope2.View"/>
+        <browser:viewlet
+            name="plonemeeting.actionspanel"
+            for="collective.contact.plonegroup.interfaces.IPloneGroupContact"
+            manager="plone.app.layout.viewlets.interfaces.IBelowContentBody"
+            layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+            class="Products.PloneMeeting.browser.overrides.PMContentActionsPanelViewlet"
+            template="browser/actions_panel_viewlet.pt"
+            permission="zope2.View"/>
     </configure>
 
     <!-- Override collective.ckeditor cke-save to handle more than just saving -->
@@ -112,72 +176,6 @@
         class=".annexes.CategorizedAnnexesView"
         permission="zope2.View"
         template="templates/categorized_annexes.pt" />
-
-    <!-- Use our own actionspanel viewlet for elements of the configuration -->
-    <browser:viewlet
-        name="plonemeeting.actionspanel"
-        for="collective.documentgenerator.content.pod_template.IConfigurablePODTemplate"
-        manager="plone.app.layout.viewlets.interfaces.IBelowContentBody"
-        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-        class="Products.PloneMeeting.browser.overrides.PMConfigActionsPanelViewlet"
-        template="templates/actions_panel_config_viewlet.pt"
-        permission="zope2.View"/>
-    <browser:viewlet
-        name="plonemeeting.actionspanel"
-        for="collective.documentgenerator.content.style_template.IStyleTemplate"
-        manager="plone.app.layout.viewlets.interfaces.IBelowContentBody"
-        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-        class="Products.PloneMeeting.browser.overrides.PMConfigActionsPanelViewlet"
-        template="templates/actions_panel_config_viewlet.pt"
-        permission="zope2.View"/>
-    <browser:viewlet
-        name="plonemeeting.actionspanel"
-        for="plone.app.contenttypes.interfaces.ICollection"
-        manager="plone.app.layout.viewlets.interfaces.IBelowContentBody"
-        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-        class="Products.PloneMeeting.browser.overrides.PMConfigActionsPanelViewlet"
-        template="templates/actions_panel_config_viewlet.pt"
-        permission="zope2.View"/>
-    <browser:viewlet
-        name="plonemeeting.actionspanel"
-        for="Products.PloneMeeting.interfaces.IConfigElement"
-        manager="plone.app.layout.viewlets.interfaces.IBelowContentBody"
-        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-        class="Products.PloneMeeting.browser.overrides.PMConfigActionsPanelViewlet"
-        template="templates/actions_panel_config_viewlet.pt"
-        permission="zope2.View"/>
-    <browser:viewlet
-        name="plonemeeting.actionspanel"
-        for="collective.contact.core.content.directory.IDirectory"
-        manager="plone.app.layout.viewlets.interfaces.IBelowContentBody"
-        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-        class="Products.PloneMeeting.browser.overrides.PMConfigActionsPanelViewlet"
-        template="templates/actions_panel_config_viewlet.pt"
-        permission="zope2.View"/>
-    <browser:viewlet
-        name="plonemeeting.actionspanel"
-        for="collective.contact.core.content.person.IPerson"
-        manager="plone.app.layout.viewlets.interfaces.IBelowContentBody"
-        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-        class="Products.PloneMeeting.browser.overrides.PMConfigActionsPanelViewlet"
-        template="templates/actions_panel_config_viewlet.pt"
-        permission="zope2.View"/>
-    <browser:viewlet
-        name="plonemeeting.actionspanel"
-        for="Products.PloneMeeting.content.held_position.IPMHeldPosition"
-        manager="plone.app.layout.viewlets.interfaces.IBelowContentBody"
-        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-        class="Products.PloneMeeting.browser.overrides.PMConfigActionsPanelViewlet"
-        template="templates/actions_panel_config_viewlet.pt"
-        permission="zope2.View"/>
-    <browser:viewlet
-        name="plonemeeting.actionspanel"
-        for="collective.contact.plonegroup.interfaces.IPloneGroupContact"
-        manager="plone.app.layout.viewlets.interfaces.IBelowContentBody"
-        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-        class="Products.PloneMeeting.browser.overrides.PMConfigActionsPanelViewlet"
-        template="templates/actions_panel_config_viewlet.pt"
-        permission="zope2.View"/>
 
     <!-- batchactions viewlet for IMeeting -->
     <browser:viewlet
