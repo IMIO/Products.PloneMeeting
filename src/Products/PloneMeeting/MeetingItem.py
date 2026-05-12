@@ -5004,10 +5004,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _bypass_meeting_closed_check_for(self, fieldName):
         """See docstring in interfaces.py"""
-        if fieldName in [
-                'internalNotes', 'marginalNotes',
-                'neededFollowUp', 'providedFollowUp']:
-            return True
+        return fieldName in [
+            'internalNotes', 'marginalNotes',
+            'neededFollowUp', 'providedFollowUp']
 
     def _bypass_write_perm_check_for(self, fieldName):
         """See docstring in interfaces.py"""
@@ -5017,8 +5016,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _bypass_quick_edit_notify_modified_for(self, fieldName):
         """See docstring in interfaces.py"""
-        if fieldName in ['internalNotes']:
-            return True
+        return fieldName in ['internalNotes']
 
     security.declarePublic('mayQuickEdit')
 
