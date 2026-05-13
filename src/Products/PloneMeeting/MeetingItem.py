@@ -3203,19 +3203,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if not set(stored) == set(value):
             # we will use unrestrictedSearchResults because in the case a user update manually linked items
             # and in already selected items, there is an item he can not view, it will be found in the catalog
-            unrestrictedSearch = api.portal.get_tool('portal_catalog').unrestrictedSearchResults
             cached_item_infos = {}
 
             def _get_item_infos(item_uid):
                 """Return meeting_date and item_created data for given p_item_uid."""
                 if not caching or item_uid not in cached_item_infos:
-                    item = self if item_uid == self.UID() else None
-                    if item is None:
-                        brains = unrestrictedSearch(UID=item_uid)
-                        if brains:
-                            # there could be no brains when created from restapi call
-                            # as new item is still not indexed
-                            item = brains[0]._unrestrictedGetObject()
+                    item = self if item_uid == self.UID() else uuidToObject(item_uid, unrestricted=True)
                     if item:
                         meeting = item.getMeeting()
                         cached_item_infos[item_uid] = {
@@ -3297,10 +3290,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # now if links were removed, remove linked items on every removed items...
             removedUids = set(stored).difference(set(value))
             for removedUid in removedUids:
-                removedItemBrains = unrestrictedSearch(UID=removedUid)
-                if not removedItemBrains:
+                removedItem = uuidToObject(removedUid, unrestricted=True)
+                if not removedItem:
                     continue
-                removedItem = removedItemBrains[0]._unrestrictedGetObject()
                 removedItem.getField('manuallyLinkedItems').set(removedItem, [], **kwargs)
                 # make change in linkedItem.at_ordered_refs until it is fixed in Products.Archetypes
                 removedItem._p_changed = True
