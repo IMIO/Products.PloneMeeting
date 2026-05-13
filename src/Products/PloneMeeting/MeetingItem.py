@@ -3199,47 +3199,42 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if '' in value:
             value.remove('')
 
-        # save value that will be actually stored on self as it will not be value
-        # if some extra uids are appended to it because linking to an item
-        # that is already linked to other items
-        valueToStore = list(value)
         # only compute if something changed
         if not set(stored) == set(value):
-
             # we will use unrestrictedSearchResults because in the case a user update manually linked items
             # and in already selected items, there is an item he can not view, it will be found in the catalog
-            unrestrictedSearch = api.portal.get_tool('portal_catalog').unrestrictedSearchResults
-            item_infos = {}
+            cached_item_infos = {}
 
             def _get_item_infos(item_uid):
                 """Return meeting_date and item_created data for given p_item_uid."""
-                if not caching or item_uid not in item_infos:
-                    item = self if item_uid == self.UID() else None
-                    if item is None:
-                        brains = unrestrictedSearch(UID=item_uid)
-                        if brains:
-                            # there could be no brains when created from restapi call
-                            # as new item is still not indexed
-                            item = brains[0]._unrestrictedGetObject()
+                if not caching or item_uid not in cached_item_infos:
+                    item = self if item_uid == self.UID() else uuidToObject(item_uid, unrestricted=True)
                     if item:
                         meeting = item.getMeeting()
-                        item_infos[item_uid] = {
+                        cached_item_infos[item_uid] = {
                             'item': item,
                             'meeting_date': meeting and meeting.date or None,
                             'item_created': item.created()}
                     else:
-                        item_infos[item_uid] = None
-                return item_infos[item_uid]
+                        cached_item_infos[item_uid] = None
+                return cached_item_infos[item_uid]
+
+            # save value that will be actually stored on self as it will not be value
+            # if some extra uids are appended to it because linking to an item
+            # that is already linked to other items
+            # wipeout unexisting values to store in case some we removed
+            # between selection and save
+            value = [v for v in value if _get_item_infos(v)]
 
             # sorting method, items will be sorted by meeting date descending
             # then, for items that are not in a meeting date, by creation date
-            def _sortByMeetingDate(xUid, yUid):
+            def _sortByMeetingDate(x_uid, y_uid):
                 '''Sort method that will sort items by meetingDate.
                    x and y are uids of items to sort.'''
-                item1_infos = _get_item_infos(xUid)
+                item1_infos = _get_item_infos(x_uid)
                 item1_created = item1_infos['item_created']
                 item1_meeting_date = item1_infos['meeting_date']
-                item2_infos = _get_item_infos(yUid)
+                item2_infos = _get_item_infos(y_uid)
                 item2_created = item2_infos['item_created']
                 item2_meeting_date = item2_infos['meeting_date']
                 if item1_meeting_date and item2_meeting_date:
@@ -3271,8 +3266,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # do not forget newUids
             newLinkedUids = newLinkedUids + newUids
             # we will also store this for self
-            valueToStore = list(set(valueToStore).union(newLinkedUids))
-            valueToStore.sort(_sortByMeetingDate)
+            value = list(set(value).union(newLinkedUids))
+            value.sort(_sortByMeetingDate)
             # for every linked items, also keep back link to self
             newLinkedUids.append(self.UID())
             # now update every item (newLinkedUids + value)
@@ -3295,10 +3290,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # now if links were removed, remove linked items on every removed items...
             removedUids = set(stored).difference(set(value))
             for removedUid in removedUids:
-                removedItemBrains = unrestrictedSearch(UID=removedUid)
-                if not removedItemBrains:
+                removedItem = uuidToObject(removedUid, unrestricted=True)
+                if not removedItem:
                     continue
-                removedItem = removedItemBrains[0]._unrestrictedGetObject()
                 removedItem.getField('manuallyLinkedItems').set(removedItem, [], **kwargs)
                 # make change in linkedItem.at_ordered_refs until it is fixed in Products.Archetypes
                 removedItem._p_changed = True
@@ -3309,7 +3303,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             self.REQUEST.set('manuallyLinkedItems_newLinkedUids', newLinkedUids)
             self.REQUEST.set('manuallyLinkedItems_removedUids', removedUids)
 
-            self.getField('manuallyLinkedItems').set(self, valueToStore, **kwargs)
+            self.getField('manuallyLinkedItems').set(self, value, **kwargs)
             # make change in linkedItem.at_ordered_refs until it is fixed in Products.Archetypes
             self._p_changed = True
 

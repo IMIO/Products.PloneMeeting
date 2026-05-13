@@ -6296,6 +6296,9 @@ class testMeetingItem(PloneMeetingTestCase):
         item2.setManuallyLinkedItems([''])
         item3.setManuallyLinkedItems(['', item2UID, item4UID])
         item4.setManuallyLinkedItems(['', item1UID])
+        # if we edited an item, selected a linked item then delete the linked item before saving
+        item1.setManuallyLinkedItems(['no_more_existing_uid', item2UID, item3UID])
+        self.assertEqual(item1.getRawManuallyLinkedItems(), [item2UID, item3UID])
 
     def test_pm_ManuallyLinkedItemsCanUpdateEvenWithNotViewableItems(self):
         '''In case a user edit MeetingItem.manuallyLinkedItems field and does not have access
