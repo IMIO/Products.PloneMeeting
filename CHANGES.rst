@@ -40,6 +40,9 @@ Changelog
 - In `MeetingItem.getCustomAdviceMessageFor`, display more complete default
   messages when advice is `hidden during redaction` or `considered not given`.
   [gbastien]
+- Fixed `MeetingItem.setManuallyLinkedItems` when current edit, a new selected
+  value does not exist anymore (freshly removed for example).
+  [gbastien]
 
 4.2.28.15 (2026-04-24)
 ----------------------
