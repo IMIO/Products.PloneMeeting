@@ -1445,7 +1445,7 @@ class testAnnexes(PloneMeetingTestCase):
         """Test for field other_mc_correspondences vocabulary."""
         # disable eventual cfg3
         if hasattr(self, "meetingConfig3"):
-            self.changeUser("siteadmin")
+            self.changeUser("admin")
             # disabled MC are listed to be able to prepare config so delete it
             self.tool.manage_delObjects([self.meetingConfig3.getId(), ])
         cfg = self.meetingConfig
