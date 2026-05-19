@@ -7050,6 +7050,14 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission(AddPortalContent, item))
         item.invokeFactory('Image', id='img5', title='Image5', file=data)
 
+        # to be fixed?  when using a field that is configurable in MeetingConfig.itemLabelsConfig
+        # as the write_permission is "View" then managed by the condition
+        # any user able to "View" can add an Image...
+        self._enableField('neededFollowUp')
+        item._update_after_edit()
+        for user_id in ('pmCreator1', 'pmCreator2', 'pmReviewer1', 'pmReviewer2', 'budgetimpacteditor', 'pmManager'):
+            self.assertTrue(self.hasPermission('ATContentTypes: Add Image', item))
+
     def test_pm_ItemExternalImagesStoredLocally(self):
         """External images are stored locally."""
         cfg = self.meetingConfig
