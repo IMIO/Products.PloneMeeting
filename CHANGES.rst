@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.28.16 (unreleased)
+4.2.28.16 (2026-05-20)
 ----------------------
 
 - Added bypass for `Manager` for `MeetingItem.show_field` so a `Manager` can
