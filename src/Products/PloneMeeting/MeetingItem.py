@@ -3190,8 +3190,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def setManuallyLinkedItems(self, value, caching=True, **kwargs):
         '''Overrides the field 'manuallyLinkedItems' mutator so we synchronize
            field manuallyLinkedItems of every linked items...
-           We are using ZCatalog.unrestrictedSearchResults and ZCatalog.unrestrictedSearchResults
-           because current member could update manually linked items in which some are not viewable.'''
+           We are using uuidToObject with unrestricted=True because current member
+           could update manually linked items in which some are not viewable.'''
         stored = self.getField('manuallyLinkedItems').getRaw(self, **kwargs)
         # value sometimes contains an empty string ''...
         if value is None:
@@ -3201,7 +3201,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         # only compute if something changed
         if not set(stored) == set(value):
-            # we will use unrestrictedSearchResults because in the case a user update manually linked items
+            # we will use uuidToObject with unrestricted=True because in the case a user update manually linked items
             # and in already selected items, there is an item he can not view, it will be found in the catalog
             cached_item_infos = {}
 
