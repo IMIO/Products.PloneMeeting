@@ -6302,6 +6302,9 @@ class testMeetingItem(PloneMeetingTestCase):
         item2.setManuallyLinkedItems([''])
         item3.setManuallyLinkedItems(['', item2UID, item4UID])
         item4.setManuallyLinkedItems(['', item1UID])
+        # if we edited an item, selected a linked item then delete the linked item before saving
+        item1.setManuallyLinkedItems(['no_more_existing_uid', item2UID, item3UID])
+        self.assertEqual(item1.getRawManuallyLinkedItems(), [item2UID, item3UID])
 
     def test_pm_ManuallyLinkedItemsCanUpdateEvenWithNotViewableItems(self):
         '''In case a user edit MeetingItem.manuallyLinkedItems field and does not have access
@@ -7052,6 +7055,14 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission('ATContentTypes: Add Image', item))
         self.assertTrue(self.hasPermission(AddPortalContent, item))
         item.invokeFactory('Image', id='img5', title='Image5', file=data)
+
+        # to be fixed?  when using a field that is configurable in MeetingConfig.itemLabelsConfig
+        # as the write_permission is "View" then managed by the condition
+        # any user able to "View" can add an Image...
+        self._enableField('neededFollowUp')
+        item._update_after_edit()
+        for user_id in ('pmCreator1', 'pmCreator2', 'pmReviewer1', 'pmReviewer2', 'budgetimpacteditor', 'pmManager'):
+            self.assertTrue(self.hasPermission('ATContentTypes: Add Image', item))
 
     def test_pm_ItemExternalImagesStoredLocally(self):
         """External images are stored locally."""

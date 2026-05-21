@@ -5,6 +5,12 @@ Changelog
 4.2.29rc9 (unreleased)
 ----------------------
 
+- Nothing changed yet.
+
+
+4.2.28.16 (2026-05-20)
+----------------------
+
 - Added bypass for `Manager` for `MeetingItem.show_field` so a `Manager` can
   view and edit any item fields defined in `MeetingConfig.itemFieldsConfig`.
   [gbastien]
@@ -39,6 +45,9 @@ Changelog
   [gbastien]
 - In `MeetingItem.getCustomAdviceMessageFor`, display more complete default
   messages when advice is `hidden during redaction` or `considered not given`.
+  [gbastien]
+- Fixed `MeetingItem.setManuallyLinkedItems` when current edit, a new selected
+  value does not exist anymore (freshly removed for example).
   [gbastien]
 
 4.2.28.15 (2026-04-24)
