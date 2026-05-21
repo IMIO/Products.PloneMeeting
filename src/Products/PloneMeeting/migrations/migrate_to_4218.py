@@ -60,6 +60,13 @@ class Migrate_To_4218(Migrator):
                 logger.info("Usage \"signer\" was added to held position at %s" % hp.absolute_url())
         logger.info('Done.')
 
+    def _configureExtraAllowedContentForCKeditor(self):
+        '''Accept 'tal:' attributes in any tag.'''
+        logger.info('CKeditor, configuring "extraAllowedContent"...')
+        cke_props = self.portal.portal_properties.ckeditor_properties
+        cke_props.extraAllowedContent = "{'$1': {attributes: 'tal:*'}}"
+        logger.info('Done.')
+
     def run(self, extra_omitted=[], from_migration_to_4200=False):
 
         logger.info('Migrating to PloneMeeting 4218...')
@@ -68,13 +75,15 @@ class Migrate_To_4218(Migrator):
             self.upgradeAll(omit=['Products.PloneMeeting:default',
                                   self.profile_name.replace('profile-', '')])
         self._configureEsign()
+        self._configureExtraAllowedContentForCKeditor()
         logger.info('Migrating to PloneMeeting 4218... Done.')
 
 
 def migrate(context):
     '''This migration function will:
 
-        1) Configure imio.esign.
+        1) Configure imio.esign;
+        2) Configure CKeditor "extraAllowedContent" to accept "tal:" attributes.
     '''
     migrator = Migrate_To_4218(context)
     migrator.run()
