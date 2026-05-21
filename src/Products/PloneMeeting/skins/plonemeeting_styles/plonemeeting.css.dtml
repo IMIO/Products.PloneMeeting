@@ -2707,6 +2707,13 @@ div#session-info span {
   font-weight: bold;
 }
 
+.hide-content {
+    display: none;
+}
+div#formfield-form-widgets-add_to_sign_session:has(.hide-content) {
+    display: none;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */

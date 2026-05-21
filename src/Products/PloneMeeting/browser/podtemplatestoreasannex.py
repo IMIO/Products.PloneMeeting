@@ -163,8 +163,11 @@ class PodTemplateStoreAsAnnexForm(form.Form):
             self.annex_type.to_sign
         # hide esign related fields if not available
         if not self.show_esign:
-            self.widgets['add_to_sign_session'].mode = HIDDEN_MODE
-            self.widgets['add_to_sign_session'].value = ['false']
+            # does not work because using MasterSelect, will always be considered selected
+            # so we use a CSS class to hide the field
+            # self.widgets['add_to_sign_session'].mode = HIDDEN_MODE
+            self.widgets['add_to_sign_session'].klass = "hide-content"
+            self.widgets['add_to_sign_session'].value = []
             self.widgets['annex_ids'].mode = HIDDEN_MODE
             self.widgets['annex_ids'].terms = []
             self.widgets['annex_ids'].value = []
