@@ -37,6 +37,14 @@
             layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer" />
 
         <browser:page
+            name="esign-session-files"
+            for="eea.facetednavigation.subtypes.interfaces.IFacetedNavigable"
+            class="Products.PloneMeeting.esign.views.PMSessionFilesView"
+            permission="zope2.View"
+            template="browser/templates/session_files.pt"
+            layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer" />
+
+        <browser:page
             name="esign-session-delete"
             for="Products.CMFPlone.interfaces.IPloneSiteRoot"
             class="Products.PloneMeeting.esign.views.PMSessionDeleteView"

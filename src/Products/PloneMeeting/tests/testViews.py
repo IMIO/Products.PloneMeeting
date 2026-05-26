@@ -13,7 +13,10 @@ from copy import deepcopy
 from datetime import datetime
 from ftw.labels.interfaces import ILabeling
 from ftw.labels.interfaces import ILabelJar
+from imio.esign.config import set_esign_registry_enabled
+from imio.esign.utils import get_session_annotation
 from imio.helpers.cache import cleanRamCacheFor
+from imio.helpers.content import get_vocab_values
 from imio.helpers.content import richtextval
 from imio.history.utils import getLastWFAction
 from imio.zamqp.pm.tests.base import DEFAULT_SCAN_ID
@@ -903,6 +906,26 @@ class testViews(PloneMeetingTestCase):
         view()
         annex = get_annexes(item)[0]
         self.assertEqual(annex.scan_id, DEFAULT_SCAN_ID)
+
+    def test_pm_StorePodTemplateAsAnnexMayStore(self):
+        """Store a Pod template as an annex is linked to being able to generate
+           the configured pod template, so a simple creator could be able to store."""
+        pod_template, annex_type, item = self._setupStorePodAsAnnex()
+        self.changeUser('pmCreator1')
+        self.assertFalse(pod_template.tal_condition)
+        self.assertFalse(get_annexes(item))
+        # as pod template can be generated, it can be stored as annex
+        view = item.restrictedTraverse('@@document-generation')
+        view()
+        self.assertTrue(get_annexes(item))
+        # set tal_condition and try again
+        pod_template.tal_condition = u"python:tool.isManager(cfg)"
+        self.assertRaises(Unauthorized, view)
+        self.changeUser('pmManager')
+        self.deleteAsManager(get_annexes(item)[0].UID())
+        self.assertFalse(get_annexes(item))
+        view()
+        self.assertTrue(get_annexes(item))
 
     def test_pm_StorePodTemplateAsAnnexTitle(self):
         """Title of stored annex may be customized depending on
@@ -3933,13 +3956,18 @@ class testViews(PloneMeetingTestCase):
         # setup dummy tool.advisersConfig, make vendors advisers not using
         # advice portal_type "meetingadvice" and so not able to use the action
         self.tool.setAdvisersConfig(
-            ({'advice_types': [],
-             'base_wf': 'meetingadvice_workflow',
-             'default_advice_type': 'positive',
-             'org_uids': [self.vendors_uid],
-             'portal_type': 'dummymeetingadvice',
-             'show_advice_on_final_wf_transition': '1',
-             'wf_adaptations': []},))
+            (
+                {
+                    'advice_types': [],
+                    'base_wf': 'meetingadvice_workflow',
+                    'default_advice_type': 'positive',
+                    'org_uids': [self.vendors_uid],
+                    'portal_type': 'dummymeetingadvice',
+                    'show_advice_on_final_wf_transition': '1',
+                    'wf_adaptations': []
+                },
+            )
+        )
         self.changeUser('pmAdviser1')
         searches_items = self.getMeetingFolder().searches_items
         form = searches_items.restrictedTraverse('@@add-advice-batch-action')
@@ -3948,6 +3976,122 @@ class testViews(PloneMeetingTestCase):
         searches_items = self.getMeetingFolder().searches_items
         form = searches_items.restrictedTraverse('@@add-advice-batch-action')
         self.assertFalse(form.available())
+
+    def _setup_esign(self):
+        """Setup for imio.esign tests."""
+        cfg = self.meetingConfig
+        # define correct config
+        annex_type = cfg.annexes_types.item_decision_annexes.get('decision-annex')
+        annex_type_uid = annex_type.UID()
+        pod_template = cfg.podtemplates.itemTemplate
+        pod_template.pod_formats = [u'odt', u'pdf']
+        pod_template_uid = pod_template.UID()
+        pod_template.store_as_annex = annex_type_uid
+        self.request.form['template_uid'] = unicode(pod_template_uid)
+        self.request.form['output_format'] = u'odt'
+
+        # create meeting with items
+        self.changeUser('pmManager')
+        meeting = self._createMeetingWithItems()
+        item = meeting.get_items(ordered=True)[0]
+        return cfg, annex_type, pod_template, pod_template_uid, item
+
+    def test_pm_PodTemplateStoreAsAnnexFormWithEsign(self):
+        """Test the view that store a pod template as annex when using imio.esign."""
+        cfg, annex_type, pod_template, pod_template_uid, item = self._setup_esign()
+        annex1 = self.addAnnex(item)
+        annex1_id = annex1.getId()
+        annex2 = self.addAnnex(item, annexFile=self.annexFilePDF)
+        annex2_id = annex2.getId()
+        form = item.restrictedTraverse('@@store-pod-temlate-as-annex-form')
+        form_instance = form.form_instance
+        form.update()
+        # esign is not enabled
+        self.assertFalse(form_instance.esign_enabled)
+        set_esign_registry_enabled(True)
+        form.update()
+        # esign not available because no esign_signers_expr on pod template
+        self.assertFalse(pod_template.esign_signers_expr)
+        self.assertFalse(form_instance.esign_enabled)
+        # make esign available
+        pod_template.esign_signers_expr = "python: utils.get_item_esign_signatories(context)"
+        form.update()
+        self.assertTrue(form_instance.esign_enabled)
+        # but not shown because config not correct
+        self.assertFalse(form_instance.show_esign)
+        self.assertEqual(
+            form_instance.signers_error_msg.message,
+            u'Could not get any signers, please check configuration!')
+        # define correct certified signatures
+        # only person with usage "signer" is selectable
+        values = get_vocab_values(
+            cfg, "Products.PloneMeeting.vocabularies.config_selectable_signers_vocabulary")
+        held_pos1 = self.portal.contacts.person1.held_pos1
+        held_pos1_uid = held_pos1.UID()
+        held_pos2 = self.portal.contacts.person2.held_pos2
+        held_pos2_uid = held_pos2.UID()
+        self.assertFalse(held_pos1_uid in values)
+        self.assertFalse(held_pos2_uid in values)
+        held_pos1.usages = ['signer']
+        held_pos2.usages = ['signer']
+        # vocabulary is cached
+        self.tool.invalidateAllCache()
+        values = get_vocab_values(
+            cfg, "Products.PloneMeeting.vocabularies.config_selectable_signers_vocabulary")
+        self.assertTrue(held_pos1_uid in values)
+        self.assertTrue(held_pos2_uid in values)
+        certified = [
+            {'signatureNumber': '1',
+             'name': '',
+             'function': 'Function1',
+             'held_position': held_pos1_uid,
+             'date_from': '',
+             'date_to': '',
+             },
+            {'signatureNumber': '2',
+             'name': 'Name2',
+             'function': '',
+             'held_position': held_pos2_uid,
+             'date_from': '',
+             'date_to': '',
+             },
+        ]
+        cfg.setCertifiedSignatures(certified)
+        # must define a userid for each signer
+        form.update()
+        self.assertEqual(
+            form_instance.signers_error_msg.message,
+            u'No userid for person at "http://nohost/plone/contacts/person1"!')
+        self.portal.contacts.person1.userid = 'pmReviewer1'
+        self.portal.contacts.person2.userid = 'pmReviewer2'
+        # still not available because output_format must be pdf
+        form.update()
+        self.assertTrue(form_instance.esign_enabled)
+        self.assertFalse(form_instance.show_esign)
+        self.request['output_format'] = u'pdf'
+        form.update()
+        # still not available because used annex_type to_sign must be True
+        self.assertFalse(form_instance.show_esign)
+        annex_type.to_sign = True
+        # this time is it available and shown
+        form.update()
+        self.assertTrue(form_instance.show_esign)
+        # store pod template and add it to a session
+        self.assertFalse(get_session_annotation()['sessions'])
+        data = {'template_uid': pod_template_uid,
+                'output_format': 'pdf',
+                'store_generated_document': True,
+                'add_to_sign_session': True,
+                'annex_ids': [annex1_id], }
+        form_instance._do_store_as_annex(data)
+        # generated pod template was added but not the annex because it is not PDF
+        # the form will prevent to select non pdf files but we test further
+        self.assertEqual(len(get_session_annotation()['sessions'][0]['files']), 1)
+        # call form to just add another annex but not the generated pod template
+        data['store_generated_document'] = False
+        data['annex_ids'] = [annex2_id]
+        form_instance._do_store_as_annex(data)
+        self.assertEqual(len(get_session_annotation()['sessions'][0]['files']), 2)
 
 
 def test_suite():

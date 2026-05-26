@@ -852,7 +852,8 @@ form#item-encode-votes-form input:checked + span {
 
 /* make field TAL expression text fields large enough */
 #form-widgets-store_as_annex_title_expr.text-widget.textline-field,
-#form-widgets-esign_signers_expr.text-widget.textline-field {
+#form-widgets-esign_signers_expr.text-widget.textline-field,
+#form-widgets-esign_session_title_expr.text-widget.textline-field {
     width: 99%;
 }
 
@@ -2707,6 +2708,7 @@ div#session-info span {
   font-weight: bold;
 }
 
+/* class used to hide field */
 .hide-content {
     display: none;
 }

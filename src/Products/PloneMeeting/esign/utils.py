@@ -3,6 +3,7 @@
 # File: utils.py
 #
 
+from collective.behavior.talcondition.utils import _evaluateExpression
 from imio.esign.adapters import ISignable
 from imio.esign.utils import add_files_to_session
 from imio.esign.utils import get_file_info
@@ -15,6 +16,7 @@ from Products.PloneMeeting.browser.views import get_contact_from_position_type
 from Products.PloneMeeting.config import ESIGNWATCHERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import PMMessageFactory as _
+from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import reindex_object
 from zope.i18n import translate
 
@@ -134,8 +136,21 @@ def _add_annexes_to_sign_session(obj, annexes, cfg, pod_template, signers, seal=
         (signer['userid'], signer['email'], signer['name'], signer['function'])
         for signer in signers]
     files_uids = [annex.UID() for annex in annexes]
-    title = _(u"[iA.Délib] %s - Session {sign_id}" % safe_unicode(
-        cfg.Title(include_config_group=True)))
+    # use custom session title if defined on pod template, else use common session title
+    esign_session_title_expr = pod_template.esign_session_title_expr and \
+        pod_template.esign_session_title_expr.strip()
+    if esign_session_title_expr:
+        extra_expr_ctx = _base_extra_expr_ctx(
+            obj, {'pod_template': pod_template, 'annex': annex})
+        session_title = _evaluateExpression(
+            obj,
+            expression=esign_session_title_expr,
+            roles_bypassing_expression=[],
+            extra_expr_ctx=extra_expr_ctx,
+            raise_on_error=True)
+    else:
+        session_title = cfg.Title(include_config_group=True)
+    title = _(u"[iA.Délib] %s - Session {sign_id}" % safe_unicode(session_title))
     discriminators = ISignable(obj).get_discriminators(annex, pod_template)
     watchers = ISignable(obj).get_watchers()
     create_session_custom_data = {'cfg_id': cfg.getId()}

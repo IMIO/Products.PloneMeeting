@@ -39,6 +39,12 @@
               &lt;required&gt;False&lt;/required&gt;
             &lt;/field&gt;
 
+            &lt;field name="esign_session_title_expr" type="zope.schema.TextLine"&gt;
+              &lt;title i18n:translate=""&gt;esign_session_title_expr&lt;/title&gt;
+              &lt;description i18n:translate=""&gt;esign_session_title_expr_descr&lt;/description&gt;
+              &lt;required&gt;False&lt;/required&gt;
+            &lt;/field&gt;
+
             &lt;field name=&quot;esign_include_seal&quot; type=&quot;zope.schema.Bool&quot;&gt;
               &lt;title i18n:translate=""&gt;esign_include_seal&lt;/title&gt;
               &lt;description i18n:translate=""&gt;esign_include_seal_descr&lt;/description&gt;

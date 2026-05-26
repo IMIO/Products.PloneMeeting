@@ -18,7 +18,6 @@ from collective.eeafaceted.dashboard.browser.views import RenderTermPortletView
 from collective.iconifiedcategory import safe_utils as collective_iconifiedcategory_safe_utils
 from collective.iconifiedcategory.browser.css import css_pattern
 from collective.iconifiedcategory.browser.css import IconifiedCategory
-from collective.iconifiedcategory.utils import get_categorized_elements
 from datetime import datetime
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.actionspanel.browser.viewlets import ActionsPanelViewlet
@@ -1219,12 +1218,11 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
                                 return_portal_msg_code=False):
         '''Store given p_generated_template_data as annex using p_pod_template.store_as_annex annex_type uid.'''
         # first check if current member is able to store_as_annex
-        may_store_as_annex = PMDocumentGeneratorLinksViewlet(
-            self.context,
-            self.request,
-            None,
-            None).may_store_as_annex(pod_template)
-        if not may_store_as_annex:
+        if not PMDocumentGeneratorLinksViewlet(
+                self.context,
+                self.request,
+                None,
+                None).may_store_as_annex(pod_template):
             raise Unauthorized
 
         # now check that the store_as_annex corresponds to an annex_type of

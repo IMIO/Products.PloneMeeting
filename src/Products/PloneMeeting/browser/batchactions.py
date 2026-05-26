@@ -113,7 +113,7 @@ def compute_signers(obj, pod_template):
     signers = []
     raw_signers = {}
     # esign is enabled if globally enabled and if configured for pod_template
-    esign_enabled = get_esign_registry_enabled() and pod_template.esign_signers_expr
+    esign_enabled = pod_template.esign_signers_expr and get_esign_registry_enabled() or False
     signers_error_msg = None
     # eSign signers
     if esign_enabled:
@@ -131,9 +131,10 @@ def pod_template_default(context):
     """
       Default value is the first storable pod_template.
     """
-    return get_vocab_values(
+    values = get_vocab_values(
         context,
-        'Products.PloneMeeting.vocabularies.itemtemplatesstorableasannexvocabulary')[0]
+        'Products.PloneMeeting.vocabularies.itemtemplatesstorableasannexvocabulary')
+    return values and values[0] or None
 
 
 def get_pod_template_infos(value, cfg):
@@ -151,9 +152,10 @@ def get_pod_template_infos(value, cfg):
 @provider(IContextAwareDefaultFactory)
 def annex_types_default(context):
     """Select every annex types by default."""
-    return get_vocab_values(
+    values = get_vocab_values(
         context,
         'Products.PloneMeeting.vocabularies.icon_item_annex_types_vocabulary')
+    return values and values[0] or None
 
 
 class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):

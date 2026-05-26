@@ -160,7 +160,7 @@ class PodTemplateStoreAsAnnexForm(form.Form):
         self.show_esign = self.esign_enabled and \
             not self.signers_error_msg and \
             self.output_format == u'pdf' and \
-            self.annex_type.to_sign
+            self.annex_type.to_sign is True
         # hide esign related fields if not available
         if not self.show_esign:
             # does not work because using MasterSelect, will always be considered selected
