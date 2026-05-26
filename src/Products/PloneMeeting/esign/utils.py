@@ -154,7 +154,7 @@ def _add_annexes_to_sign_session(obj, annexes, cfg, pod_template, signers, seal=
     discriminators = ISignable(obj).get_discriminators(annex, pod_template)
     watchers = ISignable(obj).get_watchers()
     create_session_custom_data = {'cfg_id': cfg.getId()}
-    session_id, session = add_files_to_session(
+    sessions = add_files_to_session(
         signers,
         files_uids,
         seal=seal,
@@ -165,11 +165,10 @@ def _add_annexes_to_sign_session(obj, annexes, cfg, pod_template, signers, seal=
     for annex in annexes:
         api.portal.show_message(
             translate(
-                'annex_added_to_session',
+                'annex_added_to_sessions',
                 domain="PloneMeeting",
-                mapping={'annex_title': safe_unicode(annex.Title()),
-                         'session_id': session_id},
-                default="Annex \"${annex_title}\" was added to session \"${session_id}\".",
+                mapping={'session_ids': ", ".join([str(session_id) for session_id, session in sessions])},
+                default="Annexes were added to the following sessions: \"${session_ids}\".",
                 context=obj.REQUEST),
             request=obj.REQUEST)
-    return session_id, session
+    return sessions

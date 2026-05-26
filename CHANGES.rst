@@ -5,8 +5,10 @@ Changelog
 4.2.29rc9 (unreleased)
 ----------------------
 
-- Nothing changed yet.
-
+- Adapted call to `imio.esign.utils.add_files_to_session` as it returns a list
+  of sessions now and no more one single session. Indeed depending on
+  `max_session_files` parameter, files may be added to several sessions.
+  [gbastien]
 
 4.2.28.16 (2026-05-20)
 ----------------------
