@@ -9,6 +9,7 @@ from imio.helpers.content import uuidToObject
 from plone import api
 from plone.formwidget.masterselect import MasterSelectBoolField
 from plone.z3cform.layout import wrap_form
+from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.browser.batchactions import compute_signers
 from Products.PloneMeeting.browser.batchactions import DisplaySignersProvider
 from Products.PloneMeeting.config import PMMessageFactory as _
@@ -22,6 +23,7 @@ from z3c.form.interfaces import HIDDEN_MODE
 from z3c.form.interfaces import IFieldsAndContentProvidersForm
 from zope import schema
 from zope.globalrequest import getRequest
+from zope.i18n import translate
 from zope.interface import implements
 from zope.interface import Interface
 from zope.interface import provider
@@ -172,6 +174,9 @@ class PodTemplateStoreAsAnnexForm(form.Form):
             self.widgets['annex_ids'].terms = []
             self.widgets['annex_ids'].value = []
             self.widgets['store_generated_document'].mode = HIDDEN_MODE
+        self.label = u"{0}: {1}".format(
+            translate(self.label, context=self.request),
+            safe_unicode(self.pod_template.Title()))
 
     def render(self):
         if self._finished:

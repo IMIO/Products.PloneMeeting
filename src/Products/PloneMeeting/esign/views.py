@@ -38,10 +38,12 @@ class PMSessionsListingView(SessionsListingView):
             pm_folder = self.tool.getPloneMeetingFolder(self.cfg.getId())
             if 'searches_decisions' in self.request.getURL():
                 searches_folder_id = 'searches_decisions'
-                collection_uid = self.cfg.get('searches').get('searches_decisions').get('searchmeetingsinesignsessions').UID()
+                collection_uid = self.cfg.get('searches').get('searches_decisions').get(
+                    'searchmeetingsinesignsessions').UID()
             else:
                 searches_folder_id = 'searches_items'
-                collection_uid = self.cfg.get('searches').get('searches_items').get('searchitemsinesignsessions').UID()
+                collection_uid = self.cfg.get('searches').get('searches_items').get(
+                    'searchitemsinesignsessions').UID()
             url = "{pm_folder_url}/{searches_folder_id}#c3=20&b_start=0&c1={collection_uid}" \
                 "&esign_session_id={session_id}".format(
                     pm_folder_url=pm_folder.absolute_url(),
@@ -58,7 +60,8 @@ class PMSessionsListingView(SessionsListingView):
         if not self.tool.isManager(realManagers=True):
             manager_user_groups = esign_access_groups()
             manager_cfg_ids = [
-                group.replace("_%s" % MEETINGMANAGERS_GROUP_SUFFIX, "").replace("_%s" % ESIGNWATCHERS_GROUP_SUFFIX, "")
+                group.replace("_%s" % MEETINGMANAGERS_GROUP_SUFFIX, "").replace(
+                    "_%s" % ESIGNWATCHERS_GROUP_SUFFIX, "")
                 for group in manager_user_groups]
             sessions = [session for session in sessions if session['cfg_id'] in manager_cfg_ids]
         return sessions
@@ -77,11 +80,15 @@ class PMSessionFilesView(SessionFilesView):
 
         child_infos_view = obj.restrictedTraverse('categorized-childs-infos')
         element = ctx.categorized_elements[obj.UID()]
-        signed_info = u"&nbsp;<div class='tooltipster-categorized-elements' style='display: inline;'><span class='{0}' title='{1}' /></div>".format(
+        signed_info = u"&nbsp;<div class='tooltipster-categorized-elements' " \
+            u"style='display: inline;'><span class='{0}' title='{1}' /></div>".format(
             child_infos_view.get_css_classses_for('signed', element),
-            translate(child_infos_view.get_tag_title_for('signed', element), domain='collective.iconifiedcategory', context=self.request))
+            translate(child_infos_view.get_tag_title_for('signed', element),
+                      domain='collective.iconifiedcategory', context=self.request))
 
-        more_infos_link = "&nbsp;<a href='{0}/@@categorized-annexes'><img style='vertical-align: middle;' src='{1}/++resource++collective.iconifiedcategory.images/more_infos.png' /> <span>{2}</span></a>".format(
+        more_infos_link = "&nbsp;<a href='{0}/@@categorized-annexes'>" \
+            "<img style='vertical-align: middle;' src='{1}/++resource++collective.iconifiedcategory.images" \
+            "/more_infos.png' /> <span>{2}</span></a>".format(
             ctx.absolute_url(),
             api.portal.get().absolute_url(),
             translate(
@@ -103,7 +110,8 @@ class PMSessionDeleteView(SessionDeleteView):
         self.tool = api.portal.get_tool('portal_plonemeeting')
 
     def may_delete_session(self):
-        """Check if the user may delete sessions, check on self.tool as MeetingManagers are MeetingManagers on the tool."""
+        """Check if the user may delete sessions, check on self.tool as
+           MeetingManagers are MeetingManagers on the tool."""
         return api.user.has_permission(manage_session_perm, obj=self.tool)
 
 

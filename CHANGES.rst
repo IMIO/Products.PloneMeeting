@@ -9,6 +9,9 @@ Changelog
   of sessions now and no more one single session. Indeed depending on
   `max_session_files` parameter, files may be added to several sessions.
   [gbastien]
+- Display current `pod_template's title` in `PodTemplateStoreAsAnnexForm` form
+  next to the `Store POD template as annex` label.
+  [gbastien]
 
 4.2.28.16 (2026-05-20)
 ----------------------
