@@ -155,7 +155,7 @@ def annex_types_default(context):
     values = get_vocab_values(
         context,
         'Products.PloneMeeting.vocabularies.icon_item_annex_types_vocabulary')
-    return values and values[0] or None
+    return values or []
 
 
 class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):

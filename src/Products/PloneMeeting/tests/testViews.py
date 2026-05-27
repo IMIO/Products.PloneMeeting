@@ -34,6 +34,7 @@ from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.CMFPlone.utils import safe_unicode
 from Products.Five import zcml
+from Products.PloneMeeting.browser.batchactions import annex_types_default
 from Products.PloneMeeting.browser.views import SEVERAL_SAME_BARCODE_ERROR
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
@@ -3980,13 +3981,45 @@ class testViews(PloneMeetingTestCase):
     def _setup_esign(self):
         """Setup for imio.esign tests."""
         cfg = self.meetingConfig
+        cfg.setAnnexRestrictShownAndEditableAttributes(('signed_edit', ))
+        # setup signers
+        self.portal.contacts.person1.userid = "pmReviewer1"
+        held_pos1 = self.portal.contacts.person1.held_pos1
+        held_pos1_uid = held_pos1.UID()
+        self.portal.contacts.person2.userid = "pmReviewer2"
+        held_pos2 = self.portal.contacts.person2.held_pos2
+        held_pos2_uid = held_pos2.UID()
+        held_pos1.usages = ['signer']
+        held_pos2.usages = ['signer']
+        # setup certifiedSignatures
+        certified = [
+            {'signatureNumber': '1',
+             'name': '',
+             'function': 'Function1',
+             'held_position': held_pos1_uid,
+             'date_from': '',
+             'date_to': '',
+             },
+            {'signatureNumber': '2',
+             'name': 'Name2',
+             'function': '',
+             'held_position': held_pos2_uid,
+             'date_from': '',
+             'date_to': '',
+             },
+        ]
+        cfg.setCertifiedSignatures(certified)
         # define correct config
+        default_annex_type = cfg.annexes_types.item_annexes.get('financial-analysis')
+        default_annex_type.aq_parent.signed_activated = True
         annex_type = cfg.annexes_types.item_decision_annexes.get('decision-annex')
+        annex_type.to_sign = True
         annex_type_uid = annex_type.UID()
         pod_template = cfg.podtemplates.itemTemplate
         pod_template.pod_formats = [u'odt', u'pdf']
         pod_template_uid = pod_template.UID()
         pod_template.store_as_annex = annex_type_uid
+        pod_template.esign_signers_expr = "python: utils.get_item_esign_signatories(context)"
         self.request.form['template_uid'] = unicode(pod_template_uid)
         self.request.form['output_format'] = u'odt'
 
@@ -3994,11 +4027,23 @@ class testViews(PloneMeetingTestCase):
         self.changeUser('pmManager')
         meeting = self._createMeetingWithItems()
         item = meeting.get_items(ordered=True)[0]
-        return cfg, annex_type, pod_template, pod_template_uid, item
+        return cfg, annex_type, pod_template, pod_template_uid, item, meeting, held_pos1, held_pos2
 
     def test_pm_PodTemplateStoreAsAnnexFormWithEsign(self):
         """Test the view that store a pod template as annex when using imio.esign."""
-        cfg, annex_type, pod_template, pod_template_uid, item = self._setup_esign()
+        cfg, annex_type, pod_template, pod_template_uid, item, meeting, held_pos1, held_pos2 = self._setup_esign()
+        # remove pod_template.esign_signers_expr for now
+        pod_template.esign_signers_expr = ""
+        # remove cfg.certifiedSignatures for now
+        cfg.setCertifiedSignatures(())
+        # remove userid for person1 for now
+        held_pos1.get_person().userid = None
+        held_pos1.usages = []
+        held_pos2.usages = []
+        # remove to_sign on annex_type for now
+        annex_type.to_sign = False
+
+        # setup
         annex1 = self.addAnnex(item)
         annex1_id = annex1.getId()
         annex2 = self.addAnnex(item, annexFile=self.annexFilePDF)
@@ -4026,9 +4071,7 @@ class testViews(PloneMeetingTestCase):
         # only person with usage "signer" is selectable
         values = get_vocab_values(
             cfg, "Products.PloneMeeting.vocabularies.config_selectable_signers_vocabulary")
-        held_pos1 = self.portal.contacts.person1.held_pos1
         held_pos1_uid = held_pos1.UID()
-        held_pos2 = self.portal.contacts.person2.held_pos2
         held_pos2_uid = held_pos2.UID()
         self.assertFalse(held_pos1_uid in values)
         self.assertFalse(held_pos2_uid in values)
@@ -4063,7 +4106,6 @@ class testViews(PloneMeetingTestCase):
             form_instance.signers_error_msg.message,
             u'No userid for person at "http://nohost/plone/contacts/person1"!')
         self.portal.contacts.person1.userid = 'pmReviewer1'
-        self.portal.contacts.person2.userid = 'pmReviewer2'
         # still not available because output_format must be pdf
         form.update()
         self.assertTrue(form_instance.esign_enabled)
@@ -4092,6 +4134,51 @@ class testViews(PloneMeetingTestCase):
         data['annex_ids'] = [annex2_id]
         form_instance._do_store_as_annex(data)
         self.assertEqual(len(get_session_annotation()['sessions'][0]['files']), 2)
+
+    def test_pm_MeetingStoreItemsPodTemplateAsAnnexBatchActionEsign(self):
+        """This will store a POD template selected in
+           MeetingConfig.meetingItemTemplatesToStoreAsAnnex as an annex
+           for every selected items and associate it with a esign session."""
+        cfg, annex_type, pod_template, pod_template_uid, item, meeting, held_pos1, held_pos2 = self._setup_esign()
+        # define correct config
+        annex_type_uid = annex_type.UID()
+        cfg.podtemplates.itemTemplate.store_as_annex = annex_type_uid
+        cfg.setMeetingItemTemplatesToStoreAsAnnex(['itemTemplate__output_format__pdf'])
+        form = meeting.restrictedTraverse('@@store-items-template-as-annex-batch-action')
+        # add 3 annexes to item:
+        # - "financial-analysis" with non pdf file
+        # - "financial-analysis" with pdf file but not to_sign
+        # - "legal-analysis" with pdf file but annex_type will not be selected to store
+        self.addAnnex(item)
+        self.addAnnex(item, annexFile=self.annexFilePDF)
+        # this will be added
+        annex_pdf = self.addAnnex(item, annexFile=self.annexFilePDF)
+        action_view = annex_pdf.restrictedTraverse('@@iconified-signed')
+        action_view.set_values({'to_sign': 'true'})
+        annex_not_selected = self.addAnnex(item, annexType='overhead-analysis', annexFile=self.annexFilePDF)
+        action_view = annex_not_selected.restrictedTraverse('@@iconified-signed')
+        action_view.set_values({'to_sign': 'true'})
+        annex_type_uid_not_selected = item.categorized_elements[annex_not_selected.UID()]['category_uid']
+
+        # store annex for every items
+        uids = [brain.UID for brain in meeting.get_items(ordered=True, the_objects=False)]
+        self.request.form['form.widgets.uids'] = u','.join(uids)
+        self.request.form['form.widgets.pod_template'] = 'itemTemplate__output_format__pdf'
+        self.request.form['form.widgets.add_to_sign_session'] = ['selected']
+        self.request.form['form.widgets.store_generated_document'] = ['selected']
+        self.request.form['form.widgets.annex_types'] = [
+            uid for uid in annex_types_default(cfg) if uid != annex_type_uid_not_selected]
+        form.update()
+        session_annot = get_session_annotation()
+        self.assertFalse(session_annot['sessions'])
+        self.assertFalse(session_annot['c_uids'])
+        form.handleApply(form, None)
+        # 7 items were stored
+        self.assertEqual(len(meeting.get_items()), len(session_annot['c_uids']))
+        # for item, only 2 annexes added, the pdf annex and the generated pod template
+        stored_generated_pod_template = get_annexes(item)[-1]
+        self.assertEqual(session_annot['c_uids'][item.UID()],
+                         [stored_generated_pod_template.UID(), annex_pdf.UID()])
 
 
 def test_suite():
