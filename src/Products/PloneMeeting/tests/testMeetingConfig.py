@@ -2814,6 +2814,23 @@ class testMeetingConfig(PloneMeetingTestCase):
         self._activate_wfas(['no_freeze', 'no_publication', 'no_decide'])
         self.assertEqual(cfg.get_transitions_to_close_a_meeting(), ['close'])
 
+    def test_pm_UpdateFolderTitle(self):
+        """When MeetingConfig.folderTitle changed, every members config folder
+           title is updated accordingly."""
+        cfg = self.meetingConfig
+        cfg_id = cfg.getId()
+        # create every member config folder
+        self.deleteAsManager(self.portal.Members.test_user_1_.UID())
+        for member_folder_id in self.portal.Members.objectIds():
+            self.changeUser(member_folder_id)
+            self.tool.getPloneMeetingFolder(cfg_id)
+        for member_folder in self.portal.Members.objectValues():
+            self.assertEqual(member_folder.mymeetings.get(cfg_id).Title(), cfg.getFolderTitle())
+        # change MeetingConfig.folderTitle, every members meeting config folders are updated accordingly
+        cfg.setFolderTitle('Another title héhé')
+        for member_folder in self.portal.Members.objectValues():
+            self.assertEqual(member_folder.mymeetings.get(cfg_id).Title(), cfg.getFolderTitle())
+
 
 def test_suite():
     from unittest import makeSuite
