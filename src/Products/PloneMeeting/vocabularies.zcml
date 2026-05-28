@@ -157,6 +157,8 @@
            name="BooleanVocabulary" />
   <utility component=".vocabularies.ConfigLabelsConfigUpdateLocalRolesVocabularyFactory"
            name="ConfigLabelsConfigUpdateLocalRoles" />
+  <utility component=".vocabularies.StoreGeneratedDocumentVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.store_generated_document_vocabulary" />
 
   <!-- PMHeldPosition vocabularies -->
   <utility component=".vocabularies.HeldPositionUsagesVocabularyFactory"

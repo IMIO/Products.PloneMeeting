@@ -3626,6 +3626,29 @@ class ConfigLabelsConfigUpdateLocalRolesVocabulary(BooleanVocabulary):
 ConfigLabelsConfigUpdateLocalRolesVocabularyFactory = ConfigLabelsConfigUpdateLocalRolesVocabulary()
 
 
+class StoreGeneratedDocumentVocabulary(BooleanVocabulary):
+    """ """
+
+    def __call__(self, context):
+        """Vocabulary for IPodTemplateStoreAsAnnex.store_generated_document:
+           - '0': no (do not store generated document);
+           - '1': yes (store but will stop if exist);
+           - '2': yes and overwrite if exist."""
+        terms = super(StoreGeneratedDocumentVocabulary, self).__call__(context)._terms
+        terms.append(
+            SimpleTerm(
+                '2',
+                '2',
+                translate(
+                    'store_generated_document_overwrite',
+                    domain="PloneMeeting",
+                    context=context.REQUEST)))
+        return SimpleVocabulary(terms)
+
+
+StoreGeneratedDocumentVocabularyFactory = StoreGeneratedDocumentVocabulary()
+
+
 class EveryConfigsVocabulary(object):
     """ """
 

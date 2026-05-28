@@ -22,6 +22,7 @@ from datetime import datetime
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.actionspanel.browser.viewlets import ActionsPanelViewlet
 from imio.actionspanel.browser.views import ActionsPanelView
+from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.dashboard.browser.overrides import IDRenderCategoryView
 from imio.dashboard.interfaces import IContactsDashboard
 from imio.esign.adapters import ISignable
@@ -1165,7 +1166,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
             helper_view = self.get_generation_context_helper()
             helper_view.get_scan_id()
         elif self.request.get('store_as_annex', '0') == '1' and \
-             kwargs.get('store_generated_document', True) is False:
+             kwargs.get('store_generated_document', '1') == '0':
             # in case we do not store generated template, do not generate it
             generated_template = ''
         else:
@@ -1182,7 +1183,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
             return_portal_msg_code = kwargs.get('return_portal_msg_code', False)
             add_to_sign_session = kwargs.get('add_to_sign_session', False)
             annex_ids_to_add_to_session = kwargs.get('annex_ids_to_add_to_session', False)
-            store_generated_document = kwargs.get('store_generated_document', True)
+            store_generated_document = kwargs.get('store_generated_document', '1')
             return self.storePodTemplateAsAnnex(
                 generated_template,
                 pod_template,
@@ -1212,7 +1213,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
                                 generated_template_data,
                                 pod_template,
                                 output_format,
-                                store_generated_document=True,
+                                store_generated_document='1',
                                 add_to_sign_session=False,
                                 annex_ids_to_add_to_session=[],
                                 return_portal_msg_code=False):
@@ -1268,19 +1269,38 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
 
         # now check that an annex was not already stored using same pod_template
         # indeed we may not store the same generated pod_template several times
-        if store_generated_document:
+        if store_generated_document != '0':
+            # manage when store_generated_document=='1', can not store if already stored
+            # or when store_generated_document=='2', overwrite if exist
             for annex in get_annexes(self.context):
                 if getattr(annex, 'used_pod_template_id', None) == pod_template.getId():
-                    msg_code = 'store_podtemplate_as_annex_can_not_store_several_times'
-                    if return_portal_msg_code:
-                        return msg_code, {}
-                    else:
-                        msg = translate(
-                            msg_code,
-                            domain='PloneMeeting',
-                            context=self.request)
-                        plone_utils.addPortalMessage(msg, type='warning')
-                        return self.request.RESPONSE.redirect(self.request['HTTP_REFERER'])
+                    if store_generated_document == '1':
+                        msg_code = 'store_podtemplate_as_annex_can_not_store_several_times'
+                        if return_portal_msg_code:
+                            return msg_code, {}
+                        else:
+                            msg = translate(
+                                msg_code,
+                                domain='PloneMeeting',
+                                context=self.request)
+                            plone_utils.addPortalMessage(msg, type='warning')
+                            return self.request.RESPONSE.redirect(self.request['HTTP_REFERER'])
+                    elif store_generated_document == '2':
+                        if annex.signed == True:
+                            msg_code = 'store_podtemplate_as_annex_can_not_overwrite_signed_annex'
+                            if return_portal_msg_code:
+                                return msg_code, {}
+                            else:
+                                msg = translate(
+                                    msg_code,
+                                    domain='PloneMeeting',
+                                    context=self.request)
+                                plone_utils.addPortalMessage(msg, type='warning')
+                                return self.request.RESPONSE.redirect(self.request['HTTP_REFERER'])
+                        else:
+                            # overwrite a stored generated document that is not marked signed
+                            # in this case we remove the existing annex
+                            unrestrictedRemoveGivenObject(annex)
 
             # now add the annex using specified type
             # check if we need to add an 'annex' or an 'annexDecision'
@@ -1340,7 +1360,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
 
         if not return_portal_msg_code:
             # avoid double message as a message will be added by imio.esign when added to session
-            if store_generated_document and not add_to_sign_session:
+            if store_generated_document != '0' and not add_to_sign_session:
                 msg = translate('stored_single_item_template_as_annex',
                                 domain="PloneMeeting",
                                 context=self.request)

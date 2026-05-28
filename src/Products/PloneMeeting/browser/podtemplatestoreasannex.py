@@ -92,11 +92,13 @@ class IPodTemplateStoreAsAnnex(Interface):
             vocabulary=u"Products.PloneMeeting.vocabularies.contained_annexes_to_sign_vocabulary"),
     )
 
-    store_generated_document = schema.Bool(
+    store_generated_document = schema.Choice(
         title=_(u'title_store_generated_document'),
         description=_("descr_store_generated_document"),
-        required=False,
-        default=True)
+        required=True,
+        default='1',
+        vocabulary=u"Products.PloneMeeting.vocabularies.store_generated_document_vocabulary",
+    )
 
 
 class PodTemplateStoreAsAnnexForm(form.Form):
