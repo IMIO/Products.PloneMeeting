@@ -13,6 +13,7 @@ from collective.documentviewer.async import queueJob
 from collective.eeafaceted.dashboard.utils import enableFacetedDashboardFor
 from collective.iconifiedcategory.utils import update_all_categorized_elements
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
+from imio.esign.utils import get_session_annotation
 from imio.esign.utils import remove_files_from_session
 from imio.helpers.cache import cleanRamCache
 from imio.helpers.cache import cleanVocabularyCacheFor
@@ -1126,8 +1127,11 @@ def onAnnexRemoved(annex, event):
 
 def onAnnexWillBeRemoved(annex, event):
     """Called before annex is actually removed."""
-    # remove it from any esign session, need done before removed from categorized_elements
-    remove_files_from_session([annex.UID()])
+    annex_uid = annex.UID()
+    annot = get_session_annotation()
+    if annex_uid in annot['uids']:
+        # remove it from any esign session, need done before removed from categorized_elements
+        remove_files_from_session([annex_uid])
 
 
 def onAnnexAttrChanged(annex, event):
