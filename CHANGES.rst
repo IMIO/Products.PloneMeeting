@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.29rc9 (unreleased)
+4.2.29rc9 (2026-06-02)
 ----------------------
 
 - Adapted call to `imio.esign.utils.add_files_to_session` as it returns a list
