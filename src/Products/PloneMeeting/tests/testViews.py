@@ -4197,6 +4197,10 @@ class testViews(PloneMeetingTestCase):
         stored_annex = get_annexes(item)[-1]
         # was overwritten
         self.assertNotEqual(stored_annex.UID(), stored_annex_uid)
+        # delete annex, session size is correct
+        self.assertEqual(get_session_annotation()['sessions'][0]['size'], 33782)
+        self.deleteAsManager(stored_annex.UID())
+        self.assertEqual(get_session_annotation()['sessions'][0]['size'], 6851)
 
     def test_pm_MeetingStoreItemsPodTemplateAsAnnexBatchActionEsign(self):
         """This will store a POD template selected in
