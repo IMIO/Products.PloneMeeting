@@ -12,6 +12,9 @@ Changelog
 - Display current `pod_template's title` in `PodTemplateStoreAsAnnexForm` form
   next to the `Store POD template as annex` label.
   [gbastien]
+- Added possibility to overwrite an existing stored annex when using
+  `@@store-pod-temlate-as-annex-form` and `@@store-items-template-as-annex-batch-action`.
+  [gbastien]
 
 4.2.28.16 (2026-05-20)
 ----------------------
