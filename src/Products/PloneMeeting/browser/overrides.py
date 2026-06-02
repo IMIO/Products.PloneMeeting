@@ -22,7 +22,6 @@ from datetime import datetime
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.actionspanel.browser.viewlets import ActionsPanelViewlet
 from imio.actionspanel.browser.views import ActionsPanelView
-from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.dashboard.browser.overrides import IDRenderCategoryView
 from imio.dashboard.interfaces import IContactsDashboard
 from imio.esign.adapters import ISignable
@@ -1300,7 +1299,19 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
                         else:
                             # overwrite a stored generated document that is not marked signed
                             # in this case we remove the existing annex
-                            unrestrictedRemoveGivenObject(annex)
+                            try:
+                                self.context.restrictedTraverse('@@delete_givenuid')(annex.UID())
+                            except Unauthorized:
+                                msg_code = 'store_podtemplate_as_annex_can_not_delete_annex_overwrite'
+                                if return_portal_msg_code:
+                                    return msg_code, {}
+                                else:
+                                    msg = translate(
+                                        msg_code,
+                                        domain='PloneMeeting',
+                                        context=self.request)
+                                    plone_utils.addPortalMessage(msg, type='warning')
+                                    return self.request.RESPONSE.redirect(self.request['HTTP_REFERER'])
 
             # now add the annex using specified type
             # check if we need to add an 'annex' or an 'annexDecision'

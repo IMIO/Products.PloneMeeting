@@ -22,6 +22,7 @@ from plone.app.textfield import RichText
 from plone.formwidget.masterselect import MasterSelectBoolField
 from Products.CMFCore.permissions import ManagePortal
 from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFCore.permissions import ReviewPortalContent
 from Products.PloneMeeting import logger
 from Products.PloneMeeting.config import NO_COMMITTEE
 from Products.PloneMeeting.config import PMMessageFactory as _
@@ -101,7 +102,8 @@ class DisplaySignersProvider(ContentProviderBase):
                 mapping={'annex_type_url': self.annex_type.absolute_url()},
                 domain='PloneMeeting',
                 context=self.request,
-                default="Selected annex type must be \"to sign\" by default, check annex type at \"${annex_type_url}\"!")
+                default="Selected annex type must be \"to sign\" by default, " \
+                    "check annex type at \"${annex_type_url}\"!")
         if error_msg is not None:
             api.portal.show_message(
                 error_msg, request=self.request, type='warning')
@@ -162,7 +164,8 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
 
     label = _CEBA("Store POD template as annex")
     button_with_icon = True
-    available_permission = ModifyPortalContent
+    # this give also access to MeetingManagers when meeting is closed
+    available_permission = ReviewPortalContent
     implements(IFieldsAndContentProvidersForm)
     contentProviders = ContentProviders()
     contentProviders['signers'] = DisplaySignersProvider
@@ -200,10 +203,13 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
         self.signers_error_msg = None
         if self.brains:
             item = brains[0].getObject()
-            self.pod_template, self.output_format = get_pod_template_infos(pod_template_default(self.context), self.cfg)
-            self.signers, self.raw_signers, self.signers_error_msg, self.esign_enabled, self.annex_type = compute_signers(item, self.pod_template)
+            self.pod_template, self.output_format = get_pod_template_infos(
+                pod_template_default(self.context), self.cfg)
+            self.signers, self.raw_signers, self.signers_error_msg, \
+                self.esign_enabled, self.annex_type = compute_signers(item, self.pod_template)
 
-        self.show_esign = self.esign_enabled and not self.signers_error_msg and self.output_format == u'pdf' and self.annex_type.to_sign
+        self.show_esign = self.esign_enabled and not self.signers_error_msg and \
+            self.output_format == u'pdf' and self.annex_type.to_sign
         self.fields += Fields(schema.Choice(
             __name__='pod_template',
             title=_(u'POD template to annex'),
@@ -236,19 +242,21 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
                 required=True))
             self.fields["annex_types"].widgetFactory = PMCheckBoxFieldWidget
 
-            self.fields += Fields(schema.Bool(
-                __name__='store_generated_document',
-                title=_(u'title_store_generated_document'),
-                description=_(u'descr_store_generated_document'),
-                required=False,
-                default=True))
+        self.fields += Fields(schema.Choice(
+            __name__='store_generated_document',
+            title=_(u'title_store_generated_document'),
+            description=_("descr_store_generated_document"),
+            required=True,
+            default='1',
+            vocabulary=u"Products.PloneMeeting.vocabularies.store_generated_document_vocabulary",
+        ))
 
     def _apply(self, **data):
         """ """
         pod_template, output_format = get_pod_template_infos(data['pod_template'], self.cfg)
         num_of_generated_templates = 0
         self.request.set('store_as_annex', '1')
-        store_generated_document = data.get('store_generated_document', True)
+        store_generated_document = data.get('store_generated_document', '1')
         add_to_sign_session = data.get('add_to_sign_session', False)
         annex_types = data.get('annex_types', [])
         for brain in self.brains:
@@ -266,7 +274,7 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
                 annex_ids_to_add_to_session=annex_ids,
                 return_portal_msg_code=True)
             if not res:
-                if store_generated_document:
+                if store_generated_document != '0':
                     num_of_generated_templates += 1
             else:
                 # log error

@@ -13,6 +13,7 @@ from copy import deepcopy
 from datetime import datetime
 from ftw.labels.interfaces import ILabeling
 from ftw.labels.interfaces import ILabelJar
+from imio.actionspanel.interfaces import IContentDeletable
 from imio.esign.config import set_esign_registry_enabled
 from imio.esign.utils import get_session_annotation
 from imio.helpers.cache import cleanRamCacheFor
@@ -1738,6 +1739,7 @@ class testViews(PloneMeetingTestCase):
         first_3_item_uids = [item.UID for item in meeting.get_items(ordered=True, the_objects=False)[0:3]]
         self.request.form['form.widgets.uids'] = u','.join(first_3_item_uids)
         self.request.form['form.widgets.pod_template'] = 'itemTemplate__output_format__odt'
+        self.request.form['form.widgets.store_generated_document'] = '1'
         form.update()
         form.handleApply(form, None)
         itemTemplateId = cfg.podtemplates.itemTemplate.getId()
@@ -1789,6 +1791,37 @@ class testViews(PloneMeetingTestCase):
             annexes = get_annexes(items[i])
             self.assertEqual(len(annexes), 1)
             self.assertTrue(annexes[0].used_pod_template_id, itemTemplateId)
+
+        # test "2" overwrite
+        created_dates = []
+        for i in range(0, 6):
+            created_dates.append(get_annexes(items[i])[0].created())
+        form = meeting.restrictedTraverse('@@store-items-template-as-annex-batch-action')
+        self.request['form.widgets.store_generated_document'] = '2'
+        form.update()
+        form.handleApply(form, None)
+        for i in range(0, 6):
+            self.assertTrue(get_annexes(items[i])[0].created() > created_dates[i])
+
+        # test "0" do nothing, remove annexes and check it is not added again
+        for i in range(0, 6):
+            self.deleteAsManager(get_annexes(items[i])[0].UID())
+        for i in range(0, 6):
+            self.assertEqual(len(get_annexes(items[i])), 0)
+        form = meeting.restrictedTraverse('@@store-items-template-as-annex-batch-action')
+        self.request['form.widgets.store_generated_document'] = '0'
+        form.update()
+        form.handleApply(form, None)
+        for i in range(0, 6):
+            self.assertEqual(len(get_annexes(items[i])), 0)
+
+        # test "2", will store if not exist
+        form = meeting.restrictedTraverse('@@store-items-template-as-annex-batch-action')
+        self.request['form.widgets.store_generated_document'] = '2'
+        form.update()
+        form.handleApply(form, None)
+        for i in range(0, 6):
+            self.assertEqual(len(get_annexes(items[i])), 1)
 
     def test_pm_PMTransitionBatchActionFormOnlyForOperationalRoles(self):
         """The PMTransitionBatchActionForm is only available to operational roles,
@@ -4122,7 +4155,7 @@ class testViews(PloneMeetingTestCase):
         self.assertFalse(get_session_annotation()['sessions'])
         data = {'template_uid': pod_template_uid,
                 'output_format': 'pdf',
-                'store_generated_document': True,
+                'store_generated_document': '1',
                 'add_to_sign_session': True,
                 'annex_ids': [annex1_id], }
         form_instance._do_store_as_annex(data)
@@ -4130,10 +4163,40 @@ class testViews(PloneMeetingTestCase):
         # the form will prevent to select non pdf files but we test further
         self.assertEqual(len(get_session_annotation()['sessions'][0]['files']), 1)
         # call form to just add another annex but not the generated pod template
-        data['store_generated_document'] = False
+        data['store_generated_document'] = '0'
         data['annex_ids'] = [annex2_id]
         form_instance._do_store_as_annex(data)
         self.assertEqual(len(get_session_annotation()['sessions'][0]['files']), 2)
+
+        # test overwrite, when store_generated_document == "2"
+        data['store_generated_document'] = '2'
+        data['annex_ids'] = []
+        stored_annex = get_annexes(item)[-1]
+        self.assertEqual(stored_annex.used_pod_template_id, pod_template.getId())
+        stored_annex_uid = stored_annex.UID()
+        stored_annex_created = stored_annex.created()
+        form_instance._do_store_as_annex(data)
+        stored_annex = get_annexes(item)[-1]
+        self.assertNotEqual(stored_annex.created(), stored_annex_created)
+        self.assertNotEqual(stored_annex.UID(), stored_annex_uid)
+        # test overwrite when user not able to edit annex, it will not be changed
+        self.assertTrue(IContentDeletable(stored_annex).mayDelete())
+        self.closeMeeting(meeting)
+        self.assertEqual(item.query_state(), 'accepted')
+        self.assertFalse(IContentDeletable(stored_annex).mayDelete())
+        stored_annex_uid = stored_annex.UID()
+        form_instance._do_store_as_annex(data)
+        stored_annex = get_annexes(item)[-1]
+        # was not overwritten
+        self.assertEqual(stored_annex.UID(), stored_annex_uid)
+        # except when using MeetingConfig.ownerMayDeleteAnnexDecision
+        cfg.setOwnerMayDeleteAnnexDecision(True)
+        self.assertTrue(IContentDeletable(stored_annex).mayDelete())
+        stored_annex_uid = stored_annex.UID()
+        form_instance._do_store_as_annex(data)
+        stored_annex = get_annexes(item)[-1]
+        # was overwritten
+        self.assertNotEqual(stored_annex.UID(), stored_annex_uid)
 
     def test_pm_MeetingStoreItemsPodTemplateAsAnnexBatchActionEsign(self):
         """This will store a POD template selected in
@@ -4165,7 +4228,7 @@ class testViews(PloneMeetingTestCase):
         self.request.form['form.widgets.uids'] = u','.join(uids)
         self.request.form['form.widgets.pod_template'] = 'itemTemplate__output_format__pdf'
         self.request.form['form.widgets.add_to_sign_session'] = ['selected']
-        self.request.form['form.widgets.store_generated_document'] = ['selected']
+        self.request.form['form.widgets.store_generated_document'] = ['1']
         self.request.form['form.widgets.annex_types'] = [
             uid for uid in annex_types_default(cfg) if uid != annex_type_uid_not_selected]
         form.update()

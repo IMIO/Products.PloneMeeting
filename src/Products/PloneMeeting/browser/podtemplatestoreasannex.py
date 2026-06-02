@@ -175,7 +175,8 @@ class PodTemplateStoreAsAnnexForm(form.Form):
             self.widgets['annex_ids'].mode = HIDDEN_MODE
             self.widgets['annex_ids'].terms = []
             self.widgets['annex_ids'].value = []
-            self.widgets['store_generated_document'].mode = HIDDEN_MODE
+            # show field "store_generated_document" as we could overwrite existing annex
+            # self.widgets['store_generated_document'].mode = HIDDEN_MODE
         self.label = u"{0}: {1}".format(
             translate(self.label, context=self.request),
             safe_unicode(self.pod_template.Title()))
