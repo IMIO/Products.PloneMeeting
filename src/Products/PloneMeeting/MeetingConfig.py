@@ -3865,7 +3865,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declareProtected(WriteRiskyConfig, 'setUsingGroups')
 
     def setUsingGroups(self, value, **kwargs):
-        '''Overrides the field 'setUsingGroups' mutator to enable or disable
+        '''Overrides the field 'usingGroups' mutator to enable or disable
            the MEETING_REMOVE_MOG_WFA WFA when relevant.
            Updating WF role mappings and every meetings local_roles is managed
            by the onConfigModified event.'''
@@ -3890,6 +3890,22 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # value changed, need to update local roles but WFA is already selected
             self.REQUEST.set('need_update_%s' % MEETING_REMOVE_MOG_WFA, True)
         self.getField('usingGroups').set(self, value, **kwargs)
+
+    security.declareProtected(WriteRiskyConfig, 'setFolderTitle')
+
+    def setFolderTitle(self, value, **kwargs):
+        '''Overrides the field 'folderTitle' mutator to rename every member folder
+           title when folderTitle changed.'''
+        stored = self.getField('folderTitle').get(self, **kwargs)
+        if stored != value:
+            folders = self._get_all_meeting_folders()
+            extras = 'number_of_elements={0} MeetingConfig={1} old_folder_title={2} new_folder_title={3}'.format(
+                len(folders), self.getId(), stored, value)
+            fplog('update_members_folder_title', extras=extras)
+            for folder in folders:
+                folder.setTitle(value)
+                folder.reindexObject(idxs=['Title'])
+        self.getField('folderTitle').set(self, value, **kwargs)
 
     security.declarePublic('getUsedVoteValues')
 
@@ -6570,6 +6586,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     portalType.icon_expr_object = Expression(portalType.icon_expr)
                     catalog = api.portal.get_tool('portal_catalog')
                     brains = catalog.unrestrictedSearchResults(portal_type=portal_type)
+                    extras = 'number_of_elements={0} portal_type={1}'.format(len(brains), portalType.id)
+                    fplog('update_item_icon_color', extras=extras)
                     pghandler = ZLogHandler(steps=1000)
                     pghandler.init(
                         'Updating items icon color ({0})...'.format(metaTypeName), len(brains))
@@ -8103,14 +8121,16 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         """Return every meeting folders for this MeetingConfig."""
         folders = []
         portal = api.portal.get()
-        for userFolder in portal.Members.objectValues():
-            mymeetings = getattr(userFolder, 'mymeetings', None)
-            if not mymeetings:
-                continue
-            meetingFolder = getattr(mymeetings, self.getId(), None)
-            if not meetingFolder:
-                continue
-            folders.append(meetingFolder)
+        members = portal.get('Members')
+        if members:
+            for userFolder in members.objectValues():
+                mymeetings = getattr(userFolder, 'mymeetings', None)
+                if not mymeetings:
+                    continue
+                meetingFolder = getattr(mymeetings, self.getId(), None)
+                if not meetingFolder:
+                    continue
+                folders.append(meetingFolder)
         return folders
 
     def _synchSearches(self, folder=None):

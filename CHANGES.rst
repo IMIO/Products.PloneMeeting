@@ -5,8 +5,9 @@ Changelog
 4.2.29rc10 (unreleased)
 -----------------------
 
-- Nothing changed yet.
-
+- Rename every members meeting config folder title when
+  `MeetingConfig.folderTitle` changed.
+  [gbastien]
 
 4.2.29rc9 (2026-06-02)
 ----------------------
