@@ -98,7 +98,7 @@ class testWFAdaptations(PloneMeetingTestCase):
                     'removed_and_duplicated',
                     'return_to_proposing_group',
                     'return_to_proposing_group_with_all_validations',
-                    'return_to_proposing_group_before_last_validation',
+                    'return_to_proposing_group_with_before_last_validation',
                     'return_to_proposing_group_with_last_validation',
                     'reviewers_take_back_validated_item',
                     'transfered',
@@ -220,7 +220,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.failIf(cfg.validate_workflowAdaptations(
             ('return_to_proposing_group_with_last_validation',)))
         self.failIf(cfg.validate_workflowAdaptations(
-            ('return_to_proposing_group_before_last_validation',)))
+            ('return_to_proposing_group_with_before_last_validation',)))
         self.failIf(cfg.validate_workflowAdaptations(
             ('return_to_proposing_group_with_all_validations',)))
         # Only one return_to_proposing_group can be selectable
@@ -236,17 +236,17 @@ class testWFAdaptations(PloneMeetingTestCase):
             wa_conflicts)
         self.assertEqual(
             cfg.validate_workflowAdaptations(
-                ('return_to_proposing_group_before_last_validation',
+                ('return_to_proposing_group_with_before_last_validation',
                  'return_to_proposing_group_with_all_validations')),
             wa_conflicts)
         self.assertEqual(
             cfg.validate_workflowAdaptations(
-                ('return_to_proposing_group_before_last_validation',
+                ('return_to_proposing_group_with_before_last_validation',
                  'return_to_proposing_group_with_last_validation')),
             wa_conflicts)
         self.assertEqual(
             cfg.validate_workflowAdaptations(
-                ('return_to_proposing_group_before_last_validation',
+                ('return_to_proposing_group_with_before_last_validation',
                  'return_to_proposing_group')),
             wa_conflicts)
         self.assertEqual(
@@ -391,7 +391,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertEqual(cfg.getItemWFValidationLevels(data='state', only_enabled=True),
                          ['itemcreated', 'proposed'])
         self.failIf(cfg.validate_workflowAdaptations(('reviewers_take_back_validated_item', )))
-        self.failIf(cfg.validate_workflowAdaptations(('return_to_proposing_group_before_last_validation',)))
+        self.failIf(cfg.validate_workflowAdaptations(('return_to_proposing_group_with_before_last_validation',)))
         self.failIf(cfg.validate_workflowAdaptations(('return_to_proposing_group_with_last_validation', )))
         self.failIf(cfg.validate_workflowAdaptations(('return_to_proposing_group_with_all_validations', )))
         self.failIf(cfg.validate_workflowAdaptations(('presented_item_back_to_itemcreated', )))
@@ -402,7 +402,7 @@ class testWFAdaptations(PloneMeetingTestCase):
             cfg.validate_workflowAdaptations(('reviewers_take_back_validated_item', )),
             wa_dependency)
         self.assertEqual(
-            cfg.validate_workflowAdaptations(('return_to_proposing_group_before_last_validation', )),
+            cfg.validate_workflowAdaptations(('return_to_proposing_group_with_before_last_validation', )),
             wa_dependency)
         self.assertEqual(
             cfg.validate_workflowAdaptations(('return_to_proposing_group_with_last_validation', )),
@@ -890,8 +890,8 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.do(item, 'return_to_proposing_group')
         self.assertEqual(item.query_state(), 'returned_to_proposing_group')
         self.failIf(cfg.validate_workflowAdaptations(('return_to_proposing_group', )))
-        if self._check_wfa_available(['return_to_proposing_group_before_last_validation']):
-            self.failIf(cfg.validate_workflowAdaptations(('return_to_proposing_group_before_last_validation',)))
+        if self._check_wfa_available(['return_to_proposing_group_with_before_last_validation']):
+            self.failIf(cfg.validate_workflowAdaptations(('return_to_proposing_group_with_before_last_validation',)))
         if self._check_wfa_available(['return_to_proposing_group_with_last_validation']):
             self.failIf(cfg.validate_workflowAdaptations(('return_to_proposing_group_with_last_validation',)))
         if self._check_wfa_available(['return_to_proposing_group_with_all_validations']):
@@ -915,16 +915,16 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.do(item, 'backTo_itemfrozen_from_returned_to_proposing_group')
         self.failIf(cfg.validate_workflowAdaptations(()))
 
-    def test_pm_Validate_workflowAdaptations_removed_return_to_proposing_group_before_last_validation(self):
+    def test_pm_Validate_workflowAdaptations_removed_return_to_proposing_group_with_before_last_validation(self):
         """Test MeetingConfig.validate_workflowAdaptations that manage removal of
-           'return_to_proposing_group_before_last_validation': not possible if
+           'return_to_proposing_group_with_before_last_validation': not possible if
            some items are still in returned_to_proposing_group validation states."""
         cfg = self.meetingConfig
-        if not self._check_wfa_available(['return_to_proposing_group_before_last_validation']):
+        if not self._check_wfa_available(['return_to_proposing_group_with_before_last_validation']):
             return
 
         self.changeUser('pmManager')
-        self._activate_wfas(('return_to_proposing_group_before_last_validation',))
+        self._activate_wfas(('return_to_proposing_group_with_before_last_validation',))
 
         meeting = self.create('Meeting')
         item = self.create('MeetingItem')
@@ -935,7 +935,7 @@ class testWFAdaptations(PloneMeetingTestCase):
 
         # aucun point dans les états de validation : on peut retirer le WFA
         self.failIf(cfg.validate_workflowAdaptations(
-            ('return_to_proposing_group_before_last_validation',)))
+            ('return_to_proposing_group_with_before_last_validation',)))
         if self._check_wfa_available(['return_to_proposing_group']):
             self.failIf(cfg.validate_workflowAdaptations(('return_to_proposing_group',)))
         if self._check_wfa_available(['return_to_proposing_group_with_all_validations']):
@@ -950,7 +950,7 @@ class testWFAdaptations(PloneMeetingTestCase):
 
         # point dans un état de validation : impossible de retirer le WFA
         msg_removed_error = translate(
-            'wa_removed_return_to_proposing_group_before_last_validation_error',
+            'wa_removed_return_to_proposing_group_with_before_last_validation_error',
             domain='PloneMeeting',
             context=self.request)
         self.assertEqual(cfg.validate_workflowAdaptations(()), msg_removed_error)

@@ -614,7 +614,7 @@ class MeetingItemWorkflowConditions(object):
                 [last_val_state],
             'return_to_proposing_group_with_last_validation':
                 [last_val_state],
-            'return_to_proposing_group_before_last_validation':
+            'return_to_proposing_group_with_before_last_validation':
                 [before_last_val_state, last_val_state],
         }
 

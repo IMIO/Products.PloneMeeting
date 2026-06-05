@@ -544,7 +544,7 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
 
     def _apply_return_to_proposing_group(whichValidation=None):
         """Helper method to apply the 'return_to_proposing_group' or
-           'return_to_proposing_group_before_last_validation' or
+           'return_to_proposing_group_with_before_last_validation' or
            'return_to_proposing_group_with_last_validation' or
            'return_to_proposing_group_with_all_validations' wfAdaptation.
            whichValidation must in ('None', 'before_last', 'last', 'all')
@@ -813,7 +813,7 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
             _apply_return_to_proposing_group(whichValidation=None)
 
         # same as the "return_to_proposing_group" here above but the second to last reviewer must validate item
-        elif wfAdaptation == 'return_to_proposing_group_before_last_validation':
+        elif wfAdaptation == 'return_to_proposing_group_with_before_last_validation':
             _apply_return_to_proposing_group(whichValidation='before_last')
 
         # same as the "return_to_proposing_group" here above but the last reviewer must validate item
