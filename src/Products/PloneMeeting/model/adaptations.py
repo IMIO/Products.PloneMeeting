@@ -544,9 +544,10 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
 
     def _apply_return_to_proposing_group(whichValidation=None):
         """Helper method to apply the 'return_to_proposing_group' or
+           'return_to_proposing_group_before_last_validation' or
            'return_to_proposing_group_with_last_validation' or
            'return_to_proposing_group_with_all_validations' wfAdaptation.
-           whichValidation must in ('None', 'last', 'all')
+           whichValidation must in ('None', 'before_last', 'last', 'all')
         """
         if 'returned_to_proposing_group' not in itemWorkflow.states:
             itemWorkflow.states.addState('returned_to_proposing_group')
@@ -811,13 +812,13 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
         elif wfAdaptation == 'return_to_proposing_group':
             _apply_return_to_proposing_group(whichValidation=None)
 
-        # same as the "return_to_proposing_group" here above but the reviewer must validate item
+        # same as the "return_to_proposing_group" here above but the second to last reviewer must validate item
+        elif wfAdaptation == 'return_to_proposing_group_before_last_validation':
+            _apply_return_to_proposing_group(whichValidation='before_last')
+
+        # same as the "return_to_proposing_group" here above but the last reviewer must validate item
         elif wfAdaptation == 'return_to_proposing_group_with_last_validation':
             _apply_return_to_proposing_group(whichValidation='last')
-
-        # same as the "return_to_proposing_group_with_last_validation" here above but the before last reviewer must validate item
-        elif wfAdaptation == 'return_to_proposing_group_with_before_last_validation':
-            _apply_return_to_proposing_group(whichValidation='before_last')
 
         # same as the "return_to_proposing_group" here above but the item must be validate by all hierarchical level
         elif wfAdaptation == 'return_to_proposing_group_with_all_validations':
