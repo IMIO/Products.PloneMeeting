@@ -2,14 +2,17 @@
 
 from natsort import humansorted
 from operator import attrgetter
+from plone import api
 from Products.PloneMeeting.external.forms import projects_default
 from Products.PloneMeeting.external.forms import tasks_default
-from Products.PloneMeeting.external.utils import send_json_request
+from Products.PloneMeeting.external.utils import send_vision_json_request
 from zope.i18n import translate
 from zope.interface import implements
 from zope.schema.interfaces import IVocabularyFactory
 from zope.schema.vocabulary import SimpleTerm
 from zope.schema.vocabulary import SimpleVocabulary
+
+import requests
 
 
 class BaseVisionVocabulary(object):
@@ -18,8 +21,13 @@ class BaseVisionVocabulary(object):
 
     def __call__(self, context, endpoint, selected_values=[]):
         """ """
+        infos = send_vision_json_request(endpoint)
+        if isinstance(infos, requests.Response):
+            api.portal.show_message(infos.text, type='warning', request=context.REQUEST)
+            return SimpleVocabulary([])
+
         terms = []
-        for info in send_json_request(endpoint):
+        for info in infos:
             # concatenate element's project, parent and name for term title
             res = []
             # store also non HTML raw value to be able to sort it correctly

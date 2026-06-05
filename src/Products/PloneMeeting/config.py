@@ -415,6 +415,8 @@ MEETING_ATTENDEES_ATTRS = (
     # place to store item votes
     'item_votes')
 
+CONFIGURABLE_FIELD_NAMES = ['groupsInChargeNotes', 'neededFollowUp', 'providedFollowUp']
+
 
 def registerClasses():
     '''ArchGenXML generated code does not register Archetype classes at the

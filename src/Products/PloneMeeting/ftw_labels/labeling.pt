@@ -1,0 +1,65 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en"
+      xmlns:tal="http://xml.zope.org/namespaces/tal"
+      xmlns:metal="http://xml.zope.org/namespaces/metal"
+      xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+      i18n:domain="ftw.labels"
+      tal:omit-tag="python: True">
+
+  <div id="labeling-viewlet"
+       tal:condition="view/available">
+    <!-- Changes by PloneMeeting, moved can_edit/can_pers_edit defines out of condition available -->
+    <tal:define define="can_edit view/can_edit;
+                        can_pers_edit view/can_personal_edit;
+                        labels view/available_labels;">
+
+    <ul class="activeLabels" id="active_url" tal:attributes="data-obj_url view/context/absolute_url;">
+      <li tal:repeat="label python:labels[0]">
+        <span tal:define="color python:label['active'] and label['color'] or 'inactive'"
+              tal:attributes="class string:labelItem persLabel labelColor labelcolor-${color} pers-edit-${can_pers_edit};
+                              data-label_id label/label_id;
+                              data-o_color label/color;
+                              data-active label/active;"
+              tal:content="label/title" />
+      </li>
+      <li id="label-type-separator" tal:condition="python:labels[0]"><span class="labelItem"></span></li>
+      <li tal:repeat="label python:labels[1]">
+        <span tal:attributes="class string:labelItem globLabel labelColor labelcolor-${label/color}"
+              tal:content="label/title"
+              tal:condition="label/active"/>
+      </li>
+      <li class="toggleLabelForm" tal:condition="python:can_edit and labels[1]">
+        <a href="#" id="toggle-label-form" title="edit labels" i18n:translate="edit_labels" i18n:attributes="title edit_labels">
+          edit labels
+        </a>
+      </li>
+    </ul>
+
+    <form method="post"
+          tal:condition="python:can_edit and labels[1]"
+          tal:attributes="action string:${here/absolute_url}/labeling/update">
+      <select type="select" multiple="multiple" name="activate_labels:list" id="activate_labels">
+        <tal:options repeat="label python:labels[1]">
+          <option tal:attributes="name label/label_id;
+                                  value label/label_id;
+                                  selected label/active"
+                  tal:content="label/title"
+                  />
+        </tal:options>
+        <!-- class string:labelcolor-${label/color}; -->
+      </select>
+      <input type="submit" name="form.submit" value="Update"
+             class="context"
+             i18n:attributes="value button_labeling_update"
+             />
+      <input type="button" class="closeForm standalone"
+             value="Cancel" i18n:domain="plone"
+             i18n:attributes="value label_cancel"
+             />
+    </form>
+
+    </tal:define>
+    <div class="visualClear"><!-- --></div>
+
+  </div>
+
+</html>

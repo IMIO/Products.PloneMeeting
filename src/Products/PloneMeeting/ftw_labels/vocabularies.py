@@ -63,12 +63,13 @@ class ConfigFTWLabelsVocabulary(FTWLabelsVocabulary):
             context, include_personal_labels=False)
         res._terms.insert(
             0,
-            SimpleTerm("*",
-                       "*",
-                       '{0} (*)'.format(
-                        translate('default_for_all_labels',
-                                  domain='PloneMeeting',
-                                  context=context.REQUEST).encode('utf-8'))))
+            SimpleTerm(
+                "*",
+                "*",
+                '{0} (*)'.format(
+                    translate('default_for_all_labels',
+                              domain='PloneMeeting',
+                              context=context.REQUEST).encode('utf-8'))))
         return res
 
 
@@ -101,7 +102,7 @@ class FTWLabelsForFacetedFilterVocabulary(object):
         member_id = get_current_user_id(context.REQUEST)
 
         res = []
-        # ftw.labels will index "_" when no label selected
+        # EMPTY_STRING will be indexed when no global labels selected
         res.append(
             SimpleTerm(EMPTY_STRING,
                        EMPTY_STRING,

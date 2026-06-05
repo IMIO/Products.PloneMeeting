@@ -414,7 +414,8 @@
           <td width="33%" tal:define="field python:here.getField('advicesKeptOnSentToOtherMC')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td>
+          <td tal:define="field python:here.getField('enabledItemActions')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
         </tr>
         <tr valign="top">
@@ -429,13 +430,7 @@
           </td>
         </tr>
         <tr valign="top">
-          <td tal:define="field python:here.getField('cssClassesToHide')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
-          <td tal:define="field python:here.getField('hideCssClassesTo')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
-          <td tal:define="field python:here.getField('enabledItemActions')">
+          <td colspan="3" tal:define="field python:here.getField('cssTransforms')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
         </tr>
@@ -1142,7 +1137,9 @@
           <td tal:define="field python:here.getField('inheritedAdviceRemoveableByAdviser')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td></td>
+          <td tal:define="field python:here.getField('enableAddQuickAdvice')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
         </tr>
         <tr valign="top">
           <td colspan="3">
@@ -1363,7 +1360,7 @@
          <span i18n:translate="PodTemplates"></span>
          <a href="#"
             class="link-overlay-pm"
-            tal:condition="isRealManager"
+            tal:condition="python: tool.is_zope_admin()"
             tal:attributes="href string:${context/podtemplates/absolute_url}/folder_factories">
           <img src="#" tal:attributes="src string:$portal_url/new.png;" />
          </a>

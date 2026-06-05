@@ -5,10 +5,10 @@
 # GNU General Public License (GPL)
 #
 
+from AccessControl import Unauthorized
 from collective.behavior.internalnumber.browser.settings import get_settings
 from collective.behavior.internalnumber.browser.settings import set_settings
 from collective.contact.plonegroup.utils import get_all_suffixes
-from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.contact.plonegroup.utils import select_org_for_function
 from copy import deepcopy
 from DateTime import DateTime
@@ -1407,8 +1407,8 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._setUpDefaultItemWFValidationLevels(cfg)
         self._enablePrevalidation(cfg)
         # configure 'pmReviewer1' as creator/prereviewer/reviewer
-        self._addPrincipalToGroup('pmReviewer1', get_plone_group_id(self.developers_uid, 'creators'))
-        self._addPrincipalToGroup('pmReviewer1', get_plone_group_id(self.developers_uid, 'prereviewers'))
+        self._addPrincipalToGroup('pmReviewer1', self.developers_creators)
+        self._addPrincipalToGroup('pmReviewer1', self.developers_prereviewers)
         # check while the wfAdaptation is not activated
         self._activate_wfas(())
         self._item_validation_shortcuts_inactive()
@@ -1627,6 +1627,7 @@ class testWFAdaptations(PloneMeetingTestCase):
     def _only_creator_may_delete_active(self):
         '''Tests while 'only_creator_may_delete' wfAdaptation is active.
            Only the 'MeetingMember' and the 'Manager' have the 'Delete objects' permission.'''
+        cfg = self.meetingConfig
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         self.assertEqual(item.query_state(), 'itemcreated')
@@ -1642,9 +1643,37 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.changeUser('pmManager')
         # the MeetingManager can NOT delete
         self.failIf(self.hasPermission(DeleteObjects, item))
-        # God can delete too...
+        # Manager can delete
         self.changeUser('admin')
         self.failUnless(self.hasPermission(DeleteObjects, item))
+        # but annexes are still deletable by the users able to edit
+        # single delete
+        self.changeUser('pmManager')
+        annex = self.addAnnex(item)
+        decision_annex = self.addAnnex(item, relatedTo='item_decision')
+        self.assertEqual(get_annexes(item), [annex, decision_annex])
+        # not deletable by creator
+        self.changeUser('pmCreator1')
+        self.assertRaises(Unauthorized, item.restrictedTraverse('@@delete_givenuid'), annex.UID())
+        self.assertRaises(Unauthorized, item.restrictedTraverse('@@delete_givenuid'), decision_annex.UID())
+        # deletable by MeetingManager as item is "validated"
+        self.changeUser('pmManager')
+        self.portal.restrictedTraverse('@@delete_givenuid')(annex.UID())
+        self.portal.restrictedTraverse('@@delete_givenuid')(decision_annex.UID())
+        self.assertEqual(get_annexes(item), [])
+        # deletable using the delete batch action
+        annex = self.addAnnex(item)
+        decision_annex = self.addAnnex(item, relatedTo='item_decision')
+        self.assertEqual(get_annexes(item), [annex, decision_annex])
+        cfg.setEnabledAnnexesBatchActions(['delete'])
+        self.request['form.widgets.uids'] = u','.join([annex.UID(), decision_annex.UID()])
+        self.request.form['form.widgets.uids'] = self.request['form.widgets.uids']
+        self.request.form['ajax_load'] = 'dummy'
+        self.changeUser('pmManager')
+        form = item.restrictedTraverse('@@delete-batch-action')
+        form.update()
+        form.handleApply(form, None)
+        self.assertEqual(get_annexes(item), [])
 
     def test_pm_WFA_return_to_proposing_group(self):
         '''Test the workflowAdaptation 'return_to_proposing_group'.'''
@@ -2648,7 +2677,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertEqual(self.transitions(item), [self._wait_advice_from_proposed_state_back_transition()])
         self.changeUser('pmCreator1')
         self.assertEqual(self.transitions(item), ['backTo_itemcreated_from_waiting_advices'])
-        self._addPrincipalToGroup('pmCreator1', get_plone_group_id(self.developers_uid, 'reviewers'))
+        self._addPrincipalToGroup('pmCreator1', self.developers_reviewers)
         self.assertEqual(
             self.transitions(item),
             ['backTo_itemcreated_from_waiting_advices',
@@ -2793,7 +2822,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.changeUser('pmReviewer2')
         self.assertEqual(self.transitions(item),
                          [self._wait_advice_from_proposed_state_back_transition()])
-        self.addAdvice(item)
+        self.add_advice(item)
         self.do(item, self._wait_advice_from_proposed_state_back_transition())
         self.assertEqual(self.transitions(item), [])
         self.changeUser('pmReviewer1')
@@ -3250,6 +3279,17 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.proposeItem(item)
         self.changeUser('pmReviewer1')
         self.do(item, 'validate')
+        # check that actions_panel is aware of this, access item as a creator
+        # action is not there, then access as a reviewer, action should be there
+        self._addPrincipalToGroup('pmReviewer1', self.developers_creators)
+        self.changeUser('pmCreator1')
+        actions_panel = item.restrictedTraverse('@@actions_panel')
+        validatedItemForCreator_rendered_actions_panel = actions_panel()
+        self.assertFalse("backTo" in validatedItemForCreator_rendered_actions_panel)
+        self.changeUser('pmReviewer1', clean_memoize=False)
+        actions_panel = item.restrictedTraverse('@@actions_panel')
+        validatedItemForReviewer_rendered_actions_panel = actions_panel()
+        self.assertTrue("backTo" in validatedItemForReviewer_rendered_actions_panel)
         # make test defensive if used by subproducts, we have a 'backXXX' transition
         self.assertTrue([tr for tr in self.transitions(item) if tr.startswith('back')])
         # but he will not be able to present it

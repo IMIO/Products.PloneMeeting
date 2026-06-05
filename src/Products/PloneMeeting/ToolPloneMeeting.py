@@ -276,6 +276,20 @@ schema = Schema((
         multiValued=1,
         vocabulary='listDeferParentReindexes',
     ),
+    LinesField(
+        name='showExternalLinksSection',
+        default=defValues.showExternalLinksSection,
+        widget=MultiSelectionWidget(
+            description="ShowExternalLinksSection",
+            description_msgid="show_external_links_section_descr",
+            format="checkbox",
+            label='Showexternallinkssection',
+            label_msgid='PloneMeeting_label_showExternalLinksSection',
+            i18n_domain='PloneMeeting',
+        ),
+        multiValued=1,
+        vocabulary_factory='PMEveryConfigs',
+    ),
     DataGridField(
         name='advisersConfig',
         widget=DataGridField._properties['widget'](
@@ -400,7 +414,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            This is the place to duplicate advice workflows
            to apply workflow adaptations on.'''
         # create a copy of each 'base_wf', we preprend the portal_type to create a new workflow
-        for org_uids, adviser_infos in self.adapted().get_extra_adviser_infos(group_by_org_uids=True).items():
+        for org_uids, adviser_infos in self.get_extra_adviser_infos(group_by_org_uids=True).items():
             portal_type = adviser_infos['portal_type']
             base_wf = adviser_infos['base_wf']
             advice_wf_id = '{0}__{1}'.format(portal_type, base_wf)
@@ -408,7 +422,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     def _finalizeAdviceWFConfig(self):
         """ """
-        for org_uids, adviser_infos in self.adapted().get_extra_adviser_infos(group_by_org_uids=True).items():
+        for org_uids, adviser_infos in self.get_extra_adviser_infos(group_by_org_uids=True).items():
             configure_advice_dx_localroles_for(
                 adviser_infos['portal_type'], org_uids)
 
@@ -777,17 +791,25 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                        using_groups=[]):
         """Check if user is member of one of the Plone groups linked
            to given p_org_id or p_org_uid.  Parameters are exclusive.
+           p_org_id or p_org_uid can be a single value or a list of values.
            Other parameters from p_user_id=None to p_the_objects=True
            are default values passed to get_orgs_for_user."""
+        if not org_id and not org_uid:
+            return
         if not org_uid:
-            org_uid = org_id_to_uid(org_id)
-        return bool(org_uid in self.get_orgs_for_user(
+            # then we have an "org_id"
+            if isinstance(org_id, str):
+                org_id = [org_id]
+            org_uid = [org_id_to_uid(_org_id) for _org_id in org_id]
+        if isinstance(org_uid, str):
+            org_uid = [org_uid]
+        return bool(set(org_uid).intersection(self.get_orgs_for_user(
             user_id=user_id,
             only_selected=only_selected,
             suffixes=suffixes,
             omitted_suffixes=omitted_suffixes,
             using_groups=using_groups,
-            the_objects=False))
+            the_objects=False)))
 
     security.declarePublic('getPloneMeetingFolder')
 
@@ -1661,26 +1683,47 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''See doc in interfaces.py.'''
         return False
 
-    def performCustomAdviceWFAdaptations(self, meetingConfig, wfAdaptation, logger, advice_wf_id):
+    def performCustomAdviceWFAdaptations(self,
+                                         meetingConfig,
+                                         wfAdaptation,
+                                         logger,
+                                         advice_wf_id):
         '''See doc in interfaces.py.'''
         return False
 
     def get_extra_adviser_infos(self, group_by_org_uids=False):
-        '''See doc in interfaces.py.'''
+        '''Helper to get ToolPloneMeeting.advisersConfig's data.
+        This will return a dict with following informations:
+           - key: an adviser organization uid, or a list of org uids when
+             p_group_by_org_uids=True
+           - value : a dict with:
+               - 'portal_type': the portal_type to use to give the advice;
+               - 'base_wf': the name of the base WF used by this portal_type;
+                 will be used to generate a patched_ prefixed WF to apply WFAdaptations on;
+               - 'wf_adaptations': a list of workflow adaptations to apply.
+        '''
         res = {}
-        tool = self.getSelf()
-        for row in tool.getAdvisersConfig():
+        for row in self.getAdvisersConfig():
             if group_by_org_uids:
-                res[tuple(row['org_uids'])] = {k: v for k, v in row.items() if k != 'org_uids'}
+                res[tuple(row['org_uids'])] = {
+                    k: v for k, v in row.items() if k != 'org_uids'}
             else:
                 for org_uid in row['org_uids']:
                     # append every existing values
-                    res[org_uid] = {k: v for k, v in row.items() if k != 'org_uids'}
+                    res[org_uid] = {
+                        k: v for k, v in row.items() if k != 'org_uids'}
         return res
 
     def extraAdviceTypes(self):
         '''See doc in interfaces.py.'''
         return []
+
+    def _advicePortalTypeForAdviser(self, org_uid):
+        """Advices may use several 'meetingadvice' portal_types.  A portal_type is associated to
+           an adviser org_uid, this method will return the advice portal_type used by given p_org_uid."""
+        adviser_infos = self.get_extra_adviser_infos().get(org_uid, {})
+        advice_portal_type = adviser_infos.get('portal_type', None)
+        return advice_portal_type or 'meetingadvice'
 
     def getGroupedConfigs_cachekey(method, self, config_group=None, check_access=True, as_items=False):
         '''cachekey method for self.getGroupedConfigs.'''
@@ -1724,12 +1767,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         else:
             return data
 
-    def show_add_config(self):
-        '''Show the add a MeetingConfig link?'''
-        res = True
-        if not check_zope_admin():
-            res = False
-        return res
+    security.declarePublic('is_zope_admin')
+
+    def is_zope_admin(self):
+        '''Is current user a Zope admin?'''
+        return check_zope_admin()
 
 
 registerType(ToolPloneMeeting, PROJECTNAME)

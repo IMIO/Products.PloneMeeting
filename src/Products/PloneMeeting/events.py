@@ -21,6 +21,7 @@ from imio.helpers.cache import setup_ram_cache
 from imio.helpers.content import get_modified_attrs
 from imio.helpers.content import richtextval
 from imio.helpers.content import safe_delattr
+from imio.helpers.security import check_zope_admin
 from imio.helpers.security import fplog
 from imio.helpers.workflow import get_final_states
 from imio.helpers.workflow import update_role_mappings_for
@@ -233,7 +234,7 @@ def onAdviceTransition(advice, event):
     item = advice.getParentNode()
     if advice.advice_hide_during_redaction is True:
         tool = api.portal.get_tool('portal_plonemeeting')
-        adviser_infos = tool.adapted().get_extra_adviser_infos().get(advice.advice_group, {})
+        adviser_infos = tool.get_extra_adviser_infos().get(advice.advice_group, {})
         # use get in case overrided get_extra_adviser_infos and
         # 'show_advice_on_final_wf_transition' not managed, will be removable
         # when every profiles use new behavior
@@ -1709,3 +1710,27 @@ def onZopeProcessStarting(event):
     """ """
     setup_ram_cache(max_entries=100000, max_age=2400, cleanup_interval=600)
     transaction.commit()
+
+
+def onPODTemplateCreated(pod_template, event):
+    """PODTemplate can only be created by a Zope admin."""
+    if not check_zope_admin():
+        raise Unauthorized
+
+
+def onPODTemplateModified(pod_template, event):
+    """PODTemplate can only be modified by a Zope admin."""
+    if not check_zope_admin():
+        raise Unauthorized
+
+
+def onStyleTemplateCreated(style_template, event):
+    """StyleTemplate can only be created by a Zope admin."""
+    if not check_zope_admin():
+        raise Unauthorized
+
+
+def onStyleTemplateModified(style_template, event):
+    """StyleTemplate can only be modified by a Zope admin."""
+    if not check_zope_admin():
+        raise Unauthorized

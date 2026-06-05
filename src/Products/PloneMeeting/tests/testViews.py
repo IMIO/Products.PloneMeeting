@@ -2334,6 +2334,7 @@ class testViews(PloneMeetingTestCase):
         viewlet = self._get_viewlet(
             context=item, manager_name='plone.belowcontenttitle', viewlet_name='ftw.labels.labeling')
         self.assertFalse(viewlet.available)
+        self.assertEqual(viewlet.render().strip(), u'')
 
         # get the labeljar, that is actually the MeetingConfig
         labeljar = getAdapter(item, ILabelJar)
@@ -2349,6 +2350,50 @@ class testViews(PloneMeetingTestCase):
         labeljar.add('Label', 'green', False)
         self.cleanMemoize()
         self.assertTrue(viewlet.available)
+        self.failUnless(viewlet.render())
+
+    def test_pm_ftw_labels_viewlet_available_item_template(self):
+        """Available on item templates to Managers and item templates managers."""
+        cfg = self.meetingConfig
+        self._enableField('labels')
+        # Manager
+        self.changeUser('siteadmin')
+        item_templates = cfg.getItemTemplates(filtered=True)
+        item_template = item_templates[0].getObject()
+        viewlet = self._get_viewlet(
+            context=item_template,
+            manager_name='plone.belowcontenttitle',
+            viewlet_name='ftw.labels.labeling')
+        self.assertTrue(viewlet.available)
+        self.failUnless(viewlet.render())
+        self.assertEqual(len(viewlet.available_labels[1]), 1)
+        # item templates manager can access every labels
+        self.changeUser('templatemanager1')
+        viewlet = self._get_viewlet(
+            context=item_template,
+            manager_name='plone.belowcontenttitle',
+            viewlet_name='ftw.labels.labeling')
+        self.assertTrue(viewlet.available)
+        self.failUnless(viewlet.render())
+        self.assertEqual(len(viewlet.available_labels[1]), 1)
+        # a user that would access it would access no labels
+        self.changeUser('pmCreator1')
+        viewlet = self._get_viewlet(
+            context=item_template,
+            manager_name='plone.belowcontenttitle',
+            viewlet_name='ftw.labels.labeling')
+        self.assertFalse(viewlet.available)
+        self.failUnless(viewlet.render())
+        self.assertEqual(viewlet.available_labels[1], [])
+        # MeetingManager
+        self.changeUser('pmManager')
+        viewlet = self._get_viewlet(
+            context=item_template,
+            manager_name='plone.belowcontenttitle',
+            viewlet_name='ftw.labels.labeling')
+        self.assertFalse(viewlet.available)
+        self.failUnless(viewlet.render())
+        self.assertEqual(viewlet.available_labels[1], [])
 
     def test_pm_ftw_labels_viewlet_can_edit(self):
         """can_edit when user has Modify portal content permission."""
@@ -3565,6 +3610,60 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(viewlet.available_labels[1], [])
         self.assertFalse(viewlet.can_edit)
 
+    def test_pm_LabelsConfigViewableByCopyGroups(self):
+        """Test labelsConfig so "label" is viewable by copy groups
+           ("Vendors reviewers") and restricted copy groups ("Vendors creators")."""
+        self._enableField(['copyGroups', 'restrictedCopyGroups', 'labels'])
+        cfg = self.meetingConfig
+        cfg.setItemCopyGroupsStates(('itemcreated', ))
+        cfg.setItemRestrictedCopyGroupsStates(('itemcreated', ))
+        cfg.setSelectableRestrictedCopyGroups((self.vendors_creators, ))
+        # editable and viewable only by proposingGroup
+        config = list(cfg.getLabelsConfig())
+        new_config = deepcopy(config[0])
+        new_config['label_id'] = "label"
+        new_config['view_groups'] = [
+            'suffix_proposing_group_creators',
+            'reader_copy_groups',
+            'reader_restricted_copy_groups']
+        config.append(new_config)
+        cfg.setLabelsConfig(config)
+        # create item as MeetingManager to be able to use restrictedCopyGroups
+        self.changeUser('pmManager')
+        item = self.create(
+            'MeetingItem',
+            copyGroups=[self.vendors_reviewers],
+            restrictedCopyGroups=[self.vendors_creators])
+        self.changeUser('pmCreator1')
+        # creator can view/edit
+        labelingview = item.restrictedTraverse('@@labeling')
+        self.assertEqual(
+            labelingview.available_labels(modes=['view'])[1][0]['label_id'],
+            'label')
+        self.assertEqual(
+            labelingview.available_labels(modes=['edit'])[1][0]['label_id'],
+            'label')
+        # set label so we can check for "read"
+        self.request.form['activate_labels'] = ['label']
+        labelingview.update()
+        self.assertTrue('label' in get_labels(item))
+        # copyGroups can view
+        self.changeUser('pmReviewer2')
+        labelingview = item.restrictedTraverse('@@labeling')
+        self.assertEqual(
+            labelingview.available_labels(modes=['view'])[1][0]['label_id'],
+            'label')
+        self.assertEqual(
+            labelingview.available_labels(modes=['edit'])[1], [])
+        # restrictedCopyGroups can view
+        self.changeUser('pmCreator2')
+        labelingview = item.restrictedTraverse('@@labeling')
+        self.assertEqual(
+            labelingview.available_labels(modes=['view'])[1][0]['label_id'],
+            'label')
+        self.assertEqual(
+            labelingview.available_labels(modes=['edit'])[1], [])
+
     def test_pm_LabelsConfigUpdateLocalRoles(self):
         """Test labelsConfig when a configuration specify to update_local_roles.
            Here a copyGroup will be added when a label is selected."""
@@ -3606,6 +3705,75 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(get_labels(item), {})
         self.assertEqual(item.getAllCopyGroups(True), ())
 
+    def test_pm_LabelsConfigUpdateLocalRolesUpdateLabelsAccess(self):
+        """Test labelsConfig when a configuration specify to update labels access.
+           Here label "label2" is available when "label1" is selected."""
+        cfg = self.meetingConfig
+        self._enable_ftw_labels(cfg)
+        # label2 is available when label1 is selected
+        # for now, do not update labels
+        config = list(cfg.getLabelsConfig())
+        new_config = deepcopy(config[0])
+        new_config['label_id'] = "label2"
+        new_config['edit_access_on'] = \
+            "python: utils.get_labels(item, include_personal_labels=False, label_ids=['label1'])"
+        new_config['edit_groups'] = []
+        config.append(new_config)
+        cfg.setLabelsConfig(config)
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        # label2 is not available
+        labelingview = item.restrictedTraverse('@@labeling')
+        # available_labels is cached
+        self.cleanMemoize()
+        self.assertEqual(
+            [label['label_id'] for label in labelingview.available_labels(modes=['edit'])[1]],
+            ['label', 'label1'])
+        self.request.form['activate_labels'] = ['label1']
+        labelingview.update()
+        # as update_local_roles is "0", labels access was not updated so "label2" is not available
+        self.assertTrue('label1' in get_labels(item))
+        labelingview = item.restrictedTraverse('@@labeling')
+        self.cleanMemoize()
+        self.assertEqual(
+            [label['label_id'] for label in labelingview.available_labels(modes=['edit'])[1]],
+            ['label', 'label1'])
+        # update config so it update labels when label1 is added/removed
+        new_config = deepcopy(config[0])
+        new_config['label_id'] = "label1"
+        new_config['update_local_roles'] = "2"
+        cfg.setLabelsConfig(config)
+        config.append(new_config)
+        cfg.setLabelsConfig(config)
+        # was not updated because updated when changed
+        labelingview.update()
+        labelingview = item.restrictedTraverse('@@labeling')
+        self.cleanMemoize()
+        self.assertEqual(
+            [label['label_id'] for label in labelingview.available_labels(modes=['edit'])[1]],
+            ['label', 'label1'])
+        # remove and add it again, this time labels access is updated
+        labelingview = item.restrictedTraverse('@@labeling')
+        self.request.form['activate_labels'] = []
+        labelingview.update()
+        self.assertEqual(get_labels(item), {})
+        self.request.form['activate_labels'] = ['label1']
+        labelingview = item.restrictedTraverse('@@labeling')
+        labelingview.update()
+        self.cleanMemoize()
+        self.assertEqual(
+            [label['label_id'] for label in labelingview.available_labels(modes=['edit'])[1]],
+            ['label', 'label1', 'label2'])
+        # removing the label will also update labels
+        self.request.form['activate_labels'] = []
+        labelingview = item.restrictedTraverse('@@labeling')
+        labelingview.update()
+        self.assertEqual(get_labels(item), {})
+        self.cleanMemoize()
+        self.assertEqual(
+            [label['label_id'] for label in labelingview.available_labels(modes=['edit'])[1]],
+            ['label', 'label1'])
+
     def test_pm_LabelsConfigWithNotViewableNotEditableLabels(self):
         """Test labelsConfig when editing an item containing labels where
            some are not viewable and/or editable.
@@ -3624,7 +3792,7 @@ class testViews(PloneMeetingTestCase):
         new_config2 = deepcopy(config[0])
         new_config2['label_id'] = "label2"
         new_config2['edit_access_on'] = "python: item.Title() != 'Label2 not editable'"
-        new_config2['view_access_on'] = "python: False"
+        new_config2['view_access_on'] = "python: 0"
         new_config2['edit_groups'] = []
         config.append(new_config1)
         config.append(new_config2)
@@ -3648,7 +3816,9 @@ class testViews(PloneMeetingTestCase):
         # try to remove 'label1', warning and still there
         item.setTitle('Label1 not editable')
         item._update_after_edit()
-
+        # edit_access and view_access are always stored as boolean values
+        # check view_access for which TAL expr is "python: 0"
+        self.assertTrue(isinstance(item._labels_access_cache['label2']['view_access'], bool))
         self.request.form['activate_labels'] = []
         labelingview.update()
         # set response status to 200 so status message is removed
@@ -3673,10 +3843,10 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(IStatusMessage(self.request).show(), [])
         # but 'label2' was kept as it is not viewable
         self.assertEqual(sorted(get_labels(item)), ['label1', 'label2'])
-        self.cleanMemoize()
         # use global MeetingConfig.update_labels_access_cache to reflect
         # configuration changes, make "label2" viewable
         # for now we have "label" and "label1"
+        self.cleanMemoize()
         self.assertEqual(len(labelingview.available_labels(modes=['edit'])[1]), 2)
         config = list(cfg.getLabelsConfig())
         config[2]["edit_access_on"] = ""
@@ -3685,7 +3855,99 @@ class testViews(PloneMeetingTestCase):
         self.changeUser('siteadmin')
         cfg.update_labels_access_cache()
         self.changeUser('pmCreator1')
+        self.cleanMemoize()
         self.assertEqual(len(labelingview.available_labels(modes=['edit'])[1]), 3)
+
+    def test_pm_AddAdviceBatchActionForm(self):
+        """Test the @@add-advice-batch-action."""
+        cfg = self.meetingConfig
+        cfg.setItemAdviceStates(('itemcreated',))
+        cfg.setItemAdviceEditStates(('itemcreated',))
+        # create some items and ask advice
+        self.changeUser('pmCreator2')
+        item1 = self.create('MeetingItem', optionalAdvisers=(self.vendors_uid, ))
+        item1_uid = item1.UID()
+        item2 = self.create('MeetingItem', optionalAdvisers=(self.vendors_uid, self.developers_uid))
+        item2_uid = item2.UID()
+        item3 = self.create('MeetingItem', optionalAdvisers=(self.developers_uid, ))
+        item3_uid = item3.UID()
+        self.request.form['form.widgets.uids'] = u','.join([item1_uid, item2_uid, item3_uid])
+        searches_items = self.getMeetingFolder().searches_items
+        # not available as not adviser
+        self.assertRaises(
+            Unauthorized,
+            searches_items.restrictedTraverse('@@add-advice-batch-action').update)
+        self.assertFalse(
+            searches_items.restrictedTraverse('@@add-advice-batch-action').available())
+        # available as developers adviser
+        self.changeUser('pmReviewer2')
+        searches_items = self.getMeetingFolder().searches_items
+        form = searches_items.restrictedTraverse('@@add-advice-batch-action')
+        self.request['PUBLISHED'] = form
+        self.assertTrue(form.available())
+        form.update()
+        self.assertEqual(len(form.brains), 3)
+        self.assertEqual(form.widgets['advice_type'].value, ['positive'])
+        # no common advice_group so no value
+        self.assertEqual(len(form.widgets['advice_group'].terms), 0)
+        # description explains to select common advisable items
+        self.assertEqual(
+            form.widgets['advice_group'].field.description,
+            u'No common or available advice group. Modify your selection.')
+        # not able to give advice for developers
+        self.request.form['form.widgets.uids'] = item3_uid
+        form = searches_items.restrictedTraverse('@@add-advice-batch-action')
+        self.request['PUBLISHED'] = form
+        form.update()
+        self.assertEqual(len(form.brains), 1)
+        # give advice on item1 and item2
+        self.request.form['form.widgets.uids'] = u','.join([item1_uid, item2_uid])
+        form = searches_items.restrictedTraverse('@@add-advice-batch-action')
+        self.request['PUBLISHED'] = form
+        self.request.form['form.widgets.advice_type'] = u'positive'
+        self.request.form['form.widgets.advice_group'] = safe_unicode(self.vendors_uid)
+        self.request.form['form.widgets.advice_comment'] = u"My comment"
+        form.update()
+        self.assertEqual(len(form.brains), 2)
+        self.assertEqual(len(form.widgets['advice_group'].terms), 1)
+        # no description
+        self.assertEqual(form.widgets['advice_group'].field.description, u'')
+        self.assertEqual(
+            form.widgets['advice_group'].terms.terms._terms[0].token, self.vendors_uid)
+        form.handleApply(form, None)
+        # advice were added on items with correct type and advice_hide_during_redaction
+        self.assertEqual(item1.adviceIndex[self.vendors_uid]['type'], 'positive')
+        self.assertEqual(item1.adviceIndex[self.vendors_uid]['comment'], u'My comment')
+        self.assertEqual(item1.getAdvices()[0].advice_comment.raw, u'My comment')
+        self.assertEqual(item2.adviceIndex[self.vendors_uid]['type'], 'positive')
+        # no more advice to give
+        form = searches_items.restrictedTraverse('@@add-advice-batch-action')
+        self.request['PUBLISHED'] = form
+        form.update()
+        self.assertEqual(len(form.widgets['advice_group'].terms), 0)
+        self.assertEqual(
+            form.widgets['advice_group'].field.description,
+            u'No common or available advice group. Modify your selection.')
+        # action is only available if current user able to add advices using
+        # the default advice portal_type "meetingadvice"
+        # setup dummy tool.advisersConfig, make vendors advisers not using
+        # advice portal_type "meetingadvice" and so not able to use the action
+        self.tool.setAdvisersConfig(
+            ({'advice_types': [],
+             'base_wf': 'meetingadvice_workflow',
+             'default_advice_type': 'positive',
+             'org_uids': [self.vendors_uid],
+             'portal_type': 'dummymeetingadvice',
+             'show_advice_on_final_wf_transition': '1',
+             'wf_adaptations': []},))
+        self.changeUser('pmAdviser1')
+        searches_items = self.getMeetingFolder().searches_items
+        form = searches_items.restrictedTraverse('@@add-advice-batch-action')
+        self.assertTrue(form.available())
+        self.changeUser('pmReviewer2')
+        searches_items = self.getMeetingFolder().searches_items
+        form = searches_items.restrictedTraverse('@@add-advice-batch-action')
+        self.assertFalse(form.available())
 
 
 def test_suite():

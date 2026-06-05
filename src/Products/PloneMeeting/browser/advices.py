@@ -5,6 +5,7 @@ from collective.contact.plonegroup.utils import get_plone_group_id
 from imio.actionspanel.interfaces import IContentDeletable
 from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.content import get_user_fullname
+from imio.helpers.content import get_vocab
 from imio.helpers.content import get_vocab_values
 from imio.helpers.workflow import get_state_infos
 from imio.history.browser.views import EventPreviewView
@@ -20,9 +21,11 @@ from plone.memoize import ram
 from plone.supermodel import model
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
+from Products.CMFPlone.utils import safe_unicode
 from Products.Five import BrowserView
 from Products.PloneMeeting.browser.advicechangedelay import _reinit_advice_delay
 from Products.PloneMeeting.config import PMMessageFactory as _
+from Products.PloneMeeting.utils import _add_advice
 from Products.PloneMeeting.utils import get_event_field_data
 from Products.PloneMeeting.utils import is_proposing_group_editor
 from Products.PloneMeeting.utils import isPowerObserverForCfg
@@ -155,15 +158,6 @@ class AdvicesIcons(BrowserView):
 
         return advicesToWarn
 
-    def getAddableAdvicePortalTypes(self, advicesToAdd):
-        """ """
-        res = []
-        for adviceToAdd in advicesToAdd:
-            advice_portal_type = self.context.adapted()._advicePortalTypeForAdviser(adviceToAdd)
-            if advice_portal_type not in res:
-                res.append(advice_portal_type)
-        return res
-
 
 class AdvicesIconsInfos(BrowserView):
     """ """
@@ -273,7 +267,7 @@ class AdvicesIconsInfos(BrowserView):
 
     def get_adviser_group_ids(self, advice_id):
         """Return list of Plone groups ids having a role in p_advice_id advice WF."""
-        advice_portal_type = self.context._advicePortalTypeForAdviser(advice_id)
+        advice_portal_type = self.tool._advicePortalTypeForAdviser(advice_id)
         suffixes = ["advisers"]
         # for performance reason, if portal_type is the basic "meetingadvice"
         # we only return the "_advisers" suffixed group
@@ -430,6 +424,72 @@ class ChangeAdviceAskedAgainView(BrowserView):
                                                force_resend_if_in_advice_review_states=True)
 
 
+class AdviceAddCompleteOrQuick(BrowserView):
+    """Display add complete/quick advice listing."""
+
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+        self.portal_url = api.portal.get().absolute_url()
+
+    def __call__(self, advice_group=None, advice_type=None):
+        # this include asked and not asked advices
+        self.advices_to_add = get_vocab(
+            self.context,
+            'Products.PloneMeeting.content.advice.advice_group_vocabulary',
+            advice_portal_type="meetingadvice")
+        self.advice_types = get_vocab(
+            self.context,
+            'Products.PloneMeeting.content.advice.advice_type_vocabulary',
+            advice_portal_type="meetingadvice")
+        # calling the view directly or trying to add wrong advice_group or
+        # wrong advice_type or passing only one value or wrong values
+        # will lead to Unauthorized
+        if not self.advices_to_add or \
+           (advice_group and not advice_type) or \
+           (not advice_group and advice_type) or \
+           (advice_group and advice_group not in self.advices_to_add) or \
+           (advice_type and advice_type not in self.advice_types):
+            raise Unauthorized
+
+        if advice_group in self.advices_to_add and \
+           advice_type in self.advice_types:
+            _add_advice(
+                self.context,
+                advice_group=advice_group,
+                advice_type=advice_type)
+            api.portal.show_message(
+                _("Advice was quick added."),
+                request=self.context.REQUEST,
+                type="info")
+            # if on the item view, redirect to "/#advices"
+            if self.request.get('HTTP_REFERER', '').startswith(self.context.absolute_url()):
+                return self.context.absolute_url() + "/#advices"
+        else:
+            self.tool = api.portal.get_tool('portal_plonemeeting')
+            self.userAdviserOrgUids = self.tool.get_orgs_for_user(suffixes=['advisers'])
+            return super(AdviceAddCompleteOrQuick, self).__call__()
+
+    def advice_to_add_title(self, advice_to_add_term):
+        """ """
+        advice_name_pattern = '<span class="add-quick-advice-name">%s</span>'
+        if advice_to_add_term.token in self.context.adviceIndex:
+            title = advice_name_pattern % self.context.adviceIndex[advice_to_add_term.token]['name']
+            if self.context.adviceIndex[advice_to_add_term.token]['delay_label']:
+                title += u" - %s" % safe_unicode(
+                    self.context.adviceIndex[advice_to_add_term.token]['delay_label'])
+            if not self.context.adviceIndex[advice_to_add_term.token]['optional']:
+                title += u" [auto]"
+        else:
+            title = advice_name_pattern % advice_to_add_term.title
+        return title
+
+    def delay_icon(self, advice_info):
+        """Makes it callable in the template."""
+        memberIsAdviserForGroup = advice_info['id'] in self.userAdviserOrgUids
+        return _delay_icon(memberIsAdviserForGroup, advice_info)
+
+
 class AdviceConfidentialityView(BrowserView):
     """Display advice confidentiality infos."""
 
@@ -517,6 +577,15 @@ class AdviceView(DefaultView):
             raise Unauthorized
         _display_asked_again_warning(self.context, self.parent)
         return super(AdviceView, self).__call__()
+
+    def updateWidgets(self):
+        # need to change select2 widget klass when in display mode because JS tries to init and it fails
+        # leading to a JS error preventing loading of some elements like portlets async requests
+        super(AdviceView, self).updateWidgets()
+        if self.widgets['advice_type'].mode == "display":
+            self.widgets['advice_type'].klass = \
+                self.widgets['advice_type'].klass.replace(
+                'single-select2-widget', 'single-select2-widget-view')
 
 
 class AdviceEdit(DefaultEditForm):

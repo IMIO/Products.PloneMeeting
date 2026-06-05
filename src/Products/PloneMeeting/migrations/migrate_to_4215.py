@@ -28,7 +28,7 @@ class Migrate_To_4215(Migrator):
                 cfg.registerPortalTypes()
         logger.info('Done.')
 
-    def _fixWSCConfigAndCleanBrokenAnnexes(self):
+    def _fixWSCConfig(self):
         """WSC could sometimes break quickupload leading to broken annexes.
            Adapt WSC config so it is no more used in quickupload and clean broken annexes."""
         logger.info("Updating WSC config and removing broken annexes...")
@@ -37,8 +37,6 @@ class Migrate_To_4215(Migrator):
             set_disable_autosearch_in(
                 u'["#form-widgets-title", "#form-widgets-description", '
                 u'".select2-focusser", ".select2-input"]')
-            # remove broken annexes
-            self._removeBrokenAnnexes()
         logger.info('Done.')
 
     def _updateWFWriteMarginalNotesPermission(self):
@@ -60,6 +58,8 @@ class Migrate_To_4215(Migrator):
     def run(self, extra_omitted=[], from_migration_to_4200=False):
 
         logger.info('Migrating to PloneMeeting 4215...')
+        # remove broken annexes before upgrading collective.iconifiedcategory
+        self._removeBrokenAnnexes()
         if not from_migration_to_4200:
             # this will upgrade collective.contact.core especially
             # that reinstalls imio.fpaudit, that will itself reinstall collective.documentgenerator
@@ -69,9 +69,9 @@ class Migrate_To_4215(Migrator):
             load_type_from_package('ConfigurablePODTemplate', 'Products.PloneMeeting:default')
             # hide document-generation-link default viewlet
             self.ps.runImportStepFromProfile('profile-Products.PloneMeeting:default', 'viewlets')
+        self._fixWSCConfig()
         self._updateConfigCustomAdvisersDataGrid()
         self._reloadMeetingConfigsForItemWorkflows()
-        self._fixWSCConfigAndCleanBrokenAnnexes()
         self._updateWFWriteMarginalNotesPermission()
         logger.info('Migrating to PloneMeeting 4215... Done.')
 

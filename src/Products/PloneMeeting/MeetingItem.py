@@ -75,6 +75,7 @@ from Products.PloneMeeting.browser.itemvotes import next_vote_is_linked
 from Products.PloneMeeting.config import AddAdvice
 from Products.PloneMeeting.config import AUTO_COPY_GROUP_PREFIX
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
+from Products.PloneMeeting.config import CONFIGURABLE_FIELD_NAMES
 from Products.PloneMeeting.config import CONSIDERED_NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import DEFAULT_COPIED_FIELDS
 from Products.PloneMeeting.config import DUPLICATE_AND_KEEP_LINK_EVENT_ACTION
@@ -1591,6 +1592,23 @@ schema = Schema((
         vocabulary='listItemInitiators',
     ),
     TextField(
+        name='groupsInChargeNotes',
+        allowable_content_types=('text/html',),
+        widget=RichWidget(
+            condition="python: here.adapted().show_field('groupsInChargeNotes')",
+            description="GroupsInChargeNotes",
+            description_msgid="groups_in_charge_notes_descr",
+            label_msgid="PloneMeeting_label_groupsInChargeNotes",
+            label='Groupsinchargenotes',
+            i18n_domain='PloneMeeting',
+        ),
+        default_content_type="text/html",
+        default_output_type="text/x-html-safe",
+        searchable=True,
+        optional=True,
+        write_permission=View,
+    ),
+    TextField(
         name='inAndOutMoves',
         allowable_content_types=('text/html',),
         widget=RichWidget(
@@ -2664,15 +2682,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('showField')
 
-    def show_field(self, field_name):
+    def show_field(self, field_name, mode='view'):
         '''See doc in interfaces.py.'''
         item = self.getSelf()
-        if not item.isDefinedInTool() and \
-            item.attribute_is_used(field_name):
+        if item.attribute_is_used(field_name):
             # evaluate TAL expression
             tool = api.portal.get_tool('portal_plonemeeting')
+            # bypass for Manager
+            if tool.isManager(realManagers=True):
+                return True
             cfg = tool.getMeetingConfig(item)
-            return cfg.eval_tal_expr_for_field(item, field_name)
+            return cfg.eval_tal_expr_for_field(item, field_name, mode=mode)
 
     security.declarePublic('showObservations')
 
@@ -3115,10 +3135,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 if not found:
                     # make sure we have a list
                     states = [states]
-            suffixes = cfg.getItemWFValidationLevels(
-                states=states, data='suffix', only_enabled=True, return_state_singleton=False)
-            if tool.user_is_in_org(org_uid=org_uid, suffixes=suffixes):
-                return True
+            # make sure user actually able to back to states in case it was overrided
+            states = [state for state in states if item.wfConditions().mayCorrect(state)]
+            if states:
+                suffixes = cfg.getItemWFValidationLevels(
+                    states=states, data='suffix', only_enabled=True, return_state_singleton=False)
+                if tool.user_is_in_org(org_uid=org_uid, suffixes=suffixes):
+                    return True
         return False
 
     security.declarePublic('mayBackToPreviousAdvice')
@@ -3150,6 +3173,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return True
         return False
 
+    def get_addable_advice_portal_types(self, advices_to_add):
+        """ """
+        tool = api.portal.get_tool('portal_plonemeeting')
+        res = []
+        for advice_to_add in advices_to_add:
+            advice_portal_type = tool._advicePortalTypeForAdviser(advice_to_add)
+            if advice_portal_type not in res:
+                res.append(advice_portal_type)
+        return res
+
     security.declareProtected(ModifyPortalContent, 'setItemIsSigned')
 
     def setItemIsSigned(self, value, **kwargs):
@@ -3176,8 +3209,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def setManuallyLinkedItems(self, value, caching=True, **kwargs):
         '''Overrides the field 'manuallyLinkedItems' mutator so we synchronize
            field manuallyLinkedItems of every linked items...
-           We are using ZCatalog.unrestrictedSearchResults and ZCatalog.unrestrictedSearchResults
-           because current member could update manually linked items in which some are not viewable.'''
+           We are using uuidToObject with unrestricted=True because current member
+           could update manually linked items in which some are not viewable.'''
         stored = self.getField('manuallyLinkedItems').getRaw(self, **kwargs)
         # value sometimes contains an empty string ''...
         if value is None:
@@ -3185,47 +3218,42 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if '' in value:
             value.remove('')
 
-        # save value that will be actually stored on self as it will not be value
-        # if some extra uids are appended to it because linking to an item
-        # that is already linked to other items
-        valueToStore = list(value)
         # only compute if something changed
         if not set(stored) == set(value):
-
-            # we will use unrestrictedSearchResults because in the case a user update manually linked items
+            # we will use uuidToObject with unrestricted=True because in the case a user update manually linked items
             # and in already selected items, there is an item he can not view, it will be found in the catalog
-            unrestrictedSearch = api.portal.get_tool('portal_catalog').unrestrictedSearchResults
-            item_infos = {}
+            cached_item_infos = {}
 
             def _get_item_infos(item_uid):
                 """Return meeting_date and item_created data for given p_item_uid."""
-                if not caching or item_uid not in item_infos:
-                    item = self if item_uid == self.UID() else None
-                    if item is None:
-                        brains = unrestrictedSearch(UID=item_uid)
-                        if brains:
-                            # there could be no brains when created from restapi call
-                            # as new item is still not indexed
-                            item = brains[0]._unrestrictedGetObject()
+                if not caching or item_uid not in cached_item_infos:
+                    item = self if item_uid == self.UID() else uuidToObject(item_uid, unrestricted=True)
                     if item:
                         meeting = item.getMeeting()
-                        item_infos[item_uid] = {
+                        cached_item_infos[item_uid] = {
                             'item': item,
                             'meeting_date': meeting and meeting.date or None,
                             'item_created': item.created()}
                     else:
-                        item_infos[item_uid] = None
-                return item_infos[item_uid]
+                        cached_item_infos[item_uid] = None
+                return cached_item_infos[item_uid]
+
+            # save value that will be actually stored on self as it will not be value
+            # if some extra uids are appended to it because linking to an item
+            # that is already linked to other items
+            # wipeout unexisting values to store in case some we removed
+            # between selection and save
+            value = [v for v in value if _get_item_infos(v)]
 
             # sorting method, items will be sorted by meeting date descending
             # then, for items that are not in a meeting date, by creation date
-            def _sortByMeetingDate(xUid, yUid):
+            def _sortByMeetingDate(x_uid, y_uid):
                 '''Sort method that will sort items by meetingDate.
                    x and y are uids of items to sort.'''
-                item1_infos = _get_item_infos(xUid)
+                item1_infos = _get_item_infos(x_uid)
                 item1_created = item1_infos['item_created']
                 item1_meeting_date = item1_infos['meeting_date']
-                item2_infos = _get_item_infos(yUid)
+                item2_infos = _get_item_infos(y_uid)
                 item2_created = item2_infos['item_created']
                 item2_meeting_date = item2_infos['meeting_date']
                 if item1_meeting_date and item2_meeting_date:
@@ -3257,8 +3285,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # do not forget newUids
             newLinkedUids = newLinkedUids + newUids
             # we will also store this for self
-            valueToStore = list(set(valueToStore).union(newLinkedUids))
-            valueToStore.sort(_sortByMeetingDate)
+            value = list(set(value).union(newLinkedUids))
+            value.sort(_sortByMeetingDate)
             # for every linked items, also keep back link to self
             newLinkedUids.append(self.UID())
             # now update every item (newLinkedUids + value)
@@ -3281,10 +3309,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # now if links were removed, remove linked items on every removed items...
             removedUids = set(stored).difference(set(value))
             for removedUid in removedUids:
-                removedItemBrains = unrestrictedSearch(UID=removedUid)
-                if not removedItemBrains:
+                removedItem = uuidToObject(removedUid, unrestricted=True)
+                if not removedItem:
                     continue
-                removedItem = removedItemBrains[0]._unrestrictedGetObject()
                 removedItem.getField('manuallyLinkedItems').set(removedItem, [], **kwargs)
                 # make change in linkedItem.at_ordered_refs until it is fixed in Products.Archetypes
                 removedItem._p_changed = True
@@ -3295,7 +3322,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             self.REQUEST.set('manuallyLinkedItems_newLinkedUids', newLinkedUids)
             self.REQUEST.set('manuallyLinkedItems_removedUids', removedUids)
 
-            self.getField('manuallyLinkedItems').set(self, valueToStore, **kwargs)
+            self.getField('manuallyLinkedItems').set(self, value, **kwargs)
             # make change in linkedItem.at_ordered_refs until it is fixed in Products.Archetypes
             self._p_changed = True
 
@@ -4990,23 +5017,19 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _bypass_meeting_closed_check_for(self, fieldName):
         """See docstring in interfaces.py"""
-        if fieldName in [
-                'internalNotes', 'marginalNotes',
-                'neededFollowUp', 'providedFollowUp']:
-            return True
+        return fieldName in [
+            'internalNotes', 'marginalNotes',
+            'neededFollowUp', 'providedFollowUp']
 
     def _bypass_write_perm_check_for(self, fieldName):
         """See docstring in interfaces.py"""
-        if fieldName in ['neededFollowUp', 'providedFollowUp']:
+        if fieldName in CONFIGURABLE_FIELD_NAMES:
             item = self.getSelf()
-            tool = api.portal.get_tool('portal_plonemeeting')
-            cfg = tool.getMeetingConfig(item)
-            return cfg.eval_tal_expr_for_field(item, fieldName, mode='edit')
+            return item.adapted().show_field(fieldName, mode='edit')
 
     def _bypass_quick_edit_notify_modified_for(self, fieldName):
         """See docstring in interfaces.py"""
-        if fieldName in ['internalNotes']:
-            return True
+        return fieldName in ['internalNotes']
 
     security.declarePublic('mayQuickEdit')
 
@@ -5032,10 +5055,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             self.adapted()._bypass_write_perm_check_for(fieldName)
         # write_permission is "View" for custom management
         # if bypassWritePermissionCheck is False, make sure write_permission
-        # is no more "View", set it to "Modify portal content"
+        # is no more "View", set it to "Manage portal"
         write_perm = field.write_permission
         if not bypassWritePermissionCheck and write_perm == "View":
-            write_perm = ModifyPortalContent
+            write_perm = ManagePortal
         res = checkMayQuickEdit(
             self,
             bypassWritePermissionCheck=bypassWritePermissionCheck,
@@ -5071,12 +5094,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             context = self.getSelf()
             if advice['advice_editable']:
                 customAdviceMessage = translate(
-                    'hidden_during_redaction',
+                    'advice_hidden_during_redaction_help',
                     domain='PloneMeeting',
                     context=context.REQUEST)
             else:
                 customAdviceMessage = translate(
-                    'considered_not_given_hidden_during_redaction',
+                    'advice_hidden_during_redaction_considered_not_given_help',
                     domain='PloneMeeting',
                     context=context.REQUEST)
         return {'displayDefaultComplementaryMessage': True,
@@ -5913,28 +5936,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 if itemState in cfg.getItemAdviceStatesForOrg(org_uid=user_org_uid):
                     toAdd.append(user_org_uid)
         return (toAdd, toEdit)
-
-    def _advicePortalTypeForAdviser(self, org_uid):
-        '''See doc in interfaces.py.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        adviser_infos = tool.adapted().get_extra_adviser_infos().get(org_uid, {})
-        advice_portal_type = adviser_infos.get('portal_type', None)
-        return advice_portal_type or 'meetingadvice'
-
-    def _adviceTypesForAdviser(self, meeting_advice_portal_type):
-        """Return the advice types (positive, negative, ...) for given p_meeting_advice_portal_type.
-           By default we will use every MeetingConfig.usedAdviceTypes but check
-           if something is defined in ToolPloneMeeting.advisersConfig."""
-        tool = api.portal.get_tool('portal_plonemeeting')
-        res = []
-        for org_uid, adviser_infos in tool.adapted().get_extra_adviser_infos().items():
-            if adviser_infos['portal_type'] == meeting_advice_portal_type:
-                res = adviser_infos['advice_types']
-                break
-        if not res:
-            cfg = tool.getMeetingConfig(self)
-            res = cfg.getUsedAdviceTypes()
-        return res
 
     def _adviceIsViewableForCurrentUser(self,
                                         cfg,
@@ -7517,7 +7518,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             cache = getattr(self, ITEM_LABELS_ACCESS_CACHE_ATTR)
             cache.update(
                 compute_labels_access(
-                    adapter, cfg, item=self, item_state=self.query_state()))
+                    adapter, cfg, item=self, item_state=item_state))
 
     def _updateCommitteeEditorsLocalRoles(self, cfg, item_state):
         '''Add local roles depending on MeetingConfig.committees.'''
@@ -7912,9 +7913,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # While getting the destFolder, it could not exist, in this case
             # we return a clear message
             plone_utils.addPortalMessage(
-                translate('sendto_inexistent_destfolder_error',
-                          mapping={'meetingConfigTitle': destCfg.Title()},
-                          domain="PloneMeeting", context=self.REQUEST),
+                translate(
+                    'sendto_inexistent_destfolder_error',
+                    mapping={'meetingConfigTitle': safe_unicode(destCfg.Title())},
+                    domain="PloneMeeting", context=self.REQUEST),
                 type='error')
             return
         # The owner of the new item will be the same as the owner of the
@@ -8464,20 +8466,23 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def may_view_follow_up(self,
                            field_name='neededFollowUp',
                            label_ids=('needed-follow-up', 'provided-follow-up'),
+                           restricted=False,
                            suffixes=[]):
         """Helper methods for default view access to followUp related fields."""
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         if tool.isManager(realManagers=True):
             return True
-        is_manager = tool.isManager(cfg)
         # same condition for any field
-        # must have relevant labels and MeetingManager or proposing group member
-        if (not fieldIsEmpty(field_name, self) or
-            get_labels(self, label_ids=label_ids)) and \
-           (is_manager or tool.user_is_in_org(
-                org_uid=self.getProposingGroup(), suffixes=suffixes)):
-            return True
+        # MeetingManager have always access
+        # when restricted=True, viewable to proposing group members
+        # when restricted=False, viewable if label viewable
+        is_manager = tool.isManager(cfg)
+        if restricted:
+            return is_manager or tool.user_is_in_org(
+                org_uid=self.getProposingGroup(), suffixes=suffixes)
+        else:
+            return is_manager or get_labels(self, label_ids=label_ids, only_viewable=True)
 
     def may_edit_follow_up(self,
                            field_name='neededFollowUp',

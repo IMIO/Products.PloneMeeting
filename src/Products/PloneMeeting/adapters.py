@@ -34,6 +34,7 @@ from imio.helpers.content import get_user_fullname
 from imio.helpers.content import get_vocab
 from imio.helpers.content import get_vocab_values
 from imio.helpers.content import richtextval
+from imio.helpers.security import check_zope_admin
 from imio.helpers.xhtml import xhtmlContentIsEmpty
 from imio.history.adapters import BaseImioHistoryAdapter
 from imio.history.adapters import ImioWfHistoryAdapter
@@ -104,6 +105,17 @@ class AnnexContentDeletableAdapter(APContentDeletableAdapter):
     def __init__(self, context):
         self.context = context
 
+    def _may_delete_decision_annex(self, parent):
+        """A 'Owner' may still remove an 'annexDecision' if enabled
+           in the cfg and if still able to add 'annexDecision'."""
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        if cfg.getOwnerMayDeleteAnnexDecision() and \
+           _checkPermission(AddAnnexDecision, parent):
+            member = api.user.get_current()
+            if 'Owner' in member.getRolesInContext(self.context):
+                return True
+
     def mayDelete(self, **kwargs):
         '''See docstring in interfaces.py.'''
         # check 'Delete objects' permission
@@ -113,17 +125,8 @@ class AnnexContentDeletableAdapter(APContentDeletableAdapter):
             # able to delete an annex/annexDecision if able to edit the parent
             if _checkPermission(ModifyPortalContent, parent):
                 return True
-
-            # a 'Owner' may still remove an 'annexDecision' if enabled
-            # in the cfg and if still able to add 'annexDecision'
             elif self.context.portal_type == 'annexDecision':
-                tool = api.portal.get_tool('portal_plonemeeting')
-                cfg = tool.getMeetingConfig(self.context)
-                if cfg.getOwnerMayDeleteAnnexDecision() and \
-                   _checkPermission(AddAnnexDecision, parent):
-                    member = api.user.get_current()
-                    if 'Owner' in member.getRolesInContext(self.context):
-                        return True
+                return self._may_delete_decision_annex(parent)
         return mayDelete
 
 
@@ -189,9 +192,11 @@ class MeetingContentDeletableAdapter(APContentDeletableAdapter):
         '''See docstring in interfaces.py.'''
         res = super(MeetingContentDeletableAdapter, self).mayDelete()
         if res:
-            if self.context.number_of_items() != 0 and \
-               not api.user.get_current().has_role('Manager'):
-                res = No(CAN_NOT_DELETE_MEETING_ERROR)
+            if self.context.number_of_items() != 0:
+                tool = api.portal.get_tool('portal_plonemeeting')
+                if not tool.isManager(realManagers=True):
+                    # for now this will not display the button
+                    res = No(CAN_NOT_DELETE_MEETING_ERROR)
         return res
 
 
@@ -212,6 +217,37 @@ class OrgContentDeletableAdapter(APContentDeletableAdapter):
             return False
 
         return True
+
+
+class PODTemplateContentDeletableAdapter(APContentDeletableAdapter):
+    """
+      Manage the mayDelete for every PODTemplate (Configurable, Style, Dashboard, ...).
+      Only Zope admin may delete.
+    """
+    def __init__(self, context):
+        self.context = context
+
+    def mayDelete(self, **kwargs):
+        '''See docstring in interfaces.py.'''
+        res = super(PODTemplateContentDeletableAdapter, self).mayDelete()
+        if res and not check_zope_admin():
+            res = False
+        return res
+
+
+class MeetingConfigContentDeletableAdapter(APContentDeletableAdapter):
+    """
+      Only Zope admin may delete a MeetingConfig.
+    """
+    def __init__(self, context):
+        self.context = context
+
+    def mayDelete(self, **kwargs):
+        '''See docstring in interfaces.py.'''
+        res = super(MeetingConfigContentDeletableAdapter, self).mayDelete()
+        if res and not check_zope_admin():
+            res = False
+        return res
 
 
 class AdvicePrettyLinkAdapter(PrettyLinkAdapter):
@@ -1852,6 +1888,12 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
                     res = res + list(item.getAllCopyGroups(auto_real_plone_group_ids=True))
                 else:
                     res += list(self.cfg.getSelectableCopyGroups())
+            elif visible_for == '{0}restricted_copy_groups'.format(READERPREFIX):
+                # item restrictedCopyGroups if item or every possible restricted copy groups
+                if item:
+                    res = res + list(item.getAllRestrictedCopyGroups(auto_real_plone_group_ids=True))
+                else:
+                    res += list(self.cfg.getSelectableRestrictedCopyGroups())
             elif visible_for == '{0}groupsincharge'.format(READERPREFIX):
                 # item groupsInCharges if item or every possible groups in charge
                 if item:

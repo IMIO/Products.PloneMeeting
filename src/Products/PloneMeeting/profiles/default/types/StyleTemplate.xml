@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<object name="StyleTemplate" meta_type="Dexterity FTI" i18n:domain="collective.documentgenerator"
+   xmlns:i18n="http://xml.zope.org/namespaces/i18n">
+  <action title="Edit" action_id="edit" category="object"
+    condition_expr="python: portal.portal_plonemeeting.is_zope_admin()"
+    description="" icon_expr="" link_target=""
+    url_expr="string:${object_url}/edit" visible="True">
+    <permission value="Modify portal content"/>
+  </action>
+</object>

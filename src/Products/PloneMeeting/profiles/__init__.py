@@ -487,8 +487,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.annexToPrintMode = 'enabled_for_info'
         self.keepOriginalToPrintOfClonedItems = True
         self.removeAnnexesPreviewsOnMeetingClosure = False
-        self.cssClassesToHide = 'highlight\nhighlight-red'
-        self.hideCssClassesTo = ()
+        self.cssTransforms = []
         self.enabledItemActions = ('duplication', 'export_pdf')
         self.enabledAnnexesBatchActions = ['download-annexes']
 
@@ -525,10 +524,10 @@ class MeetingConfigDescriptor(Descriptor):
             {'edit_access_on': '',
              'edit_access_on_cache': '1',
              'edit_groups': [
-                'configgroup_meetingmanagers',
-                'suffix_proposing_group_creators',
-                'suffix_proposing_group_prereviewers',
-                'suffix_proposing_group_reviewers'],
+                 'configgroup_meetingmanagers',
+                 'suffix_proposing_group_creators',
+                 'suffix_proposing_group_prereviewers',
+                 'suffix_proposing_group_reviewers'],
              'edit_groups_excluding': '0',
              'edit_states': [],
              'label_id': '*',
@@ -580,6 +579,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.adviceConfidentialFor = ()
         self.hideNotViewableLinkedItemsTo = ()
         self.inheritedAdviceRemoveableByAdviser = False
+        self.enableAddQuickAdvice = False
         self.itemInternalNotesEditableBy = []
         self.itemFieldsConfig = (
             {'name': "neededFollowUp",
@@ -588,6 +588,10 @@ class MeetingConfigDescriptor(Descriptor):
             {'name': "providedFollowUp",
              'view': "python: item.may_view_follow_up()",
              'edit': "python: item.may_edit_follow_up('providedFollowUp')"},
+            {'name': "groupsInChargeNotes",
+             'view': "python: tool.isManager(cfg) or tool.user_is_in_org(org_uid=[item.getProposingGroup()] + "
+                "item.getGroupsInCharge())",
+             'edit': "python: tool.isManager(cfg) or tool.user_is_in_org(org_uid=item.getGroupsInCharge())"},
         )
         self.votesResultTALExpr = ''
 
@@ -992,6 +996,7 @@ class PloneMeetingConfiguration(Descriptor):
         ]
         self.delayUnavailableEndDays = ()
         self.configGroups = ()
+        self.showExternalLinksSection = ()
         self.advisersConfig = ()
 
         # non stored values

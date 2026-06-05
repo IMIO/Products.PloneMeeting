@@ -55,6 +55,7 @@ from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.browser.itemvotes import next_vote_is_linked
 from Products.PloneMeeting.config import ADVICE_TYPES
 from Products.PloneMeeting.config import ALL_VOTE_VALUES
+from Products.PloneMeeting.config import CONFIGURABLE_FIELD_NAMES
 from Products.PloneMeeting.config import CONSIDERED_NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
@@ -2101,7 +2102,7 @@ class AnnexRestrictShownAndEditableAttributesVocabulary(object):
 
     def __call__(self, context):
         res = []
-        annex_attributes = ['confidentiality', 'to_be_printed', 'signed', 'publishable']
+        annex_attributes = ['confidentiality', 'to_be_printed', 'signed', 'publishable', 'approved']
         for annex_attr in annex_attributes:
             for suffix in ('display', 'edit'):
                 term_id = '{0}_{1}'.format(annex_attr, suffix)
@@ -3018,6 +3019,7 @@ class BaseContainedAnnexesVocabulary(object):
                 if annex_info['warn_filesize']:
                     term_title += u' ({0})'.format(render_filesize(annex_info['filesize']))
                 term = SimpleTerm(annex_info['id'], annex_info['id'], term_title)
+                term.description = annex_info['description'].replace('\n', '<br>')
                 # check if need to disable term
                 self._check_disable_term(context, annex_info, categories_vocab, term)
                 terms.append(term)
@@ -3415,12 +3417,107 @@ class ItemFieldsConfigVocabulary(object):
         """ """
         terms = []
         item_attrs = context.listAttributes(MeetingItem.schema)
-        # for now, only followUp related fields are configurable
-        configurable_field_names = ['neededFollowUp', 'providedFollowUp']
         for k, v in item_attrs.items():
-            if k in configurable_field_names:
+            if k in CONFIGURABLE_FIELD_NAMES:
                 terms.append(SimpleTerm(k, k, v))
         return SimpleVocabulary(terms)
 
 
 ItemFieldsConfigVocabularyFactory = ItemFieldsConfigVocabulary()
+
+
+class ConfigCssTransformsActionsVocabulary(object):
+    """ """
+
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """ """
+        terms = []
+        for v in ['remove', 'replace']:
+            term_title = translate('css_transform_action_' + v,
+                                   domain='PloneMeeting',
+                                   context=context.REQUEST)
+            terms.append(SimpleTerm(v, v, term_title))
+        return SimpleVocabulary(terms)
+
+
+ConfigCssTransformsActionsVocabularyFactory = ConfigCssTransformsActionsVocabulary()
+
+
+class BooleanVocabulary(object):
+    """ """
+    implements(IVocabularyFactory)
+    def __call__(self, context):
+        '''Vocabulary generating a boolean behaviour : just 2 values,
+           one yes/True, and the other no/False.
+           This is used in DataGridFields to avoid use of CheckBoxColumn
+           that does not handle validation correctly.'''
+        terms = []
+        terms.append(
+            SimpleTerm(
+                '0',
+                '0',
+                translate(
+                    'boolean_value_false',
+                    domain="PloneMeeting",
+                    context=context.REQUEST)))
+        terms.append(
+            SimpleTerm(
+                '1',
+                '1',
+                translate(
+                    'boolean_value_true',
+                    domain="PloneMeeting",
+                    context=context.REQUEST)))
+        return SimpleVocabulary(terms)
+
+
+BooleanVocabularyFactory = BooleanVocabulary()
+
+
+class ConfigLabelsConfigUpdateLocalRolesVocabulary(BooleanVocabulary):
+    """ """
+
+    def __call__(self, context):
+        """Vocabulary for labelsConfig.update_local_roles column with 3 values:
+           - '0': no update (default);
+           - '1': update local roles;
+           - '2': update labels access cache."""
+        terms = super(ConfigLabelsConfigUpdateLocalRolesVocabulary, self).__call__(context)._terms
+        terms.append(
+            SimpleTerm(
+                '2',
+                '2',
+                translate(
+                    'labels_config_update_labels_access_cache',
+                    domain="PloneMeeting",
+                    context=context.REQUEST)))
+        return SimpleVocabulary(terms)
+
+
+ConfigLabelsConfigUpdateLocalRolesVocabularyFactory = ConfigLabelsConfigUpdateLocalRolesVocabulary()
+
+
+class EveryConfigsVocabulary(object):
+    """ """
+
+    implements(IVocabularyFactory)
+
+    def __call__(self, context, only_active=False):
+        """ """
+        tool = api.portal.get_tool('portal_plonemeeting')
+        terms = []
+        if only_active:
+            cfgs = tool.getActiveConfigs()
+        else:
+            cfgs = tool.objectValues('MeetingConfig')
+        for cfg in cfgs:
+            term_id = cfg.getId()
+            term_title = safe_unicode(cfg.Title())
+            terms.append(SimpleTerm(term_id, term_id, term_title))
+        terms = humansorted(terms, key=attrgetter('title'))
+        return SimpleVocabulary(terms)
+
+
+EveryConfigsVocabularyFactory = EveryConfigsVocabulary()

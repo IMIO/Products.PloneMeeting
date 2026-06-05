@@ -1157,3 +1157,23 @@ Need to receive element "widgets".</tal:comment>
     </tal:loop>
   </table>
 </metal:renderWidgets>
+
+<tal:comment replace="nothing">Macro used to render the advice delay icon.
+Need "advice" that is the advice info dict.</tal:comment>
+<metal:delayIcon define-macro="delayIcon" i18n:domain="PloneMeeting">
+  <div tal:condition="python: advice['delay']" class="advice_popup_infos">
+   <tal:defines define="class_if_not_given string:advice_delay advice_delay_${advice/delay_infos/delay_status};">
+     <img src="advice_with_delay_big.png"
+          width="16px"
+          tal:define="delay_icon python: view.delay_icon(advice)"
+          tal:attributes="src string:${portal_url}/${delay_icon};"/>
+     <span class="advice_delay"
+           tal:content="python: advice['delay_infos']['left_delay']"
+           tal:attributes="class python: context._advice_is_given(advice['id']) and 'advice_delay' or class_if_not_given" />
+   </tal:defines>
+   <span tal:condition="python: advice.get('is_delay_calendar_days', False)"
+         title="Delay computed in calendar days"
+         i18n:attributes="title"
+         class="far fa-calendar-alt pmHelp" />
+  </div>
+</metal:delayIcon>

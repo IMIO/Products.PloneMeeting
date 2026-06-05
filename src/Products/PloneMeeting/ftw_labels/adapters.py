@@ -15,6 +15,8 @@ from imio.helpers.cache import invalidate_cachekey_volatile_for
 from plone import api
 from plone.app.querystring.queryparser import parseFormquery
 from plone.memoize import ram
+from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFCore.utils import _checkPermission
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import ITEM_LABELS_ACCESS_CACHE_ATTR
 from Products.PloneMeeting.config import PMMessageFactory as _
@@ -39,8 +41,15 @@ class PMLabeling(Labeling):
 
     def filter_manageable_labels(self, labels, modes=("view", "edit", )):
         """Give p_labels is like [[], []]."""
-        # do not filter for Managers
-        if not self.tool.isManager(realManagers=True):
+        # do not filter for Managers or for item in the configuration the current user is able to edit
+        if self.tool.isManager(realManagers=True) or \
+           (self.context.isDefinedInTool() and _checkPermission(ModifyPortalContent, self.context)):
+            return labels
+        if not hasattr(self.context, ITEM_LABELS_ACCESS_CACHE_ATTR):
+            return [[], []]
+
+        if not self.tool.isManager(realManagers=True) and \
+           not (self.context.isDefinedInTool() and _checkPermission(ModifyPortalContent, self.context)):
             # filter depending on self._labels_cache
             cache = getattr(self.context, ITEM_LABELS_ACCESS_CACHE_ATTR)
             personal_labels = []
@@ -50,7 +59,7 @@ class PMLabeling(Labeling):
             extra_expr_ctx = None
             view_expr_result_cache = {}
             edit_expr_result_cache = {}
-            for label in labels[0]+labels[1]:
+            for label in labels[0] + labels[1]:
                 # by_user labels are always editable
                 if not label['by_user']:
                     # optimization if modes == ('view', ) and label not 'active'
@@ -83,6 +92,7 @@ class PMLabeling(Labeling):
                                 continue
                             # manage view_access, already computed, "False" or "True"
                             # "None" means needs to be computed on the fly
+                            # view_access will be False if not in relevant review_state
                             if cached['view_access'] is False:
                                 continue
                             view_access_on = config['view_access_on'].strip()
@@ -126,6 +136,7 @@ class PMLabeling(Labeling):
                             continue
                         # manage edit_access_on, already computed, "False" or "True"
                         # "None" means needs to be computed on the fly
+                        # edit_access will be False if not in relevant review_state
                         if cached['edit_access'] is False:
                             continue
                         edit_access_on = config['edit_access_on'].strip()
@@ -223,8 +234,9 @@ class PMLabeling(Labeling):
                 if label['label_id'] in viewable_not_manageable_label_ids]
             api.portal.show_message(
                 _("You can not manage labels ${not_manageable_label_titles}!",
-                  mapping={'not_manageable_label_titles': safe_unicode(
-                    ', '.join(not_manageable_label_titles))}),
+                  mapping={
+                    'not_manageable_label_titles':
+                        safe_unicode(', '.join(not_manageable_label_titles))}),
                 type='warning',
                 request=self.context.REQUEST)
         label_ids += list(not_manageable_label_ids)
@@ -236,12 +248,16 @@ class PMLabeling(Labeling):
         # first element of config is related to "*"
         config = self.cfg.getLabelsConfig(('*', ) + added_or_removed, data="update_local_roles")
         # we have:
-        # a config other than the default specifying to update local roles
+        # a config other than the default specifying to update local roles/update labels cache
         # or we do not have "0" for every selected elements and
-        # default config specify to update local roles
+        # default config specify to update local roles/update labels cache
+        # update local roles will update labels cache so we check it first
         if ("1" in config[1:]) or \
-           (len(config)-1 != len(added_or_removed) and config[0] == "1"):
+           (len(config) - 1 != len(added_or_removed) and config[0] == "1"):
             self.context.update_local_roles(avoid_reindex=True)
+        elif ("2" in config[1:]) or \
+           (len(config) - 1 != len(added_or_removed) and config[0] == "2"):
+            self.context._update_labels_access_cache(self.cfg, self.context.query_state())
         # invalidate collections counter cache and portlet_todo
         if set(active_label_ids).symmetric_difference(label_ids). \
                 intersection(self.get_searches_labels()):
