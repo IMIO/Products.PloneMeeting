@@ -5,8 +5,16 @@ Changelog
 4.2.21rc4 (unreleased)
 ----------------------
 
-- Nothing changed yet.
-
+- Rename every members meeting config folder title when
+  `MeetingConfig.folderTitle` changed.
+  [gbastien]
+- Fixed `MeetingConfig.listItemAttributeVisibleFor` that was translating the
+  proposing group suffix but it is not always translated, instead take the value
+  from plonegroup configuration where we have the really used suffix title.
+  [gbastien]
+- Reordered fields at end of item view in a more chronological way:
+  `committeeObservations`, `committeeTranscript`, `inAndOutMoves` and `notes`.
+  [gbastien]
 
 4.2.21rc3 (2026-04-20)
 ----------------------
@@ -15,6 +23,89 @@ Changelog
   `collective.eeafaceted.batchactions`, this fixed the delete annexes batch
   action that was failing when using WFA `only_creator_may_delete` and item was
   no more in state `itemcreated`.
+  [gbastien]
+
+4.2.28.16 (2026-05-20)
+----------------------
+
+- Added bypass for `Manager` for `MeetingItem.show_field` so a `Manager` can
+  view and edit any item fields defined in `MeetingConfig.itemFieldsConfig`.
+  [gbastien]
+- Only a Zope admin can delete a POD template of any kind.
+  [gbastien]
+- Use a real section to display `Back` link in `actions_panel`
+  of config elements.
+  [gbastien]
+- Changed default behavior of `MeetingItem.may_view_follow_up` used in
+  `MeetingConfig.itemFieldsConfig` to manage access to
+  `neededFollowUp/providedFollowUp` fields, now fields are viewable if labels
+  `needed-follow-up/provided-follow-up` are viewable.
+  Added parameters `only_viewable=False` and `only_editable=False` to
+  `ftw_labels.utils.get_labels`.
+  [gbastien]
+- Only compute `MeetingItem._bypass_write_perm_check_for` for
+  `CONFIGURABLE_FIELD_NAMES`.
+  [gbastien]
+- Added `obj` by default to `utils._base_extra_expr_ctx`.
+  [gbastien]
+- Make sure we store a boolean in `MeetingItem._labels_access_cache`
+  `view_access` and `edit_access`.
+  [gbastien]
+- Fixed `UnicodeDecodeError` in `MeetingItem.cloneToOtherMeetingConfig`,
+  when managing message `sendto_inexistent_destfolder_error` if destination
+  `MeetingConfig` title contains special characters.
+  [gbastien]
+- In `MeetingItem.mayAskAdviceAgain`, when using
+  `waiting_advices_proposing_group_send_back`, check that user can actually
+  send back by verifying that WF back transition can be triggered in case
+  it is overrided.
+  [gbastien]
+- In `MeetingItem.getCustomAdviceMessageFor`, display more complete default
+  messages when advice is `hidden during redaction` or `considered not given`.
+  [gbastien]
+- Fixed `MeetingItem.setManuallyLinkedItems` when current edit, a new selected
+  value does not exist anymore (freshly removed for example).
+  [gbastien]
+
+4.2.28.15 (2026-04-24)
+----------------------
+
+- Fixed `MeetingItem._bypass_write_perm_check_for`.
+  [gbastien]
+- Now that `IContentDeletable` adapter is used in `@@delete-batch-action` of
+  `collective.eeafaceted.batchactions`, this fixed the delete annexes batch
+  action that was failing when using WFA `only_creator_may_delete` and item was
+  no more in state `itemcreated`.
+  [gbastien]
+- Added new field `MeetingItem.groupsInChargeNotes` configurable in
+  `MeetingConfig.itemFieldsConfig`.
+  [gbastien]
+- Adapted `ToolPloneMeeting.user_is_in_org` to be able to pass a list of
+  `org_id` or `org_uid`.
+  [gbastien]
+- Fixed JS code passing `external_user_id` to `@@load-external-infos`
+  to avoid JS injection.
+  [gbastien]
+
+4.2.28.14 (2026-04-24)
+----------------------
+
+- Fixed `MeetingItem.show_field` to not evaluate if field not enabled and
+  to raise an error if TAL expression is wrong.
+  [gbastien]
+
+4.2.28.13 (2026-04-24)
+----------------------
+
+- In `Migrate_To_4217_1`, use `upgradeAll` to upgrade especially
+  `collective.dms.scanbehavior`.
+  [gbastien]
+
+4.2.28.12 (2026-04-24)
+----------------------
+
+- Fixed version overview not in last version warning when current version
+  uses a `.` in the version.
   [gbastien]
 
 4.2.21rc2 (2026-04-13)

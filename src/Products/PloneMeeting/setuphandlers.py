@@ -596,6 +596,7 @@ def _configureWebspellchecker(site):
         u'["#form-widgets-title", "#form-widgets-description", '
         u'".select2-focusser", ".select2-input", ".goto_meeting", ".number"]')
 
+
 def _congfigureSafeHtml(site):
     '''Add some values to safe_html.'''
     logger.info('Adding \'colgroup\' to the list of nasty_tags in safe_html...')

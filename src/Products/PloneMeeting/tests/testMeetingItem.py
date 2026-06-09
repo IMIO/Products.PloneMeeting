@@ -34,7 +34,6 @@ from imio.zamqp.pm.tests.base import DEFAULT_SCAN_ID
 from os import path
 from persistent.mapping import PersistentMapping
 from plone import api
-from plone.app.testing import logout
 from plone.app.testing.bbb import _createMemberarea
 from plone.dexterity.utils import createContentInContainer
 from plone.memoize.instance import Memojito
@@ -5934,7 +5933,7 @@ class testMeetingItem(PloneMeetingTestCase):
             'takenOverBy', 'templateUsingGroups',
             'toDiscuss', 'committeeObservations', 'committeeTranscript',
             'votesObservations', 'votesResult',
-            'neededFollowUp', 'providedFollowUp',
+            'neededFollowUp', 'providedFollowUp', 'groupsInChargeNotes',
             'otherMeetingConfigsClonableToEmergency',
             'internalNotes', 'externalIdentifier']
         NEUTRAL_FIELDS += self._extraNeutralFields()
@@ -6393,6 +6392,9 @@ class testMeetingItem(PloneMeetingTestCase):
         item2.setManuallyLinkedItems([''])
         item3.setManuallyLinkedItems(['', item2UID, item4UID])
         item4.setManuallyLinkedItems(['', item1UID])
+        # if we edited an item, selected a linked item then delete the linked item before saving
+        item1.setManuallyLinkedItems(['no_more_existing_uid', item2UID, item3UID])
+        self.assertEqual(item1.getRawManuallyLinkedItems(), [item2UID, item3UID])
 
     def test_pm_ManuallyLinkedItemsCanUpdateEvenWithNotViewableItems(self):
         '''In case a user edit MeetingItem.manuallyLinkedItems field and does not have access
@@ -7144,6 +7146,14 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission(AddPortalContent, item))
         item.invokeFactory('Image', id='img5', title='Image5', file=data)
 
+        # to be fixed?  when using a field that is configurable in MeetingConfig.itemLabelsConfig
+        # as the write_permission is "View" then managed by the condition
+        # any user able to "View" can add an Image...
+        self._enableField('neededFollowUp')
+        item._update_after_edit()
+        for user_id in ('pmCreator1', 'pmCreator2', 'pmReviewer1', 'pmReviewer2', 'budgetimpacteditor', 'pmManager'):
+            self.assertTrue(self.hasPermission('ATContentTypes: Add Image', item))
+
     def test_pm_ItemExternalImagesStoredLocally(self):
         """External images are stored locally."""
         cfg = self.meetingConfig
@@ -7533,7 +7543,7 @@ class testMeetingItem(PloneMeetingTestCase):
                  'replace_new_content': 'Data were hidden',
                  'replace_new_css_class': 'pm-anonymized',
                  'powerobservers': ['restrictedpowerobservers']},
-             )
+            )
         )
         self._setPowerObserverStates(states=('itemcreated', ))
         self._setPowerObserverStates(observer_type='restrictedpowerobservers',
@@ -8639,7 +8649,6 @@ class testMeetingItem(PloneMeetingTestCase):
              u'M. PMManager <pmmanager@plonemeeting.org>',
              u'M. PMReviewer Two <pmreviewer2@plonemeeting.org>'])
 
-
     def test_pm__sendAdviceToGiveMailIfRelevant(self):
         """Check mail sent to advisers when they have access to item.
            Mail is not sent twice to same email address."""
@@ -9385,6 +9394,7 @@ class testMeetingItem(PloneMeetingTestCase):
         neededfollowup_uid = neededfollowup.UID()
         providedfollowup = cfg.searches.searches_items.searchitemswithprovidedfollowup
         self._setupFollowUp(cfg)
+        self._enableField('copyGroups')
 
         self.changeUser("pmCreator1")
         # check that counter is correct when using global labels
@@ -9392,7 +9402,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(
             view(),
             '{"criterionId": "c1", "countByCollection": [{"count": 0, "uid": "%s"}]}' % neededfollowup_uid)
-        item = self.create('MeetingItem', decision=self.decisionText)
+        item = self.create('MeetingItem', decision=self.decisionText, copyGroups=(self.vendors_reviewers, ))
         self.assertEqual(len(neededfollowup.results()), 0)
         self.assertEqual(len(providedfollowup.results()), 0)
         # providedFollowUp is not editable when label "needed-follow-up" is not set
@@ -9415,7 +9425,7 @@ class testMeetingItem(PloneMeetingTestCase):
             '{"criterionId": "c1", "countByCollection": [{"count": 1, "uid": "%s"}]}' % neededfollowup_uid)
         self.assertEqual(len(neededfollowup.results()), 1)
         self.assertEqual(len(providedfollowup.results()), 0)
-        # provided-follow-up is available to MeetingManagerswhen field providedFollowUp is not empty
+        # provided-follow-up is available to MeetingManagers when field providedFollowUp is not empty
         self.assertFalse(
             'provided-follow-up' in
             [label['label_id'] for label in labelingview.available_labels()[1]])
@@ -9452,6 +9462,104 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         self.assertFalse(item.mayQuickEdit('neededFollowUp'))
         self.assertTrue(item.mayQuickEdit('providedFollowUp'))
+        # by default, users able to see the label can see the field
+        # copyGroup can see label and field
+        self.changeUser('pmReviewer2')
+        self.failUnless(self.hasPermission(View, item))
+        self.assertFalse(item.mayQuickEdit('neededFollowUp'))
+        self.assertFalse(item.mayQuickEdit('providedFollowUp'))
+        self.assertTrue('needed-follow-up' in get_labels(item, only_viewable=True))
+        self.assertTrue(item.show_field('neededFollowUp'))
+        self.assertTrue(item.show_field('providedFollowUp'))
+        # powerobserver can not see label so nor field
+        self.changeUser('powerobserver1')
+        self.failUnless(self.hasPermission(View, item))
+        self.assertFalse(item.mayQuickEdit('neededFollowUp'))
+        self.assertFalse(item.mayQuickEdit('providedFollowUp'))
+        self.assertFalse('needed-follow-up' in get_labels(item, only_viewable=True))
+        self.assertFalse(item.show_field('neededFollowUp'))
+        self.assertFalse(item.show_field('providedFollowUp'))
+        # can also be restricted to proposing group
+        self._setupItemFieldsConfig(
+            'neededFollowUp',
+            view='python: item.may_view_follow_up(restricted=True)')
+        self.changeUser('pmReviewer2')
+        self.assertFalse(item.show_field('neededFollowUp'))
+        self.assertTrue(item.show_field('providedFollowUp'))
+        self.changeUser('pmCreator1')
+        self.assertTrue(item.show_field('neededFollowUp'))
+        self.assertTrue(item.show_field('providedFollowUp'))
+        self.changeUser('pmReviewer1')
+        self.assertTrue(item.show_field('neededFollowUp'))
+        self.assertTrue(item.show_field('providedFollowUp'))
+        self._setupItemFieldsConfig(
+            'neededFollowUp',
+            view='python: item.may_view_follow_up(restricted=True, suffixes=["reviewers"])')
+        self.changeUser('pmCreator1')
+        self.assertFalse(item.show_field('neededFollowUp'))
+        self.assertTrue(item.show_field('providedFollowUp'))
+        self.changeUser('pmReviewer1')
+        self.assertTrue(item.show_field('neededFollowUp'))
+        self.assertTrue(item.show_field('providedFollowUp'))
+
+    def test_pm_groups_in_charge_notes(self):
+        """Test that MeetingItem.groupsInChargeNotes uses
+           MeetingConfig.itemFieldsConfig.
+           Moreover, test that if edit condition is False, it can not be edited."""
+        cfg = self.meetingConfig
+        cfg.setOrderedGroupsInCharge((self.developers_uid, self.vendors_uid))
+        cfg.setItemGroupsInChargeStates([self._stateMappingFor('itemcreated')])
+        self._enableField(['groupsInCharge', 'groupsInChargeNotes'])
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem', groupsInCharge=[self.vendors_uid])
+        # by default proposingGroup can view the field but not edit it
+        self.assertTrue(item.show_field('groupsInChargeNotes'))
+        # even if item editable, field can be not editable if condition if False
+        self.assertFalse(item.mayQuickEdit('groupsInChargeNotes'))
+        # bypass for Manager
+        self.changeUser('siteadmin')
+        self.assertTrue(item.show_field('groupsInChargeNotes') and
+                        item.mayQuickEdit('groupsInChargeNotes'))
+        # group in charge can view and edit
+        self.changeUser('pmObserver2')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertTrue(item.show_field('groupsInChargeNotes'))
+        self.assertTrue(item.mayQuickEdit('groupsInChargeNotes'))
+        # bypass for Manager
+        self.changeUser('siteadmin')
+        self.assertTrue(item.show_field('groupsInChargeNotes')
+                        and item.mayQuickEdit('groupsInChargeNotes'))
+        # with no group in charge
+        self.changeUser('pmCreator1')
+        item.setGroupsInCharge([])
+        self.assertTrue(item.show_field('groupsInChargeNotes'))
+        self.assertFalse(item.mayQuickEdit('groupsInChargeNotes'))
+        # bypass for Manager
+        self.changeUser('siteadmin')
+        self.assertTrue(item.show_field('groupsInChargeNotes')
+                        and item.mayQuickEdit('groupsInChargeNotes'))
+        # make proposing group only able to edit
+        self.changeUser('pmObserver2')
+        self._setupItemFieldsConfig(
+            'groupsInChargeNotes',
+            edit='python: tool.user_is_in_org(org_uid=item.getProposingGroup())')
+        self.assertFalse(item.mayQuickEdit('groupsInChargeNotes'))
+        # bypass for Manager
+        self.changeUser('siteadmin')
+        self.assertTrue(item.show_field('groupsInChargeNotes')
+                        and item.mayQuickEdit('groupsInChargeNotes'))
+        self.changeUser('pmCreator1')
+        self.assertTrue(item.mayQuickEdit('groupsInChargeNotes'))
+        # wrong condition, will raise if used
+        self._setupItemFieldsConfig('groupsInChargeNotes', edit='python: wrong')
+        self.assertRaises(NameError, item.mayQuickEdit, 'groupsInChargeNotes')
+        # does not raise if not used
+        self._enableField(['groupsInChargeNotes'], enable=False)
+        self.assertFalse(item.mayQuickEdit('groupsInChargeNotes'))
+        # bypass for Manager not working if field not enabled
+        self.changeUser('siteadmin')
+        self.assertFalse(item.show_field('groupsInChargeNotes'))
+        self.assertFalse(item.mayQuickEdit('groupsInChargeNotes'))
 
 
 def test_suite():

@@ -35,6 +35,7 @@ from imio.helpers.content import get_user_fullname
 from imio.helpers.content import get_vocab
 from imio.helpers.content import get_vocab_values
 from imio.helpers.content import richtextval
+from imio.helpers.security import check_zope_admin
 from imio.helpers.xhtml import xhtmlContentIsEmpty
 from imio.history.adapters import BaseImioHistoryAdapter
 from imio.history.adapters import ImioWfHistoryAdapter
@@ -192,9 +193,11 @@ class MeetingContentDeletableAdapter(APContentDeletableAdapter):
         '''See docstring in interfaces.py.'''
         res = super(MeetingContentDeletableAdapter, self).mayDelete()
         if res:
-            if self.context.number_of_items() != 0 and \
-               not api.user.get_current().has_role('Manager'):
-                res = No(CAN_NOT_DELETE_MEETING_ERROR)
+            if self.context.number_of_items() != 0:
+                tool = api.portal.get_tool('portal_plonemeeting')
+                if not tool.isManager(realManagers=True):
+                    # for now this will not display the button
+                    res = No(CAN_NOT_DELETE_MEETING_ERROR)
         return res
 
 
@@ -215,6 +218,37 @@ class OrgContentDeletableAdapter(APContentDeletableAdapter):
             return False
 
         return True
+
+
+class PODTemplateContentDeletableAdapter(APContentDeletableAdapter):
+    """
+      Manage the mayDelete for every PODTemplate (Configurable, Style, Dashboard, ...).
+      Only Zope admin may delete.
+    """
+    def __init__(self, context):
+        self.context = context
+
+    def mayDelete(self, **kwargs):
+        '''See docstring in interfaces.py.'''
+        res = super(PODTemplateContentDeletableAdapter, self).mayDelete()
+        if res and not check_zope_admin():
+            res = False
+        return res
+
+
+class MeetingConfigContentDeletableAdapter(APContentDeletableAdapter):
+    """
+      Only Zope admin may delete a MeetingConfig.
+    """
+    def __init__(self, context):
+        self.context = context
+
+    def mayDelete(self, **kwargs):
+        '''See docstring in interfaces.py.'''
+        res = super(MeetingConfigContentDeletableAdapter, self).mayDelete()
+        if res and not check_zope_admin():
+            res = False
+        return res
 
 
 class AdvicePrettyLinkAdapter(PrettyLinkAdapter):

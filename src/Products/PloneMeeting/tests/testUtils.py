@@ -7,6 +7,7 @@
 
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_plone_group
+from copy import deepcopy
 from ftw.labels.interfaces import ILabeling
 from imio.helpers.content import richtextval
 from os import path
@@ -19,6 +20,7 @@ from Products.PloneMeeting.ftw_labels.utils import get_labels
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.utils import duplicate_portal_type
 from Products.PloneMeeting.utils import escape
+from Products.PloneMeeting.utils import is_proposing_group_editor
 from Products.PloneMeeting.utils import isPowerObserverForCfg
 from Products.PloneMeeting.utils import org_id_to_uid
 from Products.PloneMeeting.utils import sendMail
@@ -419,6 +421,7 @@ class testUtils(PloneMeetingTestCase):
     def test_pm_get_labels(self):
         """Test the ToolPloneMeeting.get_labels method
            that will return ftw.labels active_labels."""
+        cfg = self.meetingConfig
         self._enableField('labels')
         self.changeUser("pmCreator1")
         item = self.create("MeetingItem")
@@ -429,6 +432,20 @@ class testUtils(PloneMeetingTestCase):
         self.assertEqual(get_labels(item), {'label': 'Label', 'suivi': 'Suivi'})
         self.assertEqual(get_labels(item, False), {'label': 'Label'})
         self.assertEqual(get_labels(item, "only"), {'suivi': 'Suivi'})
+        # for now also viewable by reviewers
+        self.proposeItem(item)
+        self.changeUser("pmReviewer1")
+        self.assertEqual(get_labels(item, False), {'label': 'Label'})
+        config = list(cfg.getLabelsConfig())
+        # make 'label' only viewable by creators
+        new_config = deepcopy(config[0])
+        new_config['label_id'] = "label"
+        new_config['view_groups'] = ["suffix_proposing_group_creators"]
+        config.append(new_config)
+        cfg.setLabelsConfig(config)
+        item._update_labels_access_cache(cfg, item.query_state())
+        self.assertEqual(get_labels(item, False), {'label': 'Label'})
+        self.assertEqual(get_labels(item, False, only_viewable=True), {})
 
     def test_pm_IsPowerObserverForCfg(self):
         """ """
@@ -463,6 +480,34 @@ class testUtils(PloneMeetingTestCase):
             cfg, power_observer_types=['powerobservers', 'restrictedpowerobservers']))
         self.assertFalse(isPowerObserverForCfg(
             cfg, power_observer_types=['unknown']))
+
+    def test_pm_is_proposing_group_editor(self):
+        """Check if a user is an editor for a given org_uid."""
+        cfg = self.meetingConfig
+        self._setUpDefaultItemWFValidationLevels(cfg)
+        self.assertFalse(is_proposing_group_editor(self.developers_uid, cfg))
+        self.changeUser('pmCreator1')
+        self.assertTrue(is_proposing_group_editor(self.developers_uid, cfg))
+        self.assertFalse(is_proposing_group_editor(self.developers_uid, cfg, suffixes=['reviewers']))
+        self.assertFalse(is_proposing_group_editor(self.developers_uid, cfg, suffixes=['unknown']))
+        self.assertTrue(is_proposing_group_editor([self.developers_uid, self.vendors_uid], cfg))
+        self.assertFalse(is_proposing_group_editor([self.endUsers_uid, self.vendors_uid], cfg))
+        self.changeUser('pmCreator2')
+        self.assertFalse(is_proposing_group_editor(self.developers_uid, cfg))
+        self.assertTrue(is_proposing_group_editor(self.vendors_uid, cfg))
+        self.changeUser('pmObserver1')
+        self.assertFalse(is_proposing_group_editor(self.developers_uid, cfg))
+        self.assertFalse(is_proposing_group_editor(self.vendors_uid, cfg))
+        self.changeUser('pmReviewer1')
+        self.assertTrue(is_proposing_group_editor(self.developers_uid, cfg))
+        self.assertFalse(is_proposing_group_editor(self.vendors_uid, cfg))
+        # org_uid can be a list of org_uids
+        self.assertTrue(is_proposing_group_editor([self.developers_uid, self.vendors_uid], cfg))
+        self.assertFalse(is_proposing_group_editor([self.endUsers_uid, self.vendors_uid], cfg))
+        # no org_uid
+        self.assertFalse(is_proposing_group_editor(None, cfg))
+        self.assertFalse(is_proposing_group_editor('', cfg))
+        self.assertFalse(is_proposing_group_editor([], cfg))
 
 
 def test_suite():

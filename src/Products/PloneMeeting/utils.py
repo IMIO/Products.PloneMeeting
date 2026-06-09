@@ -339,14 +339,11 @@ def createOrUpdatePloneGroup(groupId, groupTitle, groupSuffix):
     return wasCreated
 
 
-def fieldIsEmpty(name, obj, useParamValue=False, value=None):
+def fieldIsEmpty(name, obj, value=None):
     '''If field named p_name on p_obj empty ? The method checks emptyness of
        given p_value if p_useParamValue is True instead.'''
     field = obj.getField(name)
-    if useParamValue:
-        value = value
-    else:
-        value = field.get(obj)
+    value = value or field.get(obj)
     widgetName = field.widget.getName()
     if widgetName == 'RichWidget':
         return xhtmlContentIsEmpty(value)
@@ -842,7 +839,6 @@ def is_operational_user(obj):
          (tool.isManager(cfg) or
           bool(tool.userIsAmong(
                suffixes=get_all_suffixes(omitted_suffixes=['observers']), cfg=cfg)))))
-
 
 
 def is_transition_before_date(obj, transition, date):
@@ -2014,7 +2010,7 @@ def getAvailableMailingLists(obj, pod_template, include_recipients=False):
     if not mailing_lists:
         return res
     try:
-        extra_expr_ctx = _base_extra_expr_ctx(obj, {'obj': obj, })
+        extra_expr_ctx = _base_extra_expr_ctx(obj)
         for line in mailing_lists.split('\n'):
             name, expression, userIds = line.split(';')
             if not expression or _evaluateExpression(
@@ -2047,7 +2043,7 @@ def extract_recipients(obj, values):
     # compile userIds in case we have a TAL expression
     recipients = []
     userIdsOrEmailAddresses = []
-    extra_expr_ctx = _base_extra_expr_ctx(obj, {'obj': obj, })
+    extra_expr_ctx = _base_extra_expr_ctx(obj)
     for value in values.strip().split(','):
         # value may be a TAL expression returning a list of userIds or email addresses
         # or a group (of users)
@@ -2347,7 +2343,8 @@ def get_last_validation_state(item, cfg, before_last=False, return_level=False):
 
 
 def is_proposing_group_editor(org_uid, cfg, suffixes=[]):
-    """ """
+    """Check if user is editor for given org_uid by getting editor suffixes from
+       MeetingConfig.itemWFValidationLevels."""
     suffixes = suffixes or cfg.getItemWFValidationLevels(data='suffix', only_enabled=True)
     return cfg.aq_parent.user_is_in_org(org_uid=org_uid, suffixes=suffixes)
 
@@ -2468,7 +2465,8 @@ def _base_extra_expr_ctx(obj, extra_ctx={}):
     item = obj if obj.__class__.__name__ == 'MeetingItem' else None
     meeting = obj if obj.__class__.__name__ == 'Meeting' else \
         (item.getMeeting() if item else None)
-    data = {'tool': tool,
+    data = {'obj': obj,
+            'tool': tool,
             'cfg': cfg,
             # backward compatibility
             'meetingConfig': cfg,

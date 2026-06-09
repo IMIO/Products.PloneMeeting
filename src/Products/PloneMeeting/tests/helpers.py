@@ -626,6 +626,10 @@ class PloneMeetingTestingHelpers(object):
         new_config = deepcopy(config[0])
         new_config['label_id'] = "needed-follow-up"
         new_config['edit_groups'] = ["configgroup_meetingmanagers"]
+        # everyone can see except powerobservers/restrictedpowerobservers
+        new_config['view_groups'] = [
+            "configgroup_powerobservers", "configgroup_restrictedpowerobservers"]
+        new_config['view_groups_excluding'] = '1'
         config.append(new_config)
         # provided-follow-up
         new_config = deepcopy(config[0])
@@ -634,3 +638,17 @@ class PloneMeetingTestingHelpers(object):
         new_config['edit_access_on_cache'] = "0"
         config.append(new_config)
         cfg.setLabelsConfig(config)
+
+    def _setupItemFieldsConfig(self, field_name, cfg=None, view=None, edit=None):
+        """Configure MeetingConfig.itemFieldsConfig."""
+        cfg = cfg or self.meetingConfig
+        config = cfg.getItemFieldsConfig()
+        field_config = [row for row in config if row['name'] == field_name]
+        if not field_config:
+            raise ValueError("field_name {0} config does not exist".format(field_name))
+        field_config = field_config[0]
+        if view is not None:
+            field_config['view'] = view
+        if edit is not None:
+            field_config['edit'] = edit
+        cfg.setItemFieldsConfig(config)

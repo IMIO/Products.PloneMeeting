@@ -1285,11 +1285,15 @@ class testMeetingConfig(PloneMeetingTestCase):
         # a user can not delete the MeetingConfig
         self.changeUser('pmManager')
         self.assertRaises(Unauthorized, self.tool.manage_delObjects, [cfgId])
+        # only the Zope admin can remove a MeetingConfig because only a Zope admin can remove POD templates
+        self.changeUser('siteadmin')
+        self.assertRaises(Unauthorized, self.tool.manage_delObjects, [cfgId])
 
         # fails if a meeting exists
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
-        self.changeUser('siteadmin')
+        # only the Zope admin can remove a MeetingConfig because only a Zope admin can remove POD templates
+        self.changeUser('admin')
         with self.assertRaises(BeforeDeleteException) as cm:
             self.tool.manage_delObjects([cfgId, ])
         can_not_delete_meetingconfig_meeting = \
@@ -1302,7 +1306,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # fails if an item exists
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
-        self.changeUser('siteadmin')
+        self.changeUser('admin')
         with self.assertRaises(BeforeDeleteException) as cm:
             self.tool.manage_delObjects([cfgId, ])
         can_not_delete_meetingconfig_meetingitem = \
@@ -1317,7 +1321,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         pmFolder = self.tool.getPloneMeetingFolder(cfgId)
         afileId = pmFolder.invokeFactory('File', id='afile')
         afile = getattr(pmFolder, afileId)
-        self.changeUser('siteadmin')
+        self.changeUser('admin')
         with self.assertRaises(BeforeDeleteException) as cm:
             self.tool.manage_delObjects([cfgId, ])
         can_not_delete_meetingconfig_meetingfolder = \
@@ -1395,6 +1399,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                           if groupId.startswith(newCfgId)]
         self.assertEqual(len(created_groups), 5)
         # remove the MeetingConfig, groups are removed as well
+        self.changeUser('admin')
         self.tool.restrictedTraverse('@@delete_givenuid')(newCfg.UID())
         self.assertFalse(newCfgId in self.tool.objectIds())
         created_groups = [groupId for groupId in self.portal.portal_groups.listGroupIds()
@@ -1848,8 +1853,8 @@ class testMeetingConfig(PloneMeetingTestCase):
         new_pod_template_removed_cfg_modified = cfg.modified()
         self.assertNotEqual(new_pod_template_cfg_modified, new_pod_template_removed_cfg_modified)
 
-    def test_pm_PODTemplateOnlyCreatedModifiedByZopeAdmin(self):
-        """Only a Zope admin can create or modify a PODTemplate of any kind."""
+    def test_pm_PODTemplateOnlyCreatedModifiedDeletedByZopeAdmin(self):
+        """Only a Zope admin can create/modify/delete a PODTemplate of any kind."""
         cfg = self.meetingConfig
         portal_types = ['ConfigurablePODTemplate', 'StyleTemplate', 'DashboardPODTemplate', 'PODTemplate', 'MailingLoopTemplate', 'SubTemplate']
         containers = [self.portal, cfg.podtemplates]
@@ -1873,6 +1878,9 @@ class testMeetingConfig(PloneMeetingTestCase):
                     pm_logger.info(
                         "Could not find an element with portal_type {0} in "
                         "container at {1}".format(portal_type, container.absolute_url_path()))
+                    continue
+                # delete
+                self.assertRaises(Unauthorized, container.manage_delObjects, [templates[0].getId()])
         # OK as zope admin
         self.changeUser('admin')
         for portal_type in portal_types:
@@ -1894,6 +1902,9 @@ class testMeetingConfig(PloneMeetingTestCase):
                     pm_logger.info(
                         "Could not find an element with portal_type {0} in "
                         "container at {1}".format(portal_type, container.absolute_url_path()))
+                    continue
+                # delete
+                container.manage_delObjects([templates[0].getId()])
 
     def test_pm_UsedLabelCanNotBeRemoved(self):
         """A ftw.labels label that is used on an item can not be removed."""
@@ -2802,6 +2813,23 @@ class testMeetingConfig(PloneMeetingTestCase):
                          ['decide', 'close'])
         self._activate_wfas(['no_freeze', 'no_publication', 'no_decide'])
         self.assertEqual(cfg.get_transitions_to_close_a_meeting(), ['close'])
+
+    def test_pm_UpdateFolderTitle(self):
+        """When MeetingConfig.folderTitle changed, every members config folder
+           title is updated accordingly."""
+        cfg = self.meetingConfig
+        cfg_id = cfg.getId()
+        # create every member config folder
+        self.deleteAsManager(self.portal.Members.test_user_1_.UID())
+        for member_folder_id in self.portal.Members.objectIds():
+            self.changeUser(member_folder_id)
+            self.tool.getPloneMeetingFolder(cfg_id)
+        for member_folder in self.portal.Members.objectValues():
+            self.assertEqual(member_folder.mymeetings.get(cfg_id).Title(), cfg.getFolderTitle())
+        # change MeetingConfig.folderTitle, every members meeting config folders are updated accordingly
+        cfg.setFolderTitle('Another title héhé')
+        for member_folder in self.portal.Members.objectValues():
+            self.assertEqual(member_folder.mymeetings.get(cfg_id).Title(), cfg.getFolderTitle())
 
 
 def test_suite():
