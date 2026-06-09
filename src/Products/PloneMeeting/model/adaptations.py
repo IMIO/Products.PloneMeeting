@@ -604,7 +604,7 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
         validation_returned_states = _getValidationReturnedStates(meetingConfig)
         if whichValidation == 'last':
             validation_returned_states = (validation_returned_states[-1],)
-        elif whichValidation == 'before_last':
+        elif whichValidation == 'before_last' and len(validation_returned_states) >= 2:
             validation_returned_states = (validation_returned_states[-2],)
         elif whichValidation is None:
             validation_returned_states = ()
