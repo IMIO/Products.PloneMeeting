@@ -6255,6 +6255,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     confidential_profiles.append('{0}{1}'.format(CONFIGGROUPPREFIX, po_infos['row_id']))
             else:
                 confidential_profiles.append('{0}{1}'.format(READERPREFIX, suffix))
+        fct_titles = {fct['fct_id']: fct['fct_title'] for fct in get_registry_functions(as_copy=False)}
         for suffix in get_item_validation_wf_suffixes(self):
             confidential_profiles.append('{0}{1}'.format(PROPOSINGGROUPPREFIX, suffix))
 
@@ -6264,14 +6265,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if profile.startswith(PROPOSINGGROUPPREFIX):
                 res.append(
                     (profile,
-                     translate('visible_for_{0}'.format(PROPOSINGGROUPPREFIX),
-                               mapping={'meeting_group_suffix':
-                                        translate(profile.replace(PROPOSINGGROUPPREFIX, ''),
-                                                  domain="PloneMeeting",
-                                                  context=self.REQUEST)},
-                               domain="PloneMeeting",
-                               context=self.REQUEST,
-                               default=u"Visible for {0}".format(profile))))
+                     translate(
+                        'visible_for_{0}'.format(PROPOSINGGROUPPREFIX),
+                        mapping={
+                            'meeting_group_suffix':
+                                fct_titles[profile.replace(PROPOSINGGROUPPREFIX, '')]},
+                        domain="PloneMeeting",
+                        context=self.REQUEST,
+                        default=u"Visible for {0}".format(profile))))
             elif profile.startswith(CONFIGGROUPPREFIX):
                 config_group_suffix = profile.replace(CONFIGGROUPPREFIX, '')
                 is_power_observer = config_group_suffix in po_row_ids

@@ -641,16 +641,6 @@
        <metal:f use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
 
-    <tal:comment replace="nothing">In and out moves</tal:comment>
-    <tal:field define="fieldName python: 'inAndOutMoves'; ajaxEdit python:True">
-       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
-    </tal:field>
-
-    <tal:comment replace="nothing">Notes</tal:comment>
-    <tal:field define="fieldName python: 'notes'; ajaxEdit python:True">
-       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
-    </tal:field>
-
     <tal:comment replace="nothing">Committee observations</tal:comment>
     <tal:field define="fieldName python: 'committeeObservations'; ajaxEdit python:True">
        <metal:f use-macro="context/@@pm-macros/viewContentField"/>
@@ -658,6 +648,16 @@
 
     <tal:comment replace="nothing">Committee transcript</tal:comment>
     <tal:field define="fieldName python: 'committeeTranscript'; ajaxEdit python:True">
+       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+    </tal:field>
+
+    <tal:comment replace="nothing">In and out moves</tal:comment>
+    <tal:field define="fieldName python: 'inAndOutMoves'; ajaxEdit python:True">
+       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+    </tal:field>
+
+    <tal:comment replace="nothing">Notes</tal:comment>
+    <tal:field define="fieldName python: 'notes'; ajaxEdit python:True">
        <metal:f use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
 

@@ -8,6 +8,13 @@ Changelog
 - Rename every members meeting config folder title when
   `MeetingConfig.folderTitle` changed.
   [gbastien]
+- Fixed `MeetingConfig.listItemAttributeVisibleFor` that was translating the
+  proposing group suffix but it is not always translated, instead take the value
+  from plonegroup configuration where we have the really used suffix title.
+  [gbastien]
+- Reordered fields at end of item view in a more chronological way:
+  `committeeObservations`, `committeeTranscript`, `inAndOutMoves` and `notes`.
+  [gbastien]
 
 4.2.29rc9 (2026-06-02)
 ----------------------
