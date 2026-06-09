@@ -96,8 +96,10 @@ class PMSessionFilesView(SessionFilesView):
                 domain="collective.iconifiedcategory",
                 context=self.request), )
 
+        descr = self._get_file_link_descr(ctx, obj)
+
         return pretty_link + u"<br><span class='file_link_file'>➔ " + \
-            IPrettyLink(obj).getLink() + signed_info + more_infos_link + "</span>"
+            IPrettyLink(obj).getLink() + signed_info + more_infos_link + "</span>" + descr
 
 
 class PMSessionDeleteView(SessionDeleteView):
