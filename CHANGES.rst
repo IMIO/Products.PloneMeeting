@@ -15,6 +15,9 @@ Changelog
 - Reordered fields at end of item view in a more chronological way:
   `committeeObservations`, `committeeTranscript`, `inAndOutMoves` and `notes`.
   [gbastien]
+- Do not `saveHasActions` the `imio.actionspanel backlink` action as it is
+  not displayed as an icon or it prevent displaying `-` when no action available.
+  [gbastien]
 
 4.2.28.16 (2026-05-20)
 ----------------------
