@@ -190,6 +190,9 @@ ITEMTEMPLATESMANAGERS_GROUP_SUFFIX = 'itemtemplatesmanagers'
 # This is the group created for each MeetingConfig where we store users able to wath eSign sessions
 ESIGNWATCHERS_GROUP_SUFFIX = 'esignwatchers'
 
+# pattern for generated session title
+ESIGN_SESSION_TITLE_PATTERN = u"[iA.Délib] %s - Session {sign_id}"
+
 # This is a mapping between usecases around the role Reader, so users that can see
 # By default, the same role is used for different usecases, so it will give the same view permission by the wf
 # If a special usecase needs to use another role, it can be specified in a sub-plugin

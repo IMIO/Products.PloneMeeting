@@ -1125,15 +1125,6 @@ def onAnnexRemoved(annex, event):
     notifyModifiedAndReindex(parent, extra_idxs=extra_idxs)
 
 
-def onAnnexWillBeRemoved(annex, event):
-    """Called before annex is actually removed."""
-    annex_uid = annex.UID()
-    annot = get_session_annotation()
-    if annex_uid in annot['uids']:
-        # remove it from any esign session, need done before removed from categorized_elements
-        remove_files_from_session([annex_uid])
-
-
 def onAnnexAttrChanged(annex, event):
     """Called when an attribute on an annex is changed (using the quick action view)."""
     if event.attr_name == 'to_print':

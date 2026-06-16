@@ -198,10 +198,6 @@
               handler=".events.onAnnexModified" />
 
   <subscriber for="imio.annex.content.annex.IAnnex
-                   OFS.interfaces.IObjectWillBeRemovedEvent"
-              handler=".events.onAnnexWillBeRemoved" />
-
-  <subscriber for="imio.annex.content.annex.IAnnex
                    zope.container.interfaces.IObjectRemovedEvent"
               handler=".events.onAnnexRemoved" />
 

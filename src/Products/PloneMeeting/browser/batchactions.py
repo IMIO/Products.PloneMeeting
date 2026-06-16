@@ -17,6 +17,7 @@ from imio.esign.config import get_esign_registry_enabled
 from imio.helpers.content import get_vocab
 from imio.helpers.content import get_vocab_values
 from imio.helpers.content import uuidToObject
+from imio.zamqp.pm.utils import next_scan_id_pm
 from plone import api
 from plone.app.textfield import RichText
 from plone.formwidget.masterselect import MasterSelectBoolField
@@ -27,6 +28,7 @@ from Products.PloneMeeting import logger
 from Products.PloneMeeting.config import NO_COMMITTEE
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.content.advice import _advice_type_default
+from Products.PloneMeeting.esign.utils import get_session_title
 from Products.PloneMeeting.ftw_labels.utils import filter_access_global_labels
 from Products.PloneMeeting.utils import _add_advice
 from Products.PloneMeeting.utils import displaying_available_items
@@ -66,6 +68,16 @@ class DisplaySignersProvider(ContentProviderBase):
         self.__parent__ = view
         self.portal = api.portal.get()
         self.portal_url = self.portal.absolute_url()
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(self.context)
+
+    def get_session_title(self):
+        """Return the session title."""
+        # we have {sign_id} in session title, replace it
+        session_title = get_session_title(self.cfg, self.pod_template, self.context)
+        next_scan_id = next_scan_id_pm()
+        next_scan_id = next_scan_id[0:7] + "00..."
+        return session_title.replace("{sign_id}", next_scan_id)
 
     def show_manage_signatories(self):
         """Show the "Configure signatories" link ?"""
@@ -102,8 +114,8 @@ class DisplaySignersProvider(ContentProviderBase):
                 mapping={'annex_type_url': self.annex_type.absolute_url()},
                 domain='PloneMeeting',
                 context=self.request,
-                default="Selected annex type must be \"to sign\" by default, " \
-                    "check annex type at \"${annex_type_url}\"!")
+                default="Selected annex type must be \"to sign\" by default, "
+                "check annex type at \"${annex_type_url}\"!")
         if error_msg is not None:
             api.portal.show_message(
                 error_msg, request=self.request, type='warning')

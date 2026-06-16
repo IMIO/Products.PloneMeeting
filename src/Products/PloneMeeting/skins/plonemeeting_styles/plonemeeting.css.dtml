@@ -1281,7 +1281,13 @@ div.tooltipster-content a.item_listType_normal:link,
 div.tooltipster-content a.item_listType_normal:visited {
     color: &dtml-discreetColor;;
 }
-
+span.plain {
+    font-weight: normal;
+}
+span.esign_session_title {
+    padding-bottom: 0.5em;
+    display: inline-block;
+}
 /* make sure date picker is hover faceted sticky header */
 div#ui-datepicker-div {
    /* use !important because z-index is set as style on the <div> */
@@ -2167,10 +2173,8 @@ img.tooltipster-advice-add-complete-quick {
 #content span.green-colored span {
     color: green;
 }
-{
-    color: green;
-}
-#content span.fa.red-colored {
+#content span.fa.red-colored,
+#content span.red-colored span {
     color: red;
 }
 #content img.pmHelp,

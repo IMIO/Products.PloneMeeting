@@ -25,6 +25,9 @@
     <img width="24" height="24" tal:attributes="src python: view.portal_url + '/++resource++imio.esign/parapheo.svg'" />
     <span i18n:translate="esign_label">e-Signature:</span>
   </h3>
+  <div class="discreet">
+    <span class="item_attribute_label esign_session_title" i18n:translate="esign_session_title">Session title: <span class="plain" i18n:name="session_title" tal:content="python: view.get_session_title()">Session title</span></span>
+  </div>
   <div metal:use-macro="context/global_statusmessage/macros/portal_message">
     Portal status message
   </div>

@@ -13,6 +13,7 @@ from imio.zamqp.pm.utils import next_scan_id_pm
 from plone import api
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.browser.views import get_contact_from_position_type
+from Products.PloneMeeting.config import ESIGN_SESSION_TITLE_PATTERN
 from Products.PloneMeeting.config import ESIGNWATCHERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import PMMessageFactory as _
@@ -83,7 +84,34 @@ def esign_access_groups():
         suffixes=[MEETINGMANAGERS_GROUP_SUFFIX, ESIGNWATCHERS_GROUP_SUFFIX])
 
 
-def _add_annexes_to_sign_session(obj, annexes, cfg, pod_template, signers, seal=None, check_is_pdf=True, show_msg=False):
+def get_session_title(cfg, pod_template, obj, annex=None):
+    """ """
+    # use custom session title if defined on pod template, else use common session title
+    esign_session_title_expr = pod_template.esign_session_title_expr and \
+        pod_template.esign_session_title_expr.strip()
+    if esign_session_title_expr:
+        extra_expr_ctx = _base_extra_expr_ctx(
+            obj, {'pod_template': pod_template, 'annex': annex})
+        session_title = _evaluateExpression(
+            obj,
+            expression=esign_session_title_expr,
+            roles_bypassing_expression=[],
+            extra_expr_ctx=extra_expr_ctx,
+            raise_on_error=True)
+    else:
+        session_title = cfg.Title(include_config_group=True)
+    return _(ESIGN_SESSION_TITLE_PATTERN % safe_unicode(session_title))
+
+
+def _add_annexes_to_sign_session(
+        obj,
+        annexes,
+        cfg,
+        pod_template,
+        signers,
+        seal=None,
+        check_is_pdf=True,
+        show_msg=False):
     """ """
     context_uid = obj.UID()
     # check that file is PDF and that annex is not already in a esign session not in state "finalized"
@@ -111,7 +139,8 @@ def _add_annexes_to_sign_session(obj, annexes, cfg, pod_template, signers, seal=
                         domain="PloneMeeting",
                         mapping={'annex_title': safe_unicode(annex.Title()),
                                  'session_id': session_id},
-                        default="Annex \"${annex_title}\" is already in session \"${session_id}\" that is not finalized!",
+                        default="Annex \"${annex_title}\" is already in session "
+                        "\"${session_id}\" that is not finalized!",
                         context=obj.REQUEST),
                     type="warning",
                     request=obj.REQUEST)
@@ -136,21 +165,9 @@ def _add_annexes_to_sign_session(obj, annexes, cfg, pod_template, signers, seal=
         (signer['userid'], signer['email'], signer['name'], signer['function'])
         for signer in signers]
     files_uids = [annex.UID() for annex in annexes]
-    # use custom session title if defined on pod template, else use common session title
-    esign_session_title_expr = pod_template.esign_session_title_expr and \
-        pod_template.esign_session_title_expr.strip()
-    if esign_session_title_expr:
-        extra_expr_ctx = _base_extra_expr_ctx(
-            obj, {'pod_template': pod_template, 'annex': annex})
-        session_title = _evaluateExpression(
-            obj,
-            expression=esign_session_title_expr,
-            roles_bypassing_expression=[],
-            extra_expr_ctx=extra_expr_ctx,
-            raise_on_error=True)
-    else:
-        session_title = cfg.Title(include_config_group=True)
-    title = _(u"[iA.Délib] %s - Session {sign_id}" % safe_unicode(session_title))
+
+    # add files to session
+    title = get_session_title(cfg, pod_template, obj, annex)
     discriminators = ISignable(obj).get_discriminators(annex, pod_template)
     watchers = ISignable(obj).get_watchers()
     create_session_custom_data = {'cfg_id': cfg.getId()}

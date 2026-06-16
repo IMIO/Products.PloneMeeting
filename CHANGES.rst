@@ -15,6 +15,8 @@ Changelog
 - Reordered fields at end of item view in a more chronological way:
   `committeeObservations`, `committeeTranscript`, `inAndOutMoves` and `notes`.
   [gbastien]
+- Display potential session title in prepare for signature forms.
+  [gbastien]
 
 4.2.29rc9 (2026-06-02)
 ----------------------

@@ -2547,23 +2547,25 @@ class PlacesVocabulary(object):
         terms = []
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        # XXX with MeetingConfig AT, place is stored as utf-8, we need unicode
-        places = [safe_unicode(place) for place in cfg.getPlaces().strip().split('\r\n')
-                  if place.strip()]
-        # history when context is a Meeting
-        if context.getTagName() == "Meeting" and \
-           context.place and \
-           context.place not in places and \
-           context.place != PLACE_OTHER:
-            places.append(context.place)
+        # no cfg when plone.restapi introspecting the portal_type
+        if cfg:
+            # XXX with MeetingConfig AT, place is stored as utf-8, we need unicode
+            places = [safe_unicode(place) for place in cfg.getPlaces().strip().split('\r\n')
+                      if place.strip()]
+            # history when context is a Meeting
+            if context.getTagName() == "Meeting" and \
+               context.place and \
+               context.place not in places and \
+               context.place != PLACE_OTHER:
+                places.append(context.place)
 
-        for place in places:
-            terms.append(UnicodeSimpleTerm(place, place, place))
-        terms.append(UnicodeSimpleTerm(
-            PLACE_OTHER, PLACE_OTHER, translate('other_place',
-                                                domain='PloneMeeting',
-                                                context=context.REQUEST,
-                                                default=u"Other")))
+            for place in places:
+                terms.append(UnicodeSimpleTerm(place, place, place))
+            terms.append(UnicodeSimpleTerm(
+                PLACE_OTHER, PLACE_OTHER, translate('other_place',
+                                                    domain='PloneMeeting',
+                                                    context=context.REQUEST,
+                                                    default=u"Other")))
         return SimpleVocabulary(terms)
 
 
