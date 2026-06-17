@@ -3569,6 +3569,26 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                         "and cfg.getCommittees()",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
+                # Items of my groups with neededFollowUp
+                ('searchitemsofmygroupswithneededfollowup', {
+                    'subFolderId': 'searches_items',
+                    'active': True,
+                    'query':
+                    [
+                        {u'i': u'labels',
+                         u'o': u'plone.app.querystring.operation.selection.is',
+                         u'v': [u'needed-follow-up']},
+                        {'i': 'CompoundCriterion',
+                         'o': 'plone.app.querystring.operation.compound.is',
+                         'v': 'items-of-my-groups'},
+                    ],
+                    'sort_on': u'modified',
+                    'sort_reversed': True,
+                    'showNumberOfItems': True,
+                    'tal_condition': "python: 'neededFollowUp' in cfg.getUsedItemAttributes() and "
+                        "tool.get_orgs_for_user(omitted_suffixes=['observers', ])",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
                 # Items with neededFollowUp
                 ('searchitemswithneededfollowup', {
                     'subFolderId': 'searches_items',
@@ -3586,6 +3606,26 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_reversed': True,
                     'showNumberOfItems': True,
                     'tal_condition': "python: 'neededFollowUp' in cfg.getUsedItemAttributes() and "
+                        "tool.get_orgs_for_user(omitted_suffixes=['observers', ])",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Items of my groups with providedFollowUp
+                ('searchitemsofmygroupswithprovidedfollowup', {
+                    'subFolderId': 'searches_items',
+                    'active': True,
+                    'query':
+                    [
+                        {u'i': u'labels',
+                         u'o': u'plone.app.querystring.operation.selection.is',
+                         u'v': [u'provided-follow-up']},
+                        {'i': 'CompoundCriterion',
+                         'o': 'plone.app.querystring.operation.compound.is',
+                         'v': 'items-of-my-groups'},
+                    ],
+                    'sort_on': u'modified',
+                    'sort_reversed': True,
+                    'showNumberOfItems': False,
+                    'tal_condition': "python: 'providedFollowUp' in cfg.getUsedItemAttributes() and "
                         "tool.get_orgs_for_user(omitted_suffixes=['observers', ])",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),

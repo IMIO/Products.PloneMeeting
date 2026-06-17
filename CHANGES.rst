@@ -18,6 +18,12 @@ Changelog
 - Do not `saveHasActions` the `imio.actionspanel backlink` action as it is
   not displayed as an icon or it prevent displaying `-` when no action available.
   [gbastien]
+- Added searches `searchitemsofmygroupswithneededfollowup` and
+  `searchitemsofmygroupswithprovidedfollowup`.
+  [gbastien]
+- Added `utils.display_as_html` so it is available in expressions to render
+  `text/plain` as `text/html`.
+  [gbastien]
 
 4.2.28.16 (2026-05-20)
 ----------------------
