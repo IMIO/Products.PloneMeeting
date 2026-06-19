@@ -296,7 +296,8 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
                     domain='PloneMeeting',
                     mapping=mapping,
                     context=self.request)
-                logger.info(u'Could not generate POD template {0} using output format {1} for item at {2} : {3}'.format(
+                logger.info(u'Could not generate POD template {0} using output '
+                            u'format {1} for item at {2} : {3}'.format(
                     pod_template.getId(), output_format, '/'.join(item.getPhysicalPath()), msg))
                 api.portal.show_message(msg, request=self.request, type='error')
 

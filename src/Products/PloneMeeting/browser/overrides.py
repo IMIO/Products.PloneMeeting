@@ -1155,8 +1155,9 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
            - send to mailing list if relevant;
            - or just generate the template."""
 
+        return_portal_msg_code = kwargs.get('return_portal_msg_code', False)
         if self.request.get('store_as_annex', '0') == '1' and \
-           pod_template.store_as_annex_empty_file is True:
+            pod_template.store_as_annex_empty_file is True:
             generated_template = translate('empty_annex_file_content',
                                            domain='PloneMeeting',
                                            context=self.request)
@@ -1169,17 +1170,31 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
             # in case we do not store generated template, do not generate it
             generated_template = ''
         else:
-            generated_template = super(
-                PMDocumentGenerationView, self).generate_and_download_doc(
-                    pod_template,
-                    output_format)
+            # while batch generating, return message if one element can not be generated
+            if return_portal_msg_code and not pod_template.can_be_generated(self.context):
+                msg_code = 'store_podtemplate_as_annex_can_not_be_generated'
+                return msg_code, {
+                    'obj_url': self.context.absolute_url(),
+                    'pod_template_title': safe_unicode(pod_template.Title())}
+            try:
+                generated_template = super(
+                    PMDocumentGenerationView, self).generate_and_download_doc(
+                        pod_template, output_format)
+            except Exception as e:
+                if return_portal_msg_code:
+                    msg_code = 'store_podtemplate_as_annex_generation_error'
+                    return msg_code, {
+                    'obj_url': self.context.absolute_url(),
+                    'pod_template_title': safe_unicode(pod_template.Title()),
+                    'error_msg': e.message}
+                else:
+                    raise e
 
         # check if we have to send this generated POD template or to render it
         if self.request.get('mailinglist_name'):
             return self._sendPodTemplate(generated_template)
         # check if we need to store the generated document
         elif self.request.get('store_as_annex', '0') == '1':
-            return_portal_msg_code = kwargs.get('return_portal_msg_code', False)
             add_to_sign_session = kwargs.get('add_to_sign_session', False)
             annex_ids_to_add_to_session = kwargs.get('annex_ids_to_add_to_session', False)
             store_generated_document = kwargs.get('store_generated_document', '1')

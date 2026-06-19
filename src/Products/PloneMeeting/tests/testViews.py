@@ -1727,7 +1727,9 @@ class testViews(PloneMeetingTestCase):
         cfg = self.meetingConfig
         # define correct config
         annex_type_uid = cfg.annexes_types.item_decision_annexes.get('decision-annex').UID()
-        cfg.podtemplates.itemTemplate.store_as_annex = annex_type_uid
+        pod_template = cfg.podtemplates.itemTemplate
+        pod_template_id = pod_template.getId()
+        pod_template.store_as_annex = annex_type_uid
         cfg.setMeetingItemTemplatesToStoreAsAnnex('itemTemplate__output_format__odt')
 
         # create meeting with items
@@ -1742,13 +1744,12 @@ class testViews(PloneMeetingTestCase):
         self.request.form['form.widgets.store_generated_document'] = '1'
         form.update()
         form.handleApply(form, None)
-        itemTemplateId = cfg.podtemplates.itemTemplate.getId()
         items = meeting.get_items(ordered=True)
         # 3 first item have the stored annex
         for i in range(0, 3):
             annexes = get_annexes(items[i])
             self.assertEqual(len(annexes), 1)
-            self.assertTrue(annexes[0].used_pod_template_id, itemTemplateId)
+            self.assertTrue(annexes[0].used_pod_template_id, pod_template_id)
         # but not the others
         for i in range(3, 6):
             annexes = get_annexes(items[i])
@@ -1764,7 +1765,7 @@ class testViews(PloneMeetingTestCase):
         for i in range(0, 5):
             annexes = get_annexes(items[i])
             self.assertEqual(len(annexes), 1)
-            self.assertTrue(annexes[0].used_pod_template_id, itemTemplateId)
+            self.assertTrue(annexes[0].used_pod_template_id, pod_template_id)
         # last element does not have annex
         annexes = get_annexes(items[6])
         self.assertFalse(annexes)
@@ -1779,7 +1780,7 @@ class testViews(PloneMeetingTestCase):
         for i in range(0, 6):
             annexes = get_annexes(items[i])
             self.assertEqual(len(annexes), 1)
-            self.assertTrue(annexes[0].used_pod_template_id, itemTemplateId)
+            self.assertTrue(annexes[0].used_pod_template_id, pod_template_id)
 
         # call a last time, when nothing to do, nothing is done
         form = meeting.restrictedTraverse('@@store-items-template-as-annex-batch-action')
@@ -1790,7 +1791,7 @@ class testViews(PloneMeetingTestCase):
         for i in range(0, 6):
             annexes = get_annexes(items[i])
             self.assertEqual(len(annexes), 1)
-            self.assertTrue(annexes[0].used_pod_template_id, itemTemplateId)
+            self.assertTrue(annexes[0].used_pod_template_id, pod_template_id)
 
         # test "2" overwrite
         created_dates = []
@@ -1822,6 +1823,50 @@ class testViews(PloneMeetingTestCase):
         form.handleApply(form, None)
         for i in range(0, 6):
             self.assertEqual(len(get_annexes(items[i])), 1)
+        messages = IStatusMessage(self.request).show()
+        self.assertEqual(messages[-1].message, u'Stored 7 annexes.')
+
+        # if one among selected elements can not be generated, we get a message
+        # but generetable templates are stored as expected
+        for i in range(0, 6):
+            self.deleteAsManager(get_annexes(items[i])[0].UID())
+        for i in range(0, 6):
+            self.assertEqual(len(get_annexes(items[i])), 0)
+        # adapt so pod_template can not be generated on item1
+        # ite1 generate an error when calling getDecision
+        # item2 (template not available)
+        item1 = items[0]
+        item1.decision = item1.Title
+        api.portal.set_registry_record(
+            'collective.documentgenerator.browser.controlpanel.'
+            'IDocumentGeneratorControlPanelSchema.raiseOnError_for_non_managers',
+            True)
+        item2 = items[1]
+        pod_template.tal_condition = "python: obj.getId() != '%s'" % item2.getId()
+        form = meeting.restrictedTraverse('@@store-items-template-as-annex-batch-action')
+        self.request['form.widgets.store_generated_document'] = '2'
+        form.update()
+        form.handleApply(form, None)
+        # no annex for item1 and item2
+        self.assertFalse(get_annexes(item1))
+        self.assertFalse(get_annexes(item2))
+        for i in range(2, 6):
+            self.assertEqual(len(get_annexes(items[i])), 1)
+        messages = IStatusMessage(self.request).show()
+        self.assertEqual(
+            messages[-1].message,
+            u'Stored 5 annexes.')
+        self.assertEqual(
+            messages[-2].message,
+            u'The "Meeting item" template can not be generated for element at '
+            u'http://nohost/plone/Members/pmManager/mymeetings/plonemeeting-assembly/recItem2.')
+        self.assertEqual(
+            messages[-3].message,
+            u'Not able to generate template Meeting item for element at '
+            u'http://nohost/plone/Members/pmManager/mymeetings/plonemeeting-assembly/recItem1, '
+            u'technical error message was "Error while evaluating the expression '
+            u'"xhtml(view.printXhtml(self, self.getDecision()))" defined in the '
+            u'"from" part of a statement. TypeError: expected string or buffer".')
 
     def test_pm_PMTransitionBatchActionFormOnlyForOperationalRoles(self):
         """The PMTransitionBatchActionForm is only available to operational roles,
