@@ -1725,6 +1725,7 @@ class testViews(PloneMeetingTestCase):
            MeetingConfig.meetingItemTemplatesToStoreAsAnnex as an annex
            for every selected items."""
         cfg = self.meetingConfig
+        cfg_id = cfg.getId()
         # define correct config
         annex_type_uid = cfg.annexes_types.item_decision_annexes.get('decision-annex').UID()
         pod_template = cfg.podtemplates.itemTemplate
@@ -1859,14 +1860,14 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(
             messages[-2].message,
             u'The "Meeting item" template can not be generated for element at '
-            u'http://nohost/plone/Members/pmManager/mymeetings/plonemeeting-assembly/recItem2.')
+            u'http://nohost/plone/Members/pmManager/mymeetings/%s/recItem2.' % cfg_id)
         self.assertEqual(
             messages[-3].message,
             u'Not able to generate template Meeting item for element at '
-            u'http://nohost/plone/Members/pmManager/mymeetings/plonemeeting-assembly/recItem1, '
+            u'http://nohost/plone/Members/pmManager/mymeetings/%s/recItem1, '
             u'technical error message was "Error while evaluating the expression '
             u'"xhtml(view.printXhtml(self, self.getDecision()))" defined in the '
-            u'"from" part of a statement. TypeError: expected string or buffer".')
+            u'"from" part of a statement. TypeError: expected string or buffer".' % cfg_id)
 
     def test_pm_PMTransitionBatchActionFormOnlyForOperationalRoles(self):
         """The PMTransitionBatchActionForm is only available to operational roles,
