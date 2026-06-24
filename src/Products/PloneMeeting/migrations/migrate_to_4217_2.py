@@ -15,6 +15,8 @@ class Migrate_To_4217_2(Migrator):
                                   self.profile_name.replace('profile-', '')])
         # add new searches follow-up of items of my groups
         self.addNewSearches()
+        # unregister portlets.Classic
+        self.ps.runImportStepFromProfile('profile-Products.PloneMeeting:default', 'portlets')
         logger.info('Migrating to PloneMeeting 4217.2... Done.')
 
 

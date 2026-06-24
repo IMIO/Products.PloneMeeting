@@ -24,6 +24,8 @@ Changelog
 - Added `utils.display_as_html` so it is available in expressions to render
   `text/plain` as `text/html`.
   [gbastien]
+- Remove the Classic portlet.
+  [gbastien]
 
 4.2.28.16 (2026-05-20)
 ----------------------
