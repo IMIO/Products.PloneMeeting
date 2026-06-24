@@ -26,6 +26,14 @@ Changelog
   [gbastien]
 - Remove the Classic portlet.
   [gbastien]
+- Added new values for `MeetingItem.privacy`:
+
+  - `public_info`;
+  - `public_advice`;
+  - `secret_info`;
+  - `secret_advice`.
+
+  [gbastien]
 
 4.2.28.16 (2026-05-20)
 ----------------------
