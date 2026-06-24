@@ -37,6 +37,10 @@ Changelog
 - As tests on `GA` are failing when using `fastly.picsum.photos`,
   rely on `loremflickr.com` to get external images in tests.
   [gbastien]
+- Make sure relevant annexes types are selectable in the
+  `PMContentCategory.after_scan_change_annex_type_to` field depending on annex type
+  (related to item, meeting or advice).
+  [gbastien]
 
 4.2.28.16 (2026-05-20)
 ----------------------
