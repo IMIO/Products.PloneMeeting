@@ -5,12 +5,6 @@ Changelog
 4.2.29rc11 (unreleased)
 -----------------------
 
-- Nothing changed yet.
-
-
-4.2.29rc10 (2026-06-19)
------------------------
-
 - Rename every members meeting config folder title when
   `MeetingConfig.folderTitle` changed.
   [gbastien]
@@ -30,6 +24,20 @@ Changelog
 - Added `utils.display_as_html` so it is available in expressions to render
   `text/plain` as `text/html`.
   [gbastien]
+- Remove the Classic portlet.
+  [gbastien]
+- Added new values for `MeetingItem.privacy`:
+
+  - `public_info`;
+  - `public_advice`;
+  - `secret_info`;
+  - `secret_advice`.
+
+  [gbastien]
+
+4.2.29rc10 (2026-06-19)
+-----------------------
+
 - Display potential session title in prepare for signature forms.
   [gbastien]
 - In `@@store-items-template-as-annex-batch-action` display error message if
@@ -50,7 +58,6 @@ Changelog
   [gbastien]
 - Added possibility to overwrite an existing stored annex when using
   `@@store-pod-temlate-as-annex-form` and `@@store-items-template-as-annex-batch-action`.
-  [gbastien]
 
 4.2.28.16 (2026-05-20)
 ----------------------

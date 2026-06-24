@@ -1566,15 +1566,23 @@ class SelectablePrivaciesVocabulary(object):
     def __call__(self, context):
         """ """
         res = []
-        keys = ['public_heading', 'public', 'secret_heading', 'secret']
+        keys = ['public_heading',
+                'public',
+                'public_info',
+                'public_advice',
+                'secret_heading',
+                'secret',
+                'secret_info',
+                'secret_advice']
         for key in keys:
             res.append(SimpleTerm(
                 key,
                 key,
-                safe_unicode(translate(key,
-                                       domain='PloneMeeting',
-                                       context=context.REQUEST))))
-
+                safe_unicode(
+                    translate(
+                        key,
+                        domain='PloneMeeting',
+                        context=context.REQUEST))))
         return SimpleVocabulary(res)
 
 
