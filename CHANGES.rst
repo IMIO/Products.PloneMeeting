@@ -34,6 +34,9 @@ Changelog
   - `secret_advice`.
 
   [gbastien]
+- Overrided `ResolveUIDAndCaptionFilter` output filter to add `loading="lazy"`
+  to `<img>` tags.
+  [gbastien]
 
 4.2.28.16 (2026-05-20)
 ----------------------
