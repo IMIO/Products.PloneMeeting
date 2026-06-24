@@ -34,6 +34,9 @@ Changelog
   - `secret_advice`.
 
   [gbastien]
+- As tests on `GA` are failing when using `fastly.picsum.photos`,
+  rely on `loremflickr.com` to get external images in tests.
+  [gbastien]
 
 4.2.28.16 (2026-05-20)
 ----------------------
