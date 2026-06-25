@@ -34,6 +34,15 @@ Changelog
   - `secret_advice`.
 
   [gbastien]
+- As tests on `GA` are failing when using `fastly.picsum.photos`,
+  rely on `loremflickr.com` to get external images in tests.
+  [gbastien]
+- Make sure relevant annexes types are selectable in the
+  `PMContentCategory.after_scan_change_annex_type_to` field depending on annex type
+  (related to item, meeting or advice).
+  [gbastien]
+- Make `imio.actionspanel` viewlet always viewable at bottom of `DashboardCollection`.
+  [gbastien]
 
 4.2.29rc10 (2026-06-19)
 -----------------------

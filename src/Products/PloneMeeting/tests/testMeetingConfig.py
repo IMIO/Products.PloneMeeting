@@ -2831,6 +2831,45 @@ class testMeetingConfig(PloneMeetingTestCase):
         for member_folder in self.portal.Members.objectValues():
             self.assertEqual(member_folder.mymeetings.get(cfg_id).Title(), cfg.getFolderTitle())
 
+    def test_pm_ContentAnnexTypesVocabulary(self):
+        """Test the ContentCategory.after_scan_change_annex_type_to as it changes
+           depending on item annex type, advice annex type or meeting annex type."""
+        cfg = self.meetingConfig
+        item_annex_type = cfg.annexes_types.item_annexes.get('item-annex')
+        item_annex_type_uid = item_annex_type.UID()
+        item_decision_annex_type = cfg.annexes_types.item_decision_annexes.get('decision-annex')
+        item_decision_annex_type_uid = item_decision_annex_type.UID()
+        meeting_annex_type = cfg.annexes_types.meeting_annexes.get('meeting-annex')
+        meeting_annex_type_uid = meeting_annex_type.UID()
+        advice_annex_type = cfg.annexes_types.advice_annexes.get('advice-annex')
+        advice_annex_type_uid = advice_annex_type.UID()
+        # can go from item annex types to another item annex type or decision annex types
+        vocab_name = "Products.PloneMeeting.vocabularies.content_annex_types_vocabulary"
+        # item annex type
+        item_annex_type_values = get_vocab_values(item_annex_type, vocab_name)
+        self.assertTrue(item_annex_type_uid in item_annex_type_values)
+        self.assertTrue(item_decision_annex_type_uid in item_annex_type_values)
+        self.assertFalse(meeting_annex_type_uid in item_annex_type_values)
+        self.assertFalse(advice_annex_type_uid in item_annex_type_values)
+        # item decision annex type
+        item_decision_annex_type_values = get_vocab_values(item_decision_annex_type, vocab_name)
+        self.assertTrue(item_annex_type_uid in item_decision_annex_type_values)
+        self.assertTrue(item_decision_annex_type_uid in item_decision_annex_type_values)
+        self.assertFalse(meeting_annex_type_uid in item_decision_annex_type_values)
+        self.assertFalse(advice_annex_type_uid in item_decision_annex_type_values)
+        # meeting annex type
+        meeting_annex_type_values = get_vocab_values(meeting_annex_type, vocab_name)
+        self.assertFalse(item_annex_type_uid in meeting_annex_type_values)
+        self.assertFalse(item_decision_annex_type_uid in meeting_annex_type_values)
+        self.assertTrue(meeting_annex_type_uid in meeting_annex_type_values)
+        self.assertFalse(advice_annex_type_uid in item_decision_annex_type_values)
+        # advice annex type
+        advice_annex_type_values = get_vocab_values(advice_annex_type, vocab_name)
+        self.assertFalse(item_annex_type_uid in advice_annex_type_values)
+        self.assertFalse(item_decision_annex_type_uid in advice_annex_type_values)
+        self.assertFalse(meeting_annex_type_uid in advice_annex_type_values)
+        self.assertTrue(advice_annex_type_uid in advice_annex_type_values)
+
 
 def test_suite():
     from unittest import makeSuite

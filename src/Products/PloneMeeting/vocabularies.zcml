@@ -125,6 +125,8 @@
            component=".vocabularies.PMAttendeeRedefinePositionTypesVocabularyFactory" />
   <utility name="Products.PloneMeeting.vocabularies.item_annex_types_vocabulary"
            component=".vocabularies.ItemAnnexTypesVocabularyFactory" />
+  <utility name="Products.PloneMeeting.vocabularies.content_annex_types_vocabulary"
+           component=".vocabularies.ContentAnnexTypesVocabularyFactory" />
   <utility name="Products.PloneMeeting.vocabularies.icon_item_annex_types_vocabulary"
            component=".vocabularies.IconItemAnnexTypesVocabularyFactory" />
   <utility name="Products.PloneMeeting.vocabularies.every_annex_types_vocabulary"
