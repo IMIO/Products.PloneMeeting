@@ -41,6 +41,8 @@ Changelog
   `PMContentCategory.after_scan_change_annex_type_to` field depending on annex type
   (related to item, meeting or advice).
   [gbastien]
+- Make `imio.actionspanel` viewlet always viewable at bottom of `DashboardCollection`.
+  [gbastien]
 
 4.2.28.16 (2026-05-20)
 ----------------------

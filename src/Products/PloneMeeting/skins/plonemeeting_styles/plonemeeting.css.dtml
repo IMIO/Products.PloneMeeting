@@ -897,6 +897,7 @@ body[class^='template-view portaltype-meetingadvice'] div#viewlet-below-content-
 body[class^='template-view portaltype-configurablepodtemplate'] div#viewlet-below-content-body,
 body[class^='template-view portaltype-dashboardpodtemplate'] div#viewlet-below-content-body,
 body[class^='template-view portaltype-styletemplate'] div#viewlet-below-content-body,
+body[class^='template-listing_view portaltype-dashboardcollection'] div#viewlet-below-content-body,
 body.template-meetingitem_view div#viewlet-below-content-body {
     position: sticky;
     bottom: 10px;
