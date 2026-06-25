@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.28.17 (unreleased)
+4.2.28.17 (2026-06-25)
 ----------------------
 
 - Rename every members meeting config folder title when
