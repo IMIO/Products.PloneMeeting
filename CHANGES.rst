@@ -57,7 +57,7 @@ Changelog
   [gbastien]
 - In `@@store-items-template-as-annex-batch-action` display error message if
   a template could not be generated because of technical error
-  (error durint generation) or condition not available for an item instead
+  (error during generation) or condition not available for an item instead
   breaking without any message and reloading the page.
   [gbastien]
 
