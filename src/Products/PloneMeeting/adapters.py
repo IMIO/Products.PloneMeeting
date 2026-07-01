@@ -1876,7 +1876,7 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
                     org_uids = item.adviceIndex.keys()
                 else:
                     # every possible advisers, so configured custom advisers and selectable advisers
-                    custom_advisers_org_uids = [row['org_uid'] for row in self.cfg.getCustomAdvisers()]
+                    custom_advisers_org_uids = [row['org'] for row in self.cfg.getCustomAdvisers()]
                     selectable_advisers = self.cfg.getSelectableAdvisers()
                     org_uids = set(custom_advisers_org_uids).union(selectable_advisers)
                 for org_uid in org_uids:

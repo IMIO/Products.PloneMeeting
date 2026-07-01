@@ -5,8 +5,10 @@ Changelog
 4.2.28.18 (unreleased)
 ----------------------
 
-- Nothing changed yet.
-
+- Fixed `PMCategorizedObjectInfoAdapter._reader_groups` when using
+  `reader_advices` with `item=None`, the key to get organization uid in
+  `MeetingConfig.customAdvisers` is `org` and not `org_uid`.
+  [gbastien]
 
 4.2.28.17 (2026-06-25)
 ----------------------
