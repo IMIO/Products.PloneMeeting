@@ -14,7 +14,7 @@ Changelog
   [gbastien]
 
 4.2.29rc11 (2026-06-25)
-----------------------
+-----------------------
 
 - Rename every members meeting config folder title when
   `MeetingConfig.folderTitle` changed.
