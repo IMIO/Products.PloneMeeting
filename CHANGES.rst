@@ -5,11 +5,16 @@ Changelog
 4.2.29rc12 (unreleased)
 -----------------------
 
-- Nothing changed yet.
-
+- Fixed `PMCategorizedObjectInfoAdapter._reader_groups` when using
+  `reader_advices` with `item=None`, the key to get organization uid in
+  `MeetingConfig.customAdvisers` is `org` and not `org_uid`.
+  [gbastien]
+- Make `proposing group comment` available on `advice popup` even when advice
+  is `hidden during redaction`.
+  [gbastien]
 
 4.2.29rc11 (2026-06-25)
------------------------
+----------------------
 
 - Rename every members meeting config folder title when
   `MeetingConfig.folderTitle` changed.
