@@ -9,6 +9,9 @@ Changelog
   `reader_advices` with `item=None`, the key to get organization uid in
   `MeetingConfig.customAdvisers` is `org` and not `org_uid`.
   [gbastien]
+- Make `proposing group comment` available on `advice popup` even when advice
+  is `hidden during redaction`.
+  [gbastien]
 
 4.2.28.17 (2026-06-25)
 ----------------------
