@@ -2,7 +2,24 @@ Changelog
 =========
 
 
-4.2.28.17 (unreleased)
+4.2.28.19 (unreleased)
+----------------------
+
+- Nothing changed yet.
+
+
+4.2.28.18 (2026-07-01)
+----------------------
+
+- Fixed `PMCategorizedObjectInfoAdapter._reader_groups` when using
+  `reader_advices` with `item=None`, the key to get organization uid in
+  `MeetingConfig.customAdvisers` is `org` and not `org_uid`.
+  [gbastien]
+- Make `proposing group comment` available on `advice popup` even when advice
+  is `hidden during redaction`.
+  [gbastien]
+
+4.2.28.17 (2026-06-25)
 ----------------------
 
 - Rename every members meeting config folder title when
@@ -14,6 +31,34 @@ Changelog
   [gbastien]
 - Reordered fields at end of item view in a more chronological way:
   `committeeObservations`, `committeeTranscript`, `inAndOutMoves` and `notes`.
+  [gbastien]
+- Do not `saveHasActions` the `imio.actionspanel backlink` action as it is
+  not displayed as an icon or it prevent displaying `-` when no action available.
+  [gbastien]
+- Added searches `searchitemsofmygroupswithneededfollowup` and
+  `searchitemsofmygroupswithprovidedfollowup`.
+  [gbastien]
+- Added `utils.display_as_html` so it is available in expressions to render
+  `text/plain` as `text/html`.
+  [gbastien]
+- Remove the Classic portlet.
+  [gbastien]
+- Added new values for `MeetingItem.privacy`:
+
+  - `public_info`;
+  - `public_advice`;
+  - `secret_info`;
+  - `secret_advice`.
+
+  [gbastien]
+- As tests on `GA` are failing when using `fastly.picsum.photos`,
+  rely on `loremflickr.com` to get external images in tests.
+  [gbastien]
+- Make sure relevant annexes types are selectable in the
+  `PMContentCategory.after_scan_change_annex_type_to` field depending on annex type
+  (related to item, meeting or advice).
+  [gbastien]
+- Make `imio.actionspanel` viewlet always viewable at bottom of `DashboardCollection`.
   [gbastien]
 
 4.2.28.16 (2026-05-20)

@@ -24,6 +24,8 @@ from collective.eeafaceted.collectionwidget.content.dashboardcollection import I
 from collective.eeafaceted.collectionwidget.vocabulary import CachedCollectionVocabulary
 from collective.eeafaceted.dashboard.vocabulary import DashboardCollectionsVocabulary
 from collective.iconifiedcategory.config import get_sort_categorized_tab
+from collective.iconifiedcategory.content.category import Category
+from collective.iconifiedcategory.content.subcategory import Subcategory
 from collective.iconifiedcategory.utils import get_categorized_elements
 from collective.iconifiedcategory.utils import get_category_icon_url
 from collective.iconifiedcategory.utils import get_category_object
@@ -1563,15 +1565,23 @@ class SelectablePrivaciesVocabulary(object):
     def __call__(self, context):
         """ """
         res = []
-        keys = ['public_heading', 'public', 'secret_heading', 'secret']
+        keys = ['public_heading',
+                'public',
+                'public_info',
+                'public_advice',
+                'secret_heading',
+                'secret',
+                'secret_info',
+                'secret_advice']
         for key in keys:
             res.append(SimpleTerm(
                 key,
                 key,
-                safe_unicode(translate(key,
-                                       domain='PloneMeeting',
-                                       context=context.REQUEST))))
-
+                safe_unicode(
+                    translate(
+                        key,
+                        domain='PloneMeeting',
+                        context=context.REQUEST))))
         return SimpleVocabulary(res)
 
 
@@ -1686,6 +1696,32 @@ class ItemAnnexTypesVocabulary(EveryAnnexTypesVocabulary):
 
 
 ItemAnnexTypesVocabularyFactory = ItemAnnexTypesVocabulary()
+
+
+class ContentAnnexTypesVocabulary(EveryAnnexTypesVocabulary):
+
+    def __call__(self,
+                 context,
+                 filtered_annex_groups=[],
+                 include_icon=False):
+        """Vocabulary managing filtered_annex_groups depending on context."""
+        # here we are on a Category or on a CategoryGroup
+        if isinstance(context, (Category, Subcategory)):
+            annex_group = context.get_category_group()
+        else:
+            annex_group = context
+        annex_group_id = annex_group.getId()
+        if annex_group_id in ['item_annexes', 'item_decision_annexes']:
+            filtered_annex_groups = ['item_annexes', 'item_decision_annexes']
+        else:
+            filtered_annex_groups = [annex_group_id]
+        return super(ContentAnnexTypesVocabulary, self).__call__(
+            context,
+            filtered_annex_groups=filtered_annex_groups,
+            include_icon=include_icon)
+
+
+ContentAnnexTypesVocabularyFactory = ContentAnnexTypesVocabulary()
 
 
 class IconItemAnnexTypesVocabulary(ItemAnnexTypesVocabulary):

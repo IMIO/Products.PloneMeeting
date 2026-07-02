@@ -7073,8 +7073,8 @@ class testMeetingItem(PloneMeetingTestCase):
         item = getattr(pmFolder, itemId)
         item.processForm()
         # contact.png was saved in the item
-        self.assertTrue('22-400x400.jpg' in item.objectIds())
-        img = item.get('22-400x400.jpg')
+        self.assertTrue('image.jpeg' in item.objectIds())
+        img = item.get('image.jpeg')
         # external image link was updated
         self.assertEqual(
             item.getRawDescription(),
@@ -7083,8 +7083,8 @@ class testMeetingItem(PloneMeetingTestCase):
         # test using the quickedit, test with field 'decision' where getRaw was overrided
         description = '<p>Working external image <img src="%s"/>.</p>' % self.external_image2
         set_field_from_ajax(item, 'description', description)
-        self.assertTrue('1025-400x300.jpg' in item.objectIds())
-        img2 = item.get('1025-400x300.jpg')
+        self.assertTrue('image-1.jpeg' in item.objectIds())
+        img2 = item.get('image-1.jpeg')
         # external image link was updated
         self.assertEqual(
             item.getRawDescription(),
@@ -7094,8 +7094,8 @@ class testMeetingItem(PloneMeetingTestCase):
         descr = '<p>Working external image <img src="%s"/>.</p>' % self.external_image3
         item.setDescription(descr)
         item.processForm()
-        self.assertTrue('1035-600x400.jpg' in item.objectIds())
-        img3 = item.get('1035-600x400.jpg')
+        self.assertTrue('image-2.jpeg' in item.objectIds())
+        img3 = item.get('image-2.jpeg')
         # external image link was updated
         self.assertEqual(
             item.getRawDescription(),
@@ -7114,7 +7114,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # the not retrievable image was replaced with a "not found" image
         self.assertListEqual(
             sorted(item.objectIds()),
-            ['1025-400x300.jpg', '1035-600x400.jpg', '22-400x400.jpg', 'imagenotfound.jpg'])
+            ['image-1.jpeg', 'image-2.jpeg', 'image.jpeg', 'imagenotfound.jpg'])
         self.assertEqual(item.getRawDescription(), expected)
 
     def test_pm_ItemInternalImagesStoredLocallyWhenItemDuplicated(self):
@@ -7138,19 +7138,19 @@ class testMeetingItem(PloneMeetingTestCase):
             '<p>Internal image <img src="{1}">.</p>' \
             '<p>Internal image 2 <img src="{2}">.</p>'
         text = text_pattern.format(
-            self.external_image2,  # 1025-400x300.jpg
+            self.external_image2,
             img.absolute_url(),
             'resolveuid/{0}'.format(img2.UID()))
         item.setDescription(text)
         self.assertEqual(item.objectIds(), ['dot.gif', 'dot2.gif'])
         item.at_post_edit_script()
         # we have images saved locally
-        self.assertEqual(sorted(item.objectIds()), ['1025-400x300.jpg', 'dot.gif', 'dot2.gif'])
+        self.assertEqual(sorted(item.objectIds()), ['dot.gif', 'dot2.gif', 'image.jpeg'])
 
         # duplicate and check that uri are correct
         newItem = item.clone()
-        self.assertEqual(sorted(newItem.objectIds()), ['1025-400x300.jpg', 'dot.gif', 'dot2.gif'])
-        new_img = newItem.get('1025-400x300.jpg')
+        self.assertEqual(sorted(newItem.objectIds()), ['dot.gif', 'dot2.gif', 'image.jpeg'])
+        new_img = newItem.get('image.jpeg')
         new_img1 = newItem.get('dot.gif')
         new_img2 = newItem.get('dot2.gif')
         # every links are turned to resolveuid

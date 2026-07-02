@@ -89,6 +89,16 @@ class testAnnexes(PloneMeetingTestCase):
     def _setupConfidentialityOnItemAnnexes(self, powerObserverStates=[], copyGroups=[]):
         """ """
         cfg = self.meetingConfig
+        cfg.setCustomAdvisers(
+            [{'row_id': 'unique_id_123',
+              'org': self.developers_uid,
+              'gives_auto_advice_on': '',
+              'for_item_created_from': '2016/08/08',
+              'delay': '5',
+              'delay_label': '',
+              'available_on': '',
+              'is_linked_to_previous_row': '0'}]
+        )
         cfgItemWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
         item_initial_state = self.wfTool[cfgItemWF.getId()].initial_state
         # make sure by default no access to items for powerobservers
