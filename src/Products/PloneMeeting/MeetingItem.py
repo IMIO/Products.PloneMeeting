@@ -597,15 +597,24 @@ class MeetingItemWorkflowConditions(object):
         if not _checkPermission(ReviewPortalContent, self.context) and not \
            self.tool.isManager(self.cfg):
             return
-        # when using validation states, may return when in last validation state
-        if 'return_to_proposing_group' not in self.cfg.getWorkflowAdaptations():
+
+        wf_adaptations = self.cfg.getWorkflowAdaptations()
+
+        # when using validation states, may only return to the meeting from the
+        # last validation state, plus the before-last one when using
+        # 'return_to_proposing_group_with_before_last_validation'.  A validation level
+        # is skipped by _getLastValidationState when its Plone group is empty, so the
+        # returned state may match either the last or before-last level, hence we accept both.
+        if 'return_to_proposing_group' not in wf_adaptations:
             current_validation_state = 'itemcreated' \
                 if self.review_state == 'returned_to_proposing_group' \
                 else self.review_state.replace('returned_to_proposing_group_', '')
-            last_val_state = self._getLastValidationState()
-            # we are in last validation state, or we are in state 'returned_to_proposing_group'
-            # and there is no last validation state, aka it is "itemcreated"
-            if current_validation_state != last_val_state:
+            allowed_val_states = [self._getLastValidationState()]
+            if 'return_to_proposing_group_with_before_last_validation' in wf_adaptations:
+                allowed_val_states.append(self._getLastValidationState(before_last=True))
+            # we are in a relevant validation state, or in state 'returned_to_proposing_group'
+            # and there is no validation state, aka it is "itemcreated"
+            if current_validation_state not in allowed_val_states:
                 return
 
         # get the linked meeting
@@ -617,7 +626,7 @@ class MeetingItemWorkflowConditions(object):
             self.cfg.getId(), RETURN_TO_PROPOSING_GROUP_MAPPINGS[transitionName].get('*'))
         # special behavior when using WFA 'itemdecided', back to itemfrozen
         # may only be done if meeting in state 'frozen'
-        if 'itemdecided' in self.cfg.getWorkflowAdaptations() and \
+        if 'itemdecided' in wf_adaptations and \
            transitionName == 'backTo_itemfrozen_from_returned_to_proposing_group':
             authorizedMeetingStates = ['frozen']
         if meetingState in authorizedMeetingStates:
