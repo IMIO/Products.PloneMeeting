@@ -600,32 +600,22 @@ class MeetingItemWorkflowConditions(object):
 
         wf_adaptations = self.cfg.getWorkflowAdaptations()
 
-        last_val_state = self._getLastValidationState()
-        before_last_val_state = self._getLastValidationState(before_last=True)
-
-        # restrict which returned states allow the 'back to meeting' transitions:
-        # - 'with_all_validations'        : only from the last validation state
-        # - 'with_last_validation'        : only from the last validation state
-        # - 'with_before_last_validation' : from the before-last OR the last state
-        #                                   (the last validation level is optional)
-        # - 'return_to_proposing_group'   : no restriction (not in the map)
-        validation_state_map = {
-            'return_to_proposing_group_with_all_validations':
-                [last_val_state],
-            'return_to_proposing_group_with_last_validation':
-                [last_val_state],
-            'return_to_proposing_group_with_before_last_validation':
-                [before_last_val_state, last_val_state],
-        }
-
-        for wfa, allowed_states in validation_state_map.items():
-            if wfa in wf_adaptations:
-                current_validation_state = 'itemcreated' \
-                    if self.review_state == 'returned_to_proposing_group' \
-                    else self.review_state.replace('returned_to_proposing_group_', '')
-                if current_validation_state not in allowed_states:
-                    return
-                break  # these WFAs are mutually exclusive, no need to continue
+        # when using validation states, may only return to the meeting from the
+        # last validation state, plus the before-last one when using
+        # 'return_to_proposing_group_with_before_last_validation'.  A validation level
+        # is skipped by _getLastValidationState when its Plone group is empty, so the
+        # returned state may match either the last or before-last level, hence we accept both.
+        if 'return_to_proposing_group' not in wf_adaptations:
+            current_validation_state = 'itemcreated' \
+                if self.review_state == 'returned_to_proposing_group' \
+                else self.review_state.replace('returned_to_proposing_group_', '')
+            allowed_val_states = [self._getLastValidationState()]
+            if 'return_to_proposing_group_with_before_last_validation' in wf_adaptations:
+                allowed_val_states.append(self._getLastValidationState(before_last=True))
+            # we are in a relevant validation state, or in state 'returned_to_proposing_group'
+            # and there is no validation state, aka it is "itemcreated"
+            if current_validation_state not in allowed_val_states:
+                return
 
         # get the linked meeting
         meeting = self.context.getMeeting()
