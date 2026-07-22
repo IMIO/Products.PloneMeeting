@@ -5,8 +5,13 @@ Changelog
 4.2.28.17 (unreleased)
 ----------------------
 
-- Nothing changed yet.
+- Registered a different `CategorizedChildInfosView._show_protected_download` for:
 
+  - `MeetingItem`: only shown to `MeetingManagers` and `proposingGroup` members;
+  - `Meeting`: only shown to `MeetingManagers`;
+  - `MeetingAdvice`: only shown to `MeetingManagers` and `advice_group advisers`.
+
+  [gbastien]
 
 4.2.28.16 (2026-05-20)
 ----------------------
