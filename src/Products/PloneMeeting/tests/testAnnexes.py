@@ -1813,13 +1813,21 @@ class testAnnexes(PloneMeetingTestCase):
     def test_pm_AnnexShowPreview(self):
         """Test when show_preview is defined on annex type."""
         cfg = self.meetingConfig
+        self._removeConfigObjectsFor(cfg)
         self._enableField('copyGroups')
         cfgItemWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
         item_initial_state = self.wfTool[cfgItemWF.getId()].initial_state
         cfg.setItemCopyGroupsStates((item_initial_state, ))
         cfg.setSelectableCopyGroups((self.vendors_creators, ))
+        cfg.setItemAdviceStates((item_initial_state, ))
+        cfg.setItemAdviceEditStates((item_initial_state, ))
+
+        # item annex
         self.changeUser('pmCreator1')
-        item = self.create('MeetingItem', copyGroups=(self.vendors_creators, ))
+        item = self.create(
+            'MeetingItem',
+            copyGroups=(self.vendors_creators, ),
+            optionalAdvisers=(self.vendors_uid, ))
         annex0 = self.addAnnex(item)
         # must be PDF
         self.assertRaises(Invalid, self.addAnnex, item, annexType='preview-annex')
@@ -1877,6 +1885,24 @@ class testAnnexes(PloneMeetingTestCase):
         data = form.handleApply(form, None)
         m = magic.Magic()
         self.assertTrue(m.from_buffer(data).startswith('Zip archive data, at least v2.0 to extract'))
+
+        # meeting annex, only downloadable by MeetingManager
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting')
+        meeting_annex = self.addAnnex(meeting, annexType='preview-hide-download-annex')
+        self.assertTrue(meeting_annex.show_download())
+        self.changeUser('pmCreator1')
+        self.assertFalse(meeting_annex.show_download())
+
+        # advice annex
+        self.changeUser('pmReviewer2')
+        advice = self.add_advice(item)
+        advice_annex = self.addAnnex(advice, annexType='preview-hide-download-annex')
+        self.assertTrue(advice_annex.show_download())
+        self.changeUser('pmCreator1')
+        self.assertFalse(advice_annex.show_download())
+        self.changeUser('pmManager')
+        self.assertTrue(advice_annex.show_download())
 
     def test_pm_AnonymousCanNotDownloadAnnex(self):
         """As we overrided can_view to let user download not viewable annexes

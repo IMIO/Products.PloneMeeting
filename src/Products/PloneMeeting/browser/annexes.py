@@ -265,9 +265,8 @@ class AdviceCategorizedChildInfosView(BaseCategorizedChildInfosView):
            Are allowed to download:
            - advice_group advisers members;
            - (Meeting)Managers."""
-        import ipdb; ipdb.set_trace()
         return super(AdviceCategorizedChildInfosView, self)._show_protected_download(element) or \
-            get_plone_group_id(self.context.advice_group, 'advisers') in self.tool.get_orgs_for_user()
+            get_plone_group_id(self.context.advice_group, 'advisers') in get_plone_groups_for_user()
 
 
 class PMBaseActionView(BaseActionView):
