@@ -3569,6 +3569,26 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                         "and cfg.getCommittees()",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
+                # Items of my groups with neededFollowUp
+                ('searchitemsofmygroupswithneededfollowup', {
+                    'subFolderId': 'searches_items',
+                    'active': True,
+                    'query':
+                    [
+                        {u'i': u'labels',
+                         u'o': u'plone.app.querystring.operation.selection.is',
+                         u'v': [u'needed-follow-up']},
+                        {'i': 'CompoundCriterion',
+                         'o': 'plone.app.querystring.operation.compound.is',
+                         'v': 'items-of-my-groups'},
+                    ],
+                    'sort_on': u'modified',
+                    'sort_reversed': True,
+                    'showNumberOfItems': True,
+                    'tal_condition': "python: 'neededFollowUp' in cfg.getUsedItemAttributes() and "
+                        "tool.get_orgs_for_user(omitted_suffixes=['observers', ])",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
                 # Items with neededFollowUp
                 ('searchitemswithneededfollowup', {
                     'subFolderId': 'searches_items',
@@ -3586,6 +3606,26 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_reversed': True,
                     'showNumberOfItems': True,
                     'tal_condition': "python: 'neededFollowUp' in cfg.getUsedItemAttributes() and "
+                        "tool.get_orgs_for_user(omitted_suffixes=['observers', ])",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Items of my groups with providedFollowUp
+                ('searchitemsofmygroupswithprovidedfollowup', {
+                    'subFolderId': 'searches_items',
+                    'active': True,
+                    'query':
+                    [
+                        {u'i': u'labels',
+                         u'o': u'plone.app.querystring.operation.selection.is',
+                         u'v': [u'provided-follow-up']},
+                        {'i': 'CompoundCriterion',
+                         'o': 'plone.app.querystring.operation.compound.is',
+                         'v': 'items-of-my-groups'},
+                    ],
+                    'sort_on': u'modified',
+                    'sort_reversed': True,
+                    'showNumberOfItems': False,
+                    'tal_condition': "python: 'providedFollowUp' in cfg.getUsedItemAttributes() and "
                         "tool.get_orgs_for_user(omitted_suffixes=['observers', ])",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
@@ -3811,7 +3851,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declareProtected(WriteRiskyConfig, 'setUsingGroups')
 
     def setUsingGroups(self, value, **kwargs):
-        '''Overrides the field 'setUsingGroups' mutator to enable or disable
+        '''Overrides the field 'usingGroups' mutator to enable or disable
            the MEETING_REMOVE_MOG_WFA WFA when relevant.
            Updating WF role mappings and every meetings local_roles is managed
            by the onConfigModified event.'''
@@ -3836,6 +3876,22 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # value changed, need to update local roles but WFA is already selected
             self.REQUEST.set('need_update_%s' % MEETING_REMOVE_MOG_WFA, True)
         self.getField('usingGroups').set(self, value, **kwargs)
+
+    security.declareProtected(WriteRiskyConfig, 'setFolderTitle')
+
+    def setFolderTitle(self, value, **kwargs):
+        '''Overrides the field 'folderTitle' mutator to rename every member folder
+           title when folderTitle changed.'''
+        stored = self.getField('folderTitle').get(self, **kwargs)
+        if stored != value:
+            folders = self._get_all_meeting_folders()
+            extras = 'number_of_elements={0} MeetingConfig={1} old_folder_title={2} new_folder_title={3}'.format(
+                len(folders), self.getId(), stored, value)
+            fplog('update_members_folder_title', extras=extras)
+            for folder in folders:
+                folder.setTitle(value)
+                folder.reindexObject(idxs=['Title'])
+        self.getField('folderTitle').set(self, value, **kwargs)
 
     security.declarePublic('getUsedVoteValues')
 
@@ -6198,6 +6254,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     confidential_profiles.append('{0}{1}'.format(CONFIGGROUPPREFIX, po_infos['row_id']))
             else:
                 confidential_profiles.append('{0}{1}'.format(READERPREFIX, suffix))
+        fct_titles = {fct['fct_id']: fct['fct_title'] for fct in get_registry_functions(as_copy=False)}
         for suffix in get_item_validation_wf_suffixes(self):
             confidential_profiles.append('{0}{1}'.format(PROPOSINGGROUPPREFIX, suffix))
 
@@ -6207,14 +6264,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if profile.startswith(PROPOSINGGROUPPREFIX):
                 res.append(
                     (profile,
-                     translate('visible_for_{0}'.format(PROPOSINGGROUPPREFIX),
-                               mapping={'meeting_group_suffix':
-                                        translate(profile.replace(PROPOSINGGROUPPREFIX, ''),
-                                                  domain="PloneMeeting",
-                                                  context=self.REQUEST)},
-                               domain="PloneMeeting",
-                               context=self.REQUEST,
-                               default=u"Visible for {0}".format(profile))))
+                     translate(
+                        'visible_for_{0}'.format(PROPOSINGGROUPPREFIX),
+                        mapping={
+                            'meeting_group_suffix':
+                                fct_titles[profile.replace(PROPOSINGGROUPPREFIX, '')]},
+                        domain="PloneMeeting",
+                        context=self.REQUEST,
+                        default=u"Visible for {0}".format(profile))))
             elif profile.startswith(CONFIGGROUPPREFIX):
                 config_group_suffix = profile.replace(CONFIGGROUPPREFIX, '')
                 is_power_observer = config_group_suffix in po_row_ids
@@ -6529,6 +6586,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     portalType.icon_expr_object = Expression(portalType.icon_expr)
                     catalog = api.portal.get_tool('portal_catalog')
                     brains = catalog.unrestrictedSearchResults(portal_type=portal_type)
+                    extras = 'number_of_elements={0} portal_type={1}'.format(len(brains), portalType.id)
+                    fplog('update_item_icon_color', extras=extras)
                     pghandler = ZLogHandler(steps=1000)
                     pghandler.init(
                         'Updating items icon color ({0})...'.format(metaTypeName), len(brains))
@@ -8044,14 +8103,16 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         """Return every meeting folders for this MeetingConfig."""
         folders = []
         portal = api.portal.get()
-        for userFolder in portal.Members.objectValues():
-            mymeetings = getattr(userFolder, 'mymeetings', None)
-            if not mymeetings:
-                continue
-            meetingFolder = getattr(mymeetings, self.getId(), None)
-            if not meetingFolder:
-                continue
-            folders.append(meetingFolder)
+        members = portal.get('Members')
+        if members:
+            for userFolder in members.objectValues():
+                mymeetings = getattr(userFolder, 'mymeetings', None)
+                if not mymeetings:
+                    continue
+                meetingFolder = getattr(mymeetings, self.getId(), None)
+                if not meetingFolder:
+                    continue
+                folders.append(meetingFolder)
         return folders
 
     def _synchSearches(self, folder=None):

@@ -30,6 +30,7 @@ from Products.PloneMeeting.browser.views import print_votes
 from Products.PloneMeeting.ftw_labels.utils import get_labels
 from Products.PloneMeeting.utils import cleanMemoize
 from Products.PloneMeeting.utils import cropHTML
+from Products.PloneMeeting.utils import display_as_html
 from Products.PloneMeeting.utils import down_or_up_wf
 from Products.PloneMeeting.utils import escape
 from Products.PloneMeeting.utils import field_is_empty
