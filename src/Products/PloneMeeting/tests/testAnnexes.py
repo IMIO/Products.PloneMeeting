@@ -1311,7 +1311,8 @@ class testAnnexes(PloneMeetingTestCase):
         form_annex_widget_terms = [term.token for term in form_annex_widget.terms]
         self.assertEqual(
             form_annex_widget_terms,
-            ['{0}-annexes_types_-_meeting_annexes_-_meeting-annex'.format(cfgId)])
+            ['{0}-annexes_types_-_meeting_annexes_-_meeting-annex'.format(cfgId),
+             '{0}-annexes_types_-_meeting_annexes_-_preview-hide-download-annex'.format(cfgId)])
 
     def test_pm_AdviceAnnexFormVocabularies(self):
         """This is essentially done to make sure ++add++annex works
@@ -1329,7 +1330,8 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertEqual(
             form_annex_widget_terms,
             ['{0}-annexes_types_-_advice_annexes_-_advice-annex'.format(cfgId),
-             '{0}-annexes_types_-_advice_annexes_-_advice-legal-analysis'.format(cfgId)])
+             '{0}-annexes_types_-_advice_annexes_-_advice-legal-analysis'.format(cfgId),
+             '{0}-annexes_types_-_advice_annexes_-_preview-hide-download-annex'.format(cfgId)])
 
     def test_pm_UpdateCategorizedElements(self):
         """The actions "update_categorized_elements" from collective.iconifiedcategory
