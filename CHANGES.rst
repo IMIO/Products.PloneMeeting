@@ -15,6 +15,12 @@ Changelog
 - Make `test_pm_SearchItemsToValidateOfHighestHierarchicLevel` more robust when
   `prevalidation` does not use the `prereviewers` suffix.
   [gbastien]
+- Make any parameter of `imio.helpers.xhtml.replace_content`
+  useable thru dict parameter `BaseDGHV.printXhtml.anonymize`, this way we can
+  use any parameter, including the new parameter `new_css_class` that let's
+  change the CSS class in a rendered POD template to have a specific style
+  mapping when rendering the anonymized version.
+  [gbastien]
 
 4.2.28.18 (2026-07-01)
 ----------------------

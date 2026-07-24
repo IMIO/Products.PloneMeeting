@@ -2634,20 +2634,13 @@ def convert2xhtml(obj,
 
     # manage anonymize_css_class
     if anonymize:
+        # anonymize can be a dict of parameters that will be passed to "replace_content"
+        # or True when True, we define a default value for "css_class"
         if anonymize is True:
-            css_class = "pm-anonymize"
-            new_content = u""
-            new_content_link = {}
-        else:
-            css_class = anonymize["css_class"]
-            new_content = anonymize.get("new_content", u"")
-            new_content_link = anonymize.get("new_content_link", u"")
+            anonymize = {"css_class": "pm-anonymize"}
 
         xhtmlFinal = replace_content(
-            xhtmlFinal,
-            css_class=css_class,
-            new_content=new_content,
-            new_content_link=new_content_link)
+            xhtmlFinal, **anonymize)
 
     if clean:
         xhtmlFinal = separate_images(xhtmlFinal)
