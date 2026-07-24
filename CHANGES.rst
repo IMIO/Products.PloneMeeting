@@ -12,6 +12,9 @@ Changelog
   - `MeetingAdvice`: only shown to `MeetingManagers` and `advice_group advisers`.
 
   [gbastien]
+- Make `test_pm_SearchItemsToValidateOfHighestHierarchicLevel` more robust when
+  `prevalidation` does not use the `prereviewers` suffix.
+  [gbastien]
 
 4.2.28.18 (2026-07-01)
 ----------------------
