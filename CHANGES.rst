@@ -24,6 +24,9 @@ Changelog
 - In `tests`, added `BACK_TO_WF_PATH` for state `prevalidated` in case
   `prevaldiation` is enabled by default in a custom profile.
   [gbastien]
+- Added helper `Migrator.update_cfg_wf_attrs` to ease removing an item or
+  meeting WF state or transitions from every `MeetingConfig` attributes.
+  [gbastien]
 
 4.2.28.18 (2026-07-01)
 ----------------------

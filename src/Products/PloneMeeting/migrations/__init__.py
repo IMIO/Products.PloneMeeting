@@ -217,6 +217,7 @@ class Migrator(BaseMigrator):
                 # calling reindexObject will update modified
                 reindex_object(obj, no_idxs=['SearchableText', 'Title', 'Description'])
 
+
     def addCatalogIndexesAndColumns(self, indexes=True, columns=True, update_metadata=True):
         """ """
         if indexes:
@@ -532,6 +533,40 @@ class Migrator(BaseMigrator):
                 cfg.setUsedMeetingAttributes(adapted_used_attrs)
         logger.info('Done.')
 
+    def update_cfg_wf_attrs(self, is_review_state=True, to_remove=[], to_add=[], to_replace={}, cfg_ids=[], related_to='MeetingItem'):
+        """Clean MeetingConfig WF related attributes.
+           If p_is_state, manage state related attrs, manage transition related attrs otherwise."""
+        info = is_review_state and "WF review_state" or "WF transition"
+        logger.info('Updating MeetingConfig "%s" "%s" related attributes, '
+                    'removing "%s", replacing "%s" and adding "%s"...'
+                    % (related_to,
+                       info,
+                       ', '.join(to_remove),
+                       ', '.join(to_replace.keys()),
+                       ', '.join(to_add)))
+        if is_review_state is True:
+            attrs = ITEM_WF_STATE_ATTRS if related_to == 'MeetingItem' else MEETING_WF_STATE_ATTRS
+        else:
+            attrs = ITEM_WF_TRANSITION_ATTRS if related_to == 'MeetingItem' else MEETING_WF_TRANSITION_ATTRS
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            if cfg_ids and cfg.getId() not in cfg_ids:
+                continue
+            for attr in attrs:
+                # if attr contains a "/" it means it is a column of a datagridfield
+                field_name = attr.split("/")[0]
+                values = getattr(cfg, field_name)
+                # to_remove
+                adapted_values = [k for k in values if k not in to_remove]
+                # to_add
+                for v_to_add in to_add:
+                    if v_to_add not in adapted_values:
+                        adapted_values.append(v_to_add)
+                # to_replace
+                for orignal_value, new_value in to_replace.items():
+                    adapted_values = replace_in_list(adapted_values, orignal_value, new_value)
+                setattr(cfg, attr, adapted_values)
+
+
     def removeUnusedWorkflows(self):
         '''Check used workflows and remove workflows containing '__' that are not used.'''
         logger.info('Cleaning unused workflows...')
@@ -547,11 +582,13 @@ class Migrator(BaseMigrator):
             self.wfTool.manage_delObjects(to_delete)
         logger.info('Done.')
 
-    def reloadMeetingConfigs(self, full=False):
+    def reloadMeetingConfigs(self, full=False, cfg_ids=[]):
         '''Reload MeetingConfigs, either only portal_types related parameters,
            or full reload.'''
         logger.info("Reloading every MeetingConfigs (full={0})...".format(repr(full)))
         for cfg in self.tool.objectValues('MeetingConfig'):
+            if cfg_ids and cfg.getId() not in cfg_ids:
+                continue
             if full:
                 notify(ObjectEditedEvent(cfg))
             else:
