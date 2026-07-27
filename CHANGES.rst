@@ -27,6 +27,10 @@ Changelog
 - Added helper `Migrator.update_cfg_wf_attrs` to ease removing an item or
   meeting WF state or transitions from every `MeetingConfig` attributes.
   [gbastien]
+- When duplicating an item, make sure every `otherMeetingConfigsClonableToXXX`
+  fields still contains active values
+  (only `MeetingItem.otherMeetingConfigsClonableTo` was managed).
+  [gbastien]
 
 4.2.28.18 (2026-07-01)
 ----------------------
