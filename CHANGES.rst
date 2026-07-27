@@ -21,6 +21,9 @@ Changelog
   change the CSS class in a rendered POD template to have a specific style
   mapping when rendering the anonymized version.
   [gbastien]
+- In `tests`, added `BACK_TO_WF_PATH` for state `prevalidated` in case
+  `prevaldiation` is enabled by default in a custom profile.
+  [gbastien]
 
 4.2.28.18 (2026-07-01)
 ----------------------
