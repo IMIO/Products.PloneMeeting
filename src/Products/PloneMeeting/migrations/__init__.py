@@ -554,7 +554,8 @@ class Migrator(BaseMigrator):
             for attr in attrs:
                 # if attr contains a "/" it means it is a column of a datagridfield
                 field_name = attr.split("/")[0]
-                values = getattr(cfg, field_name)
+                field = cfg.getField(field_name)
+                values = field.get(cfg)
                 # to_remove
                 adapted_values = [k for k in values if k not in to_remove]
                 # to_add
@@ -564,8 +565,7 @@ class Migrator(BaseMigrator):
                 # to_replace
                 for orignal_value, new_value in to_replace.items():
                     adapted_values = replace_in_list(adapted_values, orignal_value, new_value)
-                setattr(cfg, attr, adapted_values)
-
+                field.set(cfg, adapted_values)
 
     def removeUnusedWorkflows(self):
         '''Check used workflows and remove workflows containing '__' that are not used.'''
