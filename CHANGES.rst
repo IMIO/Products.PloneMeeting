@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.28.19 (unreleased)
+4.2.28.19 (2026-07-31)
 ----------------------
 
 - Registered a different `CategorizedChildInfosView._show_protected_download` for:
