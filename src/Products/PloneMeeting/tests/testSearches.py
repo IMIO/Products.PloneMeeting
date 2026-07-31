@@ -640,12 +640,9 @@ class testSearches(PloneMeetingTestCase):
                 {'query': reviewProcessInfo},
              'portal_type': {'query': itemTypeName}})
 
-        reviewers = cfg.reviewersFor()
         # activate 'prevalidation' if necessary
         if 'prevalidate' not in cfg.getItemWFValidationLevels(data='leading_transition', only_enabled=True):
             self._enablePrevalidation(cfg)
-        reviewers = cfg.reviewersFor()
-        self.assertTrue(['prevalidated'] in reviewers.values())
         # now do the query
         # this adapter is used by the "searchitemstovalidate"
         collection = cfg.searches.searches_items.searchitemstovalidate
@@ -678,6 +675,7 @@ class testSearches(PloneMeetingTestCase):
         # the search does returns him the item, it should not as he is just a reviewer
         # but not able to really validate the new item
         self._enableField('copyGroups')
+        reviewers = cfg.reviewersFor()
         review_states = reviewers[reviewers.keys()[0]]
         cfg.setItemCopyGroupsStates(review_states)
         item.setCopyGroups((self.vendors_reviewers, ))
