@@ -5,8 +5,32 @@ Changelog
 4.2.29rc13 (unreleased)
 -----------------------
 
-- Nothing changed yet.
+- Registered a different `CategorizedChildInfosView._show_protected_download` for:
 
+  - `MeetingItem`: only shown to `MeetingManagers` and `proposingGroup` members;
+  - `Meeting`: only shown to `MeetingManagers`;
+  - `MeetingAdvice`: only shown to `MeetingManagers` and `advice_group advisers`.
+
+  [gbastien]
+- Make `test_pm_SearchItemsToValidateOfHighestHierarchicLevel` more robust when
+  `prevalidation` does not use the `prereviewers` suffix.
+  [gbastien]
+- Make any parameter of `imio.helpers.xhtml.replace_content`
+  useable thru dict parameter `BaseDGHV.printXhtml.anonymize`, this way we can
+  use any parameter, including the new parameter `new_css_class` that let's
+  change the CSS class in a rendered POD template to have a specific style
+  mapping when rendering the anonymized version.
+  [gbastien]
+- In `tests`, added `BACK_TO_WF_PATH` for state `prevalidated` in case
+  `prevaldiation` is enabled by default in a custom profile.
+  [gbastien]
+- Added helper `Migrator.update_cfg_wf_attrs` to ease removing an item or
+  meeting WF state or transitions from every `MeetingConfig` attributes.
+  [gbastien]
+- When duplicating an item, make sure every `otherMeetingConfigsClonableToXXX`
+  fields still contains active values
+  (only `MeetingItem.otherMeetingConfigsClonableTo` was managed).
+  [gbastien]
 
 4.2.29rc12 (2026-07-01)
 -----------------------

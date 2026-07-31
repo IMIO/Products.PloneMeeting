@@ -6001,26 +6001,37 @@ class testMeetingItem(PloneMeetingTestCase):
            Unauthorized when inserted in a meeting and trying to send it to the
            other MC because it can not...'''
         cfg = self.meetingConfig
+        cfg_id = cfg.getId()
         cfg2 = self.meetingConfig2
-        cfg2Id = cfg2.getId()
+        cfg2_id = cfg2.getId()
         # items are clonable to cfg2
         cfg.setMeetingConfigsToCloneTo(
-            ({'meeting_config': cfg2Id,
+            ({'meeting_config': cfg_id,
+              'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL},
+             {'meeting_config': cfg2_id,
               'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL},))
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
-        item.setOtherMeetingConfigsClonableTo((self.meetingConfig2.getId(), ))
+        item.setOtherMeetingConfigsClonableTo((cfg_id, cfg2_id, ))
+        item.setOtherMeetingConfigsClonableToPrivacy((cfg2_id, ))
         item._update_after_edit()
         newItem = item.clone()
         # field was kept as still possible in the configuration
         self.assertEqual(newItem.getOtherMeetingConfigsClonableTo(),
-                         (self.meetingConfig2.getId(), ))
+                         (cfg_id, cfg2_id, ))
+        self.assertEqual(newItem.getOtherMeetingConfigsClonableToPrivacy(),
+                         (cfg2_id, ))
 
         # change configuration and clone again
-        cfg.setMeetingConfigsToCloneTo(())
+        cfg.setMeetingConfigsToCloneTo(
+            ({'meeting_config': cfg_id,
+              'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL},))
         notSendableItem = item.clone()
         # field was not kept as no more possible with current configuration
-        self.assertFalse(notSendableItem.getOtherMeetingConfigsClonableTo())
+        self.assertEqual(notSendableItem.getOtherMeetingConfigsClonableTo(),
+                         (cfg_id, ))
+        self.assertEqual(notSendableItem.getOtherMeetingConfigsClonableToPrivacy(),
+                         ())
 
     def test_pm_CopiedFieldsCopyGroupsWhenDuplicated(self):
         '''Make sure field MeetingItem.copyGroups value correspond to what is

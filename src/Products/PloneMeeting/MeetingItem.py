@@ -7773,8 +7773,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if 'otherMeetingConfigsClonableTo' in copyFields:
             clonableTo = set([mc['meeting_config'] for mc in dest_cfg.getMeetingConfigsToCloneTo()])
             # make sure we only have selectable otherMeetingConfigsClonableTo
+            # do not use set() and it could change result when many values
             newItem.setOtherMeetingConfigsClonableTo(
-                tuple(set(self.getOtherMeetingConfigsClonableTo()).intersection(clonableTo)))
+                tuple([v for v in self.getOtherMeetingConfigsClonableTo() if v in clonableTo]))
+        if 'otherMeetingConfigsClonableToPrivacy' in copyFields:
+            clonableTo = set([mc['meeting_config'] for mc in dest_cfg.getMeetingConfigsToCloneTo()])
+            # make sure we only have selectable otherMeetingConfigsClonableTo
+            newItem.setOtherMeetingConfigsClonableToPrivacy(
+                tuple([v for v in self.getOtherMeetingConfigsClonableToPrivacy() if v in clonableTo]))
         if 'copyGroups' in copyFields:
             copyGroups = list(self.getCopyGroups())
             selectableCopyGroups = 'copyGroups' in dest_cfg.getUsedItemAttributes() and \

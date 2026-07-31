@@ -1313,13 +1313,15 @@ class testViews(PloneMeetingTestCase):
                          '<p>The motivation <span class="pm-anonymize"></span>.</p>')
 
         # anonymize may be a dict with some more config
-        anonymize = {"css_class": "pm-hide", "new_content": "[Hidden]"}
+        # we can change the CSS class so it can behave differently in POD templates
+        # when we have a style mapping that should render only in the anonymized version
+        anonymize = {"css_class": "pm-hide", "new_content": "[Hidden]", "new_css_class": "pm-hidden"}
         motivation += '<p>The motivation <span class="pm-hide">chars \xc3\xa8\xc3\xa0</span>.</p>'
         self.assertEqual(
             helper.printXhtml(item, motivation, anonymize=anonymize),
             '<p>The motivation using UTF-8 characters : &#232;&#224;.</p>'
             '<p>The motivation <span class="pm-anonymize">chars &#232;&#224;</span>.</p>'
-            '<p>The motivation <span class="pm-hide">[Hidden]</span>.</p>')
+            '<p>The motivation <span class="pm-hidden">[Hidden]</span>.</p>')
 
     def test_pm_print_advices_infos(self):
         """Test the print_advices_infos method."""

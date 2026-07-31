@@ -1213,10 +1213,24 @@
             layer="collective.iconifiedcategory.interfaces.ICollectiveIconifiedCategoryLayer"
             template="browser/templates/categorized-childs.pt" />
         <browser:page
-            for="Products.PloneMeeting.interfaces.IMeetingContent"
+            for="Products.PloneMeeting.content.meeting.IMeeting"
             name="categorized-childs-infos"
             permission="zope2.Public"
-            class="Products.PloneMeeting.browser.annexes.PMCategorizedChildInfosView"
+            class="Products.PloneMeeting.browser.annexes.MeetingCategorizedChildInfosView"
+            layer="collective.iconifiedcategory.interfaces.ICollectiveIconifiedCategoryLayer"
+            template="browser/templates/categorized-childs-infos.pt" />
+        <browser:page
+            for="Products.PloneMeeting.interfaces.IMeetingItem"
+            name="categorized-childs-infos"
+            permission="zope2.Public"
+            class="Products.PloneMeeting.browser.annexes.ItemCategorizedChildInfosView"
+            layer="collective.iconifiedcategory.interfaces.ICollectiveIconifiedCategoryLayer"
+            template="browser/templates/categorized-childs-infos.pt" />
+        <browser:page
+            for="Products.PloneMeeting.content.advice.IMeetingAdvice"
+            name="categorized-childs-infos"
+            permission="zope2.Public"
+            class="Products.PloneMeeting.browser.annexes.AdviceCategorizedChildInfosView"
             layer="collective.iconifiedcategory.interfaces.ICollectiveIconifiedCategoryLayer"
             template="browser/templates/categorized-childs-infos.pt" />
         <browser:page

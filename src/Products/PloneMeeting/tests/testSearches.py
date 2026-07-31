@@ -608,9 +608,12 @@ class testSearches(PloneMeetingTestCase):
                           'getTakenOverBy': {'query': 'pmCreator1'}})
 
     def _searchItemsToValidateOfHighestHierarchicLevelReviewerInfo(self, cfg):
-        """ """
-        return ['{0}__reviewprocess__{1}'.format(self.developers_uid,
-                                                 self._stateMappingFor('proposed'))]
+        """Overridable if necessary, take into account when prevalidation is enabled or not."""
+        item_state = self._stateMappingFor('proposed')
+        item_wf_transitions = cfg.getItemWFValidationLevels(data='leading_transition', only_enabled=True)
+        if "prevalidate" in item_wf_transitions:
+            item_state = self._stateMappingFor('prevalidated')
+        return ['{0}__reviewprocess__{1}'.format(self.developers_uid, item_state)]
 
     def test_pm_SearchItemsToValidateOfHighestHierarchicLevel(self):
         '''Test the searchItemsToValidateOfHighestHierarchicLevel method.
@@ -630,6 +633,7 @@ class testSearches(PloneMeetingTestCase):
                              name='items-to-validate-of-highest-hierarchic-level')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstovalidateofhighesthierarchiclevel')
         reviewProcessInfo = self._searchItemsToValidateOfHighestHierarchicLevelReviewerInfo(cfg)
+
         self.assertEqual(
             adapter.query,
             {'reviewProcessInfo':
@@ -638,10 +642,10 @@ class testSearches(PloneMeetingTestCase):
 
         reviewers = cfg.reviewersFor()
         # activate 'prevalidation' if necessary
-        if 'prereviewers' not in reviewers:
+        if 'prevalidate' not in cfg.getItemWFValidationLevels(data='leading_transition', only_enabled=True):
             self._enablePrevalidation(cfg)
         reviewers = cfg.reviewersFor()
-        self.assertTrue('prereviewers' in reviewers)
+        self.assertTrue(['prevalidated'] in reviewers.values())
         # now do the query
         # this adapter is used by the "searchitemstovalidate"
         collection = cfg.searches.searches_items.searchitemstovalidate
@@ -675,8 +679,6 @@ class testSearches(PloneMeetingTestCase):
         # but not able to really validate the new item
         self._enableField('copyGroups')
         review_states = reviewers[reviewers.keys()[0]]
-        if 'prereviewers' in reviewers:
-            review_states += ('prevalidated',)
         cfg.setItemCopyGroupsStates(review_states)
         item.setCopyGroups((self.vendors_reviewers, ))
         item._update_after_edit()
