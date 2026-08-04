@@ -8115,18 +8115,20 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfg.setItemWithGivenAdviceIsNotDeletable(True)
         cfg.setUseAdvices(True)
-        cfg.setItemAdviceStates(['itemcreated'])
-        cfg.setItemAdviceEditStates(['itemcreated'])
-        cfg.setItemAdviceViewStates(['itemcreated'])
+        cfg.setItemAdviceStates([self._stateMappingFor('proposed')])
+        cfg.setItemAdviceEditStates([self._stateMappingFor('proposed')])
+        cfg.setItemAdviceViewStates([self._stateMappingFor('proposed')])
         self.changeUser('pmCreator1')
-        itemWithoutAdvice = self.create('MeetingItem')
-        itemWithNotGivenAdvice = self.create('MeetingItem')
-        itemWithNotGivenAdvice.setOptionalAdvisers((self.vendors_uid, ))
-        itemWithGivenAdvice = self.create('MeetingItem')
-        itemWithGivenAdvice.setOptionalAdvisers((self.vendors_uid, ))
-        itemWithGivenAdvice._update_after_edit()
+        # we create to group of items because we will delete it depending on config here under
+        # 1
+        itemWithoutAdvice1 = self.create('MeetingItem')
+        self.proposeItem(itemWithoutAdvice1)
+        itemWithNotGivenAdvice1 = self.create('MeetingItem', optionalAdvisers=((self.vendors_uid, )))
+        self.proposeItem(itemWithNotGivenAdvice1)
+        itemWithGivenAdvice1 = self.create('MeetingItem', optionalAdvisers=((self.vendors_uid, )))
+        self.proposeItem(itemWithGivenAdvice1)
         self.changeUser('pmReviewer2')
-        createContentInContainer(itemWithGivenAdvice,
+        createContentInContainer(itemWithGivenAdvice1,
                                  'meetingadvice',
                                  **{'advice_group': self.vendors_uid,
                                     'advice_type': u'positive',
@@ -8134,20 +8136,79 @@ class testMeetingItem(PloneMeetingTestCase):
                                     'advice_comment': richtextval(u'My comment')})
         # an item containing inherited advices may be deleted
         self.changeUser('pmCreator1')
-        itemWithInheritedGivenAdvices = itemWithGivenAdvice.clone(
+        itemWithInheritedGivenAdvices1 = itemWithGivenAdvice1.clone(
             setCurrentAsPredecessor=True, inheritAdvices=True)
+        self.proposeItem(itemWithInheritedGivenAdvices1)
+
+        # 2
+        itemWithoutAdvice2 = self.create('MeetingItem')
+        self.proposeItem(itemWithoutAdvice2)
+        itemWithNotGivenAdvice2 = self.create('MeetingItem', optionalAdvisers=((self.vendors_uid, )))
+        self.proposeItem(itemWithNotGivenAdvice2)
+        itemWithGivenAdvice2 = self.create('MeetingItem', optionalAdvisers=((self.vendors_uid, )))
+        self.proposeItem(itemWithGivenAdvice2)
+        self.changeUser('pmReviewer2')
+        createContentInContainer(itemWithGivenAdvice2,
+                                 'meetingadvice',
+                                 **{'advice_group': self.vendors_uid,
+                                    'advice_type': u'positive',
+                                    'advice_hide_during_redaction': False,
+                                    'advice_comment': richtextval(u'My comment')})
+        # an item containing inherited advices may be deleted
+        self.changeUser('pmCreator1')
+        itemWithInheritedGivenAdvices2 = itemWithGivenAdvice2.clone(
+            setCurrentAsPredecessor=True, inheritAdvices=True)
+        self.proposeItem(itemWithInheritedGivenAdvices2)
 
         # checks
+        self.changeUser('pmReviewer1')
         cfg.setItemWithGivenAdviceIsNotDeletable(False)
-        self.assertTrue(IContentDeletable(itemWithoutAdvice).mayDelete())
-        self.assertTrue(IContentDeletable(itemWithNotGivenAdvice).mayDelete())
-        self.assertTrue(IContentDeletable(itemWithGivenAdvice).mayDelete())
-        self.assertTrue(IContentDeletable(itemWithInheritedGivenAdvices).mayDelete())
+        self.assertTrue(IContentDeletable(itemWithoutAdvice1).mayDelete())
+        self.assertTrue(IContentDeletable(itemWithNotGivenAdvice1).mayDelete())
+        self.assertTrue(IContentDeletable(itemWithGivenAdvice1).mayDelete())
+        self.assertTrue(IContentDeletable(itemWithInheritedGivenAdvices1).mayDelete())
+        self.assertTrue(IContentDeletable(itemWithoutAdvice2).mayDelete())
+        self.assertTrue(IContentDeletable(itemWithNotGivenAdvice2).mayDelete())
+        self.assertTrue(IContentDeletable(itemWithGivenAdvice2).mayDelete())
+        self.assertTrue(IContentDeletable(itemWithInheritedGivenAdvices2).mayDelete())
         cfg.setItemWithGivenAdviceIsNotDeletable(True)
-        self.assertTrue(IContentDeletable(itemWithoutAdvice).mayDelete())
-        self.assertTrue(IContentDeletable(itemWithNotGivenAdvice).mayDelete())
-        self.assertFalse(IContentDeletable(itemWithGivenAdvice).mayDelete())
-        self.assertTrue(IContentDeletable(itemWithInheritedGivenAdvices).mayDelete())
+        self.assertTrue(IContentDeletable(itemWithoutAdvice1).mayDelete())
+        self.assertTrue(IContentDeletable(itemWithNotGivenAdvice1).mayDelete())
+        self.assertFalse(IContentDeletable(itemWithGivenAdvice1).mayDelete())
+        self.assertTrue(IContentDeletable(itemWithInheritedGivenAdvices1).mayDelete())
+        self.assertTrue(IContentDeletable(itemWithoutAdvice2).mayDelete())
+        self.assertTrue(IContentDeletable(itemWithNotGivenAdvice2).mayDelete())
+        self.assertFalse(IContentDeletable(itemWithGivenAdvice2).mayDelete())
+        self.assertTrue(IContentDeletable(itemWithInheritedGivenAdvices2).mayDelete())
+        # when set back to "itemcreated", item is always deletable
+        self.backToState(itemWithoutAdvice1, 'itemcreated')
+        self.backToState(itemWithNotGivenAdvice1, 'itemcreated')
+        self.backToState(itemWithGivenAdvice1, 'itemcreated')
+        self.backToState(itemWithInheritedGivenAdvices1, 'itemcreated')
+        self.backToState(itemWithoutAdvice2, 'itemcreated')
+        self.backToState(itemWithNotGivenAdvice2, 'itemcreated')
+        self.backToState(itemWithGivenAdvice2, 'itemcreated')
+        self.backToState(itemWithInheritedGivenAdvices2, 'itemcreated')
+        self.changeUser('pmCreator1')
+        cfg.setItemWithGivenAdviceIsNotDeletable(False)
+        self.assertTrue(IContentDeletable(itemWithoutAdvice1).mayDelete())
+        self.assertTrue(IContentDeletable(itemWithNotGivenAdvice1).mayDelete())
+        self.assertTrue(IContentDeletable(itemWithGivenAdvice1).mayDelete())
+        self.assertTrue(IContentDeletable(itemWithInheritedGivenAdvices1).mayDelete())
+        self.portal.restrictedTraverse('@@delete_givenuid')(itemWithoutAdvice1.UID())
+        self.portal.restrictedTraverse('@@delete_givenuid')(itemWithNotGivenAdvice1.UID())
+        self.portal.restrictedTraverse('@@delete_givenuid')(itemWithGivenAdvice1.UID())
+        self.portal.restrictedTraverse('@@delete_givenuid')(itemWithInheritedGivenAdvices1.UID())
+        cfg.setItemWithGivenAdviceIsNotDeletable(True)
+        self.assertTrue(IContentDeletable(itemWithoutAdvice2).mayDelete())
+        self.assertTrue(IContentDeletable(itemWithNotGivenAdvice2).mayDelete())
+        self.assertTrue(IContentDeletable(itemWithGivenAdvice2).mayDelete())
+        self.assertTrue(IContentDeletable(itemWithInheritedGivenAdvices2).mayDelete())
+        # actually delete items
+        self.portal.restrictedTraverse('@@delete_givenuid')(itemWithoutAdvice2.UID())
+        self.portal.restrictedTraverse('@@delete_givenuid')(itemWithNotGivenAdvice2.UID())
+        self.portal.restrictedTraverse('@@delete_givenuid')(itemWithGivenAdvice2.UID())
+        self.portal.restrictedTraverse('@@delete_givenuid')(itemWithInheritedGivenAdvices2.UID())
 
     def test_pm_ShowObservations(self):
         """By default, MeetingItem.showObservations returns True but

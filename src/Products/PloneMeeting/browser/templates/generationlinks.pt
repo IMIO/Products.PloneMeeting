@@ -2,9 +2,9 @@
      tal:condition="python: view.available()"
      i18n:domain="PloneMeeting">
     <form name="podTemplateForm"
-      method="POST"
+      method="GET"
       target="_blank"
-      tal:attributes="action string:${context/absolute_url}/document-generation;">
+      tal:attributes="action string:${context/absolute_url}/@@document-generation;">
       <input type="hidden" name="template_uid"/>
       <input type="hidden" name="output_format"/>
       <input type="hidden" name="uids" value=""/>

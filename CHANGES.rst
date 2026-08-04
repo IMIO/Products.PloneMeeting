@@ -5,8 +5,14 @@ Changelog
 4.2.28.20 (unreleased)
 ----------------------
 
-- Nothing changed yet.
-
+- Fixed bug were deleting an item containing advices was leading to an
+  `Unauthorized`.
+  Now an item that is in `review_state itemcreated` will be deletable by
+  the `proposingGroup` even if it contains advices.
+  A item no more in `initial_state` that contain advices will not be deletable
+  when `MeetingConfig.itemWithGivenAdviceIsNotDeletable` is True except if
+  user is `MeetingManager`.
+  [gbastien]
 
 4.2.28.19 (2026-07-31)
 ----------------------
