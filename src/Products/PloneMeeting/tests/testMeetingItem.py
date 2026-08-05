@@ -7111,6 +7111,10 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(
             item.getRawDescription(),
             '<p>Working external image <img src="resolveuid/{0}">.</p>'.format(img3.UID()))
+        self.assertEqual(
+            item.Description(),
+            '<p>Working external image <img src="{0}" alt="image-2.jpeg" '
+            'loading="lazy" title="image-2.jpeg" />.</p>'.format(img3.absolute_url()))
 
         # link to unknown external image, like during copy/paste of content
         # that has a link to an unexisting image or so
