@@ -5,6 +5,13 @@ Changelog
 4.2.29rc13 (unreleased)
 -----------------------
 
+- `ResolveUIDAndCaptionFilter` output filter now adds `loading="lazy"`
+  to `<img>` tags.
+  [gbastien]
+
+4.2.28.19 (2026-07-31)
+----------------------
+
 - Registered a different `CategorizedChildInfosView._show_protected_download` for:
 
   - `MeetingItem`: only shown to `MeetingManagers` and `proposingGroup` members;
