@@ -5995,26 +5995,37 @@ class testMeetingItem(PloneMeetingTestCase):
            Unauthorized when inserted in a meeting and trying to send it to the
            other MC because it can not...'''
         cfg = self.meetingConfig
+        cfg_id = cfg.getId()
         cfg2 = self.meetingConfig2
-        cfg2Id = cfg2.getId()
+        cfg2_id = cfg2.getId()
         # items are clonable to cfg2
         cfg.setMeetingConfigsToCloneTo(
-            ({'meeting_config': cfg2Id,
+            ({'meeting_config': cfg_id,
+              'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL},
+             {'meeting_config': cfg2_id,
               'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL},))
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
-        item.setOtherMeetingConfigsClonableTo((self.meetingConfig2.getId(), ))
+        item.setOtherMeetingConfigsClonableTo((cfg_id, cfg2_id, ))
+        item.setOtherMeetingConfigsClonableToPrivacy((cfg2_id, ))
         item._update_after_edit()
         newItem = item.clone()
         # field was kept as still possible in the configuration
         self.assertEqual(newItem.getOtherMeetingConfigsClonableTo(),
-                         (self.meetingConfig2.getId(), ))
+                         (cfg_id, cfg2_id, ))
+        self.assertEqual(newItem.getOtherMeetingConfigsClonableToPrivacy(),
+                         (cfg2_id, ))
 
         # change configuration and clone again
-        cfg.setMeetingConfigsToCloneTo(())
+        cfg.setMeetingConfigsToCloneTo(
+            ({'meeting_config': cfg_id,
+              'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL},))
         notSendableItem = item.clone()
         # field was not kept as no more possible with current configuration
-        self.assertFalse(notSendableItem.getOtherMeetingConfigsClonableTo())
+        self.assertEqual(notSendableItem.getOtherMeetingConfigsClonableTo(),
+                         (cfg_id, ))
+        self.assertEqual(notSendableItem.getOtherMeetingConfigsClonableToPrivacy(),
+                         ())
 
     def test_pm_CopiedFieldsCopyGroupsWhenDuplicated(self):
         '''Make sure field MeetingItem.copyGroups value correspond to what is
@@ -7073,8 +7084,8 @@ class testMeetingItem(PloneMeetingTestCase):
         item = getattr(pmFolder, itemId)
         item.processForm()
         # contact.png was saved in the item
-        self.assertTrue('22-400x400.jpg' in item.objectIds())
-        img = item.get('22-400x400.jpg')
+        self.assertTrue('image.jpeg' in item.objectIds())
+        img = item.get('image.jpeg')
         # external image link was updated
         self.assertEqual(
             item.getRawDescription(),
@@ -7083,8 +7094,8 @@ class testMeetingItem(PloneMeetingTestCase):
         # test using the quickedit, test with field 'decision' where getRaw was overrided
         description = '<p>Working external image <img src="%s"/>.</p>' % self.external_image2
         set_field_from_ajax(item, 'description', description)
-        self.assertTrue('1025-400x300.jpg' in item.objectIds())
-        img2 = item.get('1025-400x300.jpg')
+        self.assertTrue('image-1.jpeg' in item.objectIds())
+        img2 = item.get('image-1.jpeg')
         # external image link was updated
         self.assertEqual(
             item.getRawDescription(),
@@ -7094,8 +7105,8 @@ class testMeetingItem(PloneMeetingTestCase):
         descr = '<p>Working external image <img src="%s"/>.</p>' % self.external_image3
         item.setDescription(descr)
         item.processForm()
-        self.assertTrue('1035-600x400.jpg' in item.objectIds())
-        img3 = item.get('1035-600x400.jpg')
+        self.assertTrue('image-2.jpeg' in item.objectIds())
+        img3 = item.get('image-2.jpeg')
         # external image link was updated
         self.assertEqual(
             item.getRawDescription(),
@@ -7114,7 +7125,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # the not retrievable image was replaced with a "not found" image
         self.assertListEqual(
             sorted(item.objectIds()),
-            ['1025-400x300.jpg', '1035-600x400.jpg', '22-400x400.jpg', 'imagenotfound.jpg'])
+            ['image-1.jpeg', 'image-2.jpeg', 'image.jpeg', 'imagenotfound.jpg'])
         self.assertEqual(item.getRawDescription(), expected)
 
     def test_pm_ItemInternalImagesStoredLocallyWhenItemDuplicated(self):
@@ -7138,19 +7149,19 @@ class testMeetingItem(PloneMeetingTestCase):
             '<p>Internal image <img src="{1}">.</p>' \
             '<p>Internal image 2 <img src="{2}">.</p>'
         text = text_pattern.format(
-            self.external_image2,  # 1025-400x300.jpg
+            self.external_image2,
             img.absolute_url(),
             'resolveuid/{0}'.format(img2.UID()))
         item.setDescription(text)
         self.assertEqual(item.objectIds(), ['dot.gif', 'dot2.gif'])
         item.at_post_edit_script()
         # we have images saved locally
-        self.assertEqual(sorted(item.objectIds()), ['1025-400x300.jpg', 'dot.gif', 'dot2.gif'])
+        self.assertEqual(sorted(item.objectIds()), ['dot.gif', 'dot2.gif', 'image.jpeg'])
 
         # duplicate and check that uri are correct
         newItem = item.clone()
-        self.assertEqual(sorted(newItem.objectIds()), ['1025-400x300.jpg', 'dot.gif', 'dot2.gif'])
-        new_img = newItem.get('1025-400x300.jpg')
+        self.assertEqual(sorted(newItem.objectIds()), ['dot.gif', 'dot2.gif', 'image.jpeg'])
+        new_img = newItem.get('image.jpeg')
         new_img1 = newItem.get('dot.gif')
         new_img2 = newItem.get('dot2.gif')
         # every links are turned to resolveuid

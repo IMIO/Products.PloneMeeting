@@ -112,9 +112,21 @@ adviceAnnex = AnnexTypeDescriptor(
     'advice-annex', 'Advice annex(es)', u'itemAnnex.png', relatedTo='advice')
 adviceLegalAnalysis = AnnexTypeDescriptor(
     'advice-legal-analysis', 'Advice legal analysis', u'legalAnalysis.png', relatedTo='advice')
+advicePreviewHideDownloadAnnex = AnnexTypeDescriptor(
+    'preview-hide-download-annex',
+    'Preview hide download annex',
+    u'itemAnnex.png',
+    relatedTo='advice',
+    show_preview=2)
 # Meeting annex types
 meetingAnnex = AnnexTypeDescriptor(
     'meeting-annex', 'Meeting annex(es)', u'itemAnnex.png', relatedTo='meeting')
+meetingPreviewHideDownloadAnnex = AnnexTypeDescriptor(
+    'preview-hide-download-annex',
+    'Preview hide download annex',
+    u'itemAnnex.png',
+    relatedTo='meeting',
+    show_preview=2)
 
 # Style Template ---------------------------------------------------------------
 stylesTemplate1 = StyleTemplateDescriptor('styles1', 'Default Styles')
@@ -295,7 +307,8 @@ meetingPma.meetingcategories = [mcategory1, mcategory2, mcategory3]
 meetingPma.annexTypes = [financialAnalysis, budgetAnalysisCfg1, overheadAnalysis,
                          itemAnnex, previewAnnex, previewHideDownloadAnnex,
                          decisionAnnex, marketingAnalysis,
-                         adviceAnnex, adviceLegalAnalysis, meetingAnnex]
+                         adviceAnnex, adviceLegalAnalysis, advicePreviewHideDownloadAnnex,
+                         meetingAnnex, meetingPreviewHideDownloadAnnex]
 meetingPma.usedItemAttributes = ('description', 'toDiscuss', 'itemTags', 'itemIsSigned',)
 meetingPma.usedMeetingAttributes = ('assembly', 'assembly_excused', 'assembly_absents',
                                     'assembly_guests', 'signatures', 'place',)
@@ -444,7 +457,8 @@ meetingPga.categories = [deployment, maintenance, development, events,
 meetingPga.classifiers = [classifier1, classifier2, classifier3]
 meetingPga.annexTypes = [financialAnalysis, legalAnalysis,
                          budgetAnalysisCfg2, itemAnnex, decisionAnnex,
-                         adviceAnnex, adviceLegalAnalysis, meetingAnnex]
+                         adviceAnnex, adviceLegalAnalysis, advicePreviewHideDownloadAnnex,
+                         meetingAnnex, meetingPreviewHideDownloadAnnex]
 meetingPga.usedItemAttributes = (
     'description', 'toDiscuss', 'associatedGroups', 'itemIsSigned', 'category', 'copyGroups')
 meetingPga.onMeetingTransitionItemActionToExecute = deepcopy(

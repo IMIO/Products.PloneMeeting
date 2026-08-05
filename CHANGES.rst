@@ -2,7 +2,55 @@ Changelog
 =========
 
 
-4.2.28.17 (unreleased)
+4.2.28.20 (unreleased)
+----------------------
+
+- Overrided `ResolveUIDAndCaptionFilter` output filter to add `loading="lazy"`
+  to `<img>` tags.
+  [gbastien]
+
+4.2.28.19 (2026-07-31)
+----------------------
+
+- Registered a different `CategorizedChildInfosView._show_protected_download` for:
+
+  - `MeetingItem`: only shown to `MeetingManagers` and `proposingGroup` members;
+  - `Meeting`: only shown to `MeetingManagers`;
+  - `MeetingAdvice`: only shown to `MeetingManagers` and `advice_group advisers`.
+
+  [gbastien]
+- Make `test_pm_SearchItemsToValidateOfHighestHierarchicLevel` more robust when
+  `prevalidation` does not use the `prereviewers` suffix.
+  [gbastien]
+- Make any parameter of `imio.helpers.xhtml.replace_content`
+  useable thru dict parameter `BaseDGHV.printXhtml.anonymize`, this way we can
+  use any parameter, including the new parameter `new_css_class` that let's
+  change the CSS class in a rendered POD template to have a specific style
+  mapping when rendering the anonymized version.
+  [gbastien]
+- In `tests`, added `BACK_TO_WF_PATH` for state `prevalidated` in case
+  `prevaldiation` is enabled by default in a custom profile.
+  [gbastien]
+- Added helper `Migrator.update_cfg_wf_attrs` to ease removing an item or
+  meeting WF state or transitions from every `MeetingConfig` attributes.
+  [gbastien]
+- When duplicating an item, make sure every `otherMeetingConfigsClonableToXXX`
+  fields still contains active values
+  (only `MeetingItem.otherMeetingConfigsClonableTo` was managed).
+  [gbastien]
+
+4.2.28.18 (2026-07-01)
+----------------------
+
+- Fixed `PMCategorizedObjectInfoAdapter._reader_groups` when using
+  `reader_advices` with `item=None`, the key to get organization uid in
+  `MeetingConfig.customAdvisers` is `org` and not `org_uid`.
+  [gbastien]
+- Make `proposing group comment` available on `advice popup` even when advice
+  is `hidden during redaction`.
+  [gbastien]
+
+4.2.28.17 (2026-06-25)
 ----------------------
 
 - Rename every members meeting config folder title when
@@ -34,8 +82,14 @@ Changelog
   - `secret_advice`.
 
   [gbastien]
-- Overrided `ResolveUIDAndCaptionFilter` output filter to add `loading="lazy"`
-  to `<img>` tags.
+- As tests on `GA` are failing when using `fastly.picsum.photos`,
+  rely on `loremflickr.com` to get external images in tests.
+  [gbastien]
+- Make sure relevant annexes types are selectable in the
+  `PMContentCategory.after_scan_change_annex_type_to` field depending on annex type
+  (related to item, meeting or advice).
+  [gbastien]
+- Make `imio.actionspanel` viewlet always viewable at bottom of `DashboardCollection`.
   [gbastien]
 
 4.2.28.16 (2026-05-20)

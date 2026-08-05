@@ -14,6 +14,7 @@ from datetime import datetime
 from ftw.labels.interfaces import ILabeling
 from ftw.labels.interfaces import ILabelJar
 from imio.helpers.cache import cleanRamCacheFor
+from imio.helpers.content import get_vocab
 from imio.helpers.content import richtextval
 from imio.history.utils import getLastWFAction
 from imio.zamqp.pm.tests.base import DEFAULT_SCAN_ID
@@ -1287,13 +1288,15 @@ class testViews(PloneMeetingTestCase):
                          '<p>The motivation <span class="pm-anonymize"></span>.</p>')
 
         # anonymize may be a dict with some more config
-        anonymize = {"css_class": "pm-hide", "new_content": "[Hidden]"}
+        # we can change the CSS class so it can behave differently in POD templates
+        # when we have a style mapping that should render only in the anonymized version
+        anonymize = {"css_class": "pm-hide", "new_content": "[Hidden]", "new_css_class": "pm-hidden"}
         motivation += '<p>The motivation <span class="pm-hide">chars \xc3\xa8\xc3\xa0</span>.</p>'
         self.assertEqual(
             helper.printXhtml(item, motivation, anonymize=anonymize),
             '<p>The motivation using UTF-8 characters : &#232;&#224;.</p>'
             '<p>The motivation <span class="pm-anonymize">chars &#232;&#224;</span>.</p>'
-            '<p>The motivation <span class="pm-hide">[Hidden]</span>.</p>')
+            '<p>The motivation <span class="pm-hidden">[Hidden]</span>.</p>')
 
     def test_pm_print_advices_infos(self):
         """Test the print_advices_infos method."""
@@ -3610,14 +3613,28 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(viewlet.available_labels[1], [])
         self.assertFalse(viewlet.can_edit)
 
-    def test_pm_LabelsConfigViewableByCopyGroups(self):
+    def test_pm_LabelsConfigViewableByCopyGroupsAndAdvisers(self):
         """Test labelsConfig so "label" is viewable by copy groups
-           ("Vendors reviewers") and restricted copy groups ("Vendors creators")."""
+           ("Vendors reviewers"), restricted copy groups ("Vendors creators") and advisers."""
         self._enableField(['copyGroups', 'restrictedCopyGroups', 'labels'])
         cfg = self.meetingConfig
+        cfg.setItemAdviceStates(('itemcreated',))
+        cfg.setItemAdviceEditStates(('itemcreated',))
+        cfg.setCustomAdvisers(
+            [{'row_id': 'unique_id_123',
+              'org': self.developers_uid,
+              'gives_auto_advice_on': '',
+              'for_item_created_from': '2016/08/08',
+              'delay': '5',
+              'delay_label': '',
+              'available_on': '',
+              'is_linked_to_previous_row': '0'}]
+        )
         cfg.setItemCopyGroupsStates(('itemcreated', ))
         cfg.setItemRestrictedCopyGroupsStates(('itemcreated', ))
-        cfg.setSelectableRestrictedCopyGroups((self.vendors_creators, ))
+        cfg.setSelectableRestrictedCopyGroups((self.developers_creators, ))
+        # powerobservers will not be able to see
+        self._setPowerObserverStates(states=(self._stateMappingFor('itemcreated'),))
         # editable and viewable only by proposingGroup
         config = list(cfg.getLabelsConfig())
         new_config = deepcopy(config[0])
@@ -3625,17 +3642,22 @@ class testViews(PloneMeetingTestCase):
         new_config['view_groups'] = [
             'suffix_proposing_group_creators',
             'reader_copy_groups',
-            'reader_restricted_copy_groups']
+            'reader_restricted_copy_groups',
+            'reader_advices']
         config.append(new_config)
         cfg.setLabelsConfig(config)
         # create item as MeetingManager to be able to use restrictedCopyGroups
         self.changeUser('pmManager')
         item = self.create(
             'MeetingItem',
-            copyGroups=[self.vendors_reviewers],
-            restrictedCopyGroups=[self.vendors_creators])
-        self.changeUser('pmCreator1')
+            copyGroups=[self.developers_reviewers],
+            restrictedCopyGroups=[self.developers_creators],
+            optionalAdvisers=[self.developers_uid])
+        item.setProposingGroup(self.vendors_uid)
+        item.update_local_roles()
+        self.changeUser('pmCreator2')
         # creator can view/edit
+        self.assertTrue(self.hasPermission(View, item))
         labelingview = item.restrictedTraverse('@@labeling')
         self.assertEqual(
             labelingview.available_labels(modes=['view'])[1][0]['label_id'],
@@ -3648,7 +3670,8 @@ class testViews(PloneMeetingTestCase):
         labelingview.update()
         self.assertTrue('label' in get_labels(item))
         # copyGroups can view
-        self.changeUser('pmReviewer2')
+        self.changeUser('pmReviewer1')
+        self.assertTrue(self.hasPermission(View, item))
         labelingview = item.restrictedTraverse('@@labeling')
         self.assertEqual(
             labelingview.available_labels(modes=['view'])[1][0]['label_id'],
@@ -3656,13 +3679,35 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(
             labelingview.available_labels(modes=['edit'])[1], [])
         # restrictedCopyGroups can view
-        self.changeUser('pmCreator2')
+        self.changeUser('pmCreator1')
+        self.assertTrue(self.hasPermission(View, item))
         labelingview = item.restrictedTraverse('@@labeling')
         self.assertEqual(
             labelingview.available_labels(modes=['view'])[1][0]['label_id'],
             'label')
         self.assertEqual(
             labelingview.available_labels(modes=['edit'])[1], [])
+        # advisers can view
+        self.changeUser('pmAdviser1')
+        self.assertTrue(self.hasPermission(View, item))
+        labelingview = item.restrictedTraverse('@@labeling')
+        self.assertEqual(
+            labelingview.available_labels(modes=['view'])[1][0]['label_id'],
+            'label')
+        self.assertEqual(
+            labelingview.available_labels(modes=['edit'])[1], [])
+        # power observers can not see
+        self.changeUser('powerobserver1')
+        self.assertTrue(self.hasPermission(View, item))
+        labelingview = item.restrictedTraverse('@@labeling')
+        self.assertEqual(labelingview.available_labels(modes=['view'])[1], [])
+        self.assertEqual(labelingview.available_labels(modes=['edit'])[1], [])
+        # the labels faceted filter is correctly rendered
+        pmFolder = self.getMeetingFolder()
+        self.assertTrue(
+            get_vocab(
+                pmFolder,
+                'Products.PloneMeeting.vocabularies.ftwlabelsforfacetedfiltervocabulary'))
 
     def test_pm_LabelsConfigUpdateLocalRoles(self):
         """Test labelsConfig when a configuration specify to update_local_roles.
