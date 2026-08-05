@@ -5,7 +5,7 @@ Changelog
 4.2.28.20 (unreleased)
 ----------------------
 
-- Overrided `ResolveUIDAndCaptionFilter` output filter to add `loading="lazy"`
+- `ResolveUIDAndCaptionFilter` output filter now adds `loading="lazy"`
   to `<img>` tags.
   [gbastien]
 
