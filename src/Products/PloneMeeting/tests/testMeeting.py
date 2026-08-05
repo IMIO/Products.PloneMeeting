@@ -3106,12 +3106,16 @@ class testMeetingType(PloneMeetingTestCase):
         img = meeting.get('image.jpeg')
         # link to image uses resolveuid
         self.assertEqual(
+            meeting.observations.raw,
+            '<p>Working external image <img src="resolveuid/{0}">.</p>'.format(img.UID()))
+        self.assertEqual(
             meeting.observations.output,
             '<p>Working external image <img src="{0}" alt="image.jpeg" '
             'title="image.jpeg" />.</p>'.format(img.absolute_url()))
         self.assertEqual(
-            meeting.observations.raw,
-            '<p>Working external image <img src="resolveuid/{0}">.</p>'.format(img.UID()))
+            meeting.observations.output_relative_to(meeting),
+            '<p>Working external image <img src="{0}" alt="image.jpeg" loading="lazy" '
+            'title="image.jpeg" />.</p>'.format(img.absolute_url()))
 
         # test using the quickedit
         text = '<p>Working external image <img src="%s"/>.</p>' % self.external_image2

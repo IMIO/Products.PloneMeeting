@@ -5,6 +5,9 @@ Changelog
 4.2.28.20 (unreleased)
 ----------------------
 
+- `ResolveUIDAndCaptionFilter` output filter now adds `loading="lazy"`
+  to `<img>` tags.
+  [gbastien]
 - Fixed bug were deleting an item containing advices was leading to an
   `Unauthorized`.
   Now an item that is in `review_state itemcreated` will be deletable by

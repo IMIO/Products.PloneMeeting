@@ -11,4 +11,11 @@
     factory=".css_transforms.CssTransformer"
     zcml:condition="installed Products.PloneMeeting" />
 
+  <adapter
+    provides="plone.outputfilters.interfaces.IFilter"
+    name="resolveuid_and_caption"
+    for="Products.PloneMeeting.interfaces.IMeetingContent
+         *"
+    factory=".overrides.PMResolveUIDAndCaptionFilter" />
+
 </configure>
