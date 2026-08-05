@@ -8,5 +8,6 @@ class PMResolveUIDAndCaptionFilter(ResolveUIDAndCaptionFilter):
 
     def unknown_starttag(self, tag, attrs):
         if tag == 'img':
-            attrs.append(('loading', 'lazy'))
+            if ('loading', 'lazy') not in attrs:
+                attrs.append(('loading', 'lazy'))
         ResolveUIDAndCaptionFilter.unknown_starttag(self, tag, attrs)
