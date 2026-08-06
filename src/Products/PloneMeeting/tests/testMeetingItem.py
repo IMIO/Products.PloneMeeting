@@ -8123,7 +8123,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.setItemAdviceEditStates([self._stateMappingFor('proposed')])
         cfg.setItemAdviceViewStates([self._stateMappingFor('proposed')])
         self.changeUser('pmCreator1')
-        # we create to group of items because we will delete it depending on config here under
+        # we create 2 groups of items because we will delete it depending on config here under
         # 1
         itemWithoutAdvice1 = self.create('MeetingItem')
         self.proposeItem(itemWithoutAdvice1)
@@ -8167,19 +8167,23 @@ class testMeetingItem(PloneMeetingTestCase):
         # checks
         self.changeUser('pmReviewer1')
         cfg.setItemWithGivenAdviceIsNotDeletable(False)
+        # 1
         self.assertTrue(IContentDeletable(itemWithoutAdvice1).mayDelete())
         self.assertTrue(IContentDeletable(itemWithNotGivenAdvice1).mayDelete())
         self.assertTrue(IContentDeletable(itemWithGivenAdvice1).mayDelete())
         self.assertTrue(IContentDeletable(itemWithInheritedGivenAdvices1).mayDelete())
+        # 2
         self.assertTrue(IContentDeletable(itemWithoutAdvice2).mayDelete())
         self.assertTrue(IContentDeletable(itemWithNotGivenAdvice2).mayDelete())
         self.assertTrue(IContentDeletable(itemWithGivenAdvice2).mayDelete())
         self.assertTrue(IContentDeletable(itemWithInheritedGivenAdvices2).mayDelete())
         cfg.setItemWithGivenAdviceIsNotDeletable(True)
+        # 1
         self.assertTrue(IContentDeletable(itemWithoutAdvice1).mayDelete())
         self.assertTrue(IContentDeletable(itemWithNotGivenAdvice1).mayDelete())
         self.assertFalse(IContentDeletable(itemWithGivenAdvice1).mayDelete())
         self.assertTrue(IContentDeletable(itemWithInheritedGivenAdvices1).mayDelete())
+        # 2
         self.assertTrue(IContentDeletable(itemWithoutAdvice2).mayDelete())
         self.assertTrue(IContentDeletable(itemWithNotGivenAdvice2).mayDelete())
         self.assertFalse(IContentDeletable(itemWithGivenAdvice2).mayDelete())
@@ -8195,6 +8199,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.backToState(itemWithInheritedGivenAdvices2, 'itemcreated')
         self.changeUser('pmCreator1')
         cfg.setItemWithGivenAdviceIsNotDeletable(False)
+        # 1
         self.assertTrue(IContentDeletable(itemWithoutAdvice1).mayDelete())
         self.assertTrue(IContentDeletable(itemWithNotGivenAdvice1).mayDelete())
         self.assertTrue(IContentDeletable(itemWithGivenAdvice1).mayDelete())
@@ -8204,6 +8209,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.portal.restrictedTraverse('@@delete_givenuid')(itemWithGivenAdvice1.UID())
         self.portal.restrictedTraverse('@@delete_givenuid')(itemWithInheritedGivenAdvices1.UID())
         cfg.setItemWithGivenAdviceIsNotDeletable(True)
+        # 2
         self.assertTrue(IContentDeletable(itemWithoutAdvice2).mayDelete())
         self.assertTrue(IContentDeletable(itemWithNotGivenAdvice2).mayDelete())
         self.assertTrue(IContentDeletable(itemWithGivenAdvice2).mayDelete())
