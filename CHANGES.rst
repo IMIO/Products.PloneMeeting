@@ -8,6 +8,14 @@ Changelog
 - `ResolveUIDAndCaptionFilter` output filter now adds `loading="lazy"`
   to `<img>` tags.
   [gbastien]
+- Fixed bug where deleting an item containing advices was leading to an
+  `Unauthorized`.
+  Now an item that is in `review_state itemcreated` will be deletable by
+  the `proposingGroup` even if it contains advices.
+  A item that is no more in `initial_state` that contain advices will not be
+  deletable when `MeetingConfig.itemWithGivenAdviceIsNotDeletable` is `True`
+  except if user is `MeetingManager`.
+  [gbastien]
 
 4.2.28.19 (2026-07-31)
 ----------------------
