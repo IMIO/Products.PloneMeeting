@@ -8,6 +8,8 @@ Changelog
 - `ResolveUIDAndCaptionFilter` output filter now adds `loading="lazy"`
   to `<img>` tags.
   [gbastien]
+- Limit `annex_types` widget height when batch preparing annexes for `esign`.
+  [gbastien]
 
 4.2.28.19 (2026-07-31)
 ----------------------
