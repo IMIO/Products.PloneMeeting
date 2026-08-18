@@ -116,10 +116,10 @@ class AnnexContentDeletableAdapter(APContentDeletableAdapter):
             if 'Owner' in member.getRolesInContext(self.context):
                 return True
 
-    def mayDelete(self, **kwargs):
+    def mayDelete(self, initiator=None, **kwargs):
         '''See docstring in interfaces.py.'''
         # check 'Delete objects' permission
-        mayDelete = super(AnnexContentDeletableAdapter, self).mayDelete()
+        mayDelete = super(AnnexContentDeletableAdapter, self).mayDelete(initiator=initiator)
         if not mayDelete:
             parent = self.context.getParentNode()
             # able to delete an annex/annexDecision if able to edit the parent
@@ -140,13 +140,14 @@ class AdviceContentDeletableAdapter(APContentDeletableAdapter):
     def __init__(self, context):
         self.context = context
 
-    def mayDelete(self, **kwargs):
+    def mayDelete(self, initiator=None, **kwargs):
         '''See docstring in interfaces.py.'''
         # check 'Delete objects' permission
-        mayDelete = super(AdviceContentDeletableAdapter, self).mayDelete()
+        mayDelete = super(AdviceContentDeletableAdapter, self).mayDelete(initiator=initiator)
         if mayDelete:
             tool = api.portal.get_tool('portal_plonemeeting')
-            if not tool.isManager(realManagers=True) and \
+            # if initiator is the parent item, mayDelete was already managed there
+            if initiator is None and not tool.isManager(realManagers=True) and \
                getLastAction(getAdapter(self.context, IImioHistory, 'advice_given')):
                 mayDelete = False
         return mayDelete
@@ -160,21 +161,25 @@ class MeetingItemContentDeletableAdapter(APContentDeletableAdapter):
     def __init__(self, context):
         self.context = context
 
-    def mayDelete(self, **kwargs):
+    def mayDelete(self, initiator=None, **kwargs):
         '''See docstring in interfaces.py.'''
         # check 'Delete objects' permission
-        mayDelete = super(MeetingItemContentDeletableAdapter, self).mayDelete()
+        mayDelete = super(MeetingItemContentDeletableAdapter, self).mayDelete(initiator=initiator)
         if mayDelete:
-            # check itemWithGivenAdviceIsNotDeletable
+            # check itemWithGivenAdviceIsNotDeletable if item not in initial review_state
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self.context)
             if cfg.getItemWithGivenAdviceIsNotDeletable() and not tool.isManager(cfg):
-                # do we have any given advice?
-                # do not consider advices that are inherited
-                given_advices = [advice for advice in self.context.adviceIndex.values() if
-                                 not advice['inherited'] and not advice['type'] == NOT_GIVEN_ADVICE_VALUE]
-                if given_advices:
-                    return False
+                wfTool = api.portal.get_tool('portal_workflow')
+                item_wf = wfTool.getWorkflowsFor(self.context)[0]
+                if self.context.query_state() != item_wf.initial_state:
+                    # do we have any given advice?
+                    # do not consider advices that are inherited
+                    given_advices = [
+                        advice for advice in self.context.adviceIndex.values()
+                        if not advice['inherited'] and not advice['type'] == NOT_GIVEN_ADVICE_VALUE]
+                    if given_advices:
+                        return False
         return mayDelete
 
 
@@ -188,9 +193,9 @@ class MeetingContentDeletableAdapter(APContentDeletableAdapter):
     def __init__(self, context):
         self.context = context
 
-    def mayDelete(self, **kwargs):
+    def mayDelete(self, initiator=None, **kwargs):
         '''See docstring in interfaces.py.'''
-        res = super(MeetingContentDeletableAdapter, self).mayDelete()
+        res = super(MeetingContentDeletableAdapter, self).mayDelete(initiator=initiator)
         if res:
             if self.context.number_of_items() != 0:
                 tool = api.portal.get_tool('portal_plonemeeting')
@@ -208,9 +213,9 @@ class OrgContentDeletableAdapter(APContentDeletableAdapter):
     def __init__(self, context):
         self.context = context
 
-    def mayDelete(self, **kwargs):
+    def mayDelete(self, initiator=None, **kwargs):
         '''See docstring in interfaces.py.'''
-        if not super(OrgContentDeletableAdapter, self).mayDelete():
+        if not super(OrgContentDeletableAdapter, self).mayDelete(initiator=initiator):
             return False
 
         if self.context == get_own_organization():
@@ -227,9 +232,9 @@ class PODTemplateContentDeletableAdapter(APContentDeletableAdapter):
     def __init__(self, context):
         self.context = context
 
-    def mayDelete(self, **kwargs):
+    def mayDelete(self, initiator=None, **kwargs):
         '''See docstring in interfaces.py.'''
-        res = super(PODTemplateContentDeletableAdapter, self).mayDelete()
+        res = super(PODTemplateContentDeletableAdapter, self).mayDelete(initiator=initiator)
         if res and not check_zope_admin():
             res = False
         return res
@@ -242,9 +247,9 @@ class MeetingConfigContentDeletableAdapter(APContentDeletableAdapter):
     def __init__(self, context):
         self.context = context
 
-    def mayDelete(self, **kwargs):
+    def mayDelete(self, initiator=None, **kwargs):
         '''See docstring in interfaces.py.'''
-        res = super(MeetingConfigContentDeletableAdapter, self).mayDelete()
+        res = super(MeetingConfigContentDeletableAdapter, self).mayDelete(initiator=initiator)
         if res and not check_zope_admin():
             res = False
         return res
