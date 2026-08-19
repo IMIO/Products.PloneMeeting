@@ -10,6 +10,11 @@ Changelog
 - Manage files order in `esign` session, make sure we have first
   generated POD templates stored as annexes then annexes to sign.
   [gbastien]
+- In `PMUtils` completed cases where we do not escape vocabulary values
+  in addition to the `document-generation` view, include also the store pod
+  templates as annex views, so `store-pod-temlate-as-annex-form` and
+  `store-items-template-as-annex-batch-action`.
+  [gbastien]
 
 4.2.28.20 (2026-08-19)
 ----------------------
