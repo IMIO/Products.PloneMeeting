@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.28.20 (unreleased)
+4.2.28.20 (2026-08-19)
 ----------------------
 
 - `ResolveUIDAndCaptionFilter` output filter now adds `loading="lazy"`
