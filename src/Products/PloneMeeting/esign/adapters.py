@@ -4,6 +4,7 @@
 #
 
 from collective.behavior.talcondition.utils import _evaluateExpression
+from imio.esign.adapters import DefaultItemOrderProvider
 from imio.esign.adapters import FilesBelongingToAGivenSession
 from imio.helpers.content import uuidToObject
 from plone import api
@@ -13,6 +14,7 @@ from Products.PloneMeeting.browser.batchactions import get_pod_template_infos
 from Products.PloneMeeting.browser.batchactions import pod_template_default
 from Products.PloneMeeting.config import ESIGNWATCHERS_GROUP_SUFFIX
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
+from Products.PloneMeeting.utils import get_annexes
 from zope.i18n import translate
 
 
@@ -209,6 +211,17 @@ class PMSignersAdapter(object):
         and we can have a per MeetingConfig behavior.
         """
         return {'cfg_id': self.cfg.getId()}
+
+
+class PMItemOrderProvider(DefaultItemOrderProvider):
+    """ """
+
+    def get_item_order(self):
+        """First stored generated POD template then annexes."""
+        annexes = get_annexes(self.context)
+        generated_annexes = [annex for annex in annexes if getattr(annex, 'used_pod_template_id', None)]
+        annexes = [annex for annex in annexes if annex not in generated_annexes]
+        return {a.UID(): idx for idx, a in enumerate(annexes)}
 
 
 class ItemsBelongingToAGivenSession(CompoundCriterionBaseAdapter, FilesBelongingToAGivenSession):

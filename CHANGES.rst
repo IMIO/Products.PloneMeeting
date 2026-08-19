@@ -10,6 +10,9 @@ Changelog
   [gbastien]
 - Limit `annex_types` widget height when batch preparing annexes for `esign`.
   [gbastien]
+- Manage files order in `esign` session, make sure we have first
+  generated POD templates stored as annexes then annexes to sign.
+  [gbastien]
 
 4.2.28.19 (2026-07-31)
 ----------------------

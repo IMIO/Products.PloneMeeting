@@ -4288,11 +4288,17 @@ class testViews(PloneMeetingTestCase):
         stored_annex = get_annexes(item)[-1]
         # was overwritten
         self.assertNotEqual(stored_annex.UID(), stored_annex_uid)
+        # documents order is correct we get first main annex (decision generated annex)
+        # then annexes to sign
+        view = self.portal.restrictedTraverse("@@esign-session-files")
+        result = view(0)
+        self.assertTrue(
+            result.index(stored_annex.absolute_url()) <
+            result.index(annex2.absolute_url()))
         # delete annex, session size is correct
-        # XXX uncomment when https://github.com/IMIO/imio.esign/pull/42 is merged
-        # self.assertEqual(get_session_annotation()['sessions'][0]['size'], 33782)
-        # self.deleteAsManager(stored_annex.UID())
-        # self.assertEqual(get_session_annotation()['sessions'][0]['size'], 6851)
+        self.assertEqual(get_session_annotation()['sessions'][0]['size'], 33782)
+        self.deleteAsManager(stored_annex.UID())
+        self.assertEqual(get_session_annotation()['sessions'][0]['size'], 6851)
 
     def test_pm_MeetingStoreItemsPodTemplateAsAnnexBatchActionEsign(self):
         """This will store a POD template selected in

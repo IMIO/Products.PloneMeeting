@@ -9,6 +9,11 @@
         factory="Products.PloneMeeting.esign.adapters.PMSignersAdapter"
         provides="imio.esign.adapters.ISignable"/>
 
+    <adapter
+        factory=".adapters.PMItemOrderProvider"
+        provides="imio.esign.interfaces.IItemOrderProvider"
+        for="Products.PloneMeeting.interfaces.IMeetingContent" />
+
     <adapter for="*"
       factory=".adapters.ItemsBelongingToAGivenSession"
       provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
