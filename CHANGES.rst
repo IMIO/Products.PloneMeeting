@@ -5,13 +5,25 @@ Changelog
 4.2.29rc13 (unreleased)
 -----------------------
 
-- `ResolveUIDAndCaptionFilter` output filter now adds `loading="lazy"`
-  to `<img>` tags.
-  [gbastien]
 - Limit `annex_types` widget height when batch preparing annexes for `esign`.
   [gbastien]
 - Manage files order in `esign` session, make sure we have first
   generated POD templates stored as annexes then annexes to sign.
+  [gbastien]
+
+4.2.28.20 (2026-08-19)
+----------------------
+
+- `ResolveUIDAndCaptionFilter` output filter now adds `loading="lazy"`
+  to `<img>` tags.
+  [gbastien]
+- Fixed bug where deleting an item containing advices was leading to an
+  `Unauthorized`.
+  Now an item that is in `review_state itemcreated` will be deletable by
+  the `proposingGroup` even if it contains advices.
+  A item that is no more in `initial_state` that contain advices will not be
+  deletable when `MeetingConfig.itemWithGivenAdviceIsNotDeletable` is `True`
+  except if user is `MeetingManager`.
   [gbastien]
 
 4.2.28.19 (2026-07-31)
