@@ -8117,6 +8117,9 @@ class testMeetingItem(PloneMeetingTestCase):
         """If MeetingConfig.itemWithGivenAdviceIsNotDeletable is True,
            an item containing given advices will not be deletable."""
         cfg = self.meetingConfig
+        # maje sure a custom profile do not enable the "only_creator_may_delete" WFA
+        cfg.setWorkflowAdaptations(())
+        notify(ObjectEditedEvent(cfg))
         cfg.setItemWithGivenAdviceIsNotDeletable(True)
         cfg.setUseAdvices(True)
         cfg.setItemAdviceStates([self._stateMappingFor('proposed')])
