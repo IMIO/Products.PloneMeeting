@@ -14,6 +14,9 @@ Changelog
   in addition to the `document-generation` view, include also the store pod
   templates as annex views, so `store-pod-temlate-as-annex-form` and
   `store-items-template-as-annex-batch-action`.
+- Make `test_pm_ItemNotDeletableWhenContainingGivenAdvices` more robust by
+  disabling every workflow adaptations so a custom profile will not enable
+  the `only_creator_may_delete`.
   [gbastien]
 
 4.2.28.20 (2026-08-19)
