@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.29rc13 (unreleased)
+4.2.29rc13 (2026-08-20)
 -----------------------
 
 - Limit `annex_types` widget height when batch preparing annexes for `esign`.
