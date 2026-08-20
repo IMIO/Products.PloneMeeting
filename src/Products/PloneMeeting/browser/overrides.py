@@ -1750,7 +1750,8 @@ class PMUtils(Utils):
         # do not escape vocabularies used in MeetingConfig
         # especially the SelectableAssemblyMembersVocabulary for which terms
         # contain HTML
-        if self.request.get('PUBLISHED').__name__ not in (
+        published = self.request.get('PUBLISHED')
+        if published and published.__name__ not in (
             'document-generation',
             'store-pod-temlate-as-annex-form',
             'store-items-template-as-annex-batch-action') and \
