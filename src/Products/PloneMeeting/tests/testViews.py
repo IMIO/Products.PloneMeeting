@@ -4296,9 +4296,10 @@ class testViews(PloneMeetingTestCase):
             result.index(stored_annex.absolute_url()) <
             result.index(annex2.absolute_url()))
         # delete annex, session size is correct
-        self.assertEqual(get_session_annotation()['sessions'][0]['size'], 33782)
-        self.deleteAsManager(stored_annex.UID())
-        self.assertEqual(get_session_annotation()['sessions'][0]['size'], 6851)
+        # depending on version of soffice, initial size of generated pod template can be different
+        initial_size = get_session_annotation()['sessions'][0]['size']
+        self.deleteAsManager(annex2.UID())
+        self.assertEqual(get_session_annotation()['sessions'][0]['size'], initial_size - 6851)
 
     def test_pm_MeetingStoreItemsPodTemplateAsAnnexBatchActionEsign(self):
         """This will store a POD template selected in
