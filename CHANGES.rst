@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.29rc14 (unreleased)
+4.2.29rc14 (2026-08-24)
 -----------------------
 
 - Give `MeetingManagers` permission to `Recreate esign session`.
