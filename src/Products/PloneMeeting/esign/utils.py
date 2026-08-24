@@ -170,7 +170,7 @@ def _add_annexes_to_sign_session(
     title = get_session_title(cfg, pod_template, obj, annex)
     discriminators = ISignable(obj).get_discriminators(annex, pod_template)
     watchers = ISignable(obj).get_watchers()
-    create_session_custom_data = {'cfg_id': cfg.getId()}
+    create_session_custom_data = ISignable(obj).get_create_session_custom_data()
     sessions = add_files_to_session(
         signers,
         files_uids,

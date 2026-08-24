@@ -14,6 +14,7 @@ from datetime import datetime
 from ftw.labels.interfaces import ILabeling
 from ftw.labels.interfaces import ILabelJar
 from imio.actionspanel.interfaces import IContentDeletable
+from imio.esign.adapters import ISignable
 from imio.esign.config import set_esign_registry_enabled
 from imio.esign.utils import get_session_annotation
 from imio.helpers.cache import cleanRamCacheFor
@@ -46,6 +47,7 @@ from Products.PloneMeeting.etags import ConfigModified
 from Products.PloneMeeting.etags import ContextModified
 from Products.PloneMeeting.etags import LinkedMeetingModified
 from Products.PloneMeeting.etags import ToolModified
+from Products.PloneMeeting.esign.utils import _add_annexes_to_sign_session
 from Products.PloneMeeting.ftw_labels.utils import get_labels
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.tests.PloneMeetingTestCase import DEFAULT_USER_PASSWORD
@@ -65,6 +67,7 @@ from zope.component import getMultiAdapter
 from zope.event import notify
 from zope.i18n import translate
 
+import json
 import magic
 import transaction
 
@@ -4345,6 +4348,50 @@ class testViews(PloneMeetingTestCase):
         stored_generated_pod_template = get_annexes(item)[-1]
         self.assertEqual(session_annot['c_uids'][item.UID()],
                          [stored_generated_pod_template.UID(), annex_pdf.UID()])
+
+    def test_pm_RecreateEsignSession(self):
+        """Test the @@recreate-session view especially custom data."""
+        cfg, annex_type, pod_template, pod_template_uid, item, meeting, held_pos1, held_pos2 = self._setup_esign()
+        for item in meeting.get_items():
+            self.addAnnex(item, to_sign=True, annexFile=self.annexFilePDF)
+            signers = ISignable(item).get_signers()
+            _add_annexes_to_sign_session(item, get_annexes(item), cfg, pod_template, signers)
+        self.request.form['esign_session_id'] = '0'
+        view = self.portal.restrictedTraverse('@@esign-session-recreate')
+        self.assertEqual(
+            view._resolve_session(),
+            (None, None, (u'Cannot recreate a draft session!', 'warning')))
+        # redirect when error
+        self.assertEqual(view(), 'http://nohost/plone/@@parapheo')
+        # only work on a "Refused" session
+        session0 = get_session_annotation()['sessions'][0]
+        self.assertEqual(len(session0['files']), 7)
+        session0['state'] = "refused"
+        # we have session 0
+        self.assertEqual(view._resolve_session()[0], 0)
+        # must be MeetingManager
+        self.changeUser('pmCreator1')
+        self.assertRaises(Unauthorized, view)
+        self.changeUser('pmManager')
+        # let one files in old session
+        old_files_uids = [f["uid"] for f in session0["files"][:-1]]
+        self.request.form["file_uids"] = json.dumps(old_files_uids)
+        view()
+        # new session created, still one file in session 0 and everything works
+        session1 = get_session_annotation()['sessions'][1]
+        self.assertEqual(len(session0['files']), 1)
+        self.assertEqual(len(session1['files']), 6)
+        # new title is correct
+        self.assertEqual(
+            session0['title'],
+            u'[iA.D\xe9lib] PloneMeeting assembly - Session 013999900000')
+        self.assertEqual(
+            session1['title'],
+            u'[iA.D\xe9lib] PloneMeeting assembly - Session 013999900001')
+        # custom data is correct
+        self.assertEqual(session0['cfg_id'], session1['cfg_id'])
+        # the @@parapheo view is rendered correctly
+        self.assertTrue(self.portal.restrictedTraverse('@@parapheo')())
 
 
 def test_suite():

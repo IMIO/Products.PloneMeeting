@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from imio.esign import manage_session_perm
+from imio.esign.browser.actions import RecreateSessionFormView
+from imio.esign.browser.actions import RecreateSessionView
 from imio.esign.browser.views import ExternalSessionCreateView
 from imio.esign.browser.views import SessionDeleteView
 from imio.esign.browser.views import SessionFilesView
@@ -127,5 +129,38 @@ class PMExternalSessionCreateView(ExternalSessionCreateView):
         self.tool = api.portal.get_tool('portal_plonemeeting')
 
     def may_create_external_sessions(self):
-        """Check if the user may create external sessions"""
+        """Check if the user may create external sessions.
+           Must be MeetingManager on tool."""
         return api.user.has_permission(manage_session_perm, obj=self.tool)
+
+
+class PMRecreateSessionView(RecreateSessionView):
+    """ """
+
+    def may_recreate_session(self, state=None):
+        if state in self.NON_RECREATABLE_STATES:
+            return False
+        # permission is given to MeetingManager
+        # check if user MeetingManager on portal_plonemeeting
+        tool = api.portal.get_tool('portal_plonemeeting')
+        return api.user.has_permission(manage_session_perm, obj=tool)
+
+    def get_new_session_title(self, old, old_session_id):
+        """Replace last part after "Session " by {sign_id} so it can be
+           set at creation (in case first element of old session was not kept.
+           A session title is like:
+           [iA.Délib] - ... - Session 013999900001
+        """
+        return old["title"][:-12] + "{sign_id}"
+
+
+class PMRecreateSessionFormView(RecreateSessionFormView):
+    """ """
+
+    def may_recreate_session(self, state=None):
+        if state in self.NON_RECREATABLE_STATES:
+            return False
+        # permission is given to MeetingManager
+        # check if user MeetingManager on portal_plonemeeting
+        tool = api.portal.get_tool('portal_plonemeeting')
+        return api.user.has_permission(manage_session_perm, obj=tool)

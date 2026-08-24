@@ -82,6 +82,24 @@
             allowed_attributes="available"
             layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer" />
 
+        <browser:page
+            name="esign-session-recreate"
+            for="Products.CMFPlone.interfaces.IPloneSiteRoot"
+            class="Products.PloneMeeting.esign.views.PMRecreateSessionView"
+            permission="zope2.View"
+            allowed_attributes="may_recreate_session"
+            i18n:domain="imio.esign"
+            layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer" />
+
+        <browser:page
+            name="esign-session-recreate-form"
+            for="Products.CMFPlone.interfaces.IPloneSiteRoot"
+            class="Products.PloneMeeting.esign.views.PMRecreateSessionFormView"
+            permission="zope2.View"
+            allowed_attributes="may_recreate_session files refused_reason session_id no_file_msg recreate_onclick"
+            i18n:domain="imio.esign"
+            layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer" />
+
         <browser:viewlet
             for="eea.facetednavigation.subtypes.interfaces.IFacetedNavigable"
             manager="collective.eeafaceted.z3ctable.interfaces.ITopAboveNavManager"
