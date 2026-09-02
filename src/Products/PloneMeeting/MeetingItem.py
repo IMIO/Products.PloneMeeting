@@ -6366,6 +6366,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         adviser_org_uids = tool.get_orgs_for_user(suffixes=['advisers'])
         for adviceInfo in self.adviceIndex.values():
             advId = adviceInfo['id']
+            if adviser_uid and advId != adviser_uid:
+                continue
             # if advice is inherited get real adviceInfo
             if adviceInfo['inherited']:
                 adviceInfo = self.getInheritedAdviceInfo(advId)
@@ -6408,6 +6410,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 data[advId]['creator_id'] = creator_id
                 data[advId]['creator_fullname'] = creator_fullname
 
+        # in case we asked for an adviser_uid, we only return this single value
+        # dict and not a list of results
         if adviser_uid:
             data = data.get(adviser_uid, {})
 

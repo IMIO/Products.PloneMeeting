@@ -13,6 +13,9 @@ Changelog
   anonymize item's title using `[[]]` to surround text to anonymize.
   This rely on `utils.anonymize_raw_text` that was added to `safe_utils`.
   [gbastien]
+- Optimized `MeetingItem.getAdviceDataFor` when an `adviser_uid` is given,
+  only compute the data for given `adviser_uid`.
+  [gbastien]
 
 4.2.28.20 (2026-08-19)
 ----------------------
