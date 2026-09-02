@@ -122,8 +122,8 @@ from Products.PloneMeeting.utils import _clear_local_roles
 from Products.PloneMeeting.utils import _get_category
 from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
 from Products.PloneMeeting.utils import addDataChange
-from Products.PloneMeeting.utils import anonymize_raw_text
 from Products.PloneMeeting.utils import AdvicesUpdatedEvent
+from Products.PloneMeeting.utils import anonymize_raw_text
 from Products.PloneMeeting.utils import checkMayQuickEdit
 from Products.PloneMeeting.utils import cleanMemoize
 from Products.PloneMeeting.utils import compute_item_roles_to_assign_to_suffixes
@@ -6413,7 +6413,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # in case we asked for an adviser_uid, we only return this single value
         # dict and not a list of results
         if adviser_uid:
-            data = data.get(adviser_uid, {})
+            return data.get(adviser_uid, {})
 
         if ordered and data:
             # sort by adviser name

@@ -9,8 +9,9 @@ Changelog
   disabling every workflow adaptations so a custom profile will not enable
   the `only_creator_may_delete`.
   [gbastien]
-- Added parameter `anonymize=False` to `MeetingItem.Title` to be able to
-  anonymize item's title using `[[]]` to surround text to anonymize.
+- Added parameter `anonymize=None` (nothing is done by default) to
+  `MeetingItem.Title` to be able to anonymize item's title using `[[]]`
+  to surround text to anonymize.
   This rely on `utils.anonymize_raw_text` that was added to `safe_utils`.
   [gbastien]
 - Optimized `MeetingItem.getAdviceDataFor` when an `adviser_uid` is given,
