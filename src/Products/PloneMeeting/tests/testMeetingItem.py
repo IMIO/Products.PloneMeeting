@@ -9377,6 +9377,42 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(item.show_field('groupsInChargeNotes'))
         self.assertFalse(item.mayQuickEdit('groupsInChargeNotes'))
 
+    def test_pm_anonymize_item_title(self):
+        """Test the anonymize parameter of MeetingItem.Title that will use
+           utils.anonymize_raw_text."""
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem', title="My title confidential")
+        self.assertEqual(item.Title(anonymize=False), "My title confidential")
+        self.assertFalse(isinstance(item.Title(anonymize=False), unicode))
+        self.assertEqual(item.Title(anonymize=True), "My title confidential")
+        self.assertFalse(isinstance(item.Title(anonymize=True), unicode))
+        item.setTitle("My title [[confidential]]")
+        self.assertEqual(item.Title(anonymize=False), "My title confidential")
+        self.assertFalse(isinstance(item.Title(anonymize=False), unicode))
+        self.assertEqual(item.Title(anonymize=True), "My title [[DGPR]]")
+        self.assertFalse(isinstance(item.Title(anonymize=True), unicode))
+        self.assertEqual(item.Title(anonymize=True, separators=('{', '}')), "My title [[confidential]]")
+        self.assertEqual(item.Title(anonymize=True, new_text='New text'), "My title New text")
+        self.assertEqual(
+            item.Title(anonymize=True, as_html=True),
+            '<p>My title <span class="pm-anonymize">[[DGPR]]</span></p>')
+        self.assertEqual(
+            item.Title(anonymize=True, new_text='', as_html=True),
+            '<p>My title <span class="pm-anonymize"></span></p>')
+        self.assertEqual(
+            item.Title(
+                anonymize=True,
+                as_html=True,
+                xhtml_anonymize_sentence_format='<p class="title">{0}</p>'),
+            '<p class="title">My title <span class="pm-anonymize">[[DGPR]]</span></p>')
+        self.assertEqual(
+            item.Title(
+                anonymize=True,
+                as_html=True,
+                xhtml_anonymize_sentence_format='<p class="title">{0}</p>',
+                xhtml_anonymize_value_format="{0}"),
+            '<p class="title">My title [[DGPR]]</p>')
+
 
 def test_suite():
     from unittest import makeSuite

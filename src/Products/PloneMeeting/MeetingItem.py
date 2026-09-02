@@ -123,6 +123,7 @@ from Products.PloneMeeting.utils import _get_category
 from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
 from Products.PloneMeeting.utils import addDataChange
 from Products.PloneMeeting.utils import AdvicesUpdatedEvent
+from Products.PloneMeeting.utils import anonymize_raw_text
 from Products.PloneMeeting.utils import checkMayQuickEdit
 from Products.PloneMeeting.utils import cleanMemoize
 from Products.PloneMeeting.utils import compute_item_roles_to_assign_to_suffixes
@@ -2270,7 +2271,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 self.Title(withMeetingDate=True))
         return self.Title(withMeetingDate=True)
 
-    def Title(self, withMeetingDate=False, withItemNumber=False, withItemReference=False, **kwargs):
+    def Title(self, withMeetingDate=False, withItemNumber=False, withItemReference=False, anonymize=None, **kwargs):
         title = self.getField('title').get(self, **kwargs)
         if withItemReference and self.getItemReference():
             title = "[{0}] {1}".format(self.getItemReference(), title)
@@ -2284,6 +2285,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     tool = api.portal.get_tool('portal_plonemeeting')
                     title = "{0} ({1})".format(
                         title, tool.format_date(meeting.date, with_hour=True).encode('utf-8'))
+        # by default anonymize=-1 will do nothing
+        # it is possible to pass extra anonymize_raw_text parameters as kwargs
+        if anonymize is not None:
+            title = anonymize_raw_text(title, anonymize=anonymize, **kwargs)
         return title
 
     security.declarePublic('getPrettyLink')
@@ -6361,6 +6366,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         adviser_org_uids = tool.get_orgs_for_user(suffixes=['advisers'])
         for adviceInfo in self.adviceIndex.values():
             advId = adviceInfo['id']
+            if adviser_uid and advId != adviser_uid:
+                continue
             # if advice is inherited get real adviceInfo
             if adviceInfo['inherited']:
                 adviceInfo = self.getInheritedAdviceInfo(advId)
@@ -6403,8 +6410,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 data[advId]['creator_id'] = creator_id
                 data[advId]['creator_fullname'] = creator_fullname
 
+        # in case we asked for an adviser_uid, we only return this single value
+        # dict and not a list of results
         if adviser_uid:
-            data = data.get(adviser_uid, {})
+            return data.get(adviser_uid, {})
 
         if ordered and data:
             # sort by adviser name
