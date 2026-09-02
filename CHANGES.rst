@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.28.21 (unreleased)
+4.2.28.21 (2026-09-02)
 ----------------------
 
 - Make `test_pm_ItemNotDeletableWhenContainingGivenAdvices` more robust by
