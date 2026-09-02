@@ -122,6 +122,7 @@ from Products.PloneMeeting.utils import _clear_local_roles
 from Products.PloneMeeting.utils import _get_category
 from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
 from Products.PloneMeeting.utils import addDataChange
+from Products.PloneMeeting.utils import anonymize_raw_text
 from Products.PloneMeeting.utils import AdvicesUpdatedEvent
 from Products.PloneMeeting.utils import checkMayQuickEdit
 from Products.PloneMeeting.utils import cleanMemoize
@@ -2270,7 +2271,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 self.Title(withMeetingDate=True))
         return self.Title(withMeetingDate=True)
 
-    def Title(self, withMeetingDate=False, withItemNumber=False, withItemReference=False, **kwargs):
+    def Title(self, withMeetingDate=False, withItemNumber=False, withItemReference=False, anonymize=None, **kwargs):
         title = self.getField('title').get(self, **kwargs)
         if withItemReference and self.getItemReference():
             title = "[{0}] {1}".format(self.getItemReference(), title)
@@ -2284,6 +2285,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     tool = api.portal.get_tool('portal_plonemeeting')
                     title = "{0} ({1})".format(
                         title, tool.format_date(meeting.date, with_hour=True).encode('utf-8'))
+        # by default anonymize=-1 will do nothing
+        # it is possible to pass extra anonymize_raw_text parameters as kwargs
+        if anonymize is not None:
+            title = anonymize_raw_text(title, anonymize=anonymize, **kwargs)
         return title
 
     security.declarePublic('getPrettyLink')
