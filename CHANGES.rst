@@ -5,8 +5,9 @@ Changelog
 4.2.28.22 (unreleased)
 ----------------------
 
-- Nothing changed yet.
-
+- Do not escape vocabularies when generating POD template (check if current
+  url end with `@@document-generation` or `document-generation`).
+  [gbastien]
 
 4.2.28.21 (2026-09-02)
 ----------------------
