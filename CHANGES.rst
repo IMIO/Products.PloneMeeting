@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.28.22 (unreleased)
+4.2.28.22 (2026-09-03)
 ----------------------
 
 - Do not escape vocabularies when generating POD template (check if current
