@@ -1633,7 +1633,7 @@ class PMUtils(Utils):
         # do not escape vocabularies used in MeetingConfig
         # especially the SelectableAssemblyMembersVocabulary for which terms
         # contain HTML
-        if not self.request.getURL().endswith('/document-generation') and \
+        if not self.request.getURL().endswith(('/document-generation', '/@@document-generation')) and \
            not IConfigElement.providedBy(self.context):
             nvalues = [html.escape(val) for val in nvalues]
         if IConfigElement.providedBy(self.context):
