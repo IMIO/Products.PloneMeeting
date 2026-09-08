@@ -37,17 +37,16 @@ from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.CMFPlone.utils import safe_unicode
 from Products.Five import zcml
-from Products.PloneMeeting.browser.batchactions import annex_types_default
 from Products.PloneMeeting.browser.views import SEVERAL_SAME_BARCODE_ERROR
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import NO_COMMITTEE
 from Products.PloneMeeting.content.meeting import PLACE_OTHER
+from Products.PloneMeeting.esign.utils import _add_annexes_to_sign_session
 from Products.PloneMeeting.etags import ConfigModified
 from Products.PloneMeeting.etags import ContextModified
 from Products.PloneMeeting.etags import LinkedMeetingModified
 from Products.PloneMeeting.etags import ToolModified
-from Products.PloneMeeting.esign.utils import _add_annexes_to_sign_session
 from Products.PloneMeeting.ftw_labels.utils import get_labels
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.tests.PloneMeetingTestCase import DEFAULT_USER_PASSWORD
@@ -4327,16 +4326,15 @@ class testViews(PloneMeetingTestCase):
         annex_not_selected = self.addAnnex(item, annexType='overhead-analysis', annexFile=self.annexFilePDF)
         action_view = annex_not_selected.restrictedTraverse('@@iconified-signed')
         action_view.set_values({'to_sign': 'true'})
-        annex_type_uid_not_selected = item.categorized_elements[annex_not_selected.UID()]['category_uid']
 
         # store annex for every items
+        self.request['PUBLISHED'] = form
         uids = [brain.UID for brain in meeting.get_items(ordered=True, the_objects=False)]
         self.request.form['form.widgets.uids'] = u','.join(uids)
         self.request.form['form.widgets.pod_template'] = 'itemTemplate__output_format__pdf'
         self.request.form['form.widgets.add_to_sign_session'] = ['selected']
         self.request.form['form.widgets.store_generated_document'] = ['1']
-        self.request.form['form.widgets.annex_types'] = [
-            uid for uid in annex_types_default(cfg) if uid != annex_type_uid_not_selected]
+        self.request.form['form.widgets.annexes'] = [annex_pdf.UID()]
         form.update()
         session_annot = get_session_annotation()
         self.assertFalse(session_annot['sessions'])

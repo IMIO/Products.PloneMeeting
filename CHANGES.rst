@@ -5,8 +5,11 @@ Changelog
 4.2.29rc15 (unreleased)
 -----------------------
 
-- Nothing changed yet.
-
+- In the `store-items-template-as-annex-batch-action` changed `annex_types`
+  selection to `annexes` selection so we can select every real annexes that
+  will be added to the session and not simply an `annex_type` without really
+  seeing what annexes.
+  [gbastien]
 
 4.2.29rc14 (2026-08-24)
 -----------------------
@@ -29,6 +32,14 @@ Changelog
 - Make `test_pm_ItemNotDeletableWhenContainingGivenAdvices` more robust by
   disabling every workflow adaptations so a custom profile will not enable
   the `only_creator_may_delete`.
+  [gbastien]
+- Added parameter `anonymize=None` (nothing is done by default) to
+  `MeetingItem.Title` to be able to anonymize item's title using `[[]]`
+  to surround text to anonymize.
+  This rely on `utils.anonymize_raw_text` that was added to `safe_utils`.
+  [gbastien]
+- Optimized `MeetingItem.getAdviceDataFor` when an `adviser_uid` is given,
+  only compute the data for given `adviser_uid`.
   [gbastien]
 
 4.2.28.20 (2026-08-19)

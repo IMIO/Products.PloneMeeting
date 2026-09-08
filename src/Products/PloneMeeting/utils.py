@@ -2670,6 +2670,34 @@ def convert2xhtml(obj,
     return xhtmlFinal
 
 
+def anonymize_raw_text(
+        raw_text,
+        anonymize=True,
+        separators=('[[', ']]'),
+        new_text='[[DGPR]]',
+        as_html=False,
+        xhtml_anonymize_sentence_format='<p>{0}</p>',
+        xhtml_anonymize_value_format='<span class="pm-anonymize">{0}</span>',
+        **kwargs):
+    """Anonymize given p_raw_text.
+       If p_anonymize=False, this will remove anonymizing informations
+       (removing p_separators), else it will anonymize as raw_text or XHTML
+       if p_as_html=True."""
+    raw_text = safe_encode(raw_text)
+    if anonymize is False:
+        # just remove the separators
+        raw_text = raw_text.replace(separators[0], '').replace(separators[1], '')
+    elif anonymize is True:
+        # replace elements between given separator by given new_text
+        regex = "{0}.*?{1}".format(re.escape(separators[0]), re.escape(separators[1]))
+        new_text = translate(new_text, domain="PloneMeeting", context=getRequest()).encode('utf-8')
+        if as_html:
+            new_text = xhtml_anonymize_value_format.format(new_text)
+            raw_text = xhtml_anonymize_sentence_format.format(raw_text)
+        raw_text = re.sub(regex, new_text, raw_text)
+    return raw_text
+
+
 def isPowerObserverForCfg_cachekey(method, cfg, power_observer_types=[]):
     '''cachekey method for isPowerObserverForCfg.'''
     return (get_plone_groups_for_user(),

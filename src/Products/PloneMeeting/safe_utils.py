@@ -36,6 +36,7 @@ from Products.PloneMeeting.esign.utils import get_esign_signatories
 from Products.PloneMeeting.esign.utils import get_item_esign_signatories
 from Products.PloneMeeting.esign.utils import get_meeting_esign_signatories
 from Products.PloneMeeting.ftw_labels.utils import get_labels
+from Products.PloneMeeting.utils import anonymize_raw_text
 from Products.PloneMeeting.utils import cleanMemoize
 from Products.PloneMeeting.utils import cropHTML
 from Products.PloneMeeting.utils import display_as_html

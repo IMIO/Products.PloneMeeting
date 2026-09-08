@@ -129,6 +129,8 @@
            component=".vocabularies.ContentAnnexTypesVocabularyFactory" />
   <utility name="Products.PloneMeeting.vocabularies.icon_item_annex_types_vocabulary"
            component=".vocabularies.IconItemAnnexTypesVocabularyFactory" />
+  <utility component=".vocabularies.EveryContainedAnnexesToSignVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.every_contained_annexes_to_sign_vocabulary" />
   <utility name="Products.PloneMeeting.vocabularies.every_annex_types_vocabulary"
            component=".vocabularies.EveryAnnexTypesVocabularyFactory" />
   <utility name="AdvicePortalTypes"
