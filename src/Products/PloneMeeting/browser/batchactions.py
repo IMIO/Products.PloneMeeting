@@ -164,11 +164,11 @@ def get_pod_template_infos(value, cfg):
 
 
 @provider(IContextAwareDefaultFactory)
-def annex_types_default(context):
+def annexes_default(context):
     """Select every annex types by default."""
     values = get_vocab_values(
         context,
-        'Products.PloneMeeting.vocabularies.icon_item_annex_types_vocabulary')
+        'Products.PloneMeeting.vocabularies.every_contained_annexes_to_sign_vocabulary')
     return values or []
 
 
@@ -236,8 +236,8 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
                 required=False,
                 slave_fields=(
                     {'masterID': 'form-widgets-add_to_sign_session-0',
-                     'slaveID': '#formfield-form-widgets-annex_types',
-                     'name': 'annex_ids',
+                     'slaveID': '#formfield-form-widgets-annexes',
+                     'name': 'annexes',
                      'action': 'show',
                      'hide_values': 1,
                      },
@@ -245,14 +245,14 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
                 default=True))
 
             self.fields += Fields(schema.List(
-                __name__='annex_types',
-                title=_(u'title_annex_types_to_add_to_sign_session'),
-                description=_('descr_annex_types_to_add_to_sign_session'),
+                __name__='annexes',
+                title=_(u'title_annexes_to_add_to_sign_session'),
+                description=_('descr_annexes_to_add_to_sign_session'),
                 value_type=schema.Choice(
-                    vocabulary='Products.PloneMeeting.vocabularies.icon_item_annex_types_vocabulary'),
-                defaultFactory=annex_types_default,
+                    vocabulary='Products.PloneMeeting.vocabularies.every_contained_annexes_to_sign_vocabulary'),
+                defaultFactory=annexes_default,
                 required=True))
-            self.fields["annex_types"].widgetFactory = PMCheckBoxFieldWidget
+            self.fields["annexes"].widgetFactory = PMCheckBoxFieldWidget
 
         self.fields += Fields(schema.Choice(
             __name__='store_generated_document',
@@ -270,12 +270,12 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
         self.request.set('store_as_annex', '1')
         store_generated_document = data.get('store_generated_document', '1')
         add_to_sign_session = data.get('add_to_sign_session', False)
-        annex_types = data.get('annex_types', [])
+        annex_uids = data.get('annexes', [])
         for brain in self.brains:
             item = brain.getObject()
             generation_view = item.restrictedTraverse('@@document-generation')
             annex_infos = get_categorized_elements(
-                item, filters={'category_uid': annex_types, 'to_sign': True, 'signed': False})
+                item, uids=annex_uids, filters={'to_sign': True, 'signed': False})
             annex_ids = [annex_info['id'] for annex_info in annex_infos]
             # res is None or a string (error msg)
             res = generation_view(

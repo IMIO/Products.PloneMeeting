@@ -5,8 +5,11 @@ Changelog
 4.2.29rc15 (unreleased)
 -----------------------
 
-- Nothing changed yet.
-
+- In the `store-items-template-as-annex-batch-action` changed `annex_types`
+  selection to `annexes` selection so we can select every real annexes that
+  will be added to the session and not simply an `annex_type` without really
+  seeing what annexes.
+  [gbastien]
 
 4.2.29rc14 (2026-08-24)
 -----------------------

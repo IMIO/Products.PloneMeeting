@@ -3111,7 +3111,14 @@ class BaseContainedAnnexesVocabulary(object):
 
     implements(IVocabularyFactory)
 
-    def __call__(self, context, portal_type='annex', prefixed=False, filters={}):
+    def __call__(
+            self,
+            context,
+            portal_type='annex',
+            token_value='id',
+            include_portal_type=False,
+            include_parent_title=False,
+            filters={}):
         """ """
         portal = api.portal.get()
         portal_url = portal.absolute_url()
@@ -3126,15 +3133,19 @@ class BaseContainedAnnexesVocabulary(object):
                 context,
                 'collective.iconifiedcategory.categories',
                 use_category_uid_as_token=True)
+            parent_title = u'%s<br><span class="titleVisualPadding">➔ </span>' % \
+                safe_unicode(context.Title(withItemNumber=True)) \
+                if include_parent_title else ''
             portal_type_title = u'%s - ' % translate(
                 portal.portal_types[portal_type].title,
                 domain="imio.annex",
-                context=context.REQUEST) if prefixed else ''
+                context=context.REQUEST) if include_portal_type else ''
 
             for annex_info in annex_infos:
                 # term title is annex icon, number and title
-                term_title = u'<img src="{0}/{1}" title="{2}" ' \
-                    u'width="16px" height="16px"> {3}{4}. {5}'.format(
+                term_title = u'{0}<img src="{1}/{2}" title="{3}" ' \
+                    u'width="16px" height="16px"> {4}{5}. {6}'.format(
+                        parent_title,
                         portal_url,
                         annex_info['icon_url'],
                         html.escape(safe_unicode(annex_info['category_title'])),
@@ -3144,7 +3155,7 @@ class BaseContainedAnnexesVocabulary(object):
                 i += 1
                 if annex_info['warn_filesize']:
                     term_title += u' ({0})'.format(render_filesize(annex_info['filesize']))
-                term = SimpleTerm(annex_info['id'], annex_info['id'], term_title)
+                term = SimpleTerm(annex_info[token_value], annex_info[token_value], term_title)
                 term.description = annex_info['description'].replace('\n', '<br>')
                 # check if need to disable term
                 self._check_disable_term(context, annex_info, categories_vocab, term)
@@ -3250,12 +3261,29 @@ ItemExportPDFElementsVocabularyFactory = ItemExportPDFElementsVocabulary()
 class ContainedAnnexesToSignVocabulary(BaseContainedAnnexesVocabulary):
     """ """
 
-    def __call__(self, context, portal_type='annex', prefixed=True, filters={'to_sign': True, 'signed': False}):
+    def __call__(
+            self,
+            context,
+            portal_type='annex',
+            token_value='id',
+            include_portal_type=True,
+            include_parent_title=False,
+            filters={'to_sign': True, 'signed': False}):
         annexes_terms = super(ContainedAnnexesToSignVocabulary, self).__call__(
-            context, portal_type=portal_type, prefixed=prefixed, filters=filters)
+            context,
+            portal_type=portal_type,
+            token_value=token_value,
+            include_portal_type=include_portal_type,
+            include_parent_title=include_parent_title,
+            filters=filters)
         context.REQUEST['force_use_item_decision_annexes_group'] = True
         decision_annexes_terms = super(ContainedAnnexesToSignVocabulary, self).__call__(
-            context, portal_type='annexDecision', prefixed=prefixed, filters=filters)
+            context,
+            portal_type='annexDecision',
+            token_value=token_value,
+            include_portal_type=include_portal_type,
+            include_parent_title=include_parent_title,
+            filters=filters)
         context.REQUEST['force_use_item_decision_annexes_group'] = False
         return SimpleVocabulary(annexes_terms._terms + decision_annexes_terms._terms)
 
@@ -3283,6 +3311,27 @@ class ContainedAnnexesToSignVocabulary(BaseContainedAnnexesVocabulary):
 
 
 ContainedAnnexesToSignVocabularyFactory = ContainedAnnexesToSignVocabulary()
+
+
+class EveryContainedAnnexesToSignVocabulary(object):
+    """ """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """ """
+        terms = []
+        for brain in getRequest()['PUBLISHED'].brains:
+            item = brain.getObject()
+            vocab = get_vocab(
+                item,
+                u"Products.PloneMeeting.vocabularies.contained_annexes_to_sign_vocabulary",
+                token_value="UID",
+                include_parent_title=True)
+            terms += vocab._terms
+        return SimpleVocabulary(terms)
+
+
+EveryContainedAnnexesToSignVocabularyFactory = EveryContainedAnnexesToSignVocabulary()
 
 
 class GenerablePODTemplatesVocabulary(object):

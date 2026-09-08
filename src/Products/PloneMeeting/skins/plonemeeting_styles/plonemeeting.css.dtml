@@ -1161,7 +1161,7 @@ body.portaltype-meetingconfig div.field.ArchetypesMultiSelectionWidget[id^='arch
     max-width: 500px !important;
 }
 div.field.ArchetypesMultiSelectionWidget[id^='archetypes-fieldname-'],
-div#formfield-form-widgets-annex_types div.pm_checkbox_widget {
+div#formfield-form-widgets-annexes div.pm_checkbox_widget {
     /* use 600px so most of fields in config are fully displayed */
     max-height: 600px;
     overflow-x: auto;
