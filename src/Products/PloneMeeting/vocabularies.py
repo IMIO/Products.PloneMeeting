@@ -3246,11 +3246,11 @@ class ItemExportPDFElementsVocabulary(BaseContainedAnnexesVocabulary):
             'generable_pdf_documents_vocabulary')._terms
         # annexes
         terms += super(ItemExportPDFElementsVocabulary, self).__call__(
-            context, prefixed=True)
+            context, include_portal_type=True)
         # decision annexes
         context.REQUEST['force_use_item_decision_annexes_group'] = True
         terms += super(ItemExportPDFElementsVocabulary, self).__call__(
-            context, portal_type='annexDecision', prefixed=True)
+            context, portal_type='annexDecision', include_portal_type=True)
         context.REQUEST['force_use_item_decision_annexes_group'] = False
         return SimpleVocabulary(terms)
 
