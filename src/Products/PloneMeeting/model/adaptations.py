@@ -544,9 +544,10 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
 
     def _apply_return_to_proposing_group(whichValidation=None):
         """Helper method to apply the 'return_to_proposing_group' or
+           'return_to_proposing_group_with_before_last_validation' or
            'return_to_proposing_group_with_last_validation' or
            'return_to_proposing_group_with_all_validations' wfAdaptation.
-           whichValidation must in ('None', 'last', 'all')
+           whichValidation must in ('None', 'before_last', 'last', 'all')
         """
         if 'returned_to_proposing_group' not in itemWorkflow.states:
             itemWorkflow.states.addState('returned_to_proposing_group')
@@ -603,6 +604,8 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
         validation_returned_states = _getValidationReturnedStates(meetingConfig)
         if whichValidation == 'last':
             validation_returned_states = (validation_returned_states[-1],)
+        elif whichValidation == 'before_last' and len(validation_returned_states) >= 2:
+            validation_returned_states = (validation_returned_states[-2],)
         elif whichValidation is None:
             validation_returned_states = ()
         last_returned_state_id = 'returned_to_proposing_group'
@@ -809,7 +812,11 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
         elif wfAdaptation == 'return_to_proposing_group':
             _apply_return_to_proposing_group(whichValidation=None)
 
-        # same as the "return_to_proposing_group" here above but the reviewer must validate item
+        # same as the "return_to_proposing_group" here above but the second to last reviewer must validate item
+        elif wfAdaptation == 'return_to_proposing_group_with_before_last_validation':
+            _apply_return_to_proposing_group(whichValidation='before_last')
+
+        # same as the "return_to_proposing_group" here above but the last reviewer must validate item
         elif wfAdaptation == 'return_to_proposing_group_with_last_validation':
             _apply_return_to_proposing_group(whichValidation='last')
 
