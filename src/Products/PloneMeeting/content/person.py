@@ -32,6 +32,13 @@ class PMPerson(Person):
             if not position_type or held_position.position_type == position_type:
                 return held_position
 
+    def get_held_position_by_usage(self, usage):
+        """Get held_position for a given p_usage."""
+        held_positions = self.get_held_positions()
+        for held_position in held_positions:
+            if usage in held_position.usages:
+                return held_position
+
     def _invalidateCachedMethods(self):
         '''Clean cache for vocabularies using held_positions.'''
         _invalidateAttendeesRelatedCache()

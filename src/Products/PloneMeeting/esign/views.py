@@ -8,11 +8,13 @@ from imio.esign.browser.views import SessionDeleteView
 from imio.esign.browser.views import SessionFilesView
 from imio.esign.browser.views import SessionsListingView
 from imio.esign.utils import get_session_info
+from imio.helpers.cache import get_current_user_id
 from imio.prettylink.interfaces import IPrettyLink
 from plone import api
 from Products.PloneMeeting.config import ESIGNWATCHERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.esign.utils import esign_access_groups
+from Products.PloneMeeting.esign.utils import user_is_signer
 from zope.i18n import translate
 
 
@@ -27,7 +29,10 @@ class PMSessionsListingView(SessionsListingView):
 
     def available(self):
         if super(PMSessionsListingView, self).available():
-            return bool(esign_access_groups()) or self.tool.isManager(realManagers=True)
+            return bool(
+                esign_access_groups()) or \
+            self.tool.isManager(realManagers=True) or \
+            user_is_signer()
 
     def get_dashboard_link(self, session):
         # if a cfg could not be initialized, we get it from the session first element
@@ -58,14 +63,21 @@ class PMSessionsListingView(SessionsListingView):
     def get_sessions(self):
         """Filter sessions by MeetingConfig.
            Only keep sessions user is MeetingManager for."""
-        sessions = super(PMSessionsListingView, self).get_sessions()
+        every_sessions = super(PMSessionsListingView, self).get_sessions()
         if not self.tool.isManager(realManagers=True):
             manager_user_groups = esign_access_groups()
             manager_cfg_ids = [
                 group.replace("_%s" % MEETINGMANAGERS_GROUP_SUFFIX, "").replace(
                     "_%s" % ESIGNWATCHERS_GROUP_SUFFIX, "")
                 for group in manager_user_groups]
-            sessions = [session for session in sessions if session['cfg_id'] in manager_cfg_ids]
+            sessions = [session for session in every_sessions
+                        if session['cfg_id'] in manager_cfg_ids]
+            # check if user is a signer for a session
+            userid = get_current_user_id()
+            if not sessions and user_is_signer(userid):
+                email = api.user.get(userid).getProperty('email')
+                sessions = [session for session in every_sessions
+                            if email in [signer['email'] for signer in session['signers']]]
         return sessions
 
 

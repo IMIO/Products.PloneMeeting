@@ -10,6 +10,10 @@ Changelog
   will be added to the session and not simply an `annex_type` without really
   seeing what annexes.
   [gbastien]
+- Give access to the `Parapheo` tab to any signers and in the view, if user is
+  only `signer`, show him the sessions he is `signer` for.
+  `MeetingManagers` and `esign watchers` keep view on every sessions.
+  [gbastien]
 
 4.2.29rc14 (2026-08-24)
 -----------------------

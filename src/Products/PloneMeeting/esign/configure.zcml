@@ -31,6 +31,7 @@
             class="Products.PloneMeeting.esign.views.PMSessionsListingView"
             template="browser/templates/sessions.pt"
             permission="zope2.Public"
+            allowed_attributes="available"
             layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer" />
 
         <browser:page

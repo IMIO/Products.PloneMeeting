@@ -4,10 +4,12 @@
 #
 
 from collective.behavior.talcondition.utils import _evaluateExpression
+from collective.contact.plonegroup.utils import get_person_from_userid
 from imio.esign.adapters import ISignable
 from imio.esign.utils import add_files_to_session
 from imio.esign.utils import get_file_info
 from imio.esign.utils import get_sessions_for
+from imio.helpers.cache import get_current_user_id
 from imio.helpers.utils import is_pdf
 from imio.zamqp.pm.utils import next_scan_id_pm
 from plone import api
@@ -184,8 +186,18 @@ def _add_annexes_to_sign_session(
             translate(
                 'annex_added_to_sessions',
                 domain="PloneMeeting",
-                mapping={'session_ids': ", ".join([str(session_id) for session_id, session in sessions])},
+                mapping={'session_ids': ", ".join(
+                    [str(session_id) for session_id, session in sessions])},
                 default="Annexes were added to the following sessions: \"${session_ids}\".",
                 context=obj.REQUEST),
             request=obj.REQUEST)
     return sessions
+
+
+def user_is_signer(userid=None):
+    """Is given p_userid Plone userid linked to a person that
+       is using a held_position as signer?"""
+    userid = userid or get_current_user_id()
+    person = get_person_from_userid(userid)
+    if person and person.get_held_position_by_usage("signer"):
+        return True
