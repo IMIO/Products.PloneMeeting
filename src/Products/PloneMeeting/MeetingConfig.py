@@ -3565,9 +3565,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_reversed': True,
                     'showNumberOfItems': False,
                     'tal_condition':
-                        "python: utils.get_esign_registry_enabled() and "
-                        "(tool.isManager(cfg) or '%s' in utils.get_plone_groups_for_user())"
-                        % get_plone_group_id(cfgId, ESIGNWATCHERS_GROUP_SUFFIX),
+                        "python: portal.restrictedTraverse('@@parapheo').available()",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items of my committees

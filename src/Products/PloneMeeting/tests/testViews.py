@@ -4109,11 +4109,15 @@ class testViews(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfg.setAnnexRestrictShownAndEditableAttributes(('signed_edit', ))
         # setup signers
-        self.portal.contacts.person1.userid = "pmReviewer1"
-        held_pos1 = self.portal.contacts.person1.held_pos1
+        person1 = self.portal.contacts.person1
+        person1.userid = "pmReviewer1"
+        person1.reindexObject(idxs=['userid'])
+        held_pos1 = person1.held_pos1
         held_pos1_uid = held_pos1.UID()
-        self.portal.contacts.person2.userid = "pmReviewer2"
-        held_pos2 = self.portal.contacts.person2.held_pos2
+        person2 = self.portal.contacts.person2
+        person2.userid = "pmReviewer2"
+        person2.reindexObject(idxs=['userid'])
+        held_pos2 = person2.held_pos2
         held_pos2_uid = held_pos2.UID()
         held_pos1.usages = ['signer']
         held_pos2.usages = ['signer']
@@ -4349,7 +4353,8 @@ class testViews(PloneMeetingTestCase):
 
     def test_pm_RecreateEsignSession(self):
         """Test the @@recreate-session view especially custom data."""
-        cfg, annex_type, pod_template, pod_template_uid, item, meeting, held_pos1, held_pos2 = self._setup_esign()
+        cfg, annex_type, pod_template, pod_template_uid, item, meeting, held_pos1, held_pos2 = \
+            self._setup_esign()
         for item in meeting.get_items():
             self.addAnnex(item, to_sign=True, annexFile=self.annexFilePDF)
             signers = ISignable(item).get_signers()
@@ -4390,6 +4395,49 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(session0['cfg_id'], session1['cfg_id'])
         # the @@parapheo view is rendered correctly
         self.assertTrue(self.portal.restrictedTraverse('@@parapheo')())
+
+    def test_pm_Parapheo_available(self):
+        """@@parapheo is available to MeetingManagers, esign watchers and signers."""
+        # create 2 sessions with different signers
+        cfg, annex_type, pod_template, pod_template_uid, item, meeting, held_pos1, held_pos2 = \
+            self._setup_esign()
+        signers = ISignable(item).get_signers()
+        annex = self.addAnnex(item, to_sign=True, annexFile=self.annexFilePDF)
+        _add_annexes_to_sign_session(item, [annex], cfg, pod_template, signers)
+        # prepare a session 2 for pmCreator2 that will be signer
+        cfg, annex_type, pod_template, pod_template_uid, item, meeting, held_pos1, held_pos2 = \
+            self._setup_esign()
+        # setup certifiedSignatures
+        person3 = self.portal.contacts.person3
+        person3.userid = "pmCreator2"
+        person3.reindexObject(idxs=['userid'])
+        hp = self.portal.contacts.person3.held_pos3
+        hp.usages = ["signer"]
+        hp_uid = hp.UID()
+        certified = cfg.getCertifiedSignatures()
+        certified[1]['held_position'] = hp_uid
+        cfg.setCertifiedSignatures(certified)
+        signers = ISignable(item).get_signers()
+        annex = self.addAnnex(item, to_sign=True, annexFile=self.annexFilePDF)
+        _add_annexes_to_sign_session(item, [annex], cfg, pod_template, signers)
+        # access to @@parapheo
+        # MeetingManager
+        parapheo = self.portal.restrictedTraverse("@@parapheo")
+        self.changeUser('pmManager')
+        self.assertTrue(parapheo.available())
+        self.assertEqual(len(parapheo.get_sessions()), 2)
+        # signers, only see sessions for which he is signer
+        self.changeUser('pmReviewer1')
+        self.assertTrue(parapheo.available())
+        self.assertEqual(len(parapheo.get_sessions()), 2)
+        self.changeUser('pmReviewer2')
+        self.assertTrue(parapheo.available())
+        self.assertEqual(len(parapheo.get_sessions()), 1)
+        self.assertEqual(parapheo.get_sessions()[0]["id"], 0)
+        self.changeUser('pmCreator2')
+        self.assertTrue(parapheo.available())
+        self.assertEqual(len(parapheo.get_sessions()), 1)
+        self.assertEqual(parapheo.get_sessions()[0]["id"], 1)
 
 
 def test_suite():
