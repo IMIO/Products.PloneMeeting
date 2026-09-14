@@ -14,10 +14,15 @@ Changelog
   only `signer`, show him the sessions he is `signer` for.
   `MeetingManagers` and `esign watchers` keep view on every sessions.
   [gbastien]
+- Make it possible to use `zExceptions.Redirect` in restricted python.
+  [gbastien]
 
 4.2.29rc14 (2026-08-24)
 -----------------------
 
+- Do not escape vocabularies when generating POD template (check if current
+  url end with `@@document-generation` or `document-generation`).
+  [gbastien]
 - Give `MeetingManagers` permission to `Recreate esign session`.
   [gbastien]
 
