@@ -101,4 +101,5 @@ def initialize(context):
     allow_module('imio.history.safe_utils')
     allow_module('Products.PloneMeeting.safe_utils')
     allow_module('Products.PloneMeeting.browser.meeting')
+    allow_module('zExceptions.Redirect')
     allow_type(datetime)

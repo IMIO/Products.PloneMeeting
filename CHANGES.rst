@@ -5,8 +5,8 @@ Changelog
 4.2.28.23 (unreleased)
 ----------------------
 
-- Nothing changed yet.
-
+- Make it possible to use `zExceptions.Redirect` in restricted python.
+  [gbastien]
 
 4.2.28.22 (2026-09-03)
 ----------------------
