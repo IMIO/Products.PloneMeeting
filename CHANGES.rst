@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.29rc15 (unreleased)
+4.2.29rc15 (2026-09-14)
 -----------------------
 
 - In the `store-items-template-as-annex-batch-action` changed `annex_types`
