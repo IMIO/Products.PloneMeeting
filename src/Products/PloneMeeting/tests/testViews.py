@@ -4055,7 +4055,7 @@ class testViews(PloneMeetingTestCase):
         form = searches_items.restrictedTraverse('@@add-advice-batch-action')
         self.request['PUBLISHED'] = form
         self.request.form['form.widgets.advice_type'] = u'positive'
-        self.request.form['form.widgets.advice_group'] = safe_unicode(self.vendors_uid)
+        self.request.form['form.widgets.advice_group'] = self.vendors_uid
         self.request.form['form.widgets.advice_comment'] = u"My comment"
         form.update()
         self.assertEqual(len(form.brains), 2)
@@ -4385,12 +4385,13 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(len(session0['files']), 1)
         self.assertEqual(len(session1['files']), 6)
         # new title is correct
+        cfg_title = safe_unicode(cfg.Title())
         self.assertEqual(
             session0['title'],
-            u'[iA.D\xe9lib] PloneMeeting assembly - Session 013999900000')
+            u'[iA.D\xe9lib] %s - Session 013999900000' % cfg_title)
         self.assertEqual(
             session1['title'],
-            u'[iA.D\xe9lib] PloneMeeting assembly - Session 013999900001')
+            u'[iA.D\xe9lib] %s - Session 013999900001' % cfg_title)
         # custom data is correct
         self.assertEqual(session0['cfg_id'], session1['cfg_id'])
         # the @@parapheo view is rendered correctly
