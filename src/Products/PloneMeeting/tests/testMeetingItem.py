@@ -7160,12 +7160,12 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(item.objectIds(), ['dot.gif', 'dot2.gif'])
         item.at_post_edit_script()
         # we have images saved locally
-        self.assertEqual(sorted(item.objectIds()), ['dot.gif', 'dot2.gif', 'image.jpeg'])
+        self.assertEqual(sorted(item.objectIds()), ['280-300x300.jpg', 'dot.gif', 'dot2.gif'])
 
         # duplicate and check that uri are correct
         newItem = item.clone()
-        self.assertEqual(sorted(newItem.objectIds()), ['dot.gif', 'dot2.gif', 'image.jpeg'])
-        new_img = newItem.get('image.jpeg')
+        self.assertEqual(sorted(newItem.objectIds()), ['280-300x300.jpg', 'dot.gif', 'dot2.gif'])
+        new_img = newItem.get('280-300x300.jpg')
         new_img1 = newItem.get('dot.gif')
         new_img2 = newItem.get('dot2.gif')
         # every links are turned to resolveuid
