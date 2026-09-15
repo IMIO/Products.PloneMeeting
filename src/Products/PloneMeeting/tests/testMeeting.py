@@ -3102,32 +3102,32 @@ class testMeetingType(PloneMeetingTestCase):
                                            date=datetime(2015, 5, 5),
                                            observations=richtextval(text))
         meeting = getattr(pmFolder, meetingId)
-        self.assertIn('image.jpeg', meeting.objectIds())
-        img = meeting.get('image.jpeg')
+        self.assertIn('420-300x300.jpg', meeting.objectIds())
+        img = meeting.get('420-300x300.jpg')
         # link to image uses resolveuid
         self.assertEqual(
             meeting.observations.raw,
             '<p>Working external image <img src="resolveuid/{0}">.</p>'.format(img.UID()))
         self.assertEqual(
             meeting.observations.output,
-            '<p>Working external image <img src="{0}" alt="image.jpeg" '
-            'title="image.jpeg" />.</p>'.format(img.absolute_url()))
+            '<p>Working external image <img src="{0}" alt="420-300x300.jpg" '
+            'title="420-300x300.jpg" />.</p>'.format(img.absolute_url()))
         self.assertEqual(
             meeting.observations.output_relative_to(meeting),
-            '<p>Working external image <img src="{0}" alt="image.jpeg" loading="lazy" '
-            'title="image.jpeg" />.</p>'.format(img.absolute_url()))
+            '<p>Working external image <img src="{0}" alt="420-300x300.jpg" loading="lazy" '
+            'title="420-300x300.jpg" />.</p>'.format(img.absolute_url()))
 
         # test using the quickedit
         text = '<p>Working external image <img src="%s"/>.</p>' % self.external_image2
         set_field_from_ajax(meeting, 'observations', text)
-        self.assertIn('image-1.jpeg', meeting.objectIds())
-        img2 = meeting.get('image-1.jpeg')
+        self.assertIn('280-300x300.jpg', meeting.objectIds())
+        img2 = meeting.get('280-300x300.jpg')
 
         # link to image uses resolveuid
         self.assertEqual(
             meeting.observations.output,
-            '<p>Working external image <img src="{0}" alt="image-1.jpeg" '
-            'title="image-1.jpeg" />.</p>'.format(img2.absolute_url()))
+            '<p>Working external image <img src="{0}" alt="280-300x300.jpg" '
+            'title="280-300x300.jpg" />.</p>'.format(img2.absolute_url()))
         self.assertEqual(
             meeting.observations.raw,
             '<p>Working external image <img src="resolveuid/{0}">.</p>'.format(img2.UID()))
@@ -3136,14 +3136,14 @@ class testMeetingType(PloneMeetingTestCase):
         text = '<p>Working external image <img src="%s"/>.</p>' % self.external_image1
         meeting.observations = richtextval(text)
         notify(ObjectModifiedEvent(meeting, Attributes(Interface, 'observations')))
-        self.assertIn('image-2.jpeg', meeting.objectIds())
-        img3 = meeting.get('image-2.jpeg')
+        self.assertIn('911-300x300.jpg', meeting.objectIds())
+        img3 = meeting.get('911-300x300.jpg')
 
         # link to image uses resolveuid
         self.assertEqual(
             meeting.observations.output,
-            '<p>Working external image <img src="{0}" alt="image-2.jpeg" '
-            'title="image-2.jpeg" />.</p>'.format(img3.absolute_url()))
+            '<p>Working external image <img src="{0}" alt="911-300x300.jpg" '
+            'title="911-300x300.jpg" />.</p>'.format(img3.absolute_url()))
         self.assertEqual(
             meeting.observations.raw,
             '<p>Working external image <img src="resolveuid/{0}">.</p>'.format(img3.UID()))
