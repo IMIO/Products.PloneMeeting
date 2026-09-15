@@ -135,13 +135,13 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
     cfg2_id = 'plonegov-assembly'
 
     external_image1 = \
-        "https://loremflickr.com/320/240?lock=1"
+        "https://fastly.picsum.photos/id/911/300/300.jpg?hmac=qAqGNOX0z5Vh20O29NtYmOJfzaWdZso3iNi4lcvbxJg"
     external_image2 = \
-        "https://loremflickr.com/320/240?lock=2"
+        "https://fastly.picsum.photos/id/280/300/300.jpg?hmac=QM0wFQ6yN-v_9qGNVqgk4rHthfSgiKO30s3CF1DVeJ0"
     external_image3 = \
-        "https://loremflickr.com/320/240?lock=3"
+        "https://fastly.picsum.photos/id/813/300/300.jpg?hmac=P1QaCX9HgZK2OE_XcRiYdFI9wkhiSmgYKor-9yDp00c"
     external_image4 = \
-        "https://loremflickr.com/320/240?lock=4"
+        "https://fastly.picsum.photos/id/420/300/300.jpg?hmac=8SS52dAMD_0B1ZLyZQUMzSIbhTuqno6W7diGjLDMKX8"
 
     def setUp(self):
         # enable full diff in failing tests

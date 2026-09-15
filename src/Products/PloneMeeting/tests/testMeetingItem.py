@@ -7090,8 +7090,8 @@ class testMeetingItem(PloneMeetingTestCase):
         item = getattr(pmFolder, itemId)
         item.processForm()
         # contact.png was saved in the item
-        self.assertTrue('image.jpeg' in item.objectIds())
-        img = item.get('image.jpeg')
+        self.assertIn('911-300x300.jpg', item.objectIds())
+        img = item.get('911-300x300.jpg')
         # external image link was updated
         self.assertEqual(
             item.getRawDescription(),
@@ -7100,8 +7100,8 @@ class testMeetingItem(PloneMeetingTestCase):
         # test using the quickedit, test with field 'decision' where getRaw was overrided
         description = '<p>Working external image <img src="%s"/>.</p>' % self.external_image2
         set_field_from_ajax(item, 'description', description)
-        self.assertTrue('image-1.jpeg' in item.objectIds())
-        img2 = item.get('image-1.jpeg')
+        self.assertIn('280-300x300.jpg', item.objectIds())
+        img2 = item.get('280-300x300.jpg')
         # external image link was updated
         self.assertEqual(
             item.getRawDescription(),
@@ -7111,16 +7111,16 @@ class testMeetingItem(PloneMeetingTestCase):
         descr = '<p>Working external image <img src="%s"/>.</p>' % self.external_image3
         item.setDescription(descr)
         item.processForm()
-        self.assertTrue('image-2.jpeg' in item.objectIds())
-        img3 = item.get('image-2.jpeg')
+        self.assertIn('813-300x300.jpg', item.objectIds())
+        img3 = item.get('813-300x300.jpg')
         # external image link was updated
         self.assertEqual(
             item.getRawDescription(),
             '<p>Working external image <img src="resolveuid/{0}">.</p>'.format(img3.UID()))
         self.assertEqual(
             item.Description(),
-            '<p>Working external image <img src="{0}" alt="image-2.jpeg" '
-            'loading="lazy" title="image-2.jpeg" />.</p>'.format(img3.absolute_url()))
+            '<p>Working external image <img src="{0}" alt="813-300x300.jpg" '
+            'loading="lazy" title="813-300x300.jpg" />.</p>'.format(img3.absolute_url()))
 
         # link to unknown external image, like during copy/paste of content
         # that has a link to an unexisting image or so
@@ -7135,7 +7135,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # the not retrievable image was replaced with a "not found" image
         self.assertListEqual(
             sorted(item.objectIds()),
-            ['image-1.jpeg', 'image-2.jpeg', 'image.jpeg', 'imagenotfound.jpg'])
+            ['280-300x300.jpg', '813-300x300.jpg', '911-300x300.jpg', 'imagenotfound.jpg'])
         self.assertEqual(item.getRawDescription(), expected)
 
     def test_pm_ItemInternalImagesStoredLocallyWhenItemDuplicated(self):

@@ -3156,14 +3156,14 @@ class testAdvices(PloneMeetingTestCase):
                                              'advice_type': u'positive',
                                              'advice_hide_during_redaction': False,
                                              'advice_comment': richtextval(text)})
-        self.assertEqual(advice.objectIds(), ['image.jpeg'])
+        self.assertEqual(advice.objectIds(), ['280-300x300.jpg'])
 
         # test using IObjectModifiedEvent event, aka using edit form
         text = '<p>Working external image <img src="%s"/>.</p>' % self.external_image4
         advice.advice_comment = richtextval(text)
         # notify modified
         notify(ObjectModifiedEvent(advice))
-        self.assertEqual(advice.objectIds(), ['image.jpeg', 'image-1.jpeg'])
+        self.assertEqual(advice.objectIds(), ['280-300x300.jpg', '420-300x300.jpg'])
 
     def test_pm_GetAdviceObj(self):
         """Test the MeetingItem.getAdviceObj that return the real advice
