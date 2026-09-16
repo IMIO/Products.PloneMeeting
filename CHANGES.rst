@@ -7,6 +7,8 @@ Changelog
 
 - Make it possible to use `zExceptions.Redirect` in restricted python.
   [gbastien]
+- A label used in `MeetingConfig.labelsConfig` can not be removed from the jar.
+  [gbastien]
 
 4.2.28.22 (2026-09-03)
 ----------------------
