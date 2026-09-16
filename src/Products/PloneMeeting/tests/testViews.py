@@ -4427,6 +4427,10 @@ class testViews(PloneMeetingTestCase):
         self.changeUser('pmManager')
         self.assertTrue(parapheo.available())
         self.assertEqual(len(parapheo.get_sessions()), 2)
+        # Manager
+        self.changeUser('siteadmin')
+        self.assertTrue(parapheo.available())
+        self.assertEqual(len(parapheo.get_sessions()), 2)
         # signers, only see sessions for which he is signer
         self.changeUser('pmReviewer1')
         self.assertTrue(parapheo.available())

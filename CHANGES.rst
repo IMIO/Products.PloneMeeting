@@ -5,8 +5,11 @@ Changelog
 4.2.29rc16 (unreleased)
 -----------------------
 
-- Nothing changed yet.
-
+- Fixed `PMSessionsListingView.get_sessions` for role `Manager`.
+  [gbastien]
+- Added left padding for annexes displayed in the
+  field `annexes` of the `store-items-template-as-annex-batch-action` form.
+  [gbastien]
 
 4.2.29rc15 (2026-09-14)
 -----------------------

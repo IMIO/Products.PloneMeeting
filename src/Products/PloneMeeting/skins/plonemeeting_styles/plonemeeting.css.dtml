@@ -2722,6 +2722,10 @@ div#formfield-form-widgets-add_to_sign_session:has(.hide-content) {
     display: none;
 }
 
+.titleVisualPadding {
+    padding-left: 22px;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */

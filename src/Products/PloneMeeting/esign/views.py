@@ -64,20 +64,21 @@ class PMSessionsListingView(SessionsListingView):
         """Filter sessions by MeetingConfig.
            Only keep sessions user is MeetingManager for."""
         every_sessions = super(PMSessionsListingView, self).get_sessions()
-        if not self.tool.isManager(realManagers=True):
-            manager_user_groups = esign_access_groups()
-            manager_cfg_ids = [
-                group.replace("_%s" % MEETINGMANAGERS_GROUP_SUFFIX, "").replace(
-                    "_%s" % ESIGNWATCHERS_GROUP_SUFFIX, "")
-                for group in manager_user_groups]
+        if self.tool.isManager(realManagers=True):
+            return every_sessions
+        manager_user_groups = esign_access_groups()
+        manager_cfg_ids = [
+            group.replace("_%s" % MEETINGMANAGERS_GROUP_SUFFIX, "").replace(
+                "_%s" % ESIGNWATCHERS_GROUP_SUFFIX, "")
+            for group in manager_user_groups]
+        sessions = [session for session in every_sessions
+                    if session['cfg_id'] in manager_cfg_ids]
+        # check if user is a signer for a session
+        userid = get_current_user_id()
+        if not sessions and user_is_signer(userid):
+            email = api.user.get(userid).getProperty('email')
             sessions = [session for session in every_sessions
-                        if session['cfg_id'] in manager_cfg_ids]
-            # check if user is a signer for a session
-            userid = get_current_user_id()
-            if not sessions and user_is_signer(userid):
-                email = api.user.get(userid).getProperty('email')
-                sessions = [session for session in every_sessions
-                            if email in [signer['email'] for signer in session['signers']]]
+                        if email in [signer['email'] for signer in session['signers']]]
         return sessions
 
 
