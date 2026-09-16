@@ -38,18 +38,30 @@ class PMLabelJar(LabelJar):
         notifyModifiedAndReindex(self.context)
         return super(PMLabelJar, self).add(title, color, by_user)
 
-    def remove(self, label_id):
-        """Protect against removal of used labels."""
+    def _check_can_be_removed(self, label_id):
+        """Protect against removal of used labels,can be used on items
+           or in MeetingConfig.labelsConfig.
+           Return a "message" if can not be removed, "None" if can be removed."""
         cfg = self.context
+        # used in items?
         brains = api.content.find(portal_type=cfg.getItemTypeName(), labels=label_id)
         if brains:
+            return _('This label can not be removed as it is used by some items, for example ${item_url}',
+                     mapping={'item_url': brains[0].getURL()})
+        # used in MeetingConfig?
+        cfg_label_ids = [row['label_id'] for row in cfg.getLabelsConfig()]
+        if label_id in cfg_label_ids:
+            return _('This label can not be removed as it is used in "Labels config" field!')
+
+    def remove(self, label_id):
+        """Protect against removal of used labels."""
+        can_not_be_removed_msg = self._check_can_be_removed(label_id)
+        if can_not_be_removed_msg:
             api.portal.show_message(
-                _('This label can not be removed as it is used by some items, for example ${item_url}',
-                  mapping={'item_url': brains[0].getURL()}),
-                type='error',
-                request=self.context.REQUEST)
+                can_not_be_removed_msg, type='error', request=self.context.REQUEST)
             return self.context.REQUEST.RESPONSE.redirect(
                 self.context.REQUEST['HTTP_REFERER'])
+
         notifyModifiedAndReindex(self.context)
         return super(PMLabelJar, self).remove(label_id)
 
