@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.29rc16 (unreleased)
+4.2.29rc16 (2026-09-16)
 -----------------------
 
 - Fixed `PMSessionsListingView.get_sessions` for role `Manager`.
