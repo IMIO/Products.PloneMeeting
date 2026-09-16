@@ -1856,7 +1856,12 @@ class testMeetingConfig(PloneMeetingTestCase):
     def test_pm_PODTemplateOnlyCreatedModifiedDeletedByZopeAdmin(self):
         """Only a Zope admin can create/modify/delete a PODTemplate of any kind."""
         cfg = self.meetingConfig
-        portal_types = ['ConfigurablePODTemplate', 'StyleTemplate', 'DashboardPODTemplate', 'PODTemplate', 'MailingLoopTemplate', 'SubTemplate']
+        portal_types = ['ConfigurablePODTemplate',
+                        'StyleTemplate',
+                        'DashboardPODTemplate',
+                        'PODTemplate',
+                        'MailingLoopTemplate',
+                        'SubTemplate']
         containers = [self.portal, cfg.podtemplates]
         # trying to add these portal_types anywhere we lead to Unauthorized
         self.changeUser('siteadmin')
@@ -1868,25 +1873,33 @@ class testMeetingConfig(PloneMeetingTestCase):
                 allowed_type_ids = [allowed_type.getId() for allowed_type in container.allowedContentTypes()]
                 if portal_type in allowed_type_ids:
                     self.assertRaises(
-                        Unauthorized, api.content.create, type=portal_type, title='template', container=container)
+                        Unauthorized,
+                        api.content.create,
+                        type=portal_type,
+                        title='template',
+                        container=container)
                 # modify
                 templates = [template for template in container.objectValues()
                              if template.portal_type == portal_type]
                 if templates:
-                    self.assertRaises(Unauthorized, notify, (ObjectEditedEvent(templates[0])))
+                    self.assertRaises(
+                        Unauthorized, notify, (ObjectEditedEvent(templates[0])))
                 else:
                     pm_logger.info(
                         "Could not find an element with portal_type {0} in "
-                        "container at {1}".format(portal_type, container.absolute_url_path()))
+                        "container at {1}".format(
+                            portal_type, container.absolute_url_path()))
                     continue
                 # delete
-                self.assertRaises(Unauthorized, container.manage_delObjects, [templates[0].getId()])
+                self.assertRaises(
+                    Unauthorized, container.manage_delObjects, [templates[0].getId()])
         # OK as zope admin
         self.changeUser('admin')
         for portal_type in portal_types:
             for container in containers:
                 # create
-                allowed_type_ids = [allowed_type.getId() for allowed_type in container.allowedContentTypes()]
+                allowed_type_ids = [
+                    allowed_type.getId() for allowed_type in container.allowedContentTypes()]
                 if portal_type in allowed_type_ids:
                     api.content.create(
                         type=portal_type,
@@ -1907,28 +1920,45 @@ class testMeetingConfig(PloneMeetingTestCase):
                 container.manage_delObjects([templates[0].getId()])
 
     def test_pm_UsedLabelCanNotBeRemoved(self):
-        """A ftw.labels label that is used on an item can not be removed."""
+        """A ftw.labels label that is used on an item or in the MeetingConfig can not be removed."""
         self._enableField('labels')
         cfg = self.meetingConfig
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
+        label_id = 'personal-label'
         # add a label
         labelingview = item.restrictedTraverse('@@labeling')
-        self.request.form['activate_labels'] = ['label']
-        labelingview.update()
+        self.request.form['label_id'] = label_id
+        self.request.form['active'] = 'False'
+        labelingview.pers_update()
         item_labeling = ILabeling(item)
-        self.assertEqual(item_labeling.storage, {'label': []})
+        self.assertEqual(item_labeling.storage, {label_id: ['pmManager']})
         jar = ILabelJar(cfg)
-        self.assertTrue('label' in jar.storage)
+        self.assertTrue(label_id in jar.storage)
         # trying to remove a used label will redirect and show a message
         # but the label is not removed
-        jar.remove(label_id='label')
-        self.assertTrue('label' in jar.storage)
-        self.request.form['activate_labels'] = []
-        labelingview.update()
+        jar.remove(label_id=label_id)
+        self.assertTrue(label_id in jar.storage)
+        self.request.form['active'] = 'True'
+        labelingview.pers_update()
         self.assertEqual(item_labeling.storage, {})
-        self.assertTrue(jar.remove(label_id='label'))
-        self.assertFalse('label' in jar.storage)
+        self.assertTrue(jar.remove(label_id=label_id))
+        self.assertFalse(label_id in jar.storage)
+        # same if used in MeetingConfig.labelsConfig
+        label_id = 'label'
+        config = list(cfg.getLabelsConfig())
+        new_config = deepcopy(config[0])
+        new_config['label_id'] = "label"
+        config.append(new_config)
+        cfg.setLabelsConfig(config)
+        self.assertTrue(label_id in jar.storage)
+        # try to remove, still there
+        jar.remove(label_id=label_id)
+        self.assertTrue(label_id in jar.storage)
+        # remove from labelsConfig, will be removable from jar
+        cfg.setLabelsConfig([config[0]])
+        jar.remove(label_id=label_id)
+        self.assertFalse(label_id in jar.storage)
 
     def test_pm_ConfigModifiedWhenFTWLabelManaged(self):
         """MeetingConfig is modified when a label is added/updated/removed.

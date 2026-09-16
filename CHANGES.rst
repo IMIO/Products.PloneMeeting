@@ -10,6 +10,8 @@ Changelog
 - Added left padding for annexes displayed in the
   field `annexes` of the `store-items-template-as-annex-batch-action` form.
   [gbastien]
+- A label used in `MeetingConfig.labelsConfig` can not be removed from the jar.
+  [gbastien]
 
 4.2.29rc15 (2026-09-14)
 -----------------------
