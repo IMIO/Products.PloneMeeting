@@ -2,6 +2,7 @@
 
 from collective.contact.plonegroup.utils import select_organization
 from copy import deepcopy
+from ftw.labels.interfaces import ILabelJar
 from imio.helpers.content import richtextval
 from plone import api
 from plone.app.testing import logout
@@ -10,6 +11,7 @@ from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
+from zope.component import getAdapter
 from zope.event import notify
 
 
@@ -45,14 +47,20 @@ class PloneMeetingTestingHelpers(object):
                         'backToItemFrozen',
                         'backToPresented',
                         'backToValidated',
-                        'backToPreValidated',
+                        'backToPrevalidated',
                         'backToProposed',
                         'backToItemCreated', ),
         'proposed': ('backToItemPublished',
                      'backToItemFrozen',
                      'backToPresented',
                      'backToValidated',
+                     'backToPrevalidated',
                      'backToProposed', ),
+        'prevalidated': ('backToItemPublished',
+                         'backToItemFrozen',
+                         'backToPresented',
+                         'backToValidated',
+                         'backToPrevalidated', ),
         'validated': ('backToItemPublished',
                       'backToItemFrozen',
                       'backToPresented',
@@ -311,7 +319,7 @@ class PloneMeetingTestingHelpers(object):
                     self.do(itemOrMeeting, tr, comment=comment)
                     break
         if nb_attempts >= max_attempts or itemOrMeeting.query_state() != state:
-            raise ValueError('impossible to go back to {}'.format(state))
+            raise ValueError('Unable to go back to {}'.format(state))
         if as_manager:
             self.changeUser(currentUser)
 
@@ -454,7 +462,7 @@ class PloneMeetingTestingHelpers(object):
         self.changeUser('pmReviewer2')
         advice = createContentInContainer(
             item,
-            item.adapted()._advicePortalTypeForAdviser(self.vendors_uid),
+            self.tool._advicePortalTypeForAdviser(self.vendors_uid),
             **{'advice_group': self.vendors_uid,
                'advice_type': u'positive',
                'advice_comment': richtextval(u'My comment')})
@@ -498,7 +506,7 @@ class PloneMeetingTestingHelpers(object):
         notify(ObjectEditedEvent(cfg))
         self.changeUser(currentUser)
 
-    def _updateItemValidationLevel(self, cfg, level=None, suffix=None, extra_suffixes=None, enable=True):
+    def _updateItemValidationLevel(self, cfg, level=None, enable=True, **kwargs):
         """Utility method that enable/disable item validation levels."""
         currentUser = self.member.getId()
         self.changeUser('admin')
@@ -506,21 +514,30 @@ class PloneMeetingTestingHelpers(object):
         for itemValLevel in itemValLevels:
             if not level or itemValLevel['state'] == level:
                 itemValLevel['enabled'] = enable and '1' or '0'
-                if suffix:
-                    itemValLevel['suffix'] = suffix
-                if extra_suffixes:
-                    itemValLevel['extra_suffixes'] = extra_suffixes
+                for k in itemValLevel.keys():
+                    if k in kwargs:
+                        itemValLevel[k] = kwargs[k]
         cfg.setItemWFValidationLevels(itemValLevels)
         notify(ObjectEditedEvent(cfg))
         self.changeUser(currentUser)
 
     def _enableItemValidationLevel(self, cfg, level=None, suffix=None):
         """Enable one or every item validation levels."""
-        self._updateItemValidationLevel(cfg, level, suffix, enable=True)
+        kwargs = {}
+        if level is not None:
+            kwargs['level'] = level
+        if suffix is not None:
+            kwargs['suffix'] = suffix
+        self._updateItemValidationLevel(cfg, enable=True, **kwargs)
 
     def _disableItemValidationLevel(self, cfg, level=None, suffix=None):
         """Disable one or every item validation levels."""
-        self._updateItemValidationLevel(cfg, level, suffix, enable=False)
+        kwargs = {}
+        if level is not None:
+            kwargs['level'] = level
+        if suffix is not None:
+            kwargs['suffix'] = suffix
+        self._updateItemValidationLevel(cfg, enable=False, **kwargs)
 
     def _setUpOrderedContacts(
             self,
@@ -586,3 +603,68 @@ class PloneMeetingTestingHelpers(object):
         defValues = MeetingConfigDescriptor.get()
         cfg.setItemWFValidationLevels(deepcopy(defValues.itemWFValidationLevels))
         notify(ObjectEditedEvent(cfg))
+
+    def _setupLabelsEditableWhenItemEditable(self, cfg, enable=True):
+        """Setup labels only editable when item editable."""
+        self._enableField('labels')
+        labelsConfig = cfg.getLabelsConfig()
+        if enable:
+            labelsConfig[0]['edit_groups'] = []
+            labelsConfig[0]['edit_access_on'] = 'python: cfg.isManager(cfg) or '\
+                'checkPermission("Modify portal content", context)'
+            labelsConfig[0]['edit_access_on_cache'] = '0'
+        else:
+            labelsConfig[0]['edit_groups'] = [
+                'suffix_proposing_group_creators',
+                'suffix_proposing_group_prereviewers',
+                'suffix_proposing_group_reviewers']
+            labelsConfig[0]['edit_access_on'] = ""
+            labelsConfig[0]['edit_access_on_cache'] = '1'
+        cfg.setLabelsConfig(labelsConfig)
+
+    def _enable_ftw_labels(self, cfg, add_follow_up=False):
+        self._enableField('labels')
+        self.changeUser('pmCreator1')
+        labeljar = getAdapter(cfg, ILabelJar)
+        labeljar.add('Label1', 'green', False)
+        labeljar.add('Label2', 'red', False)
+        if add_follow_up:
+            labeljar.add('Needed follow-up', 'orange', False)
+            labeljar.add('Provided follow-up', 'green-light', False)
+        return labeljar
+
+    def _setupFollowUp(self, cfg):
+        """Configure followUp labels."""
+        self._enable_ftw_labels(cfg, add_follow_up=True)
+        self._enableField(['neededFollowUp', 'providedFollowUp'])
+        config = list(cfg.getLabelsConfig())
+        # needed-follow-up
+        new_config = deepcopy(config[0])
+        new_config['label_id'] = "needed-follow-up"
+        new_config['edit_groups'] = ["configgroup_meetingmanagers"]
+        # everyone can see except powerobservers/restrictedpowerobservers
+        new_config['view_groups'] = [
+            "configgroup_powerobservers", "configgroup_restrictedpowerobservers"]
+        new_config['view_groups_excluding'] = '1'
+        config.append(new_config)
+        # provided-follow-up
+        new_config = deepcopy(config[0])
+        new_config['label_id'] = "provided-follow-up"
+        new_config['edit_access_on'] = "python: not utils.fieldIsEmpty('providedFollowUp', item)"
+        new_config['edit_access_on_cache'] = "0"
+        config.append(new_config)
+        cfg.setLabelsConfig(config)
+
+    def _setupItemFieldsConfig(self, field_name, cfg=None, view=None, edit=None):
+        """Configure MeetingConfig.itemFieldsConfig."""
+        cfg = cfg or self.meetingConfig
+        config = cfg.getItemFieldsConfig()
+        field_config = [row for row in config if row['name'] == field_name]
+        if not field_config:
+            raise ValueError("field_name {0} config does not exist".format(field_name))
+        field_config = field_config[0]
+        if view is not None:
+            field_config['view'] = view
+        if edit is not None:
+            field_config['edit'] = edit
+        cfg.setItemFieldsConfig(config)

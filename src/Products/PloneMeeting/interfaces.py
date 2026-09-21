@@ -304,9 +304,6 @@ class IMeetingItemDocumentation:
         """May the advice delay be started for p_org_uid, so may the 'delay_started_on' information be set?"""
     def _sendAdviceToGiveToGroup(org_uid):
         """Send the 'your advice is asked on this item' mail notification to given p_org_uid?"""
-    def _advicePortalTypeForAdviser(org_uid):
-        """Advices may use several 'meetingadvice' portal_types.  A portal_type is associated to
-           an adviser org_uid, this method will return the advice portal_type used by given p_org_uid."""
     def _adviceDelayWillBeReinitialized(self, org_uid, adviceInfo, isTransitionReinitializingDelays):
         """Will advice delay be reinitialized for given p_ord_uid?
            By default delay is reinitialized if p_isTransitionReinitializingDelays,
@@ -634,18 +631,6 @@ class IToolPloneMeetingDocumentation:
         '''Called when the tool p_isCreated or edited.'''
     def performCustomWFAdaptations(meetingConfig, wfAdaptation, logger, itemWorkflow, meetingWorkflow):
         '''This let's a plugin define it's own WFAdaptations to apply.'''
-    def get_extra_adviser_infos(self, group_by_org_uids=False):
-        '''By default this will use data defined in ToolPloneMeeting.advisersConfig.
-        But this can be overrided and return a similar format, each extra adviser
-        infos must return a dict following information :
-           - master key: an adviser organization uid, or a list of org uids when
-             p_group_by_org_uids=True
-           - value : a dict with :
-               - 'portal_type' : the portal_type to use to give the advice;
-               - 'base_wf' : the name of the base WF used by this portal_type;
-                 will be used to generate a patched_ prefixed WF to apply WFAdaptations on;
-               - 'wf_adaptations': a list of workflow adaptations to apply.
-        '''
     def extraAdviceTypes(self):
         '''Method for defining extra advice types, needs to return a list of
            ids that will be used for id and translated for title.'''

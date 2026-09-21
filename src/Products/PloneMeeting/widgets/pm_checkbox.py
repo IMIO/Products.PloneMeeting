@@ -40,6 +40,7 @@ class PMCheckBoxWidget(CheckBoxWidget):
             term = terms.getTermByToken(item['value'])
             item['disabled'] = getattr(term, 'disabled', False)
             item['readonly'] = getattr(term, 'readonly', False)
+            item['description'] = getattr(term, 'description', '')
         return items
 
 

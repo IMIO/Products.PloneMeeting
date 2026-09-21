@@ -230,7 +230,7 @@ class CategoriesOfOtherMCsVocabulary(object):
             for category in otherMCObj.getCategories(catType=catType, onlySelectable=False):
                 cat_id = '%s.%s' % (otherMCId, category.getId())
                 cat_ids.append(cat_id)
-                cat_title = safe_unicode('%s -> %s' % (otherMCTitle, category.Title()))
+                cat_title = safe_unicode('%s ➔ %s' % (otherMCTitle, category.Title()))
                 if not category.enabled:
                     cat_title = translate(
                         '${element_title} (Inactive)',
@@ -252,7 +252,7 @@ class CategoriesOfOtherMCsVocabulary(object):
                     cat_title = cat.Title()
                 else:
                     cat_title = cat_id
-                cat_title = safe_unicode('%s -> %s' % (
+                cat_title = safe_unicode('%s ➔ %s' % (
                     tool.get(cfg_id).Title(), cat_title))
                 terms.append(SimpleTerm(cat_info, cat_info, cat_title))
         return SimpleVocabulary(terms)

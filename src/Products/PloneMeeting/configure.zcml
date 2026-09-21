@@ -50,6 +50,7 @@
   <include package=".ckeditor" />
   <include package=".content" />
   <include package=".documentgenerator" />
+  <include package=".external" />
   <include package=".filters" />
   <include package=".ftw_labels" />
   <include package=".widgets" />
@@ -245,6 +246,15 @@
   <adapter for="Products.PloneMeeting.content.organization.IPMOrganization"
            factory=".adapters.OrgContentDeletableAdapter"
            provides="imio.actionspanel.interfaces.IContentDeletable" />
+  <adapter for="collective.documentgenerator.content.pod_template.IPODTemplate"
+           factory=".adapters.PODTemplateContentDeletableAdapter"
+           provides="imio.actionspanel.interfaces.IContentDeletable" />
+  <adapter for="collective.documentgenerator.content.style_template.IStyleTemplate"
+           factory=".adapters.PODTemplateContentDeletableAdapter"
+           provides="imio.actionspanel.interfaces.IContentDeletable" />
+  <adapter for="Products.PloneMeeting.interfaces.IMeetingConfig"
+           factory=".adapters.MeetingConfigContentDeletableAdapter"
+           provides="imio.actionspanel.interfaces.IContentDeletable" />
 
   <!-- Indexes -->
   <adapter name="annexes_index" factory=".indexes.annexes_index" />
@@ -288,6 +298,12 @@
   <!-- available on MeetingItem to compute internalNotes releated local_roles -->
   <adapter
     for="Products.PloneMeeting.interfaces.IMeetingItem"
+    provides="collective.iconifiedcategory.interfaces.IIconifiedInfos"
+    factory=".adapters.PMCategorizedObjectInfoAdapter" />
+
+  <!-- available on MeetingConfig to compute labels access related groups -->
+  <adapter
+    for="Products.PloneMeeting.interfaces.IMeetingConfig"
     provides="collective.iconifiedcategory.interfaces.IIconifiedInfos"
     factory=".adapters.PMCategorizedObjectInfoAdapter" />
 

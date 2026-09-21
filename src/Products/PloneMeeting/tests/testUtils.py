@@ -7,6 +7,7 @@
 
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_plone_group
+from copy import deepcopy
 from ftw.labels.interfaces import ILabeling
 from imio.helpers.content import richtextval
 from os import path
@@ -19,8 +20,10 @@ from Products.PloneMeeting.ftw_labels.utils import get_labels
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.utils import duplicate_portal_type
 from Products.PloneMeeting.utils import escape
+from Products.PloneMeeting.utils import is_proposing_group_editor
 from Products.PloneMeeting.utils import isPowerObserverForCfg
 from Products.PloneMeeting.utils import org_id_to_uid
+from Products.PloneMeeting.utils import sendMail
 from Products.PloneMeeting.utils import sendMailIfRelevant
 from Products.PloneMeeting.utils import set_dx_value
 from Products.PloneMeeting.utils import set_field_from_ajax
@@ -99,7 +102,7 @@ class testUtils(PloneMeetingTestCase):
 
         # advice
         self.changeUser('pmReviewer2')
-        advice = self.addAdvice(item, advice_comment=u"")
+        advice = self.add_advice(item, advice_comment=u"")
         new_value = "<p>My advice comment.</p>"
         self.assertEqual(advice.advice_comment.raw, u"")
         self.assertFalse(self.catalog(SearchableText="my advice comment"))
@@ -121,7 +124,7 @@ class testUtils(PloneMeetingTestCase):
                   "isSuffix": True,
                   "debug": True}
 
-        # disabled
+        # deactivated
         self.assertIsNone(sendMailIfRelevant(**params))
         # enabled but not selected
         cfg.setMailMode("activated")
@@ -151,9 +154,16 @@ class testUtils(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfg.setMailMode("activated")
         cfg.setMailItemEvents(("item_state_changed_validate", ))
+        # test also that custom state/transition title works
+        self._updateItemValidationLevel(
+            cfg,
+            level=self._stateMappingFor('proposed'),
+            state_title="New proposed title",
+            leading_transition_title="New propose title")
 
         self.changeUser('pmManager')
         item = self.create("MeetingItem", title="My item")
+        self.proposeItem(item)
         params = {"obj": item,
                   "event": "item_state_changed_validate",
                   "value": [self.developers_creators, self.vendors_creators],
@@ -161,6 +171,9 @@ class testUtils(PloneMeetingTestCase):
                   "debug": True}
 
         recipients, subject, body = sendMailIfRelevant(**params)
+        # config wf state/transition title is correctly used
+        self.assertTrue("New proposed title" in subject)
+        self.assertTrue("New propose title" in subject)
         dev_creators = get_plone_group(self.developers_uid, 'creators')
         self.assertEqual(dev_creators.getMemberIds(),
                          ['pmCreator1', 'pmCreator1b', 'pmManager'])
@@ -227,6 +240,51 @@ class testUtils(PloneMeetingTestCase):
         params["value"] = ModifyPortalContent
         recipients, subject, body = sendMailIfRelevant(**params)
         self.assertEqual(sorted(recipients), self._modify_permission_mail_recipents())
+
+    def test_pm_SendMailMeetingConfigTitle(self):
+        """Variable "meetingConfigTitle" used in mail subject will include
+           MeetingConfig.groupConfig when relevant."""
+        config_groups = (
+            {'row_id': 'unique_id_1',
+             'label': 'ConfigGroup1',
+             'full_label': 'Config group 1'},
+            {'row_id': 'unique_id_2',
+             'label': 'ConfigGroup2',
+             'full_label': 'Config group 2'},
+            {'row_id': 'unique_id_3',
+             'label': 'ConfigGroup3',
+             'full_label': 'Config group 3'},
+        )
+        self.tool.setConfigGroups(config_groups)
+        cfg = self.meetingConfig
+        # "test" mailMode will return computed elements
+        cfg.setMailMode('test')
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        obj, body, recipients, from_address, subject, attachments, translation_mapping = \
+            sendMail([], item, '')
+        # no config group, simple title
+        self.assertEqual(translation_mapping['meetingConfigTitle'],
+                         safe_unicode(cfg.Title()))
+        # config group but different config title, simple title
+        cfg.setConfigGroup('unique_id_3')
+        obj, body, recipients, from_address, subject, attachments, translation_mapping = \
+            sendMail([], item, '')
+        self.assertEqual(translation_mapping['meetingConfigTitle'],
+                         safe_unicode(cfg.Title()))
+        # with several same config title, config group is preprended
+        self.meetingConfig2.setTitle(cfg.Title())
+        obj, body, recipients, from_address, subject, attachments, translation_mapping = \
+            sendMail([], item, '')
+        self.assertEqual(translation_mapping['meetingConfigTitle'],
+                         u'Config group 3 - %s' % safe_unicode(cfg.Title()))
+        # if "full_label" is empty, it is not preprended
+        config_groups[-1]['full_label'] = ''
+        self.tool.setConfigGroups(config_groups)
+        obj, body, recipients, from_address, subject, attachments, translation_mapping = \
+            sendMail([], item, '')
+        self.assertEqual(translation_mapping['meetingConfigTitle'],
+                         safe_unicode(cfg.Title()))
 
     def test_pm_org_id_to_uid(self):
         """Test the utils.org_id_to_uid function."""
@@ -363,6 +421,8 @@ class testUtils(PloneMeetingTestCase):
     def test_pm_get_labels(self):
         """Test the ToolPloneMeeting.get_labels method
            that will return ftw.labels active_labels."""
+        cfg = self.meetingConfig
+        self._enableField('labels')
         self.changeUser("pmCreator1")
         item = self.create("MeetingItem")
         self.assertEqual(get_labels(item), {})
@@ -372,6 +432,20 @@ class testUtils(PloneMeetingTestCase):
         self.assertEqual(get_labels(item), {'label': 'Label', 'suivi': 'Suivi'})
         self.assertEqual(get_labels(item, False), {'label': 'Label'})
         self.assertEqual(get_labels(item, "only"), {'suivi': 'Suivi'})
+        # for now also viewable by reviewers
+        self.proposeItem(item)
+        self.changeUser("pmReviewer1")
+        self.assertEqual(get_labels(item, False), {'label': 'Label'})
+        config = list(cfg.getLabelsConfig())
+        # make 'label' only viewable by creators
+        new_config = deepcopy(config[0])
+        new_config['label_id'] = "label"
+        new_config['view_groups'] = ["suffix_proposing_group_creators"]
+        config.append(new_config)
+        cfg.setLabelsConfig(config)
+        item._update_labels_access_cache(cfg, item.query_state())
+        self.assertEqual(get_labels(item, False), {'label': 'Label'})
+        self.assertEqual(get_labels(item, False, only_viewable=True), {})
 
     def test_pm_IsPowerObserverForCfg(self):
         """ """
@@ -406,6 +480,34 @@ class testUtils(PloneMeetingTestCase):
             cfg, power_observer_types=['powerobservers', 'restrictedpowerobservers']))
         self.assertFalse(isPowerObserverForCfg(
             cfg, power_observer_types=['unknown']))
+
+    def test_pm_is_proposing_group_editor(self):
+        """Check if a user is an editor for a given org_uid."""
+        cfg = self.meetingConfig
+        self._setUpDefaultItemWFValidationLevels(cfg)
+        self.assertFalse(is_proposing_group_editor(self.developers_uid, cfg))
+        self.changeUser('pmCreator1')
+        self.assertTrue(is_proposing_group_editor(self.developers_uid, cfg))
+        self.assertFalse(is_proposing_group_editor(self.developers_uid, cfg, suffixes=['reviewers']))
+        self.assertFalse(is_proposing_group_editor(self.developers_uid, cfg, suffixes=['unknown']))
+        self.assertTrue(is_proposing_group_editor([self.developers_uid, self.vendors_uid], cfg))
+        self.assertFalse(is_proposing_group_editor([self.endUsers_uid, self.vendors_uid], cfg))
+        self.changeUser('pmCreator2')
+        self.assertFalse(is_proposing_group_editor(self.developers_uid, cfg))
+        self.assertTrue(is_proposing_group_editor(self.vendors_uid, cfg))
+        self.changeUser('pmObserver1')
+        self.assertFalse(is_proposing_group_editor(self.developers_uid, cfg))
+        self.assertFalse(is_proposing_group_editor(self.vendors_uid, cfg))
+        self.changeUser('pmReviewer1')
+        self.assertTrue(is_proposing_group_editor(self.developers_uid, cfg))
+        self.assertFalse(is_proposing_group_editor(self.vendors_uid, cfg))
+        # org_uid can be a list of org_uids
+        self.assertTrue(is_proposing_group_editor([self.developers_uid, self.vendors_uid], cfg))
+        self.assertFalse(is_proposing_group_editor([self.endUsers_uid, self.vendors_uid], cfg))
+        # no org_uid
+        self.assertFalse(is_proposing_group_editor(None, cfg))
+        self.assertFalse(is_proposing_group_editor('', cfg))
+        self.assertFalse(is_proposing_group_editor([], cfg))
 
 
 def test_suite():

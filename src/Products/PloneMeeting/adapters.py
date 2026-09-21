@@ -7,12 +7,12 @@ from appy.gen import No
 from appy.shared.diff import HtmlDiff
 from collective.compoundcriterion.adapters import NegativePersonalLabelsAdapter
 from collective.compoundcriterion.adapters import NegativePreviousIndexValuesAdapter
+from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.documentgenerator.adapters import GenerablePODTemplatesAdapter
 from collective.eeafaceted.dashboard.adapters import DashboardGenerablePODTemplatesAdapter
 from collective.eeafaceted.dashboard.content.pod_template import IDashboardPODTemplate
-from collective.eeafaceted.z3ctable.columns import EMPTY_STRING
 from collective.iconifiedcategory.adapter import CategorizedObjectAdapter
 from collective.iconifiedcategory.adapter import CategorizedObjectInfoAdapter
 from collective.iconifiedcategory.utils import get_categories
@@ -24,6 +24,7 @@ from eea.facetednavigation.widgets.resultsperpage.widget import Widget as Result
 from eea.facetednavigation.widgets.storage import Criterion
 from imio.actionspanel.adapters import ContentDeletableAdapter as APContentDeletableAdapter
 from imio.annex.adapters import AnnexPrettyLinkAdapter
+from imio.helpers import EMPTY_STRING
 from imio.helpers.adapters import MissingTerms
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_current_user_id
@@ -33,6 +34,7 @@ from imio.helpers.content import get_user_fullname
 from imio.helpers.content import get_vocab
 from imio.helpers.content import get_vocab_values
 from imio.helpers.content import richtextval
+from imio.helpers.security import check_zope_admin
 from imio.helpers.xhtml import xhtmlContentIsEmpty
 from imio.history.adapters import BaseImioHistoryAdapter
 from imio.history.adapters import ImioWfHistoryAdapter
@@ -103,26 +105,28 @@ class AnnexContentDeletableAdapter(APContentDeletableAdapter):
     def __init__(self, context):
         self.context = context
 
-    def mayDelete(self, **kwargs):
+    def _may_delete_decision_annex(self, parent):
+        """A 'Owner' may still remove an 'annexDecision' if enabled
+           in the cfg and if still able to add 'annexDecision'."""
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        if cfg.getOwnerMayDeleteAnnexDecision() and \
+           _checkPermission(AddAnnexDecision, parent):
+            member = api.user.get_current()
+            if 'Owner' in member.getRolesInContext(self.context):
+                return True
+
+    def mayDelete(self, initiator=None, **kwargs):
         '''See docstring in interfaces.py.'''
         # check 'Delete objects' permission
-        mayDelete = super(AnnexContentDeletableAdapter, self).mayDelete()
+        mayDelete = super(AnnexContentDeletableAdapter, self).mayDelete(initiator=initiator)
         if not mayDelete:
             parent = self.context.getParentNode()
             # able to delete an annex/annexDecision if able to edit the parent
             if _checkPermission(ModifyPortalContent, parent):
                 return True
-
-            # a 'Owner' may still remove an 'annexDecision' if enabled
-            # in the cfg and if still able to add 'annexDecision'
             elif self.context.portal_type == 'annexDecision':
-                tool = api.portal.get_tool('portal_plonemeeting')
-                cfg = tool.getMeetingConfig(self.context)
-                if cfg.getOwnerMayDeleteAnnexDecision() and \
-                   _checkPermission(AddAnnexDecision, parent):
-                    member = api.user.get_current()
-                    if 'Owner' in member.getRolesInContext(self.context):
-                        return True
+                return self._may_delete_decision_annex(parent)
         return mayDelete
 
 
@@ -136,13 +140,14 @@ class AdviceContentDeletableAdapter(APContentDeletableAdapter):
     def __init__(self, context):
         self.context = context
 
-    def mayDelete(self, **kwargs):
+    def mayDelete(self, initiator=None, **kwargs):
         '''See docstring in interfaces.py.'''
         # check 'Delete objects' permission
-        mayDelete = super(AdviceContentDeletableAdapter, self).mayDelete()
+        mayDelete = super(AdviceContentDeletableAdapter, self).mayDelete(initiator=initiator)
         if mayDelete:
             tool = api.portal.get_tool('portal_plonemeeting')
-            if not tool.isManager(realManagers=True) and \
+            # if initiator is the parent item, mayDelete was already managed there
+            if initiator is None and not tool.isManager(realManagers=True) and \
                getLastAction(getAdapter(self.context, IImioHistory, 'advice_given')):
                 mayDelete = False
         return mayDelete
@@ -156,21 +161,25 @@ class MeetingItemContentDeletableAdapter(APContentDeletableAdapter):
     def __init__(self, context):
         self.context = context
 
-    def mayDelete(self, **kwargs):
+    def mayDelete(self, initiator=None, **kwargs):
         '''See docstring in interfaces.py.'''
         # check 'Delete objects' permission
-        mayDelete = super(MeetingItemContentDeletableAdapter, self).mayDelete()
+        mayDelete = super(MeetingItemContentDeletableAdapter, self).mayDelete(initiator=initiator)
         if mayDelete:
-            # check itemWithGivenAdviceIsNotDeletable
+            # check itemWithGivenAdviceIsNotDeletable if item not in initial review_state
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self.context)
             if cfg.getItemWithGivenAdviceIsNotDeletable() and not tool.isManager(cfg):
-                # do we have any given advice?
-                # do not consider advices that are inherited
-                given_advices = [advice for advice in self.context.adviceIndex.values() if
-                                 not advice['inherited'] and not advice['type'] == NOT_GIVEN_ADVICE_VALUE]
-                if given_advices:
-                    return False
+                wfTool = api.portal.get_tool('portal_workflow')
+                item_wf = wfTool.getWorkflowsFor(self.context)[0]
+                if self.context.query_state() != item_wf.initial_state:
+                    # do we have any given advice?
+                    # do not consider advices that are inherited
+                    given_advices = [
+                        advice for advice in self.context.adviceIndex.values()
+                        if not advice['inherited'] and not advice['type'] == NOT_GIVEN_ADVICE_VALUE]
+                    if given_advices:
+                        return False
         return mayDelete
 
 
@@ -184,13 +193,15 @@ class MeetingContentDeletableAdapter(APContentDeletableAdapter):
     def __init__(self, context):
         self.context = context
 
-    def mayDelete(self, **kwargs):
+    def mayDelete(self, initiator=None, **kwargs):
         '''See docstring in interfaces.py.'''
-        res = super(MeetingContentDeletableAdapter, self).mayDelete()
+        res = super(MeetingContentDeletableAdapter, self).mayDelete(initiator=initiator)
         if res:
-            if self.context.number_of_items() != 0 and \
-               not api.user.get_current().has_role('Manager'):
-                res = No(CAN_NOT_DELETE_MEETING_ERROR)
+            if self.context.number_of_items() != 0:
+                tool = api.portal.get_tool('portal_plonemeeting')
+                if not tool.isManager(realManagers=True):
+                    # for now this will not display the button
+                    res = No(CAN_NOT_DELETE_MEETING_ERROR)
         return res
 
 
@@ -202,9 +213,9 @@ class OrgContentDeletableAdapter(APContentDeletableAdapter):
     def __init__(self, context):
         self.context = context
 
-    def mayDelete(self, **kwargs):
+    def mayDelete(self, initiator=None, **kwargs):
         '''See docstring in interfaces.py.'''
-        if not super(OrgContentDeletableAdapter, self).mayDelete():
+        if not super(OrgContentDeletableAdapter, self).mayDelete(initiator=initiator):
             return False
 
         if self.context == get_own_organization():
@@ -213,15 +224,45 @@ class OrgContentDeletableAdapter(APContentDeletableAdapter):
         return True
 
 
+class PODTemplateContentDeletableAdapter(APContentDeletableAdapter):
+    """
+      Manage the mayDelete for every PODTemplate (Configurable, Style, Dashboard, ...).
+      Only Zope admin may delete.
+    """
+    def __init__(self, context):
+        self.context = context
+
+    def mayDelete(self, initiator=None, **kwargs):
+        '''See docstring in interfaces.py.'''
+        res = super(PODTemplateContentDeletableAdapter, self).mayDelete(initiator=initiator)
+        if res and not check_zope_admin():
+            res = False
+        return res
+
+
+class MeetingConfigContentDeletableAdapter(APContentDeletableAdapter):
+    """
+      Only Zope admin may delete a MeetingConfig.
+    """
+    def __init__(self, context):
+        self.context = context
+
+    def mayDelete(self, initiator=None, **kwargs):
+        '''See docstring in interfaces.py.'''
+        res = super(MeetingConfigContentDeletableAdapter, self).mayDelete(initiator=initiator)
+        if res and not check_zope_admin():
+            res = False
+        return res
+
+
 class AdvicePrettyLinkAdapter(PrettyLinkAdapter):
     """ """
 
     def getLink_cachekey(method, self):
         '''As item title is displayed on advice, invalidate cache if item title changed.'''
         res = super(AdvicePrettyLinkAdapter, self).getLink_cachekey(self)
-        item = self.context.aq_inner.aq_parent
-        item_title = item.Title()
-        return res + (item_title, )
+        # append item title
+        return res + (self.context.aq_inner.aq_parent.Title(), )
 
     @ram.cache(getLink_cachekey)
     def getLink(self):
@@ -458,10 +499,13 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
             emergency = clonedToOtherMCId in self.context.getOtherMeetingConfigsClonableToEmergency()
             clonedToOtherMC = self.tool.get(clonedToOtherMCId)
             msgid = emergency and 'sentto_othermeetingconfig_emergency' or 'sentto_othermeetingconfig'
-            msg = translate(msgid,
-                            mapping={'meetingConfigTitle': safe_unicode(clonedToOtherMC.Title())},
-                            domain="PloneMeeting",
-                            context=self.request)
+            msg = translate(
+                msgid,
+                mapping={
+                    'meetingConfigTitle':
+                        safe_unicode(clonedToOtherMC.Title(include_config_group=True))},
+                domain="PloneMeeting",
+                context=self.request)
 
             clonedBrain = self.context.getItemClonedToOtherMC(clonedToOtherMCId, theObject=False)
             # do not check on meeting_date because it may contains '1950/01/01',
@@ -498,7 +542,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
             iconName = emergency and "will_be_cloned_to_other_mc_emergency" or "will_be_cloned_to_other_mc"
             msg = translate(msgid,
                             mapping={'meetingConfigTitle': safe_unicode(
-                                     otherMeetingConfigClonableTo.Title())},
+                                     otherMeetingConfigClonableTo.Title(include_config_group=True))},
                             domain="PloneMeeting",
                             context=self.request)
             # manage the otherMeetingConfigsClonableToPrivacy
@@ -523,36 +567,47 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
             predecessor_state = predecessor.query_state()
             translated_state = translate(predecessor_state, domain='plone', context=self.request)
             if not predecessorMeeting:
-                res.append(('cloned_not_decided.png',
-                            translate('icon_help_cloned_not_presented',
-                                      domain="PloneMeeting",
-                                      mapping={'meetingConfigTitle': safe_unicode(predecessorCfg.Title()),
-                                               'predecessorState': translated_state},
-                                      context=self.request,
-                                      default="Sent from ${meetingConfigTitle}, "
-                                      "original item is \"${predecessorState}\".")))
+                res.append(
+                    ('cloned_not_decided.png',
+                     translate(
+                        'icon_help_cloned_not_presented',
+                        domain="PloneMeeting",
+                        mapping={
+                            'meetingConfigTitle':
+                            safe_unicode(predecessorCfg.Title(include_config_group=True)),
+                            'predecessorState': translated_state},
+                        context=self.request,
+                        default="Sent from ${meetingConfigTitle}, "
+                        "original item is \"${predecessorState}\".")))
             else:
                 if predecessor_state in predecessorCfg.getItemPositiveDecidedStates():
-                    res.append(('cloned_and_decided.png',
-                                translate(
-                                    'icon_help_cloned_and_decided',
-                                    mapping={'meetingDate': self.tool.format_date(predecessorMeeting.date),
-                                             'meetingConfigTitle': safe_unicode(predecessorCfg.Title()),
-                                             'predecessorState': translated_state},
-                                    domain="PloneMeeting",
-                                    context=self.request,
-                                    default="Sent from ${meetingConfigTitle} (${meetingDate}), original item is "
-                                    "\"${predecessorState}\".")))
+                    res.append(
+                        ('cloned_and_decided.png',
+                         translate(
+                            'icon_help_cloned_and_decided',
+                            mapping={
+                                'meetingDate': self.tool.format_date(predecessorMeeting.date),
+                                'meetingConfigTitle':
+                                safe_unicode(predecessorCfg.Title(include_config_group=True)),
+                                'predecessorState': translated_state},
+                            domain="PloneMeeting",
+                            context=self.request,
+                            default="Sent from ${meetingConfigTitle} (${meetingDate}), "
+                            "original item is \"${predecessorState}\".")))
                 else:
-                    res.append(('cloned_not_decided.png',
-                                translate('icon_help_cloned_not_decided',
-                                          mapping={'meetingDate': self.tool.format_date(predecessorMeeting.date),
-                                                   'meetingConfigTitle': safe_unicode(predecessorCfg.Title()),
-                                                   'predecessorState': translated_state},
-                                          domain="PloneMeeting",
-                                          context=self.request,
-                                          default="Sent from ${meetingConfigTitle} (${meetingDate}), original item is "
-                                          "\"${predecessorState}\".")))
+                    res.append(
+                        ('cloned_not_decided.png',
+                         translate(
+                            'icon_help_cloned_not_decided',
+                            mapping={
+                                'meetingDate': self.tool.format_date(predecessorMeeting.date),
+                                'meetingConfigTitle':
+                                safe_unicode(predecessorCfg.Title(include_config_group=True)),
+                                'predecessorState': translated_state},
+                            domain="PloneMeeting",
+                            context=self.request,
+                            default="Sent from ${meetingConfigTitle} (${meetingDate}), "
+                            "original item is \"${predecessorState}\".")))
 
         # display icons if element is down the workflow or up for at least second time...
         # display it only for items before state 'validated'
@@ -601,7 +656,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
 
         if self.context.getIsAcceptableOutOfMeeting():
             res.append(('acceptable_out_of_meeting.png',
-                        translate('PloneMeeting_label_isAcceptableOutOfMeeting',
+                        translate('icon_help_isAcceptableOutOfMeeting',
                                   domain="PloneMeeting",
                                   context=self.request)))
         return res
@@ -648,14 +703,16 @@ class MeetingPrettyLinkAdapter(PrettyLinkAdapter):
                                   context=self.request)))
         if self.context.adopts_next_agenda_of:
             tool = api.portal.get_tool('portal_plonemeeting')
-            res.append(('adopts_next_agenda_of.png',
-                        translate(
-                            'this_meeting_adopts_next_agenda_of',
-                            mapping={'cfg_titles': u", ".join([
-                                safe_unicode(tool.get(cfg_id).Title())
-                                for cfg_id in self.context.adopts_next_agenda_of])},
-                            domain="PloneMeeting",
-                            context=self.request)))
+            res.append(
+                ('adopts_next_agenda_of.png',
+                 translate(
+                    'this_meeting_adopts_next_agenda_of',
+                    mapping={
+                        'cfg_titles': u", ".join([
+                            safe_unicode(tool.get(cfg_id).Title(include_config_group=True))
+                            for cfg_id in self.context.adopts_next_agenda_of])},
+                    domain="PloneMeeting",
+                    context=self.request)))
         return res
 
 
@@ -1739,22 +1796,23 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
         parent_classname = self.parent.getTagName()
         if parent_classname == 'MeetingItem':
             visible_fors = self.cfg.getItemAnnexConfidentialVisibleFor()
-            groups = self._item_visible_for_groups(visible_fors)
+            groups = self._item_visible_for_groups(visible_fors, item=self.parent)
         elif parent_classname == 'Meeting':
             visible_fors = self.cfg.getMeetingAnnexConfidentialVisibleFor()
             groups = self._meeting_visible_for_groups(visible_fors)
         else:
             # advice
             visible_fors = self.cfg.getAdviceAnnexConfidentialVisibleFor()
-            groups = self._advice_visible_for_groups(visible_fors)
+            groups = self._advice_visible_for_groups(
+                visible_fors, item=self.parent.aq_parent)
         return groups
 
-    def _item_visible_for_groups(self, visible_fors):
+    def _item_visible_for_groups(self, visible_fors, item):
         """ """
         res = []
         res += self._configgroup_groups(visible_fors)
-        res += self._reader_groups(visible_fors)
-        res += self._suffix_proposinggroup(visible_fors, self.parent)
+        res += self._reader_groups(visible_fors, item)
+        res += self._suffix_proposinggroup(visible_fors, item)
         return res
 
     def _meeting_visible_for_groups(self, visible_fors):
@@ -1764,12 +1822,12 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
         res += self._suffix_profile_proposinggroup(visible_fors)
         return res
 
-    def _advice_visible_for_groups(self, visible_fors):
+    def _advice_visible_for_groups(self, visible_fors, item):
         """ """
         res = []
         res += self._configgroup_groups(visible_fors)
-        res += self._reader_groups(visible_fors)
-        res += self._suffix_proposinggroup(visible_fors, self.parent.aq_parent)
+        res += self._reader_groups(visible_fors, item)
+        res += self._suffix_proposinggroup(visible_fors, item)
         if 'adviser_group' in visible_fors:
             plone_group_id = get_plone_group_id(self.parent.advice_group, 'advisers')
             res.append(plone_group_id)
@@ -1784,16 +1842,24 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
                 res.append('{0}_{1}'.format(self.cfg.getId(), suffix))
         return res
 
-    def _suffix_proposinggroup(self, visible_fors, item):
-        """ """
+    def _suffix_proposinggroup(self, visible_fors, item=None):
+        """Behavior of this method change when receiving an item or not:
+           - when p_item is not None, we will compute Plone groups of p_visible_fors
+           suffixes of groups managing the item;
+           - when p_item is None, we will consider every groups using the suffixes."""
         res = []
-        groups_managing_item_uids = item.adapted()._getAllGroupsManagingItem(
-            item.query_state())
+        # item, we take managing groups
+        if item:
+            org_uids = item.adapted()._getAllGroupsManagingItem(
+                item.query_state())
+        else:
+            # every enabled groups
+            org_uids = get_organizations(the_objects=False)
         for visible_for in visible_fors:
             if visible_for.startswith(PROPOSINGGROUPPREFIX):
                 suffix = visible_for.replace(PROPOSINGGROUPPREFIX, '')
-                for group_managing_item_uid in groups_managing_item_uids:
-                    plone_group_id = get_plone_group_id(group_managing_item_uid, suffix)
+                for org_uid in org_uids:
+                    plone_group_id = get_plone_group_id(org_uid, suffix)
                     res.append(plone_group_id)
         return res
 
@@ -1805,20 +1871,44 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
                 res.append(visible_for)
         return res
 
-    def _reader_groups(self, visible_fors):
+    def _reader_groups(self, visible_fors, item=None):
         """ """
         res = []
         for visible_for in visible_fors:
             if visible_for == '{0}advices'.format(READERPREFIX):
-                for org_uid in self.parent.adviceIndex:
+                # item advisers if item or every possible advisers
+                if item:
+                    org_uids = item.adviceIndex.keys()
+                else:
+                    # every possible advisers, so configured custom advisers and selectable advisers
+                    custom_advisers_org_uids = [row['org'] for row in self.cfg.getCustomAdvisers()]
+                    selectable_advisers = self.cfg.getSelectableAdvisers()
+                    org_uids = set(custom_advisers_org_uids).union(selectable_advisers)
+                for org_uid in org_uids:
                     plone_group_id = get_plone_group_id(org_uid, 'advisers')
                     res.append(plone_group_id)
             elif visible_for == '{0}copy_groups'.format(READERPREFIX):
-                res = res + list(self.parent.getAllCopyGroups(auto_real_plone_group_ids=True))
+                # item copyGroups if item or every possible copy groups
+                if item:
+                    res = res + list(item.getAllCopyGroups(auto_real_plone_group_ids=True))
+                else:
+                    res += list(self.cfg.getSelectableCopyGroups())
+            elif visible_for == '{0}restricted_copy_groups'.format(READERPREFIX):
+                # item restrictedCopyGroups if item or every possible restricted copy groups
+                if item:
+                    res = res + list(item.getAllRestrictedCopyGroups(auto_real_plone_group_ids=True))
+                else:
+                    res += list(self.cfg.getSelectableRestrictedCopyGroups())
             elif visible_for == '{0}groupsincharge'.format(READERPREFIX):
-                groupsInCharge = self.parent.getGroupsInCharge(theObjects=False, includeAuto=True)
-                for groupInCharge in groupsInCharge:
-                    plone_group_id = get_plone_group_id(groupInCharge, 'observers')
+                # item groupsInCharges if item or every possible groups in charge
+                if item:
+                    org_uids = item.getGroupsInCharge(theObjects=False, includeAuto=True)
+                else:
+                    org_uids = get_vocab_values(
+                        self.cfg,
+                        "Products.PloneMeeting.vocabularies.groupsinchargevocabulary")
+                for org_uid in org_uids:
+                    plone_group_id = get_plone_group_id(org_uid, 'observers')
                     res.append(plone_group_id)
         return res
 

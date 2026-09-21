@@ -123,6 +123,8 @@
            component=".vocabularies.PMAttendeeRedefinePositionTypesVocabularyFactory" />
   <utility name="Products.PloneMeeting.vocabularies.item_annex_types_vocabulary"
            component=".vocabularies.ItemAnnexTypesVocabularyFactory" />
+  <utility name="Products.PloneMeeting.vocabularies.content_annex_types_vocabulary"
+           component=".vocabularies.ContentAnnexTypesVocabularyFactory" />
   <utility name="Products.PloneMeeting.vocabularies.icon_item_annex_types_vocabulary"
            component=".vocabularies.IconItemAnnexTypesVocabularyFactory" />
   <utility name="Products.PloneMeeting.vocabularies.every_annex_types_vocabulary"
@@ -141,10 +143,20 @@
            component=".vocabularies.AdviceWorkflowAdaptationsVocabularyFactory" />
   <utility name="ConfigAdviceTypes"
            component=".vocabularies.ConfigAdviceTypesVocabularyFactory" />
+  <utility name="Products.PloneMeeting.vocabularies.item_fields_config_vocabulary"
+           component=".vocabularies.ItemFieldsConfigVocabularyFactory" />
   <utility name="Products.PloneMeeting.vocabularies.config_hide_history_to_vocabulary"
            component=".vocabularies.ConfigHideHistoryTosVocabularyFactory" />
   <utility name="EnabledItemActions"
            component=".vocabularies.EnabledItemActionsVocabularyFactory" />
+  <utility component=".vocabularies.EveryConfigsVocabularyFactory"
+           name="PMEveryConfigs" />
+  <utility component=".vocabularies.ConfigCssTransformsActionsVocabularyFactory"
+           name="ConfigCssTransformsActions" />
+  <utility component=".vocabularies.BooleanVocabularyFactory"
+           name="BooleanVocabulary" />
+  <utility component=".vocabularies.ConfigLabelsConfigUpdateLocalRolesVocabularyFactory"
+           name="ConfigLabelsConfigUpdateLocalRoles" />
 
   <!-- PMHeldPosition vocabularies -->
   <utility component=".vocabularies.HeldPositionUsagesVocabularyFactory"

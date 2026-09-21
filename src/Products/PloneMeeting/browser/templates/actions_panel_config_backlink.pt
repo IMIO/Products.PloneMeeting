@@ -1,0 +1,6 @@
+<button tal:condition="python: not view.useIcons"
+        i18n:domain="PloneMeeting" class="#"
+        i18n:translate=""
+        tal:content="string:back"
+        tal:attributes="class string:apButton apButtonAction_backLink;
+                        onclick string:window.open('${view/getBackUrl}', '_parent');" />

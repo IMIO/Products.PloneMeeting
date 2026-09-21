@@ -1388,14 +1388,14 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.changeUser('pmAdviser1')
         dev_advice = createContentInContainer(
             item,
-            item.adapted()._advicePortalTypeForAdviser(self.developers_uid),
+            self.tool._advicePortalTypeForAdviser(self.developers_uid),
             **{'advice_group': self.developers_uid,
                'advice_type': u'positive',
                'advice_comment': richtextval(u'My comment')})
         self.changeUser('pmReviewer2')
         vendors_advice = createContentInContainer(
             item,
-            item.adapted()._advicePortalTypeForAdviser(self.vendors_uid),
+            self.tool._advicePortalTypeForAdviser(self.vendors_uid),
             **{'advice_group': self.vendors_uid,
                'advice_type': u'positive_with_remarks',
                'advice_comment': richtextval(u'My comment')})
@@ -1496,7 +1496,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.changeUser('pmAdviser1')
         dev_advice = createContentInContainer(
             item,
-            item.adapted()._advicePortalTypeForAdviser(self.developers_uid),
+            self.tool._advicePortalTypeForAdviser(self.developers_uid),
             **{'advice_group': self.developers_uid,
                'advice_type': u'positive',
                'advice_comment': richtextval(u'My comment')})

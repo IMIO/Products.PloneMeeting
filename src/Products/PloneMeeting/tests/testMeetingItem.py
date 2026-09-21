@@ -34,7 +34,6 @@ from imio.zamqp.pm.tests.base import DEFAULT_SCAN_ID
 from os import path
 from persistent.mapping import PersistentMapping
 from plone import api
-from plone.app.testing import logout
 from plone.app.testing.bbb import _createMemberarea
 from plone.dexterity.utils import createContentInContainer
 from plone.memoize.instance import Memojito
@@ -65,6 +64,7 @@ from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.config import SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY
 from Products.PloneMeeting.config import WriteBudgetInfos
+from Products.PloneMeeting.ftw_labels.utils import get_labels
 from Products.PloneMeeting.indexes import previous_review_state
 from Products.PloneMeeting.indexes import sentToInfos
 from Products.PloneMeeting.MeetingItem import MeetingItem
@@ -73,6 +73,7 @@ from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.tests.PloneMeetingTestCase import TestRequest
 from Products.PloneMeeting.tests.testUtils import ASSEMBLY_CORRECT_VALUE
 from Products.PloneMeeting.tests.testUtils import ASSEMBLY_WRONG_VALUE
+from Products.PloneMeeting.utils import fieldIsEmpty
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import get_dx_field
 from Products.PloneMeeting.utils import getFieldVersion
@@ -1458,10 +1459,13 @@ class testMeetingItem(PloneMeetingTestCase):
         '''Test when sending an item to another MeetingConfig and both using
            categories, a mapping can be defined for a category in original meetingConfig
            to a category in destination meetingConfig.'''
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        cfg2Id = cfg2.getId()
         # activate categories in both meetingConfigs, as no mapping is defined,
         # the newItem will have no category
         self._enableField('category')
-        self._enableField('category', cfg=self.meetingConfig2)
+        self._enableField('category', cfg=cfg2)
         data = self._setupSendItemToOtherMC()
         newItem = data['newItem']
         self.assertEqual(newItem.getCategory(), '')
@@ -1474,9 +1478,68 @@ class testMeetingItem(PloneMeetingTestCase):
         # delete newItem and send originalItem again
         # do this as 'Manager' in case 'MeetingManager' can not delete the item in used item workflow
         self.deleteAsManager(newItem.UID())
-        originalItem.cloneToOtherMeetingConfig(self.meetingConfig2.getId())
+        originalItem.cloneToOtherMeetingConfig(cfg2Id)
         newItem = originalItem.get_successor()
         self.assertEqual(newItem.getCategory(), catIdOfMC2Mapped)
+
+        # now test when using MeetingCategory.groups_in_charge and
+        # MeetingConfig.includeGroupsInChargeDefinedOnCategory
+        self.deleteAsManager(newItem.UID())
+        cfg.setItemManualSentToOtherMCStates(('itemcreated', ))
+        cfg.setIncludeGroupsInChargeDefinedOnCategory(True)
+        originalItemCat.groups_in_charge = (self.vendors_uid, )
+        cfg2.categories.get(catIdOfMC2Mapped).groups_in_charge = (self.developers_uid, )
+        # first test that duplicating an item will update groupsInCharge
+        self.assertFalse(originalItem.getGroupsInCharge(includeAuto=False))
+        self.request.set('need_MeetingItem_update_groups_in_charge_category', False)
+        self.request.set('need_MeetingItem_update_groups_in_charge_proposing_group', False)
+        newOriginalItem = originalItem.clone()
+        self.assertEqual(newOriginalItem.getGroupsInCharge(includeAuto=False), [self.vendors_uid])
+        originalItemCat.groups_in_charge = (self.vendors_uid, self.developers_uid)
+        self.request.set('need_MeetingItem_update_groups_in_charge_category', False)
+        self.request.set('need_MeetingItem_update_groups_in_charge_proposing_group', False)
+        newOriginalItem2 = newOriginalItem.clone()
+        self.assertEqual(newOriginalItem2.getGroupsInCharge(includeAuto=False),
+                         [self.vendors_uid, self.developers_uid])
+        # no groups in charge if sent to cfg2 as includeGroupsInChargeDefinedOnCategory is False
+        self.assertFalse(cfg2.getIncludeGroupsInChargeDefinedOnCategory())
+        newItem = newOriginalItem.cloneToOtherMeetingConfig(cfg2Id)
+        self.assertEqual(newItem.getCategory(), catIdOfMC2Mapped)
+        self.assertFalse(newItem.getGroupsInCharge(includeAuto=False))
+        # enable includeGroupsInChargeDefinedOnCategory
+        cfg2.setIncludeGroupsInChargeDefinedOnCategory(True)
+        self.deleteAsManager(newItem.UID())
+        newItem = newOriginalItem.cloneToOtherMeetingConfig(cfg2Id)
+        self.assertEqual(newItem.getCategory(), catIdOfMC2Mapped)
+        self.assertEqual(newItem.getGroupsInCharge(includeAuto=False), [self.developers_uid])
+
+    def test_pm_DuplicatedItemUpdatesAutoCommittee(self):
+        """When committees are set automatically, it is correctly updated
+           if configuration changed and an item is duplicated."""
+        cfg = self.meetingConfig
+        self._enableField('category')
+        self._enableField("committees", related_to="Meeting")
+        cfg_committees = cfg.getCommittees()
+        # configure auto committees
+        cfg_committees[0]['auto_from'] = ["proposing_group__" + self.developers_uid]
+        cfg.setCommittees(cfg_committees)
+        self.assertTrue(cfg.is_committees_using("auto_from"))
+        # create item
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.assertEqual(item.getCommittees(), (cfg_committees[0]['row_id'], ))
+        # change configuration, make committee_1 auto selected for developers
+        cfg_committees[0]['auto_from'] = ["proposing_group__" + self.vendors_uid]
+        cfg_committees[1]['auto_from'] = ["proposing_group__" + self.developers_uid]
+        cfg.setCommittees(cfg_committees)
+        # not changing already existing elements
+        item._update_after_edit()
+        self.assertEqual(item.getCommittees(), (cfg_committees[0]['row_id'], ))
+        # but when duplicating the item, the new configuration is used
+        # make sure need_MeetingItem_update_committees is False for now
+        self.request.set('need_MeetingItem_update_committees', False)
+        cloned = item.clone()
+        self.assertEqual(cloned.getCommittees(), (cfg_committees[1]['row_id'], ))
 
     def test_pm_SendItemToOtherMCManually(self):
         '''An item may be sent automatically or manually to another MC
@@ -1714,6 +1777,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(newItem.getMotivation(), '')
         # was emptied
         self.assertEqual(newItem.getDecision(), '')
+        self.assertEqual(newItem.decision.mimetype, 'text/html')
 
     def test_pm_CloneItemWithSetCurrentAsPredecessor(self):
         '''When an item is cloned with option setCurrentAsPredecessor=True,
@@ -1900,8 +1964,7 @@ class testMeetingItem(PloneMeetingTestCase):
     def test_pm_CloneItemWithFTWLabels(self):
         '''When an item is cloned with option keep_ftw_label=True,
            ftw.labels labels are kept, False by default.'''
-        cfg = self.meetingConfig
-        cfg.setEnableLabels(True)
+        self._enableField('labels')
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.setDecision('<p>Decision</p>')
@@ -3825,7 +3888,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
         self.assertTrue(m2UID not in item.listMeetingsAcceptingItems().keys())
 
-    def test_pm_CopyGroupsVocabulary(self):
+    def test_pm_ItemCopyGroupsVocabulary(self):
         '''
           This is the vocabulary for the field "copyGroups".
           Check that we still have the stored value in the vocabulary, aka if the stored value
@@ -4142,12 +4205,14 @@ class testMeetingItem(PloneMeetingTestCase):
                            'gives_auto_advice_on': '',
                            'for_item_created_from': '2012/01/01',
                            'available_on': 'python:False',
+                           'is_delay_calendar_days': '0',
                            'is_linked_to_previous_row': '1',
                            'delay': '5'},
                           {'row_id': 'unique_id_456',
                            'org': self.developers_uid,
                            'gives_auto_advice_on': '',
                            'for_item_created_from': '2012/01/01',
+                           'is_delay_calendar_days': '0',
                            'is_linked_to_previous_row': '1',
                            'delay': '10'}]
         cfg.setCustomAdvisers(customAdvisers)
@@ -4342,6 +4407,15 @@ class testMeetingItem(PloneMeetingTestCase):
         # delay aware advices should not be available anymore in the vocabulary
         self.assertEqual(get_vocab_values(item, vocab_factory_name),
                          [self.developers_uid, self.vendors_uid])
+        # every active delay aware advisers are available on an item template
+        item_template = cfg.getItemTemplates(as_brains=False)[0]
+        self.assertTrue('{0}__rowid__unique_id_456'.format(self.developers_uid)
+                        in get_vocab_values(item_template, vocab_factory_name))
+        get_vocab_values(item_template, vocab_factory_name)
+        item_template.setCreationDate(DateTime('2010/01/01'))
+        item_template.reindexObject()
+        self.assertTrue('{0}__rowid__unique_id_456'.format(self.developers_uid)
+                        in get_vocab_values(item_template, vocab_factory_name))
 
     def test_pm_Validate_optionalAdvisersCanNotSelectSameGroupAdvisers(self):
         '''
@@ -4389,10 +4463,11 @@ class testMeetingItem(PloneMeetingTestCase):
         # check with the 'non-delay-aware' and the 'delay-aware' advisers selected
         item.setOptionalAdvisers((self.developers_uid, ))
         item._update_after_edit()
-        can_not_unselect_msg = translate('can_not_unselect_already_given_advice',
-                                         mapping={'removedAdviser': self.developers.Title()},
-                                         domain='PloneMeeting',
-                                         context=self.portal.REQUEST)
+        can_not_unselect_msg = translate(
+            'can_not_unselect_already_given_advice',
+            mapping={'removedAdviser': self.developers.Title()},
+            domain='PloneMeeting',
+            context=self.portal.REQUEST)
         # for now as developers advice is not given, we can unselect it
         # validate returns nothing if validation was successful
         self.failIf(item.validate_optionalAdvisers(()))
@@ -4410,14 +4485,16 @@ class testMeetingItem(PloneMeetingTestCase):
         # remove advice given by developers and make it a delay-aware advice
         self.portal.restrictedTraverse('@@delete_givenuid')(developers_advice.UID())
         self.changeUser('admin')
-        customAdvisers = [{'row_id': 'unique_id_123',
-                           'org': self.developers_uid,
-                           'gives_auto_advice_on': '',
-                           'for_item_created_from': '2012/01/01',
-                           'for_item_created_until': '',
-                           'gives_auto_advice_on_help_message': 'Optional help message',
-                           'delay': '10',
-                           'delay_label': 'Delay label', }, ]
+        customAdvisers = [
+            {'row_id': 'unique_id_123',
+             'org': self.developers_uid,
+             'gives_auto_advice_on': '',
+             'for_item_created_from': '2012/01/01',
+             'for_item_created_until': '',
+             'gives_auto_advice_on_help_message': 'Optional help message',
+             'delay': '10',
+             'delay_label': 'Delay label',
+             'is_delay_calendar_days': '0'}, ]
         self.meetingConfig.setCustomAdvisers(customAdvisers)
         self.changeUser('pmManager')
         item.setOptionalAdvisers(('{0}__rowid__unique_id_123'.format(self.developers_uid), ))
@@ -4432,10 +4509,11 @@ class testMeetingItem(PloneMeetingTestCase):
                'advice_type': u'positive',
                'advice_comment': richtextval(u'My comment')})
         # now we can not unselect the 'developers' anymore as advice was given
-        can_not_unselect_msg = translate('can_not_unselect_already_given_advice',
-                                         mapping={'removedAdviser': "Developers - 10 day(s) (Delay label)"},
-                                         domain='PloneMeeting',
-                                         context=self.portal.REQUEST)
+        can_not_unselect_msg = translate(
+            'can_not_unselect_already_given_advice',
+            mapping={'removedAdviser': "Developers - 10 day(s) (Delay label)"},
+            domain='PloneMeeting',
+            context=self.portal.REQUEST)
         self.assertEqual(item.validate_optionalAdvisers(()), can_not_unselect_msg)
 
         # we can unselect an optional advice if the given advice is an automatic one
@@ -4443,25 +4521,28 @@ class testMeetingItem(PloneMeetingTestCase):
         # equivalent to the selected optional advice to be given
         self.portal.restrictedTraverse('@@delete_givenuid')(developers_advice.UID())
         self.changeUser('admin')
-        customAdvisers = [{'row_id': 'unique_id_123',
-                           'org': self.developers_uid,
-                           'gives_auto_advice_on': 'item/getBudgetRelated',
-                           'for_item_created_from': '2012/01/01',
-                           'for_item_created_until': '',
-                           'gives_auto_advice_on_help_message': 'Auto help message',
-                           'delay': '10',
-                           'delay_label': 'Delay label', }, ]
+        customAdvisers = [
+            {'row_id': 'unique_id_123',
+             'org': self.developers_uid,
+             'gives_auto_advice_on': 'item/getBudgetRelated',
+             'for_item_created_from': '2012/01/01',
+             'for_item_created_until': '',
+             'gives_auto_advice_on_help_message': 'Auto help message',
+             'delay': '10',
+             'delay_label': 'Delay label',
+             'is_delay_calendar_days': '0', }, ]
         self.meetingConfig.setCustomAdvisers(customAdvisers)
         self.changeUser('pmManager')
         # make item able to receive the automatic advice
         item.setBudgetRelated(True)
         item.at_post_create_script()
         # now optionalAdvisers validation pass even if advice of the 'developers' group is given
-        createContentInContainer(item,
-                                 'meetingadvice',
-                                 **{'advice_group': self.developers_uid,
-                                    'advice_type': u'positive',
-                                    'advice_comment': richtextval(u'My comment')})
+        createContentInContainer(
+            item,
+            'meetingadvice',
+            **{'advice_group': self.developers_uid,
+               'advice_type': u'positive',
+               'advice_comment': richtextval(u'My comment')})
         # the given advice is not considered as an optional advice
         self.assertEqual(item.adviceIndex[self.developers_uid]['optional'], False)
         self.failIf(item.validate_optionalAdvisers(()))
@@ -4570,7 +4651,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(
             [m.id for m in cfg.getMeetingsAcceptingItems(review_states=['created', 'decided'])],
             [m1.id, m3.id])
-        self.request.__annotations__.clear()
+        self.cleanMemoize()
         self.assertEqual(
             [m.id for m in cfg.getMeetingsAcceptingItems(review_states=['created', 'decided'])],
             [m1.id])
@@ -4959,6 +5040,22 @@ class testMeetingItem(PloneMeetingTestCase):
         actions_panel = item.restrictedTraverse('@@actions_panel')
         self.assertNotEqual(power_observer_rendered_actions_panel, actions_panel())
 
+    def test_pm_ItemActionsPanelCachingInvalidatedWhenUsingWFShortcutsAndUserChanged(self):
+        """Actions panel cache is invalidated when user changed when using WF shortcuts."""
+        self._activate_wfas(('item_validation_shortcuts', ))
+        self._enablePrevalidation(self.meetingConfig)
+        # make pmReviewer1 a creator and prereviewer (already reviewer)
+        self._addPrincipalToGroup('pmReviewer1', self.developers_creators)
+        self._addPrincipalToGroup('pmReviewer1', self.developers_prereviewers)
+        self.changeUser('pmReviewer1')
+        item = self.create('MeetingItem')
+        actions_panel = item.restrictedTraverse('@@actions_panel')
+        pmReviewer1_rendered_actions_panel = actions_panel()
+        self.changeUser('pmCreator1', clean_memoize=False)
+        actions_panel = item.restrictedTraverse('@@actions_panel')
+        pmCreator1_rendered_actions_panel = actions_panel()
+        self.assertNotEqual(pmReviewer1_rendered_actions_panel, pmCreator1_rendered_actions_panel)
+
     def test_pm_ItemActionsPanelCachingInvalidatedWhenItemTurnsToPresentable(self):
         """Actions panel cache is invalidated when the item turns to presentable."""
         item, actions_panel, rendered_actions_panel = self._setupItemActionsPanelInvalidation()
@@ -5101,6 +5198,10 @@ class testMeetingItem(PloneMeetingTestCase):
            - item editor;
            - item viewer;
            - powerobserver."""
+        # shortcuts are taken into account in cache key
+        self._deactivate_wfas(
+            ['item_validation_shortcuts',
+             'item_validation_no_validate_shortcuts'])
         cfg = self.meetingConfig
         # enable everything
         cfg.setItemCopyGroupsStates(('itemcreated', self._stateMappingFor('proposed'), 'validated'))
@@ -5736,6 +5837,7 @@ class testMeetingItem(PloneMeetingTestCase):
             'takenOverBy', 'templateUsingGroups',
             'toDiscuss', 'committeeObservations', 'committeeTranscript',
             'votesObservations', 'votesResult',
+            'neededFollowUp', 'providedFollowUp', 'groupsInChargeNotes',
             'otherMeetingConfigsClonableToEmergency',
             'internalNotes', 'externalIdentifier']
         NEUTRAL_FIELDS += self._extraNeutralFields()
@@ -5893,26 +5995,37 @@ class testMeetingItem(PloneMeetingTestCase):
            Unauthorized when inserted in a meeting and trying to send it to the
            other MC because it can not...'''
         cfg = self.meetingConfig
+        cfg_id = cfg.getId()
         cfg2 = self.meetingConfig2
-        cfg2Id = cfg2.getId()
+        cfg2_id = cfg2.getId()
         # items are clonable to cfg2
         cfg.setMeetingConfigsToCloneTo(
-            ({'meeting_config': cfg2Id,
+            ({'meeting_config': cfg_id,
+              'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL},
+             {'meeting_config': cfg2_id,
               'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL},))
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
-        item.setOtherMeetingConfigsClonableTo((self.meetingConfig2.getId(), ))
+        item.setOtherMeetingConfigsClonableTo((cfg_id, cfg2_id, ))
+        item.setOtherMeetingConfigsClonableToPrivacy((cfg2_id, ))
         item._update_after_edit()
         newItem = item.clone()
         # field was kept as still possible in the configuration
         self.assertEqual(newItem.getOtherMeetingConfigsClonableTo(),
-                         (self.meetingConfig2.getId(), ))
+                         (cfg_id, cfg2_id, ))
+        self.assertEqual(newItem.getOtherMeetingConfigsClonableToPrivacy(),
+                         (cfg2_id, ))
 
         # change configuration and clone again
-        cfg.setMeetingConfigsToCloneTo(())
+        cfg.setMeetingConfigsToCloneTo(
+            ({'meeting_config': cfg_id,
+              'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL},))
         notSendableItem = item.clone()
         # field was not kept as no more possible with current configuration
-        self.assertFalse(notSendableItem.getOtherMeetingConfigsClonableTo())
+        self.assertEqual(notSendableItem.getOtherMeetingConfigsClonableTo(),
+                         (cfg_id, ))
+        self.assertEqual(notSendableItem.getOtherMeetingConfigsClonableToPrivacy(),
+                         ())
 
     def test_pm_CopiedFieldsCopyGroupsWhenDuplicated(self):
         '''Make sure field MeetingItem.copyGroups value correspond to what is
@@ -6194,6 +6307,9 @@ class testMeetingItem(PloneMeetingTestCase):
         item2.setManuallyLinkedItems([''])
         item3.setManuallyLinkedItems(['', item2UID, item4UID])
         item4.setManuallyLinkedItems(['', item1UID])
+        # if we edited an item, selected a linked item then delete the linked item before saving
+        item1.setManuallyLinkedItems(['no_more_existing_uid', item2UID, item3UID])
+        self.assertEqual(item1.getRawManuallyLinkedItems(), [item2UID, item3UID])
 
     def test_pm_ManuallyLinkedItemsCanUpdateEvenWithNotViewableItems(self):
         '''In case a user edit MeetingItem.manuallyLinkedItems field and does not have access
@@ -6945,6 +7061,14 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission(AddPortalContent, item))
         item.invokeFactory('Image', id='img5', title='Image5', file=data)
 
+        # to be fixed?  when using a field that is configurable in MeetingConfig.itemLabelsConfig
+        # as the write_permission is "View" then managed by the condition
+        # any user able to "View" can add an Image...
+        self._enableField('neededFollowUp')
+        item._update_after_edit()
+        for user_id in ('pmCreator1', 'pmCreator2', 'pmReviewer1', 'pmReviewer2', 'budgetimpacteditor', 'pmManager'):
+            self.assertTrue(self.hasPermission('ATContentTypes: Add Image', item))
+
     def test_pm_ItemExternalImagesStoredLocally(self):
         """External images are stored locally."""
         cfg = self.meetingConfig
@@ -6960,8 +7084,8 @@ class testMeetingItem(PloneMeetingTestCase):
         item = getattr(pmFolder, itemId)
         item.processForm()
         # contact.png was saved in the item
-        self.assertTrue('22-400x400.jpg' in item.objectIds())
-        img = item.get('22-400x400.jpg')
+        self.assertIn('911-300x300.jpg', item.objectIds())
+        img = item.get('911-300x300.jpg')
         # external image link was updated
         self.assertEqual(
             item.getRawDescription(),
@@ -6970,8 +7094,8 @@ class testMeetingItem(PloneMeetingTestCase):
         # test using the quickedit, test with field 'decision' where getRaw was overrided
         description = '<p>Working external image <img src="%s"/>.</p>' % self.external_image2
         set_field_from_ajax(item, 'description', description)
-        self.assertTrue('1025-400x300.jpg' in item.objectIds())
-        img2 = item.get('1025-400x300.jpg')
+        self.assertIn('280-300x300.jpg', item.objectIds())
+        img2 = item.get('280-300x300.jpg')
         # external image link was updated
         self.assertEqual(
             item.getRawDescription(),
@@ -6981,12 +7105,16 @@ class testMeetingItem(PloneMeetingTestCase):
         descr = '<p>Working external image <img src="%s"/>.</p>' % self.external_image3
         item.setDescription(descr)
         item.processForm()
-        self.assertTrue('1035-600x400.jpg' in item.objectIds())
-        img3 = item.get('1035-600x400.jpg')
+        self.assertIn('813-300x300.jpg', item.objectIds())
+        img3 = item.get('813-300x300.jpg')
         # external image link was updated
         self.assertEqual(
             item.getRawDescription(),
             '<p>Working external image <img src="resolveuid/{0}">.</p>'.format(img3.UID()))
+        self.assertEqual(
+            item.Description(),
+            '<p>Working external image <img src="{0}" alt="813-300x300.jpg" '
+            'loading="lazy" title="813-300x300.jpg" />.</p>'.format(img3.absolute_url()))
 
         # link to unknown external image, like during copy/paste of content
         # that has a link to an unexisting image or so
@@ -7001,7 +7129,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # the not retrievable image was replaced with a "not found" image
         self.assertListEqual(
             sorted(item.objectIds()),
-            ['1025-400x300.jpg', '1035-600x400.jpg', '22-400x400.jpg', 'imagenotfound.jpg'])
+            ['280-300x300.jpg', '813-300x300.jpg', '911-300x300.jpg', 'imagenotfound.jpg'])
         self.assertEqual(item.getRawDescription(), expected)
 
     def test_pm_ItemInternalImagesStoredLocallyWhenItemDuplicated(self):
@@ -7025,19 +7153,19 @@ class testMeetingItem(PloneMeetingTestCase):
             '<p>Internal image <img src="{1}">.</p>' \
             '<p>Internal image 2 <img src="{2}">.</p>'
         text = text_pattern.format(
-            self.external_image2,  # 1025-400x300.jpg
+            self.external_image2,
             img.absolute_url(),
             'resolveuid/{0}'.format(img2.UID()))
         item.setDescription(text)
         self.assertEqual(item.objectIds(), ['dot.gif', 'dot2.gif'])
         item.at_post_edit_script()
         # we have images saved locally
-        self.assertEqual(sorted(item.objectIds()), ['1025-400x300.jpg', 'dot.gif', 'dot2.gif'])
+        self.assertEqual(sorted(item.objectIds()), ['280-300x300.jpg', 'dot.gif', 'dot2.gif'])
 
         # duplicate and check that uri are correct
         newItem = item.clone()
-        self.assertEqual(sorted(newItem.objectIds()), ['1025-400x300.jpg', 'dot.gif', 'dot2.gif'])
-        new_img = newItem.get('1025-400x300.jpg')
+        self.assertEqual(sorted(newItem.objectIds()), ['280-300x300.jpg', 'dot.gif', 'dot2.gif'])
+        new_img = newItem.get('280-300x300.jpg')
         new_img1 = newItem.get('dot.gif')
         new_img2 = newItem.get('dot2.gif')
         # every links are turned to resolveuid
@@ -7288,34 +7416,75 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(item.query_state(), 'accepted')
         _check_editable(item)
 
-    def test_pm_HideCssClasses(self):
-        """ """
+    def test_pm_ItemInternalNotesQuickEditDoesNotChangeModificationDate(self, ):
+        """When field MeetingItem.internalNotes is quickedited, it will not change
+           the item modification date as it is a field that is not really part
+           of the decision."""
+        self.changeUser('siteadmin')
+        self._enableField('description')
+        self._enableField('internalNotes')
+        # by default set internalNotes editable by proposingGroup creators
+        self._activate_config('itemInternalNotesEditableBy',
+                              'suffix_proposing_group_creators',
+                              keep_existing=False)
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item_modified = item.modified()
+        # reindexed, but as internalNotes is not indexed, check with title
+        item.setTitle('specific')
+        self.assertFalse(self.catalog(SearchableText='specific'))
+        # not modified when quick editing internalNotes
+        set_field_from_ajax(item, 'internalNotes', self.descriptionText)
+        self.assertEqual(item_modified, item.modified())
+        # but reindexed
+        self.assertTrue(self.catalog(SearchableText='specific'))
+        # modified and reindexed when quickediting another field
+        item.setTitle('specific2')
+        self.assertFalse(self.catalog(SearchableText='specific2'))
+        set_field_from_ajax(item, 'description', self.descriptionText)
+        self.assertNotEqual(item_modified, item.modified())
+        self.assertTrue(self.catalog(SearchableText='specific2'))
+
+    def test_pm_CssTransforms(self):
+        """Config defined in MeetingConfig.CssTransforms will remove or
+           replace (used to anonymize) content for selected powerobservers. """
         self.changeUser('siteadmin')
         cfg = self.meetingConfig
-        cfg.setHideCssClassesTo(('powerobservers', ))
+        cfg.setCssTransforms(
+            (
+                {'action': 'remove',
+                 'css_class': 'highlight',
+                 'replace_new_content': '',
+                 'replace_new_css_class': '',
+                 'powerobservers': ['powerobservers']},
+                {'action': 'replace',
+                 'css_class': 'pm-anonymize',
+                 'replace_new_content': 'Data were hidden',
+                 'replace_new_css_class': 'pm-anonymized',
+                 'powerobservers': ['restrictedpowerobservers']},
+            )
+        )
         self._setPowerObserverStates(states=('itemcreated', ))
         self._setPowerObserverStates(observer_type='restrictedpowerobservers',
                                      states=('itemcreated', ))
-        self.assertTrue('highlight' in cfg.getCssClassesToHide().split('\n'))
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        TEXT = '<p>Text <span class="highlight">Highlighted text</span> some text</p>'
+        TEXT = '<p>Text <span class="highlight">Highlighted text</span> some text<span class="pm-anonymize">Anonymized content</span></p>'
         item.setDecision(TEXT)
         # the creator will have the correct text
         self.assertEqual(item.getDecision(), TEXT)
-        # a power observer will not get the classes
+        # a power observer will not get the highlight class but have anonymized content
         self.changeUser('powerobserver1')
-        self.assertEqual(item.getDecision(),
-                         '<p>Text <span>Highlighted text</span> some text</p>')
-        # a restricted power observer will get the classes
+        self.assertEqual(
+            item.getDecision(),
+            '<p>Text <span>Highlighted text</span> some text<span class="pm-anonymize">Anonymized content</span></p>')
+        # a restricted power observer will get the highlight class but not the anonymized content
         self.changeUser('restrictedpowerobserver1')
-        self.assertEqual(item.getDecision(), TEXT)
+        self.assertEqual(
+            item.getDecision(),
+            '<p>Text <span class="highlight">Highlighted text</span> some text<span class="pm-anonymized">Data were hidden</span></p>')
 
-        # test as Anonymous
-        logout()
-        self.assertEqual(item.getDecision(), TEXT)
-
-        # nevertheless, if powerobserver1 may edit the item, he will see the classes
+        # nevertheless, if powerobserver1 may edit the item, he will get the original text
         # add powerobserver1 to 'developers_creators' then check
         self._addPrincipalToGroup('powerobserver1', self.developers_creators)
         self.changeUser('powerobserver1')
@@ -7948,20 +8117,25 @@ class testMeetingItem(PloneMeetingTestCase):
         """If MeetingConfig.itemWithGivenAdviceIsNotDeletable is True,
            an item containing given advices will not be deletable."""
         cfg = self.meetingConfig
+        # maje sure a custom profile do not enable the "only_creator_may_delete" WFA
+        cfg.setWorkflowAdaptations(())
+        notify(ObjectEditedEvent(cfg))
         cfg.setItemWithGivenAdviceIsNotDeletable(True)
         cfg.setUseAdvices(True)
-        cfg.setItemAdviceStates(['itemcreated'])
-        cfg.setItemAdviceEditStates(['itemcreated'])
-        cfg.setItemAdviceViewStates(['itemcreated'])
+        cfg.setItemAdviceStates([self._stateMappingFor('proposed')])
+        cfg.setItemAdviceEditStates([self._stateMappingFor('proposed')])
+        cfg.setItemAdviceViewStates([self._stateMappingFor('proposed')])
         self.changeUser('pmCreator1')
-        itemWithoutAdvice = self.create('MeetingItem')
-        itemWithNotGivenAdvice = self.create('MeetingItem')
-        itemWithNotGivenAdvice.setOptionalAdvisers((self.vendors_uid, ))
-        itemWithGivenAdvice = self.create('MeetingItem')
-        itemWithGivenAdvice.setOptionalAdvisers((self.vendors_uid, ))
-        itemWithGivenAdvice._update_after_edit()
+        # we create 2 groups of items because we will delete it depending on config here under
+        # 1
+        itemWithoutAdvice1 = self.create('MeetingItem')
+        self.proposeItem(itemWithoutAdvice1)
+        itemWithNotGivenAdvice1 = self.create('MeetingItem', optionalAdvisers=((self.vendors_uid, )))
+        self.proposeItem(itemWithNotGivenAdvice1)
+        itemWithGivenAdvice1 = self.create('MeetingItem', optionalAdvisers=((self.vendors_uid, )))
+        self.proposeItem(itemWithGivenAdvice1)
         self.changeUser('pmReviewer2')
-        createContentInContainer(itemWithGivenAdvice,
+        createContentInContainer(itemWithGivenAdvice1,
                                  'meetingadvice',
                                  **{'advice_group': self.vendors_uid,
                                     'advice_type': u'positive',
@@ -7969,20 +8143,85 @@ class testMeetingItem(PloneMeetingTestCase):
                                     'advice_comment': richtextval(u'My comment')})
         # an item containing inherited advices may be deleted
         self.changeUser('pmCreator1')
-        itemWithInheritedGivenAdvices = itemWithGivenAdvice.clone(
+        itemWithInheritedGivenAdvices1 = itemWithGivenAdvice1.clone(
             setCurrentAsPredecessor=True, inheritAdvices=True)
+        self.proposeItem(itemWithInheritedGivenAdvices1)
+
+        # 2
+        itemWithoutAdvice2 = self.create('MeetingItem')
+        self.proposeItem(itemWithoutAdvice2)
+        itemWithNotGivenAdvice2 = self.create('MeetingItem', optionalAdvisers=((self.vendors_uid, )))
+        self.proposeItem(itemWithNotGivenAdvice2)
+        itemWithGivenAdvice2 = self.create('MeetingItem', optionalAdvisers=((self.vendors_uid, )))
+        self.proposeItem(itemWithGivenAdvice2)
+        self.changeUser('pmReviewer2')
+        createContentInContainer(itemWithGivenAdvice2,
+                                 'meetingadvice',
+                                 **{'advice_group': self.vendors_uid,
+                                    'advice_type': u'positive',
+                                    'advice_hide_during_redaction': False,
+                                    'advice_comment': richtextval(u'My comment')})
+        # an item containing inherited advices may be deleted
+        self.changeUser('pmCreator1')
+        itemWithInheritedGivenAdvices2 = itemWithGivenAdvice2.clone(
+            setCurrentAsPredecessor=True, inheritAdvices=True)
+        self.proposeItem(itemWithInheritedGivenAdvices2)
 
         # checks
+        self.changeUser('pmReviewer1')
         cfg.setItemWithGivenAdviceIsNotDeletable(False)
-        self.assertTrue(IContentDeletable(itemWithoutAdvice).mayDelete())
-        self.assertTrue(IContentDeletable(itemWithNotGivenAdvice).mayDelete())
-        self.assertTrue(IContentDeletable(itemWithGivenAdvice).mayDelete())
-        self.assertTrue(IContentDeletable(itemWithInheritedGivenAdvices).mayDelete())
+        # 1
+        self.assertTrue(IContentDeletable(itemWithoutAdvice1).mayDelete())
+        self.assertTrue(IContentDeletable(itemWithNotGivenAdvice1).mayDelete())
+        self.assertTrue(IContentDeletable(itemWithGivenAdvice1).mayDelete())
+        self.assertTrue(IContentDeletable(itemWithInheritedGivenAdvices1).mayDelete())
+        # 2
+        self.assertTrue(IContentDeletable(itemWithoutAdvice2).mayDelete())
+        self.assertTrue(IContentDeletable(itemWithNotGivenAdvice2).mayDelete())
+        self.assertTrue(IContentDeletable(itemWithGivenAdvice2).mayDelete())
+        self.assertTrue(IContentDeletable(itemWithInheritedGivenAdvices2).mayDelete())
         cfg.setItemWithGivenAdviceIsNotDeletable(True)
-        self.assertTrue(IContentDeletable(itemWithoutAdvice).mayDelete())
-        self.assertTrue(IContentDeletable(itemWithNotGivenAdvice).mayDelete())
-        self.assertFalse(IContentDeletable(itemWithGivenAdvice).mayDelete())
-        self.assertTrue(IContentDeletable(itemWithInheritedGivenAdvices).mayDelete())
+        # 1
+        self.assertTrue(IContentDeletable(itemWithoutAdvice1).mayDelete())
+        self.assertTrue(IContentDeletable(itemWithNotGivenAdvice1).mayDelete())
+        self.assertFalse(IContentDeletable(itemWithGivenAdvice1).mayDelete())
+        self.assertTrue(IContentDeletable(itemWithInheritedGivenAdvices1).mayDelete())
+        # 2
+        self.assertTrue(IContentDeletable(itemWithoutAdvice2).mayDelete())
+        self.assertTrue(IContentDeletable(itemWithNotGivenAdvice2).mayDelete())
+        self.assertFalse(IContentDeletable(itemWithGivenAdvice2).mayDelete())
+        self.assertTrue(IContentDeletable(itemWithInheritedGivenAdvices2).mayDelete())
+        # when set back to "itemcreated", item is always deletable
+        self.backToState(itemWithoutAdvice1, 'itemcreated')
+        self.backToState(itemWithNotGivenAdvice1, 'itemcreated')
+        self.backToState(itemWithGivenAdvice1, 'itemcreated')
+        self.backToState(itemWithInheritedGivenAdvices1, 'itemcreated')
+        self.backToState(itemWithoutAdvice2, 'itemcreated')
+        self.backToState(itemWithNotGivenAdvice2, 'itemcreated')
+        self.backToState(itemWithGivenAdvice2, 'itemcreated')
+        self.backToState(itemWithInheritedGivenAdvices2, 'itemcreated')
+        self.changeUser('pmCreator1')
+        cfg.setItemWithGivenAdviceIsNotDeletable(False)
+        # 1
+        self.assertTrue(IContentDeletable(itemWithoutAdvice1).mayDelete())
+        self.assertTrue(IContentDeletable(itemWithNotGivenAdvice1).mayDelete())
+        self.assertTrue(IContentDeletable(itemWithGivenAdvice1).mayDelete())
+        self.assertTrue(IContentDeletable(itemWithInheritedGivenAdvices1).mayDelete())
+        self.portal.restrictedTraverse('@@delete_givenuid')(itemWithoutAdvice1.UID())
+        self.portal.restrictedTraverse('@@delete_givenuid')(itemWithNotGivenAdvice1.UID())
+        self.portal.restrictedTraverse('@@delete_givenuid')(itemWithGivenAdvice1.UID())
+        self.portal.restrictedTraverse('@@delete_givenuid')(itemWithInheritedGivenAdvices1.UID())
+        cfg.setItemWithGivenAdviceIsNotDeletable(True)
+        # 2
+        self.assertTrue(IContentDeletable(itemWithoutAdvice2).mayDelete())
+        self.assertTrue(IContentDeletable(itemWithNotGivenAdvice2).mayDelete())
+        self.assertTrue(IContentDeletable(itemWithGivenAdvice2).mayDelete())
+        self.assertTrue(IContentDeletable(itemWithInheritedGivenAdvices2).mayDelete())
+        # actually delete items
+        self.portal.restrictedTraverse('@@delete_givenuid')(itemWithoutAdvice2.UID())
+        self.portal.restrictedTraverse('@@delete_givenuid')(itemWithNotGivenAdvice2.UID())
+        self.portal.restrictedTraverse('@@delete_givenuid')(itemWithGivenAdvice2.UID())
+        self.portal.restrictedTraverse('@@delete_givenuid')(itemWithInheritedGivenAdvices2.UID())
 
     def test_pm_ShowObservations(self):
         """By default, MeetingItem.showObservations returns True but
@@ -8216,6 +8455,15 @@ class testMeetingItem(PloneMeetingTestCase):
              u'M. PMCreator Two <pmcreator2@plonemeeting.org>',
              u'M. PMManager <pmmanager@plonemeeting.org>',
              u'M. PMReviewer Two <pmreviewer2@plonemeeting.org>'])
+        # also working when mailMode is "test"
+        cfg.setMailMode('test')
+        recipients, subject, body = item._sendCopyGroupsMailIfRelevant('itemcreated', 'validated')
+        self.assertEqual(
+            sorted(recipients),
+            [u'M. PMCreator One bee <pmcreator1b@plonemeeting.org>',
+             u'M. PMCreator Two <pmcreator2@plonemeeting.org>',
+             u'M. PMManager <pmmanager@plonemeeting.org>',
+             u'M. PMReviewer Two <pmreviewer2@plonemeeting.org>'])
 
     def test_pm__sendAdviceToGiveMailIfRelevant(self):
         """Check mail sent to advisers when they have access to item.
@@ -8407,11 +8655,21 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(sorted(recipients),
                          [u'M. PMReviewer One <pmreviewer1@plonemeeting.org>'])
         # subject and body contain relevant informations
+        val_level = cfg.getItemWFValidationLevels(states=['proposed'])
         self.assertEqual(
             subject,
-            u'{0} - Item in state "Proposed" '
-            u'(following "Back to \'Proposed\'") - '
-            u'My item that notify when propose'.format(safe_unicode(cfg.Title())))
+            u'{0} - Item in state "{1}" '
+            u'(following "{2}") - '
+            u'My item that notify when propose'.format(
+                safe_unicode(cfg.Title()),
+                translate(
+                    safe_unicode(val_level['state_title']),
+                    domain="plone",
+                    context=self.request),
+                translate(
+                    safe_unicode(val_level['back_transition_title']),
+                    domain="plone",
+                    context=self.request)))
         self.assertEqual(
             body,
             u'The item is entitled "My item that notify when propose". '
@@ -8936,6 +9194,224 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(
             item.Title(withMeetingDate=True, withItemNumber=True, withItemReference=True),
             "3. [Ref. 20240327/3] My title héhé (27 march 2024 (15:30))")
+
+    def test_pm_FollowUp(self):
+        '''Test the follow-up that relies on:
+           - neededFollowUp and providedFollowUp item fields;
+           - "needed-follow-up"  and "provided-follow-up" labels;
+           - "searchitemswithneededfollowup" and "searchitemswithprovidedfollowup" dashboard searches.
+           Check also counter cache that is invalidated when labels changed.'''
+        cfg = self.meetingConfig
+        for collection in cfg.searches.searches_items.objectValues():
+            if collection.getId() == "searchitemswithneededfollowup":
+                continue
+            collection.showNumberOfItems = False
+        neededfollowup = cfg.searches.searches_items.searchitemswithneededfollowup
+        neededfollowup_uid = neededfollowup.UID()
+        providedfollowup = cfg.searches.searches_items.searchitemswithprovidedfollowup
+        self._setupFollowUp(cfg)
+        self._enableField('copyGroups')
+
+        self.changeUser("pmCreator1")
+        # check that counter is correct when using global labels
+        view = self.getMeetingFolder().restrictedTraverse("@@json_collections_count")
+        self.assertEqual(
+            view(),
+            '{"criterionId": "c1", "countByCollection": [{"count": 0, "uid": "%s"}]}' % neededfollowup_uid)
+        item = self.create('MeetingItem', decision=self.decisionText, copyGroups=(self.vendors_reviewers, ))
+        self.assertEqual(len(neededfollowup.results()), 0)
+        self.assertEqual(len(providedfollowup.results()), 0)
+        # providedFollowUp is not editable when label "needed-follow-up" is not set
+        self.assertFalse(item.mayQuickEdit('providedFollowUp'))
+        labelingview = item.restrictedTraverse('@@labeling')
+        self.request.form['activate_labels'] = ['needed-follow-up']
+        labelingview.update()
+        # was not added as only MeetingManager can add this label
+        self.assertFalse('needed-follow-up' in get_labels(item))
+        self.changeUser("pmManager")
+        view = self.getMeetingFolder().restrictedTraverse("@@json_collections_count")
+        self.assertEqual(
+            view(),
+            '{"criterionId": "c1", "countByCollection": [{"count": 0, "uid": "%s"}]}' % neededfollowup_uid)
+        labelingview = item.restrictedTraverse('@@labeling')
+        labelingview.update()
+        self.assertTrue('needed-follow-up' in get_labels(item))
+        self.assertEqual(
+            view(),
+            '{"criterionId": "c1", "countByCollection": [{"count": 1, "uid": "%s"}]}' % neededfollowup_uid)
+        self.assertEqual(len(neededfollowup.results()), 1)
+        self.assertEqual(len(providedfollowup.results()), 0)
+        # provided-follow-up is available to MeetingManagers when field providedFollowUp is not empty
+        self.assertFalse(
+            'provided-follow-up' in
+            [label['label_id'] for label in labelingview.available_labels()[1]])
+        self.changeUser('pmCreator1')
+        self.assertTrue(fieldIsEmpty('providedFollowUp', item))
+        # but now that label needed-follow-up is set, field is editable
+        self.assertTrue(item.mayQuickEdit('providedFollowUp'))
+        item.setProvidedFollowUp(self.descriptionText)
+        self.changeUser('pmManager')
+        self.assertTrue(
+            'provided-follow-up' in
+            [label['label_id'] for label in labelingview.available_labels()[1]])
+        # add 'provided-follow-up', remove 'needed-follow-up'
+        self.request.form['activate_labels'] = ['provided-follow-up']
+        labelingview.update()
+        self.assertTrue('provided-follow-up' in get_labels(item))
+        self.assertEqual(
+            view(),
+            '{"criterionId": "c1", "countByCollection": [{"count": 0, "uid": "%s"}]}' % neededfollowup_uid)
+        self.assertEqual(len(neededfollowup.results()), 0)
+        self.assertEqual(len(providedfollowup.results()), 1)
+        # fields are still editable in a closed meeting
+        self.request.form['activate_labels'] = ['needed-follow-up']
+        labelingview.update()
+        self.assertTrue('needed-follow-up' in get_labels(item))
+        self._removeConfigObjectsFor(cfg)
+        meeting = self.create('Meeting')
+        self.presentItem(item)
+        self.closeMeeting(meeting)
+        self.assertEqual(item.query_state(), "accepted")
+        self.assertEqual(meeting.query_state(), "closed")
+        self.assertTrue(item.mayQuickEdit('neededFollowUp'))
+        self.assertTrue(item.mayQuickEdit('providedFollowUp'))
+        self.changeUser('pmCreator1')
+        self.assertFalse(item.mayQuickEdit('neededFollowUp'))
+        self.assertTrue(item.mayQuickEdit('providedFollowUp'))
+        # by default, users able to see the label can see the field
+        # copyGroup can see label and field
+        self.changeUser('pmReviewer2')
+        self.failUnless(self.hasPermission(View, item))
+        self.assertFalse(item.mayQuickEdit('neededFollowUp'))
+        self.assertFalse(item.mayQuickEdit('providedFollowUp'))
+        self.assertTrue('needed-follow-up' in get_labels(item, only_viewable=True))
+        self.assertTrue(item.show_field('neededFollowUp'))
+        self.assertTrue(item.show_field('providedFollowUp'))
+        # powerobserver can not see label so nor field
+        self.changeUser('powerobserver1')
+        self.failUnless(self.hasPermission(View, item))
+        self.assertFalse(item.mayQuickEdit('neededFollowUp'))
+        self.assertFalse(item.mayQuickEdit('providedFollowUp'))
+        self.assertFalse('needed-follow-up' in get_labels(item, only_viewable=True))
+        self.assertFalse(item.show_field('neededFollowUp'))
+        self.assertFalse(item.show_field('providedFollowUp'))
+        # can also be restricted to proposing group
+        self._setupItemFieldsConfig(
+            'neededFollowUp',
+            view='python: item.may_view_follow_up(restricted=True)')
+        self.changeUser('pmReviewer2')
+        self.assertFalse(item.show_field('neededFollowUp'))
+        self.assertTrue(item.show_field('providedFollowUp'))
+        self.changeUser('pmCreator1')
+        self.assertTrue(item.show_field('neededFollowUp'))
+        self.assertTrue(item.show_field('providedFollowUp'))
+        self.changeUser('pmReviewer1')
+        self.assertTrue(item.show_field('neededFollowUp'))
+        self.assertTrue(item.show_field('providedFollowUp'))
+        self._setupItemFieldsConfig(
+            'neededFollowUp',
+            view='python: item.may_view_follow_up(restricted=True, suffixes=["reviewers"])')
+        self.changeUser('pmCreator1')
+        self.assertFalse(item.show_field('neededFollowUp'))
+        self.assertTrue(item.show_field('providedFollowUp'))
+        self.changeUser('pmReviewer1')
+        self.assertTrue(item.show_field('neededFollowUp'))
+        self.assertTrue(item.show_field('providedFollowUp'))
+
+    def test_pm_groups_in_charge_notes(self):
+        """Test that MeetingItem.groupsInChargeNotes uses
+           MeetingConfig.itemFieldsConfig.
+           Moreover, test that if edit condition is False, it can not be edited."""
+        cfg = self.meetingConfig
+        cfg.setOrderedGroupsInCharge((self.developers_uid, self.vendors_uid))
+        cfg.setItemGroupsInChargeStates([self._stateMappingFor('itemcreated')])
+        self._enableField(['groupsInCharge', 'groupsInChargeNotes'])
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem', groupsInCharge=[self.vendors_uid])
+        # by default proposingGroup can view the field but not edit it
+        self.assertTrue(item.show_field('groupsInChargeNotes'))
+        # even if item editable, field can be not editable if condition if False
+        self.assertFalse(item.mayQuickEdit('groupsInChargeNotes'))
+        # bypass for Manager
+        self.changeUser('siteadmin')
+        self.assertTrue(item.show_field('groupsInChargeNotes') and
+                        item.mayQuickEdit('groupsInChargeNotes'))
+        # group in charge can view and edit
+        self.changeUser('pmObserver2')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertTrue(item.show_field('groupsInChargeNotes'))
+        self.assertTrue(item.mayQuickEdit('groupsInChargeNotes'))
+        # bypass for Manager
+        self.changeUser('siteadmin')
+        self.assertTrue(item.show_field('groupsInChargeNotes')
+                        and item.mayQuickEdit('groupsInChargeNotes'))
+        # with no group in charge
+        self.changeUser('pmCreator1')
+        item.setGroupsInCharge([])
+        self.assertTrue(item.show_field('groupsInChargeNotes'))
+        self.assertFalse(item.mayQuickEdit('groupsInChargeNotes'))
+        # bypass for Manager
+        self.changeUser('siteadmin')
+        self.assertTrue(item.show_field('groupsInChargeNotes')
+                        and item.mayQuickEdit('groupsInChargeNotes'))
+        # make proposing group only able to edit
+        self.changeUser('pmObserver2')
+        self._setupItemFieldsConfig(
+            'groupsInChargeNotes',
+            edit='python: tool.user_is_in_org(org_uid=item.getProposingGroup())')
+        self.assertFalse(item.mayQuickEdit('groupsInChargeNotes'))
+        # bypass for Manager
+        self.changeUser('siteadmin')
+        self.assertTrue(item.show_field('groupsInChargeNotes')
+                        and item.mayQuickEdit('groupsInChargeNotes'))
+        self.changeUser('pmCreator1')
+        self.assertTrue(item.mayQuickEdit('groupsInChargeNotes'))
+        # wrong condition, will raise if used
+        self._setupItemFieldsConfig('groupsInChargeNotes', edit='python: wrong')
+        self.assertRaises(NameError, item.mayQuickEdit, 'groupsInChargeNotes')
+        # does not raise if not used
+        self._enableField(['groupsInChargeNotes'], enable=False)
+        self.assertFalse(item.mayQuickEdit('groupsInChargeNotes'))
+        # bypass for Manager not working if field not enabled
+        self.changeUser('siteadmin')
+        self.assertFalse(item.show_field('groupsInChargeNotes'))
+        self.assertFalse(item.mayQuickEdit('groupsInChargeNotes'))
+
+    def test_pm_anonymize_item_title(self):
+        """Test the anonymize parameter of MeetingItem.Title that will use
+           utils.anonymize_raw_text."""
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem', title="My title confidential")
+        self.assertEqual(item.Title(anonymize=False), "My title confidential")
+        self.assertFalse(isinstance(item.Title(anonymize=False), unicode))
+        self.assertEqual(item.Title(anonymize=True), "My title confidential")
+        self.assertFalse(isinstance(item.Title(anonymize=True), unicode))
+        item.setTitle("My title [[confidential]]")
+        self.assertEqual(item.Title(anonymize=False), "My title confidential")
+        self.assertFalse(isinstance(item.Title(anonymize=False), unicode))
+        self.assertEqual(item.Title(anonymize=True), "My title [[DGPR]]")
+        self.assertFalse(isinstance(item.Title(anonymize=True), unicode))
+        self.assertEqual(item.Title(anonymize=True, separators=('{', '}')), "My title [[confidential]]")
+        self.assertEqual(item.Title(anonymize=True, new_text='New text'), "My title New text")
+        self.assertEqual(
+            item.Title(anonymize=True, as_html=True),
+            '<p>My title <span class="pm-anonymize">[[DGPR]]</span></p>')
+        self.assertEqual(
+            item.Title(anonymize=True, new_text='', as_html=True),
+            '<p>My title <span class="pm-anonymize"></span></p>')
+        self.assertEqual(
+            item.Title(
+                anonymize=True,
+                as_html=True,
+                xhtml_anonymize_sentence_format='<p class="title">{0}</p>'),
+            '<p class="title">My title <span class="pm-anonymize">[[DGPR]]</span></p>')
+        self.assertEqual(
+            item.Title(
+                anonymize=True,
+                as_html=True,
+                xhtml_anonymize_sentence_format='<p class="title">{0}</p>',
+                xhtml_anonymize_value_format="{0}"),
+            '<p class="title">My title [[DGPR]]</p>')
 
 
 def test_suite():

@@ -5,10 +5,17 @@
 
   <adapter
     provides="plone.outputfilters.interfaces.IFilter"
-    name="highlight_remover"
+    name="css_transforms"
     for="Products.PloneMeeting.interfaces.IMeetingContent
          *"
-    factory=".remove_highlight.HighlightRemover"
+    factory=".css_transforms.CssTransformer"
     zcml:condition="installed Products.PloneMeeting" />
+
+  <adapter
+    provides="plone.outputfilters.interfaces.IFilter"
+    name="resolveuid_and_caption"
+    for="Products.PloneMeeting.interfaces.IMeetingContent
+         *"
+    factory=".overrides.PMResolveUIDAndCaptionFilter" />
 
 </configure>

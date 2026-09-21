@@ -101,6 +101,7 @@
           tal:attributes="for item/id">
      <tal:comment replace="nothing">XXX PloneMeeting, added 'structure' to render label when it is HTML</tal:comment>
      <span class="label" tal:content="structure item/label">Label</span>
+     <div class="pm-checkbox-description discreet" tal:content="structure item/description">Description</div>
    </label>
   </span>
  </span>

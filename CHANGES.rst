@@ -2,7 +2,689 @@ Changelog
 =========
 
 
-4.2.16 (unreleased)
+4.2.28.23 (unreleased)
+----------------------
+
+- Make it possible to use `zExceptions.Redirect` in restricted python.
+  [gbastien]
+- A label used in `MeetingConfig.labelsConfig` can not be removed from the jar.
+  [gbastien]
+
+4.2.28.22 (2026-09-03)
+----------------------
+
+- Do not escape vocabularies when generating POD template (check if current
+  url end with `@@document-generation` or `document-generation`).
+  [gbastien]
+
+4.2.28.21 (2026-09-02)
+----------------------
+
+- Make `test_pm_ItemNotDeletableWhenContainingGivenAdvices` more robust by
+  disabling every workflow adaptations so a custom profile will not enable
+  the `only_creator_may_delete`.
+  [gbastien]
+- Added parameter `anonymize=None` (nothing is done by default) to
+  `MeetingItem.Title` to be able to anonymize item's title using `[[]]`
+  to surround text to anonymize.
+  This rely on `utils.anonymize_raw_text` that was added to `safe_utils`.
+  [gbastien]
+- Optimized `MeetingItem.getAdviceDataFor` when an `adviser_uid` is given,
+  only compute the data for given `adviser_uid`.
+  [gbastien]
+
+4.2.28.20 (2026-08-19)
+----------------------
+
+- `ResolveUIDAndCaptionFilter` output filter now adds `loading="lazy"`
+  to `<img>` tags.
+  [gbastien]
+- Fixed bug where deleting an item containing advices was leading to an
+  `Unauthorized`.
+  Now an item that is in `review_state itemcreated` will be deletable by
+  the `proposingGroup` even if it contains advices.
+  A item that is no more in `initial_state` that contain advices will not be
+  deletable when `MeetingConfig.itemWithGivenAdviceIsNotDeletable` is `True`
+  except if user is `MeetingManager`.
+  [gbastien]
+
+4.2.28.19 (2026-07-31)
+----------------------
+
+- Registered a different `CategorizedChildInfosView._show_protected_download` for:
+
+  - `MeetingItem`: only shown to `MeetingManagers` and `proposingGroup` members;
+  - `Meeting`: only shown to `MeetingManagers`;
+  - `MeetingAdvice`: only shown to `MeetingManagers` and `advice_group advisers`.
+
+  [gbastien]
+- Make `test_pm_SearchItemsToValidateOfHighestHierarchicLevel` more robust when
+  `prevalidation` does not use the `prereviewers` suffix.
+  [gbastien]
+- Make any parameter of `imio.helpers.xhtml.replace_content`
+  useable thru dict parameter `BaseDGHV.printXhtml.anonymize`, this way we can
+  use any parameter, including the new parameter `new_css_class` that let's
+  change the CSS class in a rendered POD template to have a specific style
+  mapping when rendering the anonymized version.
+  [gbastien]
+- In `tests`, added `BACK_TO_WF_PATH` for state `prevalidated` in case
+  `prevaldiation` is enabled by default in a custom profile.
+  [gbastien]
+- Added helper `Migrator.update_cfg_wf_attrs` to ease removing an item or
+  meeting WF state or transitions from every `MeetingConfig` attributes.
+  [gbastien]
+- When duplicating an item, make sure every `otherMeetingConfigsClonableToXXX`
+  fields still contains active values
+  (only `MeetingItem.otherMeetingConfigsClonableTo` was managed).
+  [gbastien]
+
+4.2.28.18 (2026-07-01)
+----------------------
+
+- Fixed `PMCategorizedObjectInfoAdapter._reader_groups` when using
+  `reader_advices` with `item=None`, the key to get organization uid in
+  `MeetingConfig.customAdvisers` is `org` and not `org_uid`.
+  [gbastien]
+- Make `proposing group comment` available on `advice popup` even when advice
+  is `hidden during redaction`.
+  [gbastien]
+
+4.2.28.17 (2026-06-25)
+----------------------
+
+- Rename every members meeting config folder title when
+  `MeetingConfig.folderTitle` changed.
+  [gbastien]
+- Fixed `MeetingConfig.listItemAttributeVisibleFor` that was translating the
+  proposing group suffix but it is not always translated, instead take the value
+  from plonegroup configuration where we have the really used suffix title.
+  [gbastien]
+- Reordered fields at end of item view in a more chronological way:
+  `committeeObservations`, `committeeTranscript`, `inAndOutMoves` and `notes`.
+  [gbastien]
+- Do not `saveHasActions` the `imio.actionspanel backlink` action as it is
+  not displayed as an icon or it prevent displaying `-` when no action available.
+  [gbastien]
+- Added searches `searchitemsofmygroupswithneededfollowup` and
+  `searchitemsofmygroupswithprovidedfollowup`.
+  [gbastien]
+- Added `utils.display_as_html` so it is available in expressions to render
+  `text/plain` as `text/html`.
+  [gbastien]
+- Remove the Classic portlet.
+  [gbastien]
+- Added new values for `MeetingItem.privacy`:
+
+  - `public_info`;
+  - `public_advice`;
+  - `secret_info`;
+  - `secret_advice`.
+
+  [gbastien]
+- As tests on `GA` are failing when using `fastly.picsum.photos`,
+  rely on `loremflickr.com` to get external images in tests.
+  [gbastien]
+- Make sure relevant annexes types are selectable in the
+  `PMContentCategory.after_scan_change_annex_type_to` field depending on annex type
+  (related to item, meeting or advice).
+  [gbastien]
+- Make `imio.actionspanel` viewlet always viewable at bottom of `DashboardCollection`.
+  [gbastien]
+
+4.2.28.16 (2026-05-20)
+----------------------
+
+- Added bypass for `Manager` for `MeetingItem.show_field` so a `Manager` can
+  view and edit any item fields defined in `MeetingConfig.itemFieldsConfig`.
+  [gbastien]
+- Only a Zope admin can delete a POD template of any kind.
+  [gbastien]
+- Use a real section to display `Back` link in `actions_panel`
+  of config elements.
+  [gbastien]
+- Changed default behavior of `MeetingItem.may_view_follow_up` used in
+  `MeetingConfig.itemFieldsConfig` to manage access to
+  `neededFollowUp/providedFollowUp` fields, now fields are viewable if labels
+  `needed-follow-up/provided-follow-up` are viewable.
+  Added parameters `only_viewable=False` and `only_editable=False` to
+  `ftw_labels.utils.get_labels`.
+  [gbastien]
+- Only compute `MeetingItem._bypass_write_perm_check_for` for
+  `CONFIGURABLE_FIELD_NAMES`.
+  [gbastien]
+- Added `obj` by default to `utils._base_extra_expr_ctx`.
+  [gbastien]
+- Make sure we store a boolean in `MeetingItem._labels_access_cache`
+  `view_access` and `edit_access`.
+  [gbastien]
+- Fixed `UnicodeDecodeError` in `MeetingItem.cloneToOtherMeetingConfig`,
+  when managing message `sendto_inexistent_destfolder_error` if destination
+  `MeetingConfig` title contains special characters.
+  [gbastien]
+- In `MeetingItem.mayAskAdviceAgain`, when using
+  `waiting_advices_proposing_group_send_back`, check that user can actually
+  send back by verifying that WF back transition can be triggered in case
+  it is overrided.
+  [gbastien]
+- In `MeetingItem.getCustomAdviceMessageFor`, display more complete default
+  messages when advice is `hidden during redaction` or `considered not given`.
+  [gbastien]
+- Fixed `MeetingItem.setManuallyLinkedItems` when current edit, a new selected
+  value does not exist anymore (freshly removed for example).
+  [gbastien]
+
+4.2.28.15 (2026-04-24)
+----------------------
+
+- Fixed `MeetingItem._bypass_write_perm_check_for`.
+  [gbastien]
+
+4.2.28.14 (2026-04-24)
+----------------------
+
+- Fixed `MeetingItem.show_field` to not evaluate if field not enabled and
+  to raise an error if TAL expression is wrong.
+  [gbastien]
+
+4.2.28.13 (2026-04-24)
+----------------------
+
+- In `Migrate_To_4217_1`, use `upgradeAll` to upgrade especially
+  `collective.dms.scanbehavior`.
+  [gbastien]
+
+4.2.28.12 (2026-04-24)
+----------------------
+
+- Fixed version overview not in last version warning when current version
+  uses a `.` in the version.
+  [gbastien]
+
+4.2.28.11 (2026-04-24)
+----------------------
+
+- Fixed `actions_panel` cache that was causing `reviewers` sometimes not seeing
+  the `backToProposed` action on a `validated` item when
+  `reviewers_take_back_validated_item` is used.
+  [gbastien]
+- Added `ToolPloneMeeting.showExternalLinksSection` to be able to enable
+  the `External links` collapsible on items on a per `MeetingConfig` basis.
+  [gbastien]
+- Added new datagrid field `MeetingConfig.cssTransforms` in replacement for
+  fields `MeetingConfig.cssClassesToHide` and `MeetingConfig.hideCssClassesTo`,
+  new field manage `CSS removal` and `content replacement` based on a CSS class,
+  this will be used to anonymize content for selected power observers.
+  [gbastien]
+- Added possibilty to display a `description` when using the `PMCheckBoxWidget`
+  by defining a `description` on the `vocabulary term`.
+  [gbastien]
+- Added new batch action `Insert barcode` on annexes and decision annexes.
+  [gbastien]
+- Now that `IContentDeletable` adapter is used in `@@delete-batch-action` of
+  `collective.eeafaceted.batchactions`, this fixed the delete annexes batch
+  action that was failing when using WFA `only_creator_may_delete` and item was
+  no more in state `itemcreated`.
+  [gbastien]
+- Added new field `MeetingItem.groupsInChargeNotes` configurable in
+  `MeetingConfig.itemFieldsConfig`.
+  [gbastien]
+- Adapted `ToolPloneMeeting.user_is_in_org` to be able to pass a list of
+  `org_id` or `org_uid`.
+  [gbastien]
+- Fixed JS code passing `external_user_id` to `@@load-external-infos`
+  to avoid JS injection.
+  [gbastien]
+
+4.2.28.10 (2026-03-13)
+----------------------
+
+- Added `imio.helpers.xhtml.removeCssClasses` to `safe_utils` so it is available
+  in TAL expressions, Python scripts and POD templates.
+  [gbastien]
+- Do not break if an error occurs in the rest request done in `iA.Vision` form
+  vocabularies, manage the error and display a warning in the form.
+  [gbastien]
+- Restrict creation/modification of any kind of POD templates to the Zope admin.
+  Renamed `ToolPloneMeeting.show_add_config` to `ToolPloneMeeting.is_zope_admin`.
+  [gbastien]
+- Highlight `Yes` value in red in `MeetingConfig.labelsConfig` datagrid field.
+  [gbastien]
+- Fixed `ftw.labels` viewlet error when rendered on an item template, now item
+  templates managers can select any labels on item templates and viewlet.
+  [gbastien]
+
+4.2.28.9 (2026-01-27)
+---------------------
+
+- In `ExternalView.available`, be defensive when managing response error
+  in case response can not be decoded to `json`.
+  [gbastien]
+- Override `PMFTWLabelsLabelingViewlet` template (`labeling.pt`) to not call
+  `can_edit` and `can_personal_edit` when viewlet is not `available`, this leaded
+  to an error rendering the viewlet when labels are not enabled.
+  [gbastien]
+
+4.2.28.8 (2026-01-16)
+---------------------
+
+- Fixed external link to `iA.Vision`.
+  [gbastien]
+
+4.2.28.7 (2026-01-14)
+---------------------
+
+- Adapted code to use `imio.helpers.ws.get_auth_token` and
+  `imio.helpers.ws.send_json_request`.
+  [gbastien]
+
+4.2.28.6 (2026-01-13)
+---------------------
+
+- Fixed `Migrate_To_4216` upgrade steps order by re-applying `annex portal_type`
+  from package `Products.PloneMeeting:default` after upgrade of
+  `collective.dms.scanbehavior` so `add_permission` is correct.
+  [gbastien]
+- Use `requests` to manage external link authentication token.
+  [gbastien]
+- `ToolPloneMeeting.get_extra_adviser_infos` is no more an adaptable method.
+  [gbastien]
+- Hide `Add advice` batch action if current user is an adviser but not able to
+  add an advice of portal_type `meetingadvice` as this action only manage this
+  `portal_type` of advice.
+  [gbastien]
+
+4.2.28.5 (2026-01-08)
+---------------------
+
+- Use `SSO/Vision` same var env names everywhere.
+  [gbastien]
+
+4.2.28.4 (2026-01-08)
+---------------------
+
+- Use `SSO/Vision` same var env names everywhere.
+  [gbastien]
+
+4.2.28.3 (2026-01-08)
+---------------------
+
+- Use new `SSO/Vision` env var names for external link to `iA.Vision`.
+  [gbastien]
+
+4.2.28.2 (2026-01-05)
+---------------------
+
+- Fixed `PMCategorizedObjectInfoAdapter._reader_groups` to take into account
+  `reader_restricted_copy_groups` that was not implemented at all.
+  [gbastien]
+- Integrate new value `approved` from `collective.iconifiedcategory`.
+  [gbastien]
+- Set `MeetingConfig.enableAddQuickAdvice` to `False` by default.
+  [gbastien]
+
+4.2.28.1 (2025-12-24)
+---------------------
+
+- Enlarge `Add complete advice` area in add complete/quick advice tooltipster.
+  [gbastien]
+
+4.2.28 (2025-12-22)
+-------------------
+
+- Removed CSS related to faceted table sticky header as it is managed and fixed
+  in `plonetheme.imioapps`.
+  [gbastien]
+- Fixed `searchitemswithneededfollowup` and `searchitemswithprovidedfollowup`
+  `DashboardCollections` that were not filtering on `MeetingItem portal_type`.
+  [gbastien]
+- Moved adaptable `MeetingItem._advicePortalTypeForAdviser` to
+  `ToolPloneMeeting` (no more adaptable).
+  [gbastien]
+- Added `Add quick/complete advice` action.
+  [gbastien]
+- Added `Add advices` batch action:
+
+  - Moved `MeetingItem._adviceTypesForAdviser` to
+    `MeetingConfig._adviceTypesForAdviser` and moved
+    `MeetingItem._adviceTypesForAdviser` to
+    `ToolPloneMeeting._adviceTypesForAdviser` so it does not require an item;
+  - the action is associated to one advice `portal_type`, added the action for
+    `meetingadvicefinances` portal_type.
+
+  [gbastien]
+- Fixed CSS class `collapsible-inner-content` background color.
+  [gbastien]
+
+4.2.27.5 (2025-12-16)
+---------------------
+
+- Fixed `Migrate_To_4216._updateLabelsConfig` by giving access to
+  `MeetingManagers` by default when old parameter
+  `MeetingConfig.itemLabelsEditableByProposingGroupForever` was `True`.
+  Adapted it also so it is possible to define a custom
+  `MeetingConfig.labelsConfig` before migration and takes it into account
+  for items labels cache update.
+  [gbastien]
+- Completed `Migrate_To_4216` by calling `_removeBrokenAnnexes` and upgrade
+  other profiles, this will especially upgrade `collective.iconifiedcategory`
+  by adding the `to_approve/approve` new attributes on annexes.
+  [gbastien]
+- Added `imio.helpers.content` annotation manipulation related functions to
+  `safe_utils` (`add_to_annotation`, `del_from_annotation`,
+  `get_from_annotation`, `pop_from_annotation` and `set_to_annotation`).
+  [gbastien]
+- Optimized `PMLabeling.filter_manageable_labels` to not iterate every labels
+  when called from a faceted dashboard (just need to iterate active labels).
+  [gbastien]
+- Fixed `PMCategorizedObjectInfoAdapter._reader_groups` that was not
+  implemented to receive an `item` as parameter like it is the case for
+  `PMCategorizedObjectInfoAdapter._suffix_proposinggroup`.
+  [gbastien]
+- Adapted `annex` and `annexDecision` portal_type XML definition as
+  `IScanFieldsHiddenToSignAndSigned` is deprecated because now `IScanFields`
+  does not include `to_sign/signed` fields anymore, so back to the default
+  `imio.annex` configuration.
+  [gbastien]
+
+4.2.27.4 (2025-11-04)
+---------------------
+
+- Fixed link to `iA.Vision`:
+
+  - Check again if can link in `LinkWithVisionForm.update` and
+    `LinkWithVisionForm.handle_apply`;
+  - Do not fail to display error message if it contains unicode characters.
+
+  [gbastien]
+
+4.2.27.3 (2025-11-03)
+---------------------
+
+- Environment variable `MUNICIPALITY_ID` is actually `VISION_MUNICIPALITY_ID`.
+  [gbastien]
+
+4.2.27.2 (2025-11-03)
+---------------------
+
+- Take into acount environment variable `MUNICIPALITY_ID` to manage links
+  to external applications.
+  [gbastien]
+
+4.2.27.1 (2025-10-23)
+---------------------
+
+- Fixed `ExternalView.show_section`, will not be available if
+  `VISION_AUTH_USERNAME` is an empty string neither.
+  [gbastien]
+
+4.2.27 (2025-10-22)
+-------------------
+
+- Add 2026 holidays in profile.
+  [aduchene]
+- Fixed `MeetingItem.title_or_id` to return `portal_type's title` instead
+  translated `portal_type` as now we do not translate `portal_type` anymore
+  but use the `portal_type's title`.
+  [gbastien]
+- Manage item follow-up.
+  [gbastien]
+- Invalidate dashboard collection counter when a label is (un)selected.
+  This is done only when the added/removed global or personal label is used in
+  an enabled dashboard collection query.
+  [gbastien]
+
+4.2.26 (2025-10-07)
+-------------------
+
+- Fixed `MeetingItem._updateAdvices` to avoid error when comparing `Dicts`
+  `self.adviceIndex` and `old_adviceIndex` in case we have a `datetime.datetime`
+  and a `None`.
+  [gbastien]
+- Display elements from external source `iA.Vision`, added form to be able
+  to `link/unlink` elements from it as well.
+  [gbastien]
+
+4.2.25 (2025-09-26)
+-------------------
+
+- Completed parameter `disable_autosearch_in` of `imio.webspellchecker` to
+  include CSS class of input `go to item` on item view and `change item number`
+  on meeting view.
+  [gbastien]
+- Display `voting group` in `MeetingConfig.orderedContacts` so we can detect
+  easily for which held position it is configured.
+  [gbastien]
+- Added `MeetingConfig.labelsConfig` to be able to configure who can
+  view/edit labels.
+  [gbastien]
+- Added parameter `extra_ctx={}` to `utils._base_extra_expr_ctx` to be able
+  to pass extra context immediatelly without having to `dict.update` after.
+  [gbastien]
+
+4.2.24.3 (2025-09-04)
+---------------------
+
+- Use median space to separate optional letters in `abstenu·e·s` of print_votes.
+  [gbastien]
+
+4.2.24.2 (2025-08-28)
+---------------------
+
+- Fixed `Migrate_To_4200._fixPODTemplatesInstructions` to manage
+  `getMeetingNumber` to `meeting_number` replacement also in item related
+  POD templates.
+  [gbastien]
+- Fixed `utils.sendMail` `translationMapping` to use correct title for
+  `transitionTitle` and `meetingState/itemState`.
+  This let's use new WF values in email notifications with correct WF
+  transition and state title.
+  [gbastien]
+- Fixed `utils.sendMail`, return same result when `MeetingConfig.mailMode`
+  is `test` or `enabled`.
+  [gbastien]
+- In `ItemDocumentGenerationHelperView.print_votes`, added possibility to
+  use special character `|` in label so it will generate several different
+  labels useable thru the `vote_label_pattern` parameter.
+  [gbastien]
+- Added parameter `is_voter=None` to `print_attendees` and
+  `print_attendees_by_type` so it is possible to get attendees that are
+  voters (`True`), non voters (`False`) or everybody (`None`).
+  [gbastien]
+
+4.2.24.1 (2025-07-11)
+---------------------
+
+- Fixed installation of `imio.webspellchecker` using helper
+  `setuphandlers._installWebspellchecker`, need to prepend profile name with
+  `profile-` when calling `portal_setup.runAllImportStepsFromProfile`.
+  [gbastien]
+
+4.2.24 (2025-06-25)
+-------------------
+
+- Added `imio.helpers.content.object_values` to `safe_utils` so it is available
+  in TAL expressions and Python scripts.
+  [gbastien]
+- Fixed global labels not changeable using labels batch action form when
+  `MeetingConfig.itemLabelsEditableByProposingGroupForever` is `True` by
+  overriding `LabelsBatchActionForm._can_change_labels` to take into account
+  our `PMLabeling.can_edit`.
+  [gbastien]
+
+4.2.23.3 (2025-06-06)
+---------------------
+
+- Make sure WSC is disabled in annex `content_category select2 widget` or
+  it breaks `quickupload` of several annexes.
+  [gbastien]
+
+4.2.23.2 (2025-06-06)
+---------------------
+
+- Display `MeetingConfig.configGroup` on `meetingconfig_view` when listing
+  POD templates and also in informations about "sendable to/sent to" on items
+  (icons, actions).
+  [gbastien]
+- Added overlay CSS class `link-overlay-pm-info` to be used for overlays that
+  may be closed safely when clicking outside of it.
+  [gbastien]
+- Fixed max width to `300px` for `copyGroups` column of items dashboards and
+  `category` column of annexes table.
+  [gbastien]
+- Completed `test_pm_ItemAbsentsAndExcusedAndNonAttendees` to show that
+  `@@display-meeting-item-not-present` works when current user can not access
+  items for which assembly member is absent.
+  [gbastien]
+
+4.2.23.1 (2025-05-28)
+---------------------
+
+- Fixed `Migrate_To_4215._updateWFWriteMarginalNotesPermission` to only update
+  items in state `presented`.
+  [gbastien]
+
+4.2.23 (2025-05-27)
+-------------------
+
+- Adapted call to `@@load_held_position_back_refs` to be able to pass a `limit`
+  and so display more than 50 elements.
+  [gbastien]
+- Adpated step `_fixWSCConfigAndCleanBrokenAnnexes` of migration to 4215 to
+  only disable `WSC` in `quickupload`.
+  [gbastien]
+- Use an `InAndOutWidget` for `MeetingConfig.usedVoteValues`,
+  `MeetingConfig.firstLinkedVoteUsedVoteValues` and
+  `MeetingConfig.nextLinkedVotesUsedVoteValues` so it is possible to change
+  displayed order.
+  [gbastien]
+- When quick editing the `MeetingItem.internalNotes` field, do not make item
+  `modified` as this field is somehow external to the item decision and more
+  like a `post-it` field as it is the case for `labels`.
+  [gbastien]
+- Avoid overlays closing when using `WSC` in an editable field.
+  [gbastien]
+- Completed migration to 4215 with step `_updateWFWriteMarginalNotesPermission`
+  to update item WF to manage `WriteMarginalNotes` given to `MeetingManager`
+  when item is `presented`.
+  [gbastien]
+- Display `MeetingConfig.configGroup` everywhere necessary to avoid
+  misinterpretation when several `MeetingConfigs` have same title in different
+  `configGroups`.
+  [gbastien]
+- Fixed `MeetingItemWorkflowConditions.mayCorrect` and
+  `MeetingItemWorkflowConditions._getLastValidationState` to use adaptable
+  method `MeetingItem._getGroupManagingItem` instead
+  `MeetingItem.getProposingGroup` when relevant or it is possible to correct
+  to a validation state where group is empty because not using correct group.
+  [gbastien]
+
+4.2.22 (2025-05-14)
+-------------------
+
+- Completed migration to 4215 with step `_fixWSCConfigAndCleanBrokenAnnexes`
+  to configure `WSC` and remove eventual broken annexes.
+  [gbastien]
+- Fixed error when editing votes on an item when a held position was disabled
+  (actually when it had no more `usages`).
+  [gbastien]
+
+4.2.21 (2025-05-08)
+-------------------
+
+- Removed useless index `is_default_page` from item templates tree query.
+  [gbastien]
+- Fixed migration to 4215 by re-applying `collective.documentgenerator` related
+  customizations (`portal_type`, `viewlet`) as it is reinstalled by
+  `collective.contact.core` upgrade during install of dependency `imio.fpaudit`.
+  [gbastien]
+- When cloning an item, re-apply auto committees in case configuration changed.
+  [gbastien]
+
+4.2.20 (2025-05-05)
+-------------------
+
+- When using `MeetingItem.otherMeetingConfigsClonableToFields`, make sure if
+  field is empty, the resulting item field `mimetype` is correctly set to
+  `text/html` (was `text/plain` resulting in broken `quick edit`).
+  [gbastien]
+- Adapted `MeetingItemWorkflowConditions.mayPresent` so an item that
+  `isAcceptableOutOfMeeting` can not be presented into a meeting.
+  [gbastien]
+- Use another translation for `isAcceptableOutOfMeeting` pretty link icon title.
+  [gastien]
+- Fixed `Migrate_To_4211._updateDataRelatedToToolPloneMeetingSimplification`
+  that was broken since `imio.fpaudit` that reinstalls
+  `collective.documentgenerator` and breaks our custom
+  `ConfigurablePODTemplate` portal_type.
+  [gbastien]
+- Added column `is_delay_calendar_days` to `MeetingConfig.customAdvisers`,
+  when set to `1` advice delay will be computed in calendar days.
+  [gbastien]
+- Renamed `@@advice_delay_change_form` to `@@advice-delay-change-form`.
+  Fixed `UnicodeDecodeError` when `delay_label` contains special characters.
+  [gbastien]
+- Avoid add/edit advice popup closing when using WSC.
+  [gbastien]
+- When sending email notifications, prepend `MeetingConfig.configGroup`
+  `full_label` when used and several `MeetingConfigs` have same title
+  so we know from which `MeetingConfig` the notification is sent.
+  [gbastien]
+
+4.2.19 (2025-04-02)
+-------------------
+
+- Fixed MeetingItem `actions_panel` caching that could display WF transitions
+  actually not available. Transition could not be triggered anyway.
+  [gbastien]
+- In `ToolPloneMeeting.update_all_local_roles` only display the `Done.` message
+  if `redirect=True` so it is not displayed in the dashboard batch action.
+  [gbastien]
+- Fixed `BaseCopyGroupsVocabulary` that could break because of several terms
+  with same value when `copyGroups` and `restrictedCopyGroups` were used.
+  [gbastien]
+
+4.2.18 (2025-03-24)
+-------------------
+
+- Fixed do not display `MeetingConfig` title in page title
+  if faceted context is a `meeting`.
+  [gbastien]
+- Make `MeetingConfig.lastMeetingNumber` required so it can never be `None`.
+  [gbastien]
+- Adapted POD template mailing list functionnality so the list of
+  email addresses to which the mailing list will be sent to is display when
+  hovering the mailing list and also displayed in the confirmation message when
+  the mail has been sent.
+  [gbastien]
+- Adapted `getGroupsInCharge` item catalog index to not include
+  auto groups in charge as it is stored on the item.
+  Make groups in charge batch action available to `MeetingManagers` when using
+  `MeetingConfig.includeGroupsInChargeDefinedOnProposingGroup` or
+  `MeetingConfig.includeGroupsInChargeDefinedOnCategory`.
+  [gbastien]
+
+4.2.17 (2025-03-17)
+-------------------
+
+- Make `test_pm_json_collections_count` more robust by disabling every workflow
+  adaptations so a custom profile will not enable a `DashboardCollection`
+  that is using a counter.
+  [gbastien]
+- In `MeetingItem.getGivenAdvices` use `toLocalizedTime`
+  from `@@plone` instead python script.
+  [gbastien]
+- Do not close add/edit annex overlay when clicking outside of it.
+  [gbastien]
+- When duplicating an item and using groups in charge on the category, make sure
+  the new item uses groups in charge defined on the category and not original
+  item groups in charge in case configuration was changed on the category.
+  Make also sure that when an item is sent to another `MeetingConfig`, groups
+  in charge defined on destination category are correctly applied on new item.
+  On the `MeetingItem` view, do not `includeAuto=True` for groups in charge,
+  display really stored groups in charge.
+  [gbastien]
+
+4.2.16 (2025-03-11)
 -------------------
 
 - Fixed `@@json_collections_count` caching invalidation for collections using
@@ -18,6 +700,14 @@ Changelog
 - Optimized `MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject`
   cachekey to not cache per item but per `MeetingConfig` and only consider
   `preferredMeeting`.
+  [gbastien]
+- On item templates and recurring items make sure every active delay aware
+  advisers are displayed, ignore the `for_item_created_from` information.
+  [gbastien]
+- Fixed POD template mailing list containing a quote (') was breaking JS.
+  [gbastien]
+- Added logging when reindexing every items icon color
+  when changed in `MeetingConfig`.
   [gbastien]
 
 4.2.15 (2025-02-06)
@@ -235,7 +925,7 @@ Changelog
   so it can be executed separately than other `test_pm_WFA_waiting_advices_`
   tests.
   Completed `test_pm_ItemActionsPanelCachingProfiles` to check when reviewer
-  may also edit crated item (when using `extra_suffixes`), this way we may
+  may also edit created item (when using `extra_suffixes`), this way we may
   remove `_reviewers_may_edit_itemcreated` helper.
   [gbastien]
 - Fixed `test_pm_ItemMailNotificationLateItem` when called from subplugins.

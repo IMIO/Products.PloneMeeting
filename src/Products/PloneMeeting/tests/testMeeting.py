@@ -2331,11 +2331,12 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertIsNone(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject())
 
         # clean cache for MeetingConfig.getMeetingsAcceptingItems
-        # and set meeting date in the future, it will be found because no meetingPresentItemWhenNoCurrentMeetingStates
+        # and set meeting date in the future, it will be found because
+        # no meetingPresentItemWhenNoCurrentMeetingStates
         self.cleanMemoize()
         meeting.date = datetime.now() + timedelta(days=2)
         notify(ObjectModifiedEvent(meeting, Attributes(Interface, 'date')))
-        self.assertTrue(not cfg.getMeetingPresentItemWhenNoCurrentMeetingStates())
+        self.assertFalse(cfg.getMeetingPresentItemWhenNoCurrentMeetingStates())
         # item may be presented in the meeting
         self.assertTrue(item.wfConditions().mayPresent())
         # there is a meeting to insert into
@@ -2396,10 +2397,11 @@ class testMeetingType(PloneMeetingTestCase):
 
         # several items in several MeetingConfigs without preferred meeting
         item_cfg1 = self.create("MeetingItem")
-        meeting_cfg1 = self.create("Meeting")
+        # avoid failing test when meeting date was just passed
+        meeting_cfg1 = self.create("Meeting", date=datetime.now() + timedelta(days=1))
         self.setMeetingConfig(cfg2_id)
         item_cfg2 = self.create("MeetingItem")
-        meeting_cfg2 = self.create("Meeting")
+        meeting_cfg2 = self.create("Meeting", date=datetime.now() + timedelta(days=1))
         self.assertEqual(item_cfg1.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting_cfg1)
         self.assertEqual(item_cfg2.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting_cfg2)
 
@@ -3100,28 +3102,32 @@ class testMeetingType(PloneMeetingTestCase):
                                            date=datetime(2015, 5, 5),
                                            observations=richtextval(text))
         meeting = getattr(pmFolder, meetingId)
-        self.assertIn('1062-600x500.jpg', meeting.objectIds())
-        img = meeting.get('1062-600x500.jpg')
+        self.assertIn('420-300x300.jpg', meeting.objectIds())
+        img = meeting.get('420-300x300.jpg')
         # link to image uses resolveuid
-        self.assertEqual(
-            meeting.observations.output,
-            '<p>Working external image <img src="{0}" alt="1062-600x500.jpg" '
-            'title="1062-600x500.jpg" />.</p>'.format(img.absolute_url()))
         self.assertEqual(
             meeting.observations.raw,
             '<p>Working external image <img src="resolveuid/{0}">.</p>'.format(img.UID()))
+        self.assertEqual(
+            meeting.observations.output,
+            '<p>Working external image <img src="{0}" alt="420-300x300.jpg" '
+            'title="420-300x300.jpg" />.</p>'.format(img.absolute_url()))
+        self.assertEqual(
+            meeting.observations.output_relative_to(meeting),
+            '<p>Working external image <img src="{0}" alt="420-300x300.jpg" loading="lazy" '
+            'title="420-300x300.jpg" />.</p>'.format(img.absolute_url()))
 
         # test using the quickedit
         text = '<p>Working external image <img src="%s"/>.</p>' % self.external_image2
         set_field_from_ajax(meeting, 'observations', text)
-        self.assertIn('1025-400x300.jpg', meeting.objectIds())
-        img2 = meeting.get('1025-400x300.jpg')
+        self.assertIn('280-300x300.jpg', meeting.objectIds())
+        img2 = meeting.get('280-300x300.jpg')
 
         # link to image uses resolveuid
         self.assertEqual(
             meeting.observations.output,
-            '<p>Working external image <img src="{0}" alt="1025-400x300.jpg" '
-            'title="1025-400x300.jpg" />.</p>'.format(img2.absolute_url()))
+            '<p>Working external image <img src="{0}" alt="280-300x300.jpg" '
+            'title="280-300x300.jpg" />.</p>'.format(img2.absolute_url()))
         self.assertEqual(
             meeting.observations.raw,
             '<p>Working external image <img src="resolveuid/{0}">.</p>'.format(img2.UID()))
@@ -3130,14 +3136,14 @@ class testMeetingType(PloneMeetingTestCase):
         text = '<p>Working external image <img src="%s"/>.</p>' % self.external_image1
         meeting.observations = richtextval(text)
         notify(ObjectModifiedEvent(meeting, Attributes(Interface, 'observations')))
-        self.assertIn('22-400x400.jpg', meeting.objectIds())
-        img3 = meeting.get('22-400x400.jpg')
+        self.assertIn('911-300x300.jpg', meeting.objectIds())
+        img3 = meeting.get('911-300x300.jpg')
 
         # link to image uses resolveuid
         self.assertEqual(
             meeting.observations.output,
-            '<p>Working external image <img src="{0}" alt="22-400x400.jpg" '
-            'title="22-400x400.jpg" />.</p>'.format(img3.absolute_url()))
+            '<p>Working external image <img src="{0}" alt="911-300x300.jpg" '
+            'title="911-300x300.jpg" />.</p>'.format(img3.absolute_url()))
         self.assertEqual(
             meeting.observations.raw,
             '<p>Working external image <img src="resolveuid/{0}">.</p>'.format(img3.UID()))

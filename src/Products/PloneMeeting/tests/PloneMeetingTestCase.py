@@ -43,6 +43,7 @@ from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import TOOL_FOLDER_ANNEX_TYPES
 from Products.PloneMeeting.testing import PM_TESTING_PROFILE_FUNCTIONAL
 from Products.PloneMeeting.tests.helpers import PloneMeetingTestingHelpers
+from Products.PloneMeeting.utils import _add_advice
 from Products.PloneMeeting.utils import cleanMemoize
 from z3c.form.testing import TestRequest as z3c_form_TestRequest
 from z3c.relationfield.relation import RelationValue
@@ -123,6 +124,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
 
     # Some default content
     descriptionText = '<p>Some description</p>'
+    motivationText = '<p>Some motivation.</p>'
     decisionText = '<p>Some decision.</p>'
     subproductIgnoredTestFiles = ['testPerformances.py',
                                   'test_robot.py']
@@ -133,13 +135,13 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
     cfg2_id = 'plonegov-assembly'
 
     external_image1 = \
-        "https://fastly.picsum.photos/id/22/400/400.jpg?hmac=Id8VAtx7v59BrMxVGFbHMrf-93mskILQzmMJ__Tzww8"
+        "https://fastly.picsum.photos/id/911/300/300.jpg?hmac=qAqGNOX0z5Vh20O29NtYmOJfzaWdZso3iNi4lcvbxJg"
     external_image2 = \
-        "https://fastly.picsum.photos/id/1025/400/300.jpg?hmac=5qUnaqytITcD06pLxsGw7l_twswo9b9p9c8zz_tdpMc"
+        "https://fastly.picsum.photos/id/280/300/300.jpg?hmac=QM0wFQ6yN-v_9qGNVqgk4rHthfSgiKO30s3CF1DVeJ0"
     external_image3 = \
-        "https://fastly.picsum.photos/id/1035/600/400.jpg?hmac=mnooh0fwG-2MIGW-xTUcYO6wyyx9LNdZK4RM6R2SA7A"
+        "https://fastly.picsum.photos/id/813/300/300.jpg?hmac=P1QaCX9HgZK2OE_XcRiYdFI9wkhiSmgYKor-9yDp00c"
     external_image4 = \
-        "https://fastly.picsum.photos/id/1062/600/500.jpg?hmac=ZoUBWDuRcsyqDbBPOj5jEU1kHgJ5iGO1edk1-QYode8"
+        "https://fastly.picsum.photos/id/420/300/300.jpg?hmac=8SS52dAMD_0B1ZLyZQUMzSIbhTuqno6W7diGjLDMKX8"
 
     def setUp(self):
         # enable full diff in failing tests
@@ -200,6 +202,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         # Set the default file and file type for adding annexes
         self.annexFile = u'FILE.txt'
         self.annexFilePDF = u'file_correct.pdf'
+        self.annexFileODT = u'../profiles/testing/templates/Item.odt'
         self.annexFileCorruptedPDF = u'file_errorDuringConversion.pdf'
         self.annexFileType = 'financial-analysis'
         self.annexFileTypeDecision = 'decision-annex'
@@ -338,7 +341,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                 folder = cfg.classifiers
             else:
                 folder = cfg.categories
-        elif objectType == 'ConfigurablePODTemplate':
+        elif objectType in ['ConfigurablePODTemplate', 'StyleTemplate', 'DashboardPODTemplate']:
             folder = cfg.podtemplates
         else:
             contentType = '%s%s' % (objectType, shortName)
@@ -362,9 +365,12 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             # optionalAdvisers are not set (???) by invokeFactory...
             if 'optionalAdvisers' in attrs:
                 obj.setOptionalAdvisers(attrs['optionalAdvisers'])
-            # decision is not set (???) by invokeFactory...
-            if 'decision' in attrs:
-                obj.setDecision(attrs['decision'])
+            # rich text fields are not set (???) by invokeFactory...
+            rich_fields = ['motivation', 'decision', 'decisionSuite', 'decisionEnd', 'votesResult']
+            for rich_field in rich_fields:
+                if rich_field in attrs:
+                    field = obj.getField(rich_field)
+                    field.set(obj, attrs[rich_field])
             # define a category for the item if necessary
             if autoAddCategory and \
                'category' in cfg.getUsedItemAttributes() and \
@@ -421,8 +427,10 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
     def _annex_file_content(self, annexFile=None):
         current_path = os.path.dirname(__file__)
         annexFile = annexFile or self.annexFile
-        f = open(os.path.join(current_path, annexFile), 'r')
-        annex_file = namedfile.NamedBlobFile(f.read(), filename=annexFile)
+        with open(os.path.join(current_path, annexFile), 'rb') as f:
+            annex_file = namedfile.NamedBlobFile(
+                f.read(),
+                filename=os.path.basename(annexFile))
         return annex_file
 
     def addAnnex(self,
@@ -535,28 +543,26 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         )
         return annexType
 
-    def addAdvice(self,
-                  item,
-                  advice_group=None,
-                  advice_type=u"positive",
-                  advice_comment=u"My comment",
-                  advice_hide_during_redaction=False,
-                  advice_portal_type='meetingadvice'):
-        if not advice_group:
-            advice_group = self.vendors_uid
+    def add_advice(self,
+                   item,
+                   advice_group=None,
+                   advice_type=u"positive",
+                   advice_comment=u"My comment",
+                   advice_hide_during_redaction=False,
+                   advice_portal_type='meetingadvice'):
+        advice_group = advice_group or self.vendors_uid
         # manage MeetingConfig.defaultAdviceHiddenDuringRedaction
         # as it only works while added ttw
         if not advice_hide_during_redaction:
             advice_hide_during_redaction = advice_portal_type in \
                 self.meetingConfig.getDefaultAdviceHiddenDuringRedaction()
-        advice = createContentInContainer(
+        return _add_advice(
             item,
-            advice_portal_type,
-            **{'advice_group': advice_group,
-               'advice_type': advice_type,
-               'advice_hide_during_redaction': advice_hide_during_redaction,
-               'advice_comment': richtextval(advice_comment)})
-        return advice
+            advice_group,
+            advice_type,
+            advice_comment=richtextval(advice_comment),
+            advice_hide_during_redaction=advice_hide_during_redaction,
+            advice_portal_type=advice_portal_type)
 
     def deleteAsManager(self, uid):
         """When we want to remove an item the current user does not have permission to,
@@ -580,7 +586,8 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                                'meeting-config-gettopics-',
                                'plonegroup-utils-get_organizations-',
                                'PloneMeeting-MeetingConfig-getMeetingsAcceptingItems',
-                               'PloneMeeting-tool-get_orgs_for_user'])
+                               'PloneMeeting-tool-get_orgs_for_user',
+                               'ftw-labeling-cache-'])
 
     def _removeOrganizations(self):
         """Delete every organizations found in own_org."""

@@ -1,7 +1,7 @@
 <div i18n:domain="PloneMeeting"
      tal:define="using_configs python: view.using_configs();
-                 using_meetings python: view.using_meetings();
-                 using_items python: view.using_items();">
+                 using_meetings python: view.using_meetings(limit=view.request.get('limit', 50));
+                 using_items python: view.using_items(limit=view.request.get('limit', 50));">
 
   <h5><span i18n:translate="">Filled in the "Ordered contacts" for meeting configurations</span>&nbsp;:</h5>
   <ul tal:repeat="cfg using_configs">

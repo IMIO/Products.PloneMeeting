@@ -319,6 +319,8 @@ DEFAULT_LIST_TYPES = [
     {'identifier': 'normal', 'label': 'normal', 'used_in_inserting_method': '1'},
     {'identifier': 'late', 'label': 'late', 'used_in_inserting_method': '1'}, ]
 
+ITEM_LABELS_ACCESS_CACHE_ATTR = "_labels_access_cache"
+
 NO_TRIGGER_WF_TRANSITION_UNTIL = '__nothing__'
 
 AUTO_COPY_GROUP_PREFIX = 'auto__'
@@ -412,6 +414,8 @@ MEETING_ATTENDEES_ATTRS = (
     'item_attendees_order',
     # place to store item votes
     'item_votes')
+
+CONFIGURABLE_FIELD_NAMES = ['groupsInChargeNotes', 'neededFollowUp', 'providedFollowUp']
 
 
 def registerClasses():

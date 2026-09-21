@@ -242,6 +242,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                            'delay': '10',
                            'delay_left_alert': '',
                            'delay_label': '',
+                           'is_delay_calendar_days': '0',
                            'available_on': '',
                            'is_linked_to_previous_row': '0', }, ]
         org = get_organization(customAdvisers[0]['org'])
@@ -367,6 +368,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                                   'delay': '10',
                                   'delay_left_alert': '',
                                   'delay_label': 'Delay label',
+                                  'is_delay_calendar_days': '0',
                                   'available_on': '',
                                   'is_linked_to_previous_row': '0', }
         # validate returns nothing if validation was successful
@@ -382,6 +384,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                                  'delay': '20',
                                  'delay_left_alert': '',
                                  'delay_label': 'Delay label changed',
+                                 'is_delay_calendar_days': '1',
                                  'available_on': '',
                                  'is_linked_to_previous_row': '0', }
         # validate returns nothing if validation was successful
@@ -413,6 +416,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # now change a non logical field, then it still validates
         non_logical_fields_wrong_values_mapping = {
             'gives_auto_advice_on_help_message': 'New help message gives auto',
+            'is_delay_calendar_days': '1',
             'delay_left_alert': '5',
             'delay_label': 'New delay label', }
         savedOriginalCustomAdvisers = dict(originalCustomAdvisers)
@@ -457,6 +461,7 @@ class testMeetingConfig(PloneMeetingTestCase):
              'delay': '20',
              'delay_left_alert': '',
              'delay_label': 'Delay label changed',
+             'is_delay_calendar_days': '0',
              'available_on': '',
              'is_linked_to_previous_row': '0', }
         cfg.setCustomAdvisers([customAdvisersCreatedUntilSetAndPast, ])
@@ -473,6 +478,7 @@ class testMeetingConfig(PloneMeetingTestCase):
              'delay': '20',
              'delay_left_alert': '',
              'delay_label': 'Delay label changed',
+             'is_delay_calendar_days': '0',
              'available_on': '',
              'is_linked_to_previous_row': '0', }
         cfg.setCustomAdvisers([customAdvisersNotAutoChangedCreatedFrom, ])
@@ -535,6 +541,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                            'delay': '10',
                            'delay_left_alert': '',
                            'delay_label': '',
+                           'is_delay_calendar_days': '0',
                            'available_on': 'python: item.getItemIsSigned()',
                            'is_linked_to_previous_row': '0', }, ]
         org = get_organization(customAdvisers[0]['org'])
@@ -577,6 +584,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                            'delay': '',
                            'delay_left_alert': '',
                            'delay_label': '',
+                           'is_delay_calendar_days': '0',
                            'available_on': '',
                            'is_linked_to_previous_row': '0', }, ]
         org = get_organization(customAdvisers[0]['org'])
@@ -603,6 +611,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                                'delay': '',
                                'delay_left_alert': '',
                                'delay_label': '',
+                               'is_delay_calendar_days': '0',
                                'available_on': '',
                                'is_linked_to_previous_row': '1'})
 
@@ -650,6 +659,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                            'delay': '5',
                            'delay_left_alert': '2',
                            'delay_label': '',
+                           'is_delay_calendar_days': '0',
                            'available_on': '',
                            'is_linked_to_previous_row': '0', },
                           {'row_id': 'unique_id_456',
@@ -661,6 +671,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                            'delay': '10',
                            'delay_left_alert': '4',
                            'delay_label': '',
+                           'is_delay_calendar_days': '0',
                            'available_on': '',
                            'is_linked_to_previous_row': '1'},
                           {'row_id': 'unique_id_789',
@@ -672,6 +683,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                            'delay': '20',
                            'delay_left_alert': '4',
                            'delay_label': '',
+                           'is_delay_calendar_days': '0',
                            'available_on': '',
                            'is_linked_to_previous_row': '1'}]
         cfg.setCustomAdvisers(customAdvisers)
@@ -702,6 +714,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                            'delay': '5',
                            'delay_left_alert': '2',
                            'delay_label': '',
+                           'is_delay_calendar_days': '0',
                            'available_on': '',
                            'is_linked_to_previous_row': '0', },
                           {'row_id': 'unique_id_456',
@@ -713,6 +726,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                            'delay': '10',
                            'delay_left_alert': '4',
                            'delay_label': '',
+                           'is_delay_calendar_days': '0',
                            'available_on': '',
                            'is_linked_to_previous_row': '1'},
                           {'row_id': 'unique_id_789',
@@ -724,6 +738,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                            'delay': '20',
                            'delay_left_alert': '4',
                            'delay_label': '',
+                           'is_delay_calendar_days': '0',
                            'available_on': '',
                            'is_linked_to_previous_row': '1'},
                           {'row_id': 'unique_id_1011',
@@ -735,6 +750,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                            'delay': '30',
                            'delay_left_alert': '4',
                            'delay_label': '',
+                           'is_delay_calendar_days': '0',
                            'available_on': '',
                            'is_linked_to_previous_row': '1'}]
         cfg.setCustomAdvisers(customAdvisers)
@@ -836,6 +852,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                      'delay': '',
                      'delay_left_alert': '',
                      'delay_label': '',
+                     'is_delay_calendar_days': '0',
                      'available_on': '',
                      'is_linked_to_previous_row': '0'}
         customAdvisers.insert(99, extra_row)
@@ -1268,11 +1285,15 @@ class testMeetingConfig(PloneMeetingTestCase):
         # a user can not delete the MeetingConfig
         self.changeUser('pmManager')
         self.assertRaises(Unauthorized, self.tool.manage_delObjects, [cfgId])
+        # only the Zope admin can remove a MeetingConfig because only a Zope admin can remove POD templates
+        self.changeUser('siteadmin')
+        self.assertRaises(Unauthorized, self.tool.manage_delObjects, [cfgId])
 
         # fails if a meeting exists
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
-        self.changeUser('siteadmin')
+        # only the Zope admin can remove a MeetingConfig because only a Zope admin can remove POD templates
+        self.changeUser('admin')
         with self.assertRaises(BeforeDeleteException) as cm:
             self.tool.manage_delObjects([cfgId, ])
         can_not_delete_meetingconfig_meeting = \
@@ -1285,7 +1306,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # fails if an item exists
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
-        self.changeUser('siteadmin')
+        self.changeUser('admin')
         with self.assertRaises(BeforeDeleteException) as cm:
             self.tool.manage_delObjects([cfgId, ])
         can_not_delete_meetingconfig_meetingitem = \
@@ -1300,7 +1321,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         pmFolder = self.tool.getPloneMeetingFolder(cfgId)
         afileId = pmFolder.invokeFactory('File', id='afile')
         afile = getattr(pmFolder, afileId)
-        self.changeUser('siteadmin')
+        self.changeUser('admin')
         with self.assertRaises(BeforeDeleteException) as cm:
             self.tool.manage_delObjects([cfgId, ])
         can_not_delete_meetingconfig_meetingfolder = \
@@ -1378,6 +1399,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                           if groupId.startswith(newCfgId)]
         self.assertEqual(len(created_groups), 5)
         # remove the MeetingConfig, groups are removed as well
+        self.changeUser('admin')
         self.tool.restrictedTraverse('@@delete_givenuid')(newCfg.UID())
         self.assertFalse(newCfgId in self.tool.objectIds())
         created_groups = [groupId for groupId in self.portal.portal_groups.listGroupIds()
@@ -1761,7 +1783,8 @@ class testMeetingConfig(PloneMeetingTestCase):
         """When any element contained in a MeetingConfig is added/modified/removed,
            MeetingConfig.modified is updated so caching is invalidated."""
         cfg = self.meetingConfig
-        self.changeUser('siteadmin')
+        # only the Zope admin can manage PODTemplates of any kind
+        self.changeUser('admin')
         original_cfg_modified = cfg.modified()
 
         # edit a POD template
@@ -1778,11 +1801,19 @@ class testMeetingConfig(PloneMeetingTestCase):
         style_template_cfg_modified = cfg.modified()
         self.assertNotEqual(pod_template_cfg_modified, style_template_cfg_modified)
 
+        # edit a Dashboard POD template
+        dashboard_template = [dashboard_template for dashboard_template in cfg.podtemplates.objectValues()
+                              if dashboard_template.portal_type == 'DashboardPODTemplate'][0]
+        notify(ObjectModifiedEvent(dashboard_template))
+        dashboard_template_cfg_modified = cfg.modified()
+        self.assertNotEqual(style_template_cfg_modified, dashboard_template_cfg_modified)
+
         # edit a ContentCategory
+        self.changeUser('siteadmin')
         content_category = cfg.annexes_types.item_annexes.objectValues()[0]
         notify(ObjectModifiedEvent(content_category))
         content_category_cfg_modified = cfg.modified()
-        self.assertNotEqual(style_template_cfg_modified, content_category_cfg_modified)
+        self.assertNotEqual(dashboard_template_cfg_modified, content_category_cfg_modified)
 
         # edit a meetingcategory
         category = cfg.categories.objectValues()[0]
@@ -1810,6 +1841,8 @@ class testMeetingConfig(PloneMeetingTestCase):
 
         # test add and remove a POD template using pod_template_to_use
         # add
+        # only the Zope admin can manage PODTemplates of any kind
+        self.changeUser('admin')
         new_pod_template = self.create(
             'ConfigurablePODTemplate',
             pod_template_to_use=cfg.podtemplates.itemTemplate.UID())
@@ -1820,28 +1853,112 @@ class testMeetingConfig(PloneMeetingTestCase):
         new_pod_template_removed_cfg_modified = cfg.modified()
         self.assertNotEqual(new_pod_template_cfg_modified, new_pod_template_removed_cfg_modified)
 
+    def test_pm_PODTemplateOnlyCreatedModifiedDeletedByZopeAdmin(self):
+        """Only a Zope admin can create/modify/delete a PODTemplate of any kind."""
+        cfg = self.meetingConfig
+        portal_types = ['ConfigurablePODTemplate',
+                        'StyleTemplate',
+                        'DashboardPODTemplate',
+                        'PODTemplate',
+                        'MailingLoopTemplate',
+                        'SubTemplate']
+        containers = [self.portal, cfg.podtemplates]
+        # trying to add these portal_types anywhere we lead to Unauthorized
+        self.changeUser('siteadmin')
+        for portal_type in portal_types:
+            # check in portal and in MeetingConfig
+            # on portal more types could be addable
+            for container in containers:
+                # create
+                allowed_type_ids = [allowed_type.getId() for allowed_type in container.allowedContentTypes()]
+                if portal_type in allowed_type_ids:
+                    self.assertRaises(
+                        Unauthorized,
+                        api.content.create,
+                        type=portal_type,
+                        title='template',
+                        container=container)
+                # modify
+                templates = [template for template in container.objectValues()
+                             if template.portal_type == portal_type]
+                if templates:
+                    self.assertRaises(
+                        Unauthorized, notify, (ObjectEditedEvent(templates[0])))
+                else:
+                    pm_logger.info(
+                        "Could not find an element with portal_type {0} in "
+                        "container at {1}".format(
+                            portal_type, container.absolute_url_path()))
+                    continue
+                # delete
+                self.assertRaises(
+                    Unauthorized, container.manage_delObjects, [templates[0].getId()])
+        # OK as zope admin
+        self.changeUser('admin')
+        for portal_type in portal_types:
+            for container in containers:
+                # create
+                allowed_type_ids = [
+                    allowed_type.getId() for allowed_type in container.allowedContentTypes()]
+                if portal_type in allowed_type_ids:
+                    api.content.create(
+                        type=portal_type,
+                        title='template',
+                        container=container,
+                        odt_file=self._annex_file_content(annexFile=self.annexFileODT))
+                # modify
+                templates = [template for template in container.objectValues()
+                             if template.portal_type == portal_type]
+                if templates:
+                    notify(ObjectEditedEvent(templates[0]))
+                else:
+                    pm_logger.info(
+                        "Could not find an element with portal_type {0} in "
+                        "container at {1}".format(portal_type, container.absolute_url_path()))
+                    continue
+                # delete
+                container.manage_delObjects([templates[0].getId()])
+
     def test_pm_UsedLabelCanNotBeRemoved(self):
-        """A ftw.labels label that is used on an item can not be removed."""
+        """A ftw.labels label that is used on an item or in the MeetingConfig can not be removed."""
+        self._enableField('labels')
         cfg = self.meetingConfig
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
+        label_id = 'personal-label'
         # add a label
         labelingview = item.restrictedTraverse('@@labeling')
-        self.request.form['activate_labels'] = ['label']
-        labelingview.update()
+        self.request.form['label_id'] = label_id
+        self.request.form['active'] = 'False'
+        labelingview.pers_update()
         item_labeling = ILabeling(item)
-        self.assertEqual(item_labeling.storage, {'label': []})
+        self.assertEqual(item_labeling.storage, {label_id: ['pmManager']})
         jar = ILabelJar(cfg)
-        self.assertTrue('label' in jar.storage)
+        self.assertTrue(label_id in jar.storage)
         # trying to remove a used label will redirect and show a message
         # but the label is not removed
-        jar.remove(label_id='label')
-        self.assertTrue('label' in jar.storage)
-        self.request.form['activate_labels'] = []
-        labelingview.update()
+        jar.remove(label_id=label_id)
+        self.assertTrue(label_id in jar.storage)
+        self.request.form['active'] = 'True'
+        labelingview.pers_update()
         self.assertEqual(item_labeling.storage, {})
-        self.assertTrue(jar.remove(label_id='label'))
-        self.assertFalse('label' in jar.storage)
+        self.assertTrue(jar.remove(label_id=label_id))
+        self.assertFalse(label_id in jar.storage)
+        # same if used in MeetingConfig.labelsConfig
+        label_id = 'label'
+        config = list(cfg.getLabelsConfig())
+        new_config = deepcopy(config[0])
+        new_config['label_id'] = "label"
+        config.append(new_config)
+        cfg.setLabelsConfig(config)
+        self.assertTrue(label_id in jar.storage)
+        # try to remove, still there
+        jar.remove(label_id=label_id)
+        self.assertTrue(label_id in jar.storage)
+        # remove from labelsConfig, will be removable from jar
+        cfg.setLabelsConfig([config[0]])
+        jar.remove(label_id=label_id)
+        self.assertFalse(label_id in jar.storage)
 
     def test_pm_ConfigModifiedWhenFTWLabelManaged(self):
         """MeetingConfig is modified when a label is added/updated/removed.
@@ -1879,6 +1996,37 @@ class testMeetingConfig(PloneMeetingTestCase):
         jar.remove('new-added-label')
         self.assertTrue(cfg.modified() > config_modified_before_remove)
         self.assertFalse(label_id in vocab_factory(pmFolder))
+
+    def test_pm_Validate_labelsConfig(self):
+        '''Test the MeetingConfig.labelsConfigpowerObservers validation.'''
+        cfg = self.meetingConfig
+        self.failIf(cfg.validate_labelsConfig(cfg.getLabelsConfig()))
+        # first line must be about '*'
+        config = list(cfg.getLabelsConfig())
+        new_config = deepcopy(config[0])
+        new_config['label_id'] = "label"
+        config.insert(0, new_config)
+        cfg.setLabelsConfig(config)
+        # first config must be about "*"
+        error_msg = translate(
+            u'labels_config_first_row_must_be_default_config',
+            domain='PloneMeeting',
+            context=self.request)
+        self.assertEqual(cfg.validate_labelsConfig(cfg.getLabelsConfig()), error_msg)
+        # can not have several rows about same label
+        error_msg = translate(
+            u'labels_config_can_not_have_several_config_for_same_label',
+            domain='PloneMeeting',
+            context=self.request)
+        config = list(cfg.getLabelsConfig())
+        config[0]['label_id'] = "*"
+        cfg.setLabelsConfig(config)
+        self.assertEqual(cfg.validate_labelsConfig(cfg.getLabelsConfig()), error_msg)
+        # workable config
+        config = list(cfg.getLabelsConfig())
+        config[1]['label_id'] = "label"
+        cfg.setLabelsConfig(config)
+        self.failIf(cfg.validate_labelsConfig(cfg.getLabelsConfig()))
 
     def test_pm_Validate_powerObservers(self):
         '''Test the MeetingConfig.powerObservers validation.
@@ -2141,7 +2289,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         cfg2 = self.meetingConfig2
         cfg_id = cfg.getId()
         tr = get_leading_transitions(
-            cfg2.getItemWorkflow(True), self._stateMappingFor('proposed'),
+            cfg.getItemWorkflow(True), self._stateMappingFor('proposed'),
             not_starting_with="back")[0]
         error_msg = translate(
             'state_or_transition_can_not_be_removed_in_use_other_config',
@@ -2161,7 +2309,7 @@ class testMeetingConfig(PloneMeetingTestCase):
             ({'meeting_config': '%s' % cfg_id,
               'trigger_workflow_transitions_until': '%s.%s' % (cfg_id, tr.id)},))
         self.assertEqual(
-                cfg.validate_itemWFValidationLevels(values_disabled_proposed), error_msg)
+            cfg.validate_itemWFValidationLevels(values_disabled_proposed), error_msg)
         # ok if transition not used
         cfg2.setMeetingConfigsToCloneTo(
             ({'meeting_config': '%s' % cfg_id,
@@ -2580,8 +2728,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertTrue(template.showMeetingManagerReservedField('notes'))
         self.assertTrue(template.mayQuickEdit('notes'))
         # but it does not have access on a real item
-        self._addPrincipalToGroup(
-            self.member.id, get_plone_group_id(self.developers_uid, 'creators'))
+        self._addPrincipalToGroup(self.member.id, self.developers_creators)
         item = self.create('MeetingItem')
         self.assertTrue(item.attribute_is_used('textCheckList'))
         self.assertFalse(item.showMeetingManagerReservedField('textCheckList'))
@@ -2641,6 +2788,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # test without usingGroups then enable it
         self.changeUser('pmManager')
         meeting = self.create('Meeting')
+        self.freezeMeeting(meeting)
         recipients, subject, body = sendMailIfRelevant(
             meeting,
             event='meeting_state_changed_freeze',
@@ -2695,6 +2843,62 @@ class testMeetingConfig(PloneMeetingTestCase):
                          ['decide', 'close'])
         self._activate_wfas(['no_freeze', 'no_publication', 'no_decide'])
         self.assertEqual(cfg.get_transitions_to_close_a_meeting(), ['close'])
+
+    def test_pm_UpdateFolderTitle(self):
+        """When MeetingConfig.folderTitle changed, every members config folder
+           title is updated accordingly."""
+        cfg = self.meetingConfig
+        cfg_id = cfg.getId()
+        # create every member config folder
+        self.deleteAsManager(self.portal.Members.test_user_1_.UID())
+        for member_folder_id in self.portal.Members.objectIds():
+            self.changeUser(member_folder_id)
+            self.tool.getPloneMeetingFolder(cfg_id)
+        for member_folder in self.portal.Members.objectValues():
+            self.assertEqual(member_folder.mymeetings.get(cfg_id).Title(), cfg.getFolderTitle())
+        # change MeetingConfig.folderTitle, every members meeting config folders are updated accordingly
+        cfg.setFolderTitle('Another title héhé')
+        for member_folder in self.portal.Members.objectValues():
+            self.assertEqual(member_folder.mymeetings.get(cfg_id).Title(), cfg.getFolderTitle())
+
+    def test_pm_ContentAnnexTypesVocabulary(self):
+        """Test the ContentCategory.after_scan_change_annex_type_to as it changes
+           depending on item annex type, advice annex type or meeting annex type."""
+        cfg = self.meetingConfig
+        item_annex_type = cfg.annexes_types.item_annexes.get('item-annex')
+        item_annex_type_uid = item_annex_type.UID()
+        item_decision_annex_type = cfg.annexes_types.item_decision_annexes.get('decision-annex')
+        item_decision_annex_type_uid = item_decision_annex_type.UID()
+        meeting_annex_type = cfg.annexes_types.meeting_annexes.get('meeting-annex')
+        meeting_annex_type_uid = meeting_annex_type.UID()
+        advice_annex_type = cfg.annexes_types.advice_annexes.get('advice-annex')
+        advice_annex_type_uid = advice_annex_type.UID()
+        # can go from item annex types to another item annex type or decision annex types
+        vocab_name = "Products.PloneMeeting.vocabularies.content_annex_types_vocabulary"
+        # item annex type
+        item_annex_type_values = get_vocab_values(item_annex_type, vocab_name)
+        self.assertTrue(item_annex_type_uid in item_annex_type_values)
+        self.assertTrue(item_decision_annex_type_uid in item_annex_type_values)
+        self.assertFalse(meeting_annex_type_uid in item_annex_type_values)
+        self.assertFalse(advice_annex_type_uid in item_annex_type_values)
+        # item decision annex type
+        item_decision_annex_type_values = get_vocab_values(item_decision_annex_type, vocab_name)
+        self.assertTrue(item_annex_type_uid in item_decision_annex_type_values)
+        self.assertTrue(item_decision_annex_type_uid in item_decision_annex_type_values)
+        self.assertFalse(meeting_annex_type_uid in item_decision_annex_type_values)
+        self.assertFalse(advice_annex_type_uid in item_decision_annex_type_values)
+        # meeting annex type
+        meeting_annex_type_values = get_vocab_values(meeting_annex_type, vocab_name)
+        self.assertFalse(item_annex_type_uid in meeting_annex_type_values)
+        self.assertFalse(item_decision_annex_type_uid in meeting_annex_type_values)
+        self.assertTrue(meeting_annex_type_uid in meeting_annex_type_values)
+        self.assertFalse(advice_annex_type_uid in item_decision_annex_type_values)
+        # advice annex type
+        advice_annex_type_values = get_vocab_values(advice_annex_type, vocab_name)
+        self.assertFalse(item_annex_type_uid in advice_annex_type_values)
+        self.assertFalse(item_decision_annex_type_uid in advice_annex_type_values)
+        self.assertFalse(meeting_annex_type_uid in advice_annex_type_values)
+        self.assertTrue(advice_annex_type_uid in advice_annex_type_values)
 
 
 def test_suite():

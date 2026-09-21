@@ -608,9 +608,12 @@ class testSearches(PloneMeetingTestCase):
                           'getTakenOverBy': {'query': 'pmCreator1'}})
 
     def _searchItemsToValidateOfHighestHierarchicLevelReviewerInfo(self, cfg):
-        """ """
-        return ['{0}__reviewprocess__{1}'.format(self.developers_uid,
-                                                 self._stateMappingFor('proposed'))]
+        """Overridable if necessary, take into account when prevalidation is enabled or not."""
+        item_state = self._stateMappingFor('proposed')
+        item_wf_transitions = cfg.getItemWFValidationLevels(data='leading_transition', only_enabled=True)
+        if "prevalidate" in item_wf_transitions:
+            item_state = self._stateMappingFor('prevalidated')
+        return ['{0}__reviewprocess__{1}'.format(self.developers_uid, item_state)]
 
     def test_pm_SearchItemsToValidateOfHighestHierarchicLevel(self):
         '''Test the searchItemsToValidateOfHighestHierarchicLevel method.
@@ -630,18 +633,16 @@ class testSearches(PloneMeetingTestCase):
                              name='items-to-validate-of-highest-hierarchic-level')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstovalidateofhighesthierarchiclevel')
         reviewProcessInfo = self._searchItemsToValidateOfHighestHierarchicLevelReviewerInfo(cfg)
+
         self.assertEqual(
             adapter.query,
             {'reviewProcessInfo':
                 {'query': reviewProcessInfo},
              'portal_type': {'query': itemTypeName}})
 
-        reviewers = cfg.reviewersFor()
         # activate 'prevalidation' if necessary
-        if 'prereviewers' not in reviewers:
+        if 'prevalidate' not in cfg.getItemWFValidationLevels(data='leading_transition', only_enabled=True):
             self._enablePrevalidation(cfg)
-        reviewers = cfg.reviewersFor()
-        self.assertTrue('prereviewers' in reviewers)
         # now do the query
         # this adapter is used by the "searchitemstovalidate"
         collection = cfg.searches.searches_items.searchitemstovalidate
@@ -674,9 +675,8 @@ class testSearches(PloneMeetingTestCase):
         # the search does returns him the item, it should not as he is just a reviewer
         # but not able to really validate the new item
         self._enableField('copyGroups')
+        reviewers = cfg.reviewersFor()
         review_states = reviewers[reviewers.keys()[0]]
-        if 'prereviewers' in reviewers:
-            review_states += ('prevalidated',)
         cfg.setItemCopyGroupsStates(review_states)
         item.setCopyGroups((self.vendors_reviewers, ))
         item._update_after_edit()
@@ -1206,21 +1206,37 @@ class testSearches(PloneMeetingTestCase):
     def test_pm_SearchUnreadItems(self):
         '''Test the 'items-with-negative-personal-labels' adapter.
            This should return a list of items for which current user did not checked the 'lu' label.'''
+        # disable every showNumberOfItems so no search is enabled by custom profile
         cfg = self.meetingConfig
-        cfg.setEnableLabels(True)
+        for collection in cfg.searches.searches_items.objectValues():
+            collection.showNumberOfItems = False
+        cfg = self.meetingConfig
+        self._enableField('labels')
         collection = cfg.searches.searches_items.searchunreaditems
+        collection_uid = collection.UID()
+        collection.showNumberOfItems = True
 
         # create item, not 'lu' by default
         self.changeUser('pmCreator1')
+        # check that counter is updated when a personal label is changed
+        json_collections_count = self.getMeetingFolder().restrictedTraverse("@@json_collections_count")
+        self.assertEqual(
+            json_collections_count(),
+            '{"criterionId": "c1", "countByCollection": [{"count": 0, "uid": "%s"}]}' % collection_uid)
         item = self.create('MeetingItem')
-        item.reindexObject(idxs=['labels'])
         # for now item is not 'lu'
         self.assertEqual(len(collection.results()), 1)
+        self.assertEqual(
+            json_collections_count(),
+            '{"criterionId": "c1", "countByCollection": [{"count": 1, "uid": "%s"}]}' % collection_uid)
         # make item 'lu'
         labeling = ILabeling(item)
         labeling.pers_update(['lu'], True)
         item.reindexObject(idxs=['labels'])
         self.assertEqual(len(collection.results()), 0)
+        self.assertEqual(
+            json_collections_count(),
+            '{"criterionId": "c1", "countByCollection": [{"count": 0, "uid": "%s"}]}' % collection_uid)
 
     def test_pm_CompoundCriterionAdapterItemsWithNegativePreviousIndex(self):
         '''Test the 'items-with-negative-previous-index' adapter.
@@ -1411,12 +1427,16 @@ class testSearches(PloneMeetingTestCase):
            PMRenderTermView.number_of_items.
            Test also that caching works when using a "myitems" like collection as
            user_id is taken into account in the invalidation key in this case."""
+        # disable every showNumberOfItems so no search is enabled by custom profile
+        cfg = self.meetingConfig
+        for collection in cfg.searches.searches_items.objectValues():
+            collection.showNumberOfItems = False
         self.changeUser("pmCreator1")
         view = self.getMeetingFolder().restrictedTraverse("@@json_collections_count")
         self.assertEqual(view(), '{"criterionId": "c1", "countByCollection": []}')
         item = self.create("MeetingItem")
         self.assertEqual(view(), '{"criterionId": "c1", "countByCollection": []}')
-        searchmyitems = self.meetingConfig.searches.searches_items.searchmyitems
+        searchmyitems = cfg.searches.searches_items.searchmyitems
         searchmyitems_uid = searchmyitems.UID()
         searchmyitems.showNumberOfItems = True
         self.assertEqual(

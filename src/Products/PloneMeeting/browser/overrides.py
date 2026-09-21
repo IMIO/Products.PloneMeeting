@@ -16,6 +16,8 @@ from collective.eeafaceted.dashboard.browser.overrides import DashboardDocumentG
 from collective.eeafaceted.dashboard.browser.overrides import DashboardDocumentGeneratorLinksViewlet
 from collective.eeafaceted.dashboard.browser.views import RenderTermPortletView
 from collective.iconifiedcategory import safe_utils as collective_iconifiedcategory_safe_utils
+from collective.iconifiedcategory.browser.css import css_pattern
+from collective.iconifiedcategory.browser.css import IconifiedCategory
 from datetime import datetime
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.actionspanel.browser.viewlets import ActionsPanelViewlet
@@ -25,6 +27,7 @@ from imio.dashboard.interfaces import IContactsDashboard
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_current_user_id
 from imio.helpers.cache import get_plone_groups_for_user
+from imio.helpers.content import get_vocab
 from imio.helpers.content import uuidToObject
 from imio.helpers.security import check_zope_admin
 from imio.history.browser.views import IHContentHistoryView
@@ -57,11 +60,11 @@ from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.interfaces import IConfigElement
 from Products.PloneMeeting.MeetingConfig import POWEROBSERVERPREFIX
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
+from Products.PloneMeeting.utils import extract_recipients
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import get_next_meeting
 from Products.PloneMeeting.utils import getAdvicePortalTypeIds
 from Products.PloneMeeting.utils import getAvailableMailingLists
-from Products.PloneMeeting.utils import getMailRecipient
 from Products.PloneMeeting.utils import is_editing
 from Products.PloneMeeting.utils import isPowerObserverForCfg
 from Products.PloneMeeting.utils import normalize_id
@@ -210,65 +213,6 @@ class PMContentActionsPanelViewlet(ActionsPanelViewlet):
     async = True
 
 
-class PMConfigActionsPanelViewlet(PMContentActionsPanelViewlet):
-    """Render actionspanel viewlet differently for elements of the MeetingConfig.
-       Manage a "back" link."""
-
-    backPages = {'categories': 'data',
-                 'classifiers': 'data',
-                 'meetingcategories': 'data',
-                 'itemtemplates': 'data',
-                 'podtemplates': 'doc',
-                 'recurringitems': 'data', }
-
-    def _findRootSubfolder(self, folder):
-        '''Find the root subfolder in the MeetingConfig.
-           This is necessary when having subfolders in a subfolder of the MeetingConfig,
-           like for item templates for example.'''
-        previous = folder
-        parent = folder.aq_inner.aq_parent
-        while not parent.portal_type == 'MeetingConfig':
-            previous = parent
-            parent = parent.aq_inner.aq_parent
-        return previous
-
-    def getBackUrl(self):
-        '''Computes the URL for "back" links in the tool or in a config.'''
-        url = ''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        tool_url = tool.absolute_url()
-        cfg = tool.getMeetingConfig(self.context)
-        cfg_url = ''
-        if cfg:
-            cfg_url = cfg.absolute_url()
-        parent = self.context.getParentNode()
-        if self.context.portal_type == 'DashboardCollection':
-            url = '{0}?pageName=gui#searches'.format(cfg_url)
-        elif parent.portal_type == 'Folder':
-            # p_context is a sub-object in a sub-folder within a config
-            root_subfolder = self._findRootSubfolder(parent)
-            folderName = root_subfolder.getId()
-            url = '{0}?pageName={1}#{2}'.format(cfg_url, self.backPages[folderName], folderName)
-        elif self.context.portal_type in ('ContentCategoryConfiguration',
-                                          'ContentCategoryGroup',
-                                          'ContentCategory',
-                                          'ContentSubcategory',
-                                          'ItemAnnexContentCategory',
-                                          'ItemAnnexContentSubcategory',
-                                          ):
-            url = '{0}?pageName=data#annexes_types'.format(cfg_url, )
-        elif self.context.portal_type in ('person', 'held_position', 'organization'):
-            url = parent.absolute_url()
-        elif self.context.portal_type == 'DashboardPODTemplate' and not cfg:
-            portal = api.portal.get()
-            url = portal.contacts.absolute_url()
-        else:
-            # We are in a subobject from the tool or on the PLONEGROUP_ORG
-            url = tool_url
-            url += '#%s' % self.context.portal_type
-        return url
-
-
 class BaseGeneratorLinksViewlet(object):
     """ """
 
@@ -373,7 +317,7 @@ class PloneMeetingOverviewControlPanel(OverviewControlPanel):
         pm_version = api.env.get_distribution('Products.PloneMeeting')._version
         ps = api.portal.get_tool('portal_setup')
         pm_ps_version = ps.getVersionForProfile('Products.PloneMeeting:default')
-        pm_ps_last_version = ps.getLastVersionForProfile('Products.PloneMeeting:default')[0]
+        pm_ps_last_version = u'.'.join(ps.getLastVersionForProfile('Products.PloneMeeting:default'))
         if pm_ps_last_version != pm_ps_version:
             pm_ps_version = u'⚠⚠⚠ %s/%s ⚠⚠⚠ Please launch upgrade steps!!!' % (pm_ps_last_version, pm_ps_version)
         versions.insert(0, 'PloneMeeting %s (%s)' % (pm_version, pm_ps_version))
@@ -497,8 +441,8 @@ class PMRenderTermView(RenderTermPortletView):
         # include current user_id if we have a "myitems" like collection
         user_id = None
         if (criterion for criterion in self.context.query
-            if criterion['o'] == 'plone.app.querystring.operation.string.currentUser'):
-                user_id = get_current_user_id(self.request)
+                if criterion['o'] == 'plone.app.querystring.operation.string.currentUser'):
+            user_id = get_current_user_id(self.request)
         return (repr(self.context), get_plone_groups_for_user(), user_id, date, init)
 
     @ram.cache(number_of_items_cachekey)
@@ -687,7 +631,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         # try to share cache among user "profiles"
         isRealManager = isManager = isEditorUser = advicesIndexModified = \
             userAbleToCorrectItemWaitingAdvices = isPowerObserverHiddenHistory = \
-            isCreator = None
+            isCreator = isReviewer = pg_groups = None
         # Manager
         isRealManager = self.tool.isManager(realManagers=True)
         # MeetingManager, necessary for MeetingConfig.itemActionsColumnConfig for example
@@ -717,6 +661,21 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
                     userAbleToCorrectItemWaitingAdvices += \
                         self.tool.get_filtered_plone_groups_for_user(
                             org_uids=[group_managing_item_uid])
+            elif item_state == 'validated' and not isManager:
+                wfas = self.cfg.getWorkflowAdaptations()
+                if 'reviewers_take_back_validated_item' in wfas:
+                    last_val_state, last_level = self.context.wfConditions()._getLastValidationState(
+                        return_level=True)
+                    group_managing_item_uid = self.context.adapted()._getGroupManagingItem(
+                        item_state, theObject=False)
+                    isReviewer = self.tool.group_is_not_empty(
+                        group_managing_item_uid, last_level['suffix'], user_id=get_current_user_id())
+            # make sure shortucut transitions are only displayed to relevant user
+            proposing_group = self.context.getProposingGroup()
+            if proposing_group and \
+               'item_validation_shortcuts' in self.cfg.getWorkflowAdaptations():
+                pg_groups = self.tool.get_filtered_plone_groups_for_user(
+                    org_uids=[proposing_group])
 
             # powerobservers to manage MeetingConfig.hideHistoryTo
             hideHistoryTo_item_values = [
@@ -740,7 +699,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         # check also portal_url in case application is accessed thru different URI
         return (repr(self.context), repr(self.context.modified()), advicesIndexModified, repr(date),
                 sent_to,
-                isRealManager, isManager, isEditorUser, isCreator,
+                isRealManager, isManager, isEditorUser, isCreator, isReviewer, pg_groups,
                 userAbleToCorrectItemWaitingAdvices, isPowerObserverHiddenHistory,
                 meeting_review_state, useIcons, showTransitions, appendTypeNameToTransitionLabel,
                 showEdit, showOwnDelete, showOwnDeleteWithComments, showActions,
@@ -1002,6 +961,8 @@ class ConfigActionsPanelView(ActionsPanelView):
             self.SECTIONS_TO_RENDER += ('renderActions', )
             self.ACCEPTABLE_ACTIONS = ('rename', )
 
+        self.SECTIONS_TO_RENDER += ('renderBackUrl', )
+
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
 
@@ -1073,7 +1034,11 @@ class ConfigActionsPanelView(ActionsPanelView):
           We override mayEdit because for MeetingConfig,
           some users have 'Modify portal content' but no field to edit...
           In the case there is no field to edit, do not display the edit action.
+          We also hide the action to non Zope admin for PODTemplates of any kind.
         """
+        if self.context.portal_type in ['ConfigurablePODTemplate', 'StyleTemplate', 'DashboardPODTemplate'] and \
+           not check_zope_admin():
+            return False
         return _checkPermission(ModifyPortalContent, self.context) and \
             (not self.context.portal_type == 'MeetingConfig' or
              self.context.Schema().editableFields(self.context.Schema()))
@@ -1088,6 +1053,68 @@ class ConfigActionsPanelView(ActionsPanelView):
             return ViewPageTemplateFile("templates/actions_panel_config_linkedplonegroups.pt")(self)
         return ''
 
+    backPages = {'categories': 'data',
+                 'classifiers': 'data',
+                 'meetingcategories': 'data',
+                 'itemtemplates': 'data',
+                 'podtemplates': 'doc',
+                 'recurringitems': 'data', }
+
+    def _findRootSubfolder(self, folder):
+        '''Find the root subfolder in the MeetingConfig.
+           This is necessary when having subfolders in a subfolder of the MeetingConfig,
+           like for item templates for example.'''
+        previous = folder
+        parent = folder.aq_inner.aq_parent
+        while not parent.portal_type == 'MeetingConfig':
+            previous = parent
+            parent = parent.aq_inner.aq_parent
+        return previous
+
+    def getBackUrl(self):
+        '''Computes the URL for "back" links in the tool or in a config.'''
+        url = ''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        tool_url = tool.absolute_url()
+        cfg = tool.getMeetingConfig(self.context)
+        cfg_url = ''
+        if cfg:
+            cfg_url = cfg.absolute_url()
+        parent = self.context.getParentNode()
+        if self.context.portal_type == 'DashboardCollection':
+            url = '{0}?pageName=gui#searches'.format(cfg_url)
+        elif parent.portal_type == 'Folder':
+            # p_context is a sub-object in a sub-folder within a config
+            root_subfolder = self._findRootSubfolder(parent)
+            folderName = root_subfolder.getId()
+            url = '{0}?pageName={1}#{2}'.format(cfg_url, self.backPages[folderName], folderName)
+        elif self.context.portal_type in ('ContentCategoryConfiguration',
+                                          'ContentCategoryGroup',
+                                          'ContentCategory',
+                                          'ContentSubcategory',
+                                          'ItemAnnexContentCategory',
+                                          'ItemAnnexContentSubcategory',
+                                          ):
+            url = '{0}?pageName=data#annexes_types'.format(cfg_url, )
+        elif self.context.portal_type == 'organization':
+            url = parent.contacts.get('orgs-searches').absolute_url()
+        elif self.context.portal_type == 'person':
+            url = parent.contacts.get('persons-searches').absolute_url()
+        elif self.context.portal_type == 'held_position':
+            url = parent.contacts.get('hps-searches').absolute_url()
+        elif self.context.portal_type == 'DashboardPODTemplate' and not cfg:
+            portal = api.portal.get()
+            url = portal.contacts.absolute_url()
+        else:
+            # We are in a subobject from the tool or on the PLONEGROUP_ORG
+            url = tool_url
+            url += '#%s' % self.context.portal_type
+        return url
+
+    def renderBackUrl(self):
+        """Render the backUrl section."""
+        return ViewPageTemplateFile("templates/actions_panel_config_backlink.pt")(self)
+
 
 class PMDocumentGenerationView(DashboardDocumentGenerationView):
     """Redefine the DocumentGenerationView to extend context available in the template
@@ -1097,11 +1124,12 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
 
     def get_base_generation_context(self, helper_view, pod_template):
         """ """
-        specific_context = _base_extra_expr_ctx(self.context)
-        specific_context['self'] = self.context
-        specific_context['adap'] = hasattr(self.context, 'adapted') and self.context.adapted() or None
-        specific_context['itemUids'] = {}
-        specific_context['podTemplate'] = pod_template
+        specific_context = _base_extra_expr_ctx(
+            self.context,
+            {'self': self.context,
+             'adap': hasattr(self.context, 'adapted') and self.context.adapted() or None,
+             'itemUids': {},
+             'podTemplate': pod_template})
         # managed by collective.talcondition but not present here
         specific_context['member'] = specific_context['user']
         return specific_context
@@ -1299,47 +1327,13 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
         """Generates the stored annex title using the ConfigurablePODTemplate.store_as_annex_title_expr.
            If empty, we just return the ConfigurablePODTemplate title."""
         value = pod_template.store_as_annex_title_expr
-        extra_expr_ctx = _base_extra_expr_ctx(self.context)
-        extra_expr_ctx.update({'obj': self.context, 'pod_template': pod_template})
+        extra_expr_ctx = _base_extra_expr_ctx(self.context, {'pod_template': pod_template})
         evaluatedExpr = _evaluateExpression(
             self.context,
             expression=value and value.strip() or '',
             extra_expr_ctx=extra_expr_ctx,
             empty_expr_is_true=False)
         return evaluatedExpr or pod_template.Title()
-
-    def _extractRecipients(self, values):
-        """ """
-        # compile userIds in case we have a TAL expression
-        recipients = []
-        userIdsOrEmailAddresses = []
-        extra_expr_ctx = _base_extra_expr_ctx(self.context)
-        extra_expr_ctx.update({'obj': self.context, })
-        for value in values.strip().split(','):
-            # value may be a TAL expression returning a list of userIds or email addresses
-            # or a group (of users)
-            # or a userId
-            # or an e-mail address
-            if value.startswith('python:') or '/' in value:
-                evaluatedExpr = _evaluateExpression(
-                    self.context,
-                    expression=value.strip(),
-                    extra_expr_ctx=extra_expr_ctx)
-                userIdsOrEmailAddresses += list(evaluatedExpr)
-            elif value.startswith('group:'):
-                group = api.group.get(value[6:])
-                userIdsOrEmailAddresses += list(group.getMemberIds())
-            else:
-                userIdsOrEmailAddresses.append(value)
-        # now we have userIds or email address, we want email addresses
-        for userIdOrEmailAddress in userIdsOrEmailAddresses:
-            recipient = '@' in userIdOrEmailAddress and userIdOrEmailAddress or \
-                getMailRecipient(userIdOrEmailAddress.strip())
-            if not recipient:
-                continue
-            if recipient not in recipients:
-                recipients.append(recipient)
-        return recipients
 
     def _sendPodTemplate(self, rendered_template):
         '''Sends, by email, a p_rendered_template.'''
@@ -1353,9 +1347,11 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
         mailing_lists = pod_template.mailing_lists and pod_template.mailing_lists.strip()
         for line in mailing_lists.split('\n'):
             name, condition, values = line.split(';')
+            # escape as name in JS is escaped to manage name with "'"
+            name = html.escape(name).strip()
             if name != mailinglist_name:
                 continue
-            recipients = self._extractRecipients(values)
+            recipients = extract_recipients(self.context, values)
         if not recipients:
             raise Exception(self.MAILINGLIST_NO_RECIPIENTS)
         self._sendToRecipients(recipients, pod_template, rendered_template)
@@ -1375,6 +1371,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
         # Return to the referer page.
         msg = translate('pt_mailing_sent',
                         domain='PloneMeeting',
+                        mapping={'recipients': ", ".join(recipients)},
                         context=self.request)
         plone_utils = api.portal.get_tool('plone_utils')
         plone_utils.addPortalMessage(msg)
@@ -1636,7 +1633,7 @@ class PMUtils(Utils):
         # do not escape vocabularies used in MeetingConfig
         # especially the SelectableAssemblyMembersVocabulary for which terms
         # contain HTML
-        if not self.request.getURL().endswith('/document-generation') and \
+        if not self.request.getURL().endswith(('/document-generation', '/@@document-generation')) and \
            not IConfigElement.providedBy(self.context):
             nvalues = [html.escape(val) for val in nvalues]
         if IConfigElement.providedBy(self.context):
@@ -1705,3 +1702,31 @@ class PMAjaxSave(AjaxSave):
             tranform=True,
             reindex=True,
             unlock=False)
+
+
+class PMCSSIconifiedCategory(IconifiedCategory):
+    """ """
+
+    def __call__(self, *args, **kwargs):
+        """Complete CSS with advice icon CSS."""
+        content = super(PMCSSIconifiedCategory, self).__call__(*args, **kwargs)
+        # find style used, either standard or hands
+        tool = api.portal.get_tool('portal_plonemeeting')
+        advice_style = "standard"
+        for cfg in tool.getActiveConfigs(check_using_groups=False):
+            if cfg.getUseAdvices() is True:
+                advice_style = cfg.getAdviceStyle()
+                break
+        new_content = []
+        portal_url = api.portal.get().absolute_url()
+        advice_types = [
+            term.token for term in get_vocab(
+                tool,
+                'ConfigAdviceTypes',
+                include_asked_again=True,
+                include_term_id=False)._terms]
+        for advice_type in advice_types:
+            url = u'{0}/advice_{1}_{2}.png'.format(
+                portal_url, advice_style, advice_type)
+            new_content.append(css_pattern.format(advice_type, url))
+        return content + ' '.join(new_content)

@@ -23,8 +23,9 @@ from collective.documentgenerator.interfaces import IGenerablePODTemplates
 from collective.eeafaceted.collectionwidget.content.dashboardcollection import IDashboardCollection
 from collective.eeafaceted.collectionwidget.vocabulary import CachedCollectionVocabulary
 from collective.eeafaceted.dashboard.vocabulary import DashboardCollectionsVocabulary
-from collective.eeafaceted.z3ctable.columns import EMPTY_STRING
 from collective.iconifiedcategory.config import get_sort_categorized_tab
+from collective.iconifiedcategory.content.category import Category
+from collective.iconifiedcategory.content.subcategory import Subcategory
 from collective.iconifiedcategory.utils import get_categorized_elements
 from collective.iconifiedcategory.utils import get_category_icon_url
 from collective.iconifiedcategory.utils import get_category_object
@@ -36,6 +37,7 @@ from collective.iconifiedcategory.vocabularies import CategoryVocabulary
 from DateTime import DateTime
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.annex.content.annex import IAnnex
+from imio.helpers import EMPTY_STRING
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.content import find
@@ -55,6 +57,7 @@ from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.browser.itemvotes import next_vote_is_linked
 from Products.PloneMeeting.config import ADVICE_TYPES
 from Products.PloneMeeting.config import ALL_VOTE_VALUES
+from Products.PloneMeeting.config import CONFIGURABLE_FIELD_NAMES
 from Products.PloneMeeting.config import CONSIDERED_NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
@@ -65,6 +68,7 @@ from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
 from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
 from Products.PloneMeeting.interfaces import IMeetingConfig
 from Products.PloneMeeting.interfaces import IMeetingItem
+from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.utils import decodeDelayAwareId
 from Products.PloneMeeting.utils import get_context_with_request
 from Products.PloneMeeting.utils import get_datagridfield_column_value
@@ -915,22 +919,29 @@ class AskedAdvicesVocabulary(object):
             org_uid = delayAwareAdviser['org']
             org = get_organization(org_uid)
             org_title = org.get_full_title()
+            is_delay_calendar_days = delayAwareAdviser['is_delay_calendar_days'] == '1'
             if delay_label:
+                msgid = 'advice_delay_with_label'
+                if is_delay_calendar_days:
+                    msgid = 'advice_calendar_days_delay_with_label'
                 termTitle = translate(
-                    'advice_delay_with_label',
+                    msgid,
                     domain='PloneMeeting',
                     mapping={'org_title': org_title,
                              'delay': delay,
                              'delay_label': delay_label},
-                    default='${group_name} - ${delay} day(s) (${delay_label})',
+                    default='${org_title} - ${delay} day(s) (${delay_label})',
                     context=self.request)
             else:
+                msgid = 'advice_delay_without_label'
+                if is_delay_calendar_days:
+                    msgid = 'advice_calendar_days_delay_without_label'
                 termTitle = translate(
-                    'advice_delay_without_label',
+                    msgid,
                     domain='PloneMeeting',
                     mapping={'org_title': org_title,
                              'delay': delay},
-                    default='${group_name} - ${delay} day(s)',
+                    default='${org_title} - ${delay} day(s)',
                     context=self.request)
         return termTitle
 
@@ -1029,8 +1040,12 @@ class ItemOptionalAdvicesVocabulary(object):
         validity_date = None
         item = None
         if context.meta_type == 'MeetingItem':
-            validity_date = context.created()
             item = context
+            if context.isDefinedInTool():
+                # this way every defined custom advisers is valid and displayed
+                validity_date = DateTime()
+            else:
+                validity_date = context.created()
         else:
             validity_date = DateTime()
         return cfg._optionalDelayAwareAdvisers(validity_date, item)
@@ -1044,24 +1059,32 @@ class ItemOptionalAdvicesVocabulary(object):
 
         request = context.REQUEST
 
-        def _displayDelayAwareValue(delay_label, org_title, delay):
+        def _displayDelayAwareValue(delay_label, org_title, delay, is_delay_calendar_days):
             org_title = safe_unicode(org_title)
             delay_label = safe_unicode(delay_label)
             if delay_label:
-                value_to_display = translate('advice_delay_with_label',
-                                             domain='PloneMeeting',
-                                             mapping={'org_title': org_title,
-                                                      'delay': delay,
-                                                      'delay_label': delay_label},
-                                             default='${org_title} - ${delay} day(s) (${delay_label})',
-                                             context=request)
+                msgid = 'advice_delay_with_label'
+                if is_delay_calendar_days:
+                    msgid = 'advice_calendar_days_delay_with_label'
+                value_to_display = translate(
+                    msgid,
+                    domain='PloneMeeting',
+                    mapping={'org_title': org_title,
+                             'delay': delay,
+                             'delay_label': delay_label},
+                    default='${org_title} - ${delay} day(s) (${delay_label})',
+                    context=request)
             else:
-                value_to_display = translate('advice_delay_without_label',
-                                             domain='PloneMeeting',
-                                             mapping={'org_title': group_name,
-                                                      'delay': delay},
-                                             default='${org_title} - ${delay} day(s)',
-                                             context=request)
+                msgid = 'advice_delay_without_label'
+                if is_delay_calendar_days:
+                    msgid = 'advice_calendar_days_delay_without_label'
+                value_to_display = translate(
+                    msgid,
+                    domain='PloneMeeting',
+                    mapping={'org_title': group_name,
+                             'delay': delay},
+                    default='${org_title} - ${delay} day(s)',
+                    context=request)
             return value_to_display
 
         def _insert_term_and_users(res, term_value, term_title, add_users=True):
@@ -1115,7 +1138,9 @@ class ItemOptionalAdvicesVocabulary(object):
             delay = delayAwareAdviser['delay']
             delay_label = delayAwareAdviser['delay_label']
             group_name = delayAwareAdviser['org_title']
-            value_to_display = _displayDelayAwareValue(delay_label, group_name, delay)
+            is_delay_calendar_days = delayAwareAdviser['is_delay_calendar_days']
+            value_to_display = _displayDelayAwareValue(
+                delay_label, group_name, delay, is_delay_calendar_days)
             _insert_term_and_users(
                 resDelayAwareAdvisers, adviserId, value_to_display)
 
@@ -1139,11 +1164,13 @@ class ItemOptionalAdvicesVocabulary(object):
                             org_uid, row_id = decodeDelayAwareId(org_uid)
                             delay = cfg._dataForCustomAdviserRowId(row_id)['delay']
                             delay_label = context.adviceIndex[org_uid]['delay_label']
+                            is_delay_calendar_days = context.adviceIndex[org_uid].get(
+                                'is_delay_calendar_days', False)
                             org = get_organization(org_uid)
                             if not org:
                                 continue
                             value_to_display = _displayDelayAwareValue(
-                                delay_label, org.get_full_title(), delay)
+                                delay_label, org.get_full_title(), delay, is_delay_calendar_days)
                             if not user_id:
                                 _insert_term_and_users(
                                     resDelayAwareAdvisers,
@@ -1295,26 +1322,29 @@ class SentToInfosVocabulary(object):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         # the 'not to be cloned anywhere' term
-        res.append(SimpleTerm('not_to_be_cloned_to',
-                              'not_to_be_cloned_to',
-                              safe_unicode(translate('not_to_be_cloned_to_term',
-                                                     domain='PloneMeeting',
-                                                     context=context.REQUEST)))
-                   )
+        res.append(
+            SimpleTerm('not_to_be_cloned_to',
+                       'not_to_be_cloned_to',
+                       safe_unicode(translate('not_to_be_cloned_to_term',
+                                              domain='PloneMeeting',
+                                              context=context.REQUEST))))
         for cfgInfo in cfg.getMeetingConfigsToCloneTo():
             cfgId = cfgInfo['meeting_config']
-            cfgTitle = getattr(tool, cfgId).Title()
+            cfgTitle = getattr(tool, cfgId).Title(include_config_group=True)
             # add 'clonable to' and 'cloned to' options
             for suffix in ('__clonable_to', '__clonable_to_emergency',
                            '__cloned_to', '__cloned_to_emergency'):
                 termId = cfgId + suffix
-                res.append(SimpleTerm(termId,
-                                      termId,
-                                      translate('sent_to_other_mc_term' + suffix,
-                                                mapping={'meetingConfigTitle': safe_unicode(cfgTitle)},
-                                                domain='PloneMeeting',
-                                                context=context.REQUEST))
-                           )
+                res.append(
+                    SimpleTerm(
+                        termId,
+                        termId,
+                        translate(
+                            'sent_to_other_mc_term' + suffix,
+                            mapping={'meetingConfigTitle':
+                                safe_unicode(cfgTitle)},
+                            domain='PloneMeeting',
+                            context=context.REQUEST)))
         return SimpleVocabulary(res)
 
 
@@ -1535,15 +1565,23 @@ class SelectablePrivaciesVocabulary(object):
     def __call__(self, context):
         """ """
         res = []
-        keys = ['public_heading', 'public', 'secret_heading', 'secret']
+        keys = ['public_heading',
+                'public',
+                'public_info',
+                'public_advice',
+                'secret_heading',
+                'secret',
+                'secret_info',
+                'secret_advice']
         for key in keys:
             res.append(SimpleTerm(
                 key,
                 key,
-                safe_unicode(translate(key,
-                                       domain='PloneMeeting',
-                                       context=context.REQUEST))))
-
+                safe_unicode(
+                    translate(
+                        key,
+                        domain='PloneMeeting',
+                        context=context.REQUEST))))
         return SimpleVocabulary(res)
 
 
@@ -1658,6 +1696,32 @@ class ItemAnnexTypesVocabulary(EveryAnnexTypesVocabulary):
 
 
 ItemAnnexTypesVocabularyFactory = ItemAnnexTypesVocabulary()
+
+
+class ContentAnnexTypesVocabulary(EveryAnnexTypesVocabulary):
+
+    def __call__(self,
+                 context,
+                 filtered_annex_groups=[],
+                 include_icon=False):
+        """Vocabulary managing filtered_annex_groups depending on context."""
+        # here we are on a Category or on a CategoryGroup
+        if isinstance(context, (Category, Subcategory)):
+            annex_group = context.get_category_group()
+        else:
+            annex_group = context
+        annex_group_id = annex_group.getId()
+        if annex_group_id in ['item_annexes', 'item_decision_annexes']:
+            filtered_annex_groups = ['item_annexes', 'item_decision_annexes']
+        else:
+            filtered_annex_groups = [annex_group_id]
+        return super(ContentAnnexTypesVocabulary, self).__call__(
+            context,
+            filtered_annex_groups=filtered_annex_groups,
+            include_icon=include_icon)
+
+
+ContentAnnexTypesVocabularyFactory = ContentAnnexTypesVocabulary()
 
 
 class IconItemAnnexTypesVocabulary(ItemAnnexTypesVocabulary):
@@ -2074,7 +2138,7 @@ class AnnexRestrictShownAndEditableAttributesVocabulary(object):
 
     def __call__(self, context):
         res = []
-        annex_attributes = ['confidentiality', 'to_be_printed', 'signed', 'publishable']
+        annex_attributes = ['confidentiality', 'to_be_printed', 'signed', 'publishable', 'approved']
         for annex_attr in annex_attributes:
             for suffix in ('display', 'edit'):
                 term_id = '{0}_{1}'.format(annex_attr, suffix)
@@ -2221,7 +2285,7 @@ class BaseHeldPositionsVocabulary(object):
         forced_position_type_value = None
         for brain in brains:
             held_position = brain.getObject()
-            if held_position.usages and (not usage or usage in held_position.usages):
+            if not usage or (held_position.usages and usage in held_position.usages):
                 if is_item:
                     forced_position_type_value = meeting.get_attendee_position_for(
                         context_uid, brain.UID)
@@ -2333,6 +2397,7 @@ class SelectableAssemblyMembersVocabulary(BaseHeldPositionsVocabulary):
                 usage=None,
                 uids=missing_term_uids,
                 highlight_missing=True,
+                include_voting_group=True,
                 review_state=[])
             terms += missing_terms._terms
         return SimpleVocabulary(terms)
@@ -2545,6 +2610,8 @@ class BaseCopyGroupsVocabulary(object):
         terms = []
         if include_both:
             groupIds = cfg.getSelectableCopyGroups() + cfg.getSelectableRestrictedCopyGroups()
+            # remove duplicates
+            groupIds = list(set(groupIds))
         else:
             groupIds = cfg.getSelectableRestrictedCopyGroups() if restricted \
                 else cfg.getSelectableCopyGroups()
@@ -2900,9 +2967,12 @@ class OtherMCsClonableToVocabulary(object):
         cfg_ids = [mc['meeting_config'] for mc in cfg.getMeetingConfigsToCloneTo()]
         cfg_ids = list(set(cfg_ids).union(self._get_stored_values(context)))
         for cfg_id in cfg_ids:
-            terms.append(SimpleTerm(cfg_id,
-                                    cfg_id,
-                                    term_title or getattr(tool, cfg_id).Title()))
+            terms.append(
+                SimpleTerm(
+                    cfg_id,
+                    cfg_id,
+                    term_title or
+                    getattr(tool, cfg_id).Title(include_config_group=True)))
         return SimpleVocabulary(terms)
 
     # do ram.cache have a different key name
@@ -2985,6 +3055,7 @@ class BaseContainedAnnexesVocabulary(object):
                 if annex_info['warn_filesize']:
                     term_title += u' ({0})'.format(render_filesize(annex_info['filesize']))
                 term = SimpleTerm(annex_info['id'], annex_info['id'], term_title)
+                term.description = annex_info['description'].replace('\n', '<br>')
                 # check if need to disable term
                 self._check_disable_term(context, annex_info, categories_vocab, term)
                 terms.append(term)
@@ -3371,3 +3442,118 @@ class ConfigHideHistoryTosVocabulary(object):
 
 
 ConfigHideHistoryTosVocabularyFactory = ConfigHideHistoryTosVocabulary()
+
+
+class ItemFieldsConfigVocabulary(object):
+    """ """
+
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """ """
+        terms = []
+        item_attrs = context.listAttributes(MeetingItem.schema)
+        for k, v in item_attrs.items():
+            if k in CONFIGURABLE_FIELD_NAMES:
+                terms.append(SimpleTerm(k, k, v))
+        return SimpleVocabulary(terms)
+
+
+ItemFieldsConfigVocabularyFactory = ItemFieldsConfigVocabulary()
+
+
+class ConfigCssTransformsActionsVocabulary(object):
+    """ """
+
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """ """
+        terms = []
+        for v in ['remove', 'replace']:
+            term_title = translate('css_transform_action_' + v,
+                                   domain='PloneMeeting',
+                                   context=context.REQUEST)
+            terms.append(SimpleTerm(v, v, term_title))
+        return SimpleVocabulary(terms)
+
+
+ConfigCssTransformsActionsVocabularyFactory = ConfigCssTransformsActionsVocabulary()
+
+
+class BooleanVocabulary(object):
+    """ """
+    implements(IVocabularyFactory)
+    def __call__(self, context):
+        '''Vocabulary generating a boolean behaviour : just 2 values,
+           one yes/True, and the other no/False.
+           This is used in DataGridFields to avoid use of CheckBoxColumn
+           that does not handle validation correctly.'''
+        terms = []
+        terms.append(
+            SimpleTerm(
+                '0',
+                '0',
+                translate(
+                    'boolean_value_false',
+                    domain="PloneMeeting",
+                    context=context.REQUEST)))
+        terms.append(
+            SimpleTerm(
+                '1',
+                '1',
+                translate(
+                    'boolean_value_true',
+                    domain="PloneMeeting",
+                    context=context.REQUEST)))
+        return SimpleVocabulary(terms)
+
+
+BooleanVocabularyFactory = BooleanVocabulary()
+
+
+class ConfigLabelsConfigUpdateLocalRolesVocabulary(BooleanVocabulary):
+    """ """
+
+    def __call__(self, context):
+        """Vocabulary for labelsConfig.update_local_roles column with 3 values:
+           - '0': no update (default);
+           - '1': update local roles;
+           - '2': update labels access cache."""
+        terms = super(ConfigLabelsConfigUpdateLocalRolesVocabulary, self).__call__(context)._terms
+        terms.append(
+            SimpleTerm(
+                '2',
+                '2',
+                translate(
+                    'labels_config_update_labels_access_cache',
+                    domain="PloneMeeting",
+                    context=context.REQUEST)))
+        return SimpleVocabulary(terms)
+
+
+ConfigLabelsConfigUpdateLocalRolesVocabularyFactory = ConfigLabelsConfigUpdateLocalRolesVocabulary()
+
+
+class EveryConfigsVocabulary(object):
+    """ """
+
+    implements(IVocabularyFactory)
+
+    def __call__(self, context, only_active=False):
+        """ """
+        tool = api.portal.get_tool('portal_plonemeeting')
+        terms = []
+        if only_active:
+            cfgs = tool.getActiveConfigs()
+        else:
+            cfgs = tool.objectValues('MeetingConfig')
+        for cfg in cfgs:
+            term_id = cfg.getId()
+            term_title = safe_unicode(cfg.Title())
+            terms.append(SimpleTerm(term_id, term_id, term_title))
+        terms = humansorted(terms, key=attrgetter('title'))
+        return SimpleVocabulary(terms)
+
+
+EveryConfigsVocabularyFactory = EveryConfigsVocabulary()

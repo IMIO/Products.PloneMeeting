@@ -34,13 +34,16 @@ class Migrate_To_4211(Migrator):
             searchunreaditemsincopy = cfg.searches.searches_items.get('searchunreaditemsincopy')
             if searchunreaditemsincopy:
                 searchunreaditemsincopy.tal_condition = \
-                    'python: cfg.getEnableLabels() and cfg.show_copy_groups_search()'
+                    "python: 'labels' in cfg.getUsedItemAttributes() and cfg.show_copy_groups_search()"
         logger.info('Done.')
 
     def _updateDataRelatedToToolPloneMeetingSimplification(self):
         """ToolPloneMeeting will be moved to the registry,
            most methods are moved or removed, update stored data."""
         logger.info('Updating portal_plonemeeting related data...')
+        # reload ConfigurablePODTemplate to be sure that we have the correct portal_type
+        # this can have been changed by other upgrade steps
+        load_type_from_package('ConfigurablePODTemplate', 'Products.PloneMeeting:default')
         prefixes = ('tool',
                     'context.portal_plonemeeting',
                     'here.portal_plonemeeting',

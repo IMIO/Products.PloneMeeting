@@ -1,0 +1,48 @@
+<tal:defines i18n:domain="PloneMeeting"
+  tal:define="portal_url python: view.portal_url;">
+  <div id="content">
+    <p></p>
+    <div class="add-advice add-complete-advice">
+      <a class="link-overlay-pm-advice"
+         tal:attributes="href string:${context/absolute_url}/++add++meetingadvice">
+        <p class="add-complete-advice-title" i18n:translate="">Add complete advice</p>
+        <div class="add-complete-advice-icon" >
+          <span class="fa fa-plus" />
+        </div>
+      </a>
+    </div>
+    <div class="add-advice add-quick-advice">
+      <p class="add-quick-advice-title" i18n:translate="">Add quick advice</p>
+      <tal:advices_to_add repeat="advice_to_add_term python: view.advices_to_add._terms">
+        <div class="add-quick-advice-group">
+          <tal:delay-icon condition="python: advice_to_add_term.token in view.context.adviceIndex">
+            <tal:defines define="advice python: view.context.adviceIndex[advice_to_add_term.token]">
+              <metal:delay-icon use-macro="context/@@pm-macros/delayIcon" />
+            </tal:defines>
+          </tal:delay-icon>
+          <span tal:content="structure python: view.advice_to_add_title(advice_to_add_term)">Adviser</span>
+          <span class="link-help">
+            <img width="16px"
+               tal:condition="python: advice_to_add_term.token not in context.adviceIndex"
+               title="Not asked advice"
+               i18n:attributes="title"
+               tal:attributes="src string:${portal_url}/advice_not_asked.png" />
+          </span>
+        </div>
+        <div tal:repeat="advice_type_term python: view.advice_types"
+             class="add-quick-advice-type">
+          <a href="#"
+             tal:attributes="onclick string:event.preventDefault();;
+                             $('.tooltipstered').tooltipster('hide');;
+                             callViewAndReload(base_url='${context/absolute_url}',
+                                               view_name='@@advice-add-complete-quick',
+                                               params={'advice_group': '${advice_to_add_term/token}',
+                                                       'advice_type': '${advice_type_term/token}', }, );">
+            <img tal:attributes="src string:${portal_url}/advice_standard_${advice_type_term/token}.png" />
+            <span tal:content="advice_type_term/title">Advice type</span>
+          </a>
+        </div>
+      </tal:advices_to_add>
+    </div>
+  </div>
+</tal:defines>

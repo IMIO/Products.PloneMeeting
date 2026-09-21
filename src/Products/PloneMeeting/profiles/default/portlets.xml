@@ -28,4 +28,8 @@
       manager="plone.rightcolumn"
       type="ftw.labels.labeljar">
   </assignment>
+
+  <!-- disable portlets.Classic -->
+  <portlet remove="true" addview="portlets.Classic" />
+
 </portlets>

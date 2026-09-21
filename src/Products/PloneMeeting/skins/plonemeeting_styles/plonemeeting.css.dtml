@@ -692,6 +692,9 @@ span.warningValue {
     background-color: #dfdfdf;
     padding: 0.1em !important;
 }
+.pm-anonymized {
+    background-color: black;
+}
 
 p.indent-firstline {text-indent: 40px;}
 .xSmallText {font-size: 70%;}
@@ -894,6 +897,7 @@ body[class^='template-view portaltype-meetingadvice'] div#viewlet-below-content-
 body[class^='template-view portaltype-configurablepodtemplate'] div#viewlet-below-content-body,
 body[class^='template-view portaltype-dashboardpodtemplate'] div#viewlet-below-content-body,
 body[class^='template-view portaltype-styletemplate'] div#viewlet-below-content-body,
+body[class^='template-listing_view portaltype-dashboardcollection'] div#viewlet-below-content-body,
 body.template-meetingitem_view div#viewlet-below-content-body {
     position: sticky;
     bottom: 10px;
@@ -942,6 +946,7 @@ table.listing th.th_header_proposing_group_acronym,
 table.listing th.th_header_committees_index_acronym,
 table.listing th.th_header_groups_in_charge_acronym,
 table.listing th.th_header_associated_groups_acronym,
+table.listing th.th_header_vision_start_date,
 .pm_meeting_listing_th_checkBoxes {
     width: 1%;
 }
@@ -1070,9 +1075,21 @@ body[class*="itemtemplates"].template-manage-portlets a.link-parent {
     background-image: url("group.png");
 }
 
+button.apButtonAction_backLink::before {
+    font-family: "Font Awesome 5 Free";
+    content: "\f060";
+    font-weight: bold;
+    padding-right: 3px;
+}
+
 .apButtonAction_export_pdf {
     background-image: url("++resource++collective.documentgenerator/pdf.svg");
     background-size: 16px;
+}
+
+.apButton.apButtonAction.apButtonAction_update_labels_access_cache {
+    background-image: url(++resource++ftw.labels/edit_labels.png);
+    padding-left: 30px;
 }
 
 /* style for the 'Back' link displayed in the elements of the configuration next to the 'de/activate' button
@@ -1264,15 +1281,6 @@ div.tooltipster-content a.item_listType_normal:visited {
     color: &dtml-discreetColor;;
 }
 
-/* faceted table header sticky */
-#content table.faceted-table-results {
-   position: relative;
-}
-table.faceted-table-results th {
-   position: sticky;
-   top: 45px;
-   z-index: 45;
-}
 /* make sure date picker is hover faceted sticky header */
 div#ui-datepicker-div {
    /* use !important because z-index is set as style on the <div> */
@@ -1593,6 +1601,13 @@ div.advice_popup_actions span.pmHelp {
     vertical-align: middle;
     font-size: 110%;
 }
+div.advice_popup_infos {
+    display: inline-block;
+}
+div.advice_popup_infos span.pmHelp {
+    vertical-align: middle;
+    font-size: 110%;
+}
 
 /* display table with align="center"... centered... */
 table[align="center"] {
@@ -1880,6 +1895,11 @@ div.faceted-daterange-widget form div input {
    font-size: 100%;
 }
 
+/* Display "Yes" in red in MeetingConfig.labelsConfig datagrid field */
+div[id^="archetypes-fieldname-labelsConfig-"] div.value-1 {
+    color: red;
+}
+
 /* labels displayed on the item view */
 #content div#viewlet-below-content-title div#labeling-viewlet {
    float: left;
@@ -1972,9 +1992,10 @@ table.listing tbody tr.even.selected td,
 table.listing tbody tr.even.dragging td {
     background-color: #ffa;
 }
-/* category column in annexes table */
-table tbody tr td.td_cell_category-column {
-   max-width: 200px;
+/* category column in annexes table and copyGroups in items table */
+table tbody tr td.td_cell_category-column,
+table tbody tr td.td_cell_copyGroups {
+   max-width: 300px;
 }
 
 /* refresh attendees */
@@ -2040,7 +2061,8 @@ div.tooltipster-content table.actionspanel-no-style-table td.noPadding {
     cursor: help;
 }
 
-#doc-generation-view img.tooltipster-available-mailing-lists {
+#doc-generation-view img.tooltipster-available-mailing-lists,
+img.tooltipster-advice-add-complete-quick {
     cursor: pointer;
 }
 
@@ -2151,7 +2173,8 @@ div.tooltipster-content table.actionspanel-no-style-table td.noPadding {
     color: red;
 }
 #content img.pmHelp,
-#content span.pmHelp {
+#content span.pmHelp,
+div.tooltipster-base span.pmHelp {
     cursor: help;
 }
 
@@ -2175,8 +2198,7 @@ span.signatory-replacer {
     color: red;
 }
 
-
-/* hide downloard vcard link on contacts */
+/* hide download vcard link on contacts */
 p#download_vcard {
    display: none;
 }
@@ -2194,7 +2216,7 @@ p#download_vcard {
 }
 .collapsible-inner-content {
     padding: 0.3em;
-    background-color: &dtml-evenRowBackgroundColor;;
+    background-color: &dtml-oddRowBackgroundColor;;
     border:1px solid &dtml-tableHeaderBackgroundColor;;
 }
 .collapsible-content.collapsed-on-load {
@@ -2359,14 +2381,16 @@ div.pm_checkbox_widget div.checkbox_widget_select_all {
    margin-top: 0.25em;
    margin-bottom: 0.25em;
 }
-
+div.pm_checkbox_widget div.pm-checkbox-description {
+    margin-left: 40px;
+}
 /* checkboxes in item duplicate/item export pdf forms popup */
 div.pm_checkbox_widget input.checkbox-widget {
    margin-left: 0.25em;
 }
 div.pm_checkbox_widget span.option {
-   margin-top: 0.5em;
-   margin-bottom: 0.5em;
+   margin-top: 0.25em;
+   margin-bottom: 0.25em;
 }
 div.pm_checkbox_widget span.option label {
     display: inline;
@@ -2639,6 +2663,69 @@ span.link-separator::before {
 
 div#forceInsertNormalInput {
     margin-bottom: 0.5em;
+}
+
+/* by default, browser will align center table caption, but LO (appy) will
+   align it on the left, so we align on the left by default */
+table caption {
+    text-align: left;
+}
+
+label {
+    word-break: break-word;
+}
+
+div#batch-actions input#add-advice-batch-action-but.batch-action-icon-but {
+    background-image: url('&dtml-portal_url;/meetingadvice.png');
+    background-size: 16px;
+}
+
+div.add-advice {
+    font-size: 110%;
+    text-align: center;
+    margin-bottom: 0.5em;
+}
+p.add-complete-advice-title,
+p.add-quick-advice-title {
+    font-size: 115%;
+    font-weight: bold;
+}
+p.add-quick-advice-title {
+    padding-bottom: 0.5em;
+}
+div.add-complete-advice div {
+    width: 100%;
+}
+div.add-complete-advice a {
+    padding: 1em;
+    display: block;
+}
+div.add-complete-advice-icon {
+    font-size: 150%;
+}
+div.add-complete-advice,
+div.add-quick-advice {
+    background-color: &dtml-evenRowBackgroundColor;;
+}
+div.add-quick-advice {
+    padding: 1em;
+}
+div.add-quick-advice-group,
+div.add-quick-advice-type {
+    text-align: left;
+}
+div.add-quick-advice-group {
+    margin-bottom: 0.5em;
+}
+div.add-quick-advice-group div.advice_popup_infos {
+    vertical-align: bottom;
+}
+span.add-quick-advice-name {
+    font-weight: bold;
+}
+div.add-quick-advice-type {
+    padding-left: 1em;
+    padding-bottom: 0.5em;
 }
 
 /* </dtml-with> */
