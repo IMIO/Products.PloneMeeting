@@ -9,6 +9,9 @@ Changelog
   [gbastien]
 - A label used in `MeetingConfig.labelsConfig` can not be removed from the jar.
   [gbastien]
+- Added possibility to define annexes and decision annexes on an item template
+  and on a recurring item.
+  [gbastien]
 
 4.2.28.22 (2026-09-03)
 ----------------------
