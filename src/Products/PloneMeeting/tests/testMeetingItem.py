@@ -6858,6 +6858,34 @@ class testMeetingItem(PloneMeetingTestCase):
         image_resolveuid = "resolveuid/%s" % newItem.objectValues()[0].UID()
         self.assertEqual(newItem.getRawDecision(), text_pattern % image_resolveuid)
 
+    def test_pm_ItemTemplateAnnex(self):
+        """We can use (decision) annex in an item template and when used,
+           the annexes are correctly duplicated into the new item."""
+        # add annex to the default item template
+        cfg = self.meetingConfig
+        self.changeUser('templatemanager1')
+        default_template = cfg.itemtemplates.get(ITEM_DEFAULT_TEMPLATE_ID)
+        self.addAnnex(default_template)
+        self.addAnnex(default_template, relatedTo='item_decision')
+        # add annex to the default recurring item
+        self.changeUser('siteadmin')
+        recurring_item = cfg.recurringitems.objectValues()[0]
+        self.addAnnex(recurring_item)
+        self.addAnnex(recurring_item, relatedTo='item_decision')
+        # create an item using the default_template
+        self.changeUser('pmCreator1')
+        pm_folder = self.getMeetingFolder()
+        view = pm_folder.restrictedTraverse('@@createitemfromtemplate')
+        new_item = view.createItemFromTemplate(default_template.UID())
+        self.assertEqual(len(get_annexes(new_item, portal_types=['annex'])), 1)
+        self.assertEqual(len(get_annexes(new_item, portal_types=['annexDecision'])), 1)
+        # create a meeting, recurring item has annex
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting')
+        rec_item = meeting.get_items(ordered=True)[0]
+        self.assertEqual(len(get_annexes(rec_item, portal_types=['annex'])), 1)
+        self.assertEqual(len(get_annexes(rec_item, portal_types=['annexDecision'])), 1)
+
     def test_pm_ItemTemplateDefaultProposingGroup(self):
         """If a primary_organization is defined for a userid, then it is used
            as default proposingGroup when creating an item from a template for

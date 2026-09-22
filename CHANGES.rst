@@ -9,6 +9,9 @@ Changelog
   [gbastien]
 - A label used in `MeetingConfig.labelsConfig` can not be removed from the jar.
   [gbastien]
+- Added possibility to define annexes and decision annexes on an item template
+  and on a recurring item.
+  [gbastien]
 - Human sort the `MeetingConfig.listAllTransitions`.
   [gbastien]
 - Fixed bug in `MeetingConfig._check_wf_used_in_config` when using the
