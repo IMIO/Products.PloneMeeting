@@ -5052,7 +5052,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     wf = self.getMeetingWorkflow(True)
                 # manage values like MeetingItem.proposed
                 crossed_value = crossed_value.split(".")[-1]
-                if crossed_states:
+                # sometimes crossed_value is actually a crossed transition
+                # and not a crossed_state, it is the case for example for
+                # "backTo_itemfrozen_from_returned_to_proposing_group"
+                if crossed_states and crossed_value in wf.states:
                     state_or_transition_title = wf.states[crossed_value].title
                 else:
                     # manage values like MeetingItem.propose
@@ -7253,7 +7256,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             for id, text in self.listTransitions(objectType):
                 res.append((u'%s.%s' % (metaType, id),
                             u'%s ➔ %s' % (metaType, text)))
-        return DisplayList(tuple(res)).sortedByValue()
+        return DisplayList(humansorted(res, key=itemgetter(1)))
 
     security.declarePrivate('listMeetingConfigsToCloneTo')
 
