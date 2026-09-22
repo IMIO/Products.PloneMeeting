@@ -890,6 +890,10 @@ class testWFAdaptations(PloneMeetingTestCase):
         # make wfAdaptation unselectable
         self.do(item, 'backTo_itemfrozen_from_returned_to_proposing_group')
         self.failIf(cfg.validate_workflowAdaptations(()))
+        cfg.setTransitionsToConfirm(("MeetingItem.backTo_itemfrozen_from_returned_to_proposing_group", ))
+        self.failUnless(cfg.validate_workflowAdaptations(()))
+        cfg.setTransitionsToConfirm(())
+        self.failIf(cfg.validate_workflowAdaptations(()))
 
     def test_pm_Validate_workflowAdaptations_removed_return_to_proposing_group_with_last_validation(self):
         """Test MeetingConfig.validate_workflowAdaptations that manage removal

@@ -9,6 +9,13 @@ Changelog
   [gbastien]
 - A label used in `MeetingConfig.labelsConfig` can not be removed from the jar.
   [gbastien]
+- Human sort the `MeetingConfig.listAllTransitions`.
+  [gbastien]
+- Fixed bug in `MeetingConfig._check_wf_used_in_config` when using the
+  `return_to_proposing_group` WFA as the transition contains the state value
+  (`backTo_itemfrozen_from_returned_to_proposing_group` contains
+  `returned_to_proposing_group`).
+  [gbastien]
 
 4.2.28.22 (2026-09-03)
 ----------------------
