@@ -12,6 +12,13 @@ Changelog
 - Added possibility to define annexes and decision annexes on an item template
   and on a recurring item.
   [gbastien]
+- Human sort the `MeetingConfig.listAllTransitions`.
+  [gbastien]
+- Fixed bug in `MeetingConfig._check_wf_used_in_config` when using the
+  `return_to_proposing_group` WFA as the transition contains the state value
+  (`backTo_itemfrozen_from_returned_to_proposing_group` contains
+  `returned_to_proposing_group`).
+  [gbastien]
 
 4.2.28.22 (2026-09-03)
 ----------------------
