@@ -1143,7 +1143,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             raise PloneMeetingError('Could not copy.')
 
         isManager = self.isManager(destCfg)
-        originCfg = self.getMeetingConfig(copiedItem)
 
         # Let the logged user do everything on the newly created item
         with api.env.adopt_roles(['Manager']):
@@ -1235,7 +1234,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                         originCfg = self.getMeetingConfig(copiedItem)
                         if originCfg != destCfg:
                             new_annex_category = self._updateContentCategoryAfterSentToOtherMeetingConfig(
-                                newAnnex, originCfg, destCfg)
+                                newAnnex, originCfg, destCfgId)
                             if new_annex_category is None:
                                 msg = translate('annex_not_kept_item_paste_info',
                                                 mapping={'annexTitle': safe_unicode(newAnnex.Title())},
