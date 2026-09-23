@@ -3395,6 +3395,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                      "('return_to_proposing_group' in cfg.getWorkflowAdaptations() or "
                                      "'return_to_proposing_group_with_all_validations' "
                                      "in cfg.getWorkflowAdaptations() or "
+                                     "'return_to_proposing_group_with_before_last_validation' "
+                                     "in cfg.getWorkflowAdaptations() or "
                                      "'return_to_proposing_group_with_last_validation' "
                                      "in cfg.getWorkflowAdaptations())",
                     'roles_bypassing_talcondition': ['Manager', ]
@@ -3416,6 +3418,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                      "('return_to_proposing_group_with_all_validations' "
                                      "in cfg.getWorkflowAdaptations() or "
                                      "'return_to_proposing_group_with_last_validation' "
+                                     "in cfg.getWorkflowAdaptations() or "
+                                     "'return_to_proposing_group_with_before_last_validation' "
                                      "in cfg.getWorkflowAdaptations())",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
@@ -3494,6 +3498,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'tal_condition': "python: tool.isManager(cfg) and "
                                      "('return_to_proposing_group' in cfg.getWorkflowAdaptations() or "
                                      "'return_to_proposing_group_with_all_validations' in "
+                                     "cfg.getWorkflowAdaptations() or 'return_to_proposing_group_with_before_last_validation' in "
                                      "cfg.getWorkflowAdaptations() or 'return_to_proposing_group_with_last_validation' "
                                      "in cfg.getWorkflowAdaptations())",
                     'roles_bypassing_talcondition': ['Manager', ]
@@ -5192,11 +5197,19 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
              {'portal_type': item_type,
               'review_state': ['returned_to_proposing_group'],
               'optional_with': ('return_to_proposing_group_with_last_validation',
+                                'return_to_proposing_group_with_before_last_validation',
                                 'return_to_proposing_group_with_all_validations')}),
             ('return_to_proposing_group_with_last_validation',
              {'portal_type': item_type,
               'review_state': validation_returned_states,
-              'optional_with': ('return_to_proposing_group_with_all_validations', )})])
+              'optional_with': ('return_to_proposing_group_with_all_validations',
+                                'return_to_proposing_group_with_before_last_validation')}),
+            ('return_to_proposing_group_with_before_last_validation',
+             {'portal_type': item_type,
+              'review_state': validation_returned_states,
+              'optional_with': ('return_to_proposing_group_with_all_validations',
+                                'return_to_proposing_group_with_last_validation')}),
+        ])
 
         # conflicts
         msg = translate('wa_conflicts', domain='PloneMeeting', context=self.REQUEST)
@@ -5248,8 +5261,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                if v.startswith('presented_item_back_to_')]
         if not item_validation_states:
             if 'reviewers_take_back_validated_item' in values or \
-               'return_to_proposing_group_with_last_validation' in values or \
                'return_to_proposing_group_with_all_validations' in values or \
+               'return_to_proposing_group_with_before_last_validation' in values or \
+               'return_to_proposing_group_with_last_validation' in values or \
                back_from_presented:
                 return msg
 
@@ -5324,6 +5338,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if (catalog.unrestrictedSearchResults(
                     portal_type=item_type, review_state=validation_returned_states)) or \
                (('return_to_proposing_group' not in added) and
+                ('return_to_proposing_group_with_before_last_validation' not in added) and
                 ('return_to_proposing_group_with_last_validation' not in added) and
                     (catalog.unrestrictedSearchResults(
                         portal_type=item_type, review_state='returned_to_proposing_group'))):
@@ -5337,9 +5352,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                (not infos['optional_with'] or
                     not set(infos['optional_with']).intersection(added)):
                 # check that no more elements are in removed state
-                if catalog.unrestrictedSearchResults(
-                        portal_type=infos['portal_type'],
-                        review_state=infos['review_state']):
+                brains = catalog.unrestrictedSearchResults(
+                    portal_type=infos['portal_type'],
+                    review_state=infos['review_state'])
+                if brains:
                     return translate(
                         'wa_removed_found_elements_error',
                         mapping={
@@ -5348,7 +5364,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                 domain="PloneMeeting",
                                 context=self.REQUEST),
                             'review_state': translate(
-                                infos['review_state'][-1],
+                                brains[0].review_state,
                                 domain="plone",
                                 context=self.REQUEST)},
                         domain='PloneMeeting',
