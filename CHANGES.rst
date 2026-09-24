@@ -19,6 +19,10 @@ Changelog
   (`backTo_itemfrozen_from_returned_to_proposing_group` contains
   `returned_to_proposing_group`).
   [gbastien]
+- Added WFA `return_to_proposing_group_with_before_last_validation`.
+  [aduchene]
+- Added possibility to use `set` in restricted python thru `utils`.
+  [gbastien]
 
 4.2.28.22 (2026-09-03)
 ----------------------

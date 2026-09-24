@@ -3392,13 +3392,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_reversed': True,
                     'showNumberOfItems': True,
                     'tal_condition': "python: tool.userIsAmong(['creators'], cfg=cfg) and "
-                                     "('return_to_proposing_group' in cfg.getWorkflowAdaptations() or "
-                                     "'return_to_proposing_group_with_all_validations' "
-                                     "in cfg.getWorkflowAdaptations() or "
-                                     "'return_to_proposing_group_with_before_last_validation' "
-                                     "in cfg.getWorkflowAdaptations() or "
-                                     "'return_to_proposing_group_with_last_validation' "
-                                     "in cfg.getWorkflowAdaptations())",
+                                     "set(('return_to_proposing_group', "
+                                     "'return_to_proposing_group_with_all_validations', "
+                                     "'return_to_proposing_group_with_before_last_validation', "
+                                     "'return_to_proposing_group_with_last_validation')."
+                                     "intersection(cfg.getWorkflowAdaptations())",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items to correct to validate
@@ -3415,12 +3413,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_reversed': True,
                     'showNumberOfItems': True,
                     'tal_condition': "python: cfg.userIsAReviewer() and "
-                                     "('return_to_proposing_group_with_all_validations' "
-                                     "in cfg.getWorkflowAdaptations() or "
-                                     "'return_to_proposing_group_with_last_validation' "
-                                     "in cfg.getWorkflowAdaptations() or "
-                                     "'return_to_proposing_group_with_before_last_validation' "
-                                     "in cfg.getWorkflowAdaptations())",
+                                     "utils.set(('return_to_proposing_group_with_all_validations', "
+                                     "'return_to_proposing_group_with_last_validation', "
+                                     "'return_to_proposing_group_with_before_last_validation'))."
+                                     "intersection(cfg.getWorkflowAdaptations())",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Validable "Items to correct"
@@ -3437,8 +3433,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_reversed': True,
                     'showNumberOfItems': True,
                     'tal_condition': "python: tool.userIsAmong(['creators'], cfg=cfg) and "
-                                     "('return_to_proposing_group_with_all_validations' "
-                                     "in cfg.getWorkflowAdaptations())",
+                                     "'return_to_proposing_group_with_all_validations' "
+                                     "in cfg.getWorkflowAdaptations()",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Unread items
@@ -3496,11 +3492,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_reversed': True,
                     'showNumberOfItems': False,
                     'tal_condition': "python: tool.isManager(cfg) and "
-                                     "('return_to_proposing_group' in cfg.getWorkflowAdaptations() or "
-                                     "'return_to_proposing_group_with_all_validations' in "
-                                     "cfg.getWorkflowAdaptations() or 'return_to_proposing_group_with_before_last_validation' in "
-                                     "cfg.getWorkflowAdaptations() or 'return_to_proposing_group_with_last_validation' "
-                                     "in cfg.getWorkflowAdaptations())",
+                                     "utils.set(('return_to_proposing_group', "
+                                     "'return_to_proposing_group_with_all_validations', "
+                                     "'return_to_proposing_group_with_before_last_validation', "
+                                     "'return_to_proposing_group_with_last_validation')."
+                                     "intersection(cfg.getWorkflowAdaptations())",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Decided items

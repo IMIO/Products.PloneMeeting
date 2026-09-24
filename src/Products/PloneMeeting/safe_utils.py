@@ -16,6 +16,7 @@ from imio.helpers.content import pop_from_annotation
 from imio.helpers.content import set_to_annotation
 from imio.helpers.date import formatDate
 from imio.helpers.date import wordizeDate
+from imio.helpers.workflow import get_state_infos
 from imio.helpers.workflow import update_role_mappings_for
 from imio.helpers.xhtml import removeCssClasses
 from imio.helpers.xhtml import unescape_html
@@ -59,3 +60,4 @@ from Products.PloneMeeting.utils import set_dx_value
 from Products.PloneMeeting.utils import set_internal_number
 from Products.PloneMeeting.utils import toHTMLStrikedContent
 from Products.PloneMeeting.utils import uncapitalize
+from sets import Set as set
