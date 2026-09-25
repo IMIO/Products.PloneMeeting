@@ -3878,33 +3878,33 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         # while passing empty review_states, it is computed depending
         # on fact that current user isManager or not
-        for meetingBrain in cfg.getMeetingsAcceptingItems(review_states=[]):
-            meetingDate = tool.format_date(meetingBrain.meeting_date, with_hour=True)
-            meetingState = translate(meetingBrain.review_state,
-                                     domain="plone",
-                                     context=self.REQUEST)
-            res.append((meetingBrain.UID,
-                        u"{0} ({1})".format(meetingDate,
-                                            meetingState)))
+        for brain in cfg.getMeetingsAcceptingItems(review_states=[]):
+            meeting = brain.getObject()
+            state_title = translate(brain.review_state,
+                                      domain="plone",
+                                      context=self.REQUEST)
+            res.append((brain.UID,
+                        u"{0} ({1})".format(meeting.Title(), state_title)))
         # if one preferred meeting was already defined on self, add it
         # to the vocabulary or editing an older item could loose that information
-        preferredMeetingUID = self.getPreferredMeeting()
-        # add it if we actually have a preferredMeetingUID stored
+        preferred_meeting_uid = self.getPreferredMeeting()
+        # add it if we actually have a preferred_meeting_uid stored
         # and if it is not yet in the vocabulary!
-        if preferredMeetingUID and \
-           preferredMeetingUID != ITEM_NO_PREFERRED_MEETING_VALUE and \
-           preferredMeetingUID not in [meetingInfo[0] for meetingInfo in res]:
+        if preferred_meeting_uid and \
+           preferred_meeting_uid != ITEM_NO_PREFERRED_MEETING_VALUE and \
+           preferred_meeting_uid not in [meeting_info[0] for meeting_info in res]:
             # check that stored preferredMeeting still exists, if it
             # is the case, add it the the vocabulary
-            brain = uuidToCatalogBrain(preferredMeetingUID, unrestricted=True)
-            if brain:
-                preferredMeetingDate = tool.format_date(
-                    brain.meeting_date, with_hour=True)
-                preferredMeetingState = translate(brain.review_state,
-                                                  domain="plone",
-                                                  context=self.REQUEST)
-                res.append((brain.UID,
-                            u"{0} ({1})".format(preferredMeetingDate, preferredMeetingState)))
+            preferred_meeting = uuidToObject(preferred_meeting_uid, unrestricted=True)
+            if preferred_meeting:
+                state_title = translate(
+                    preferred_meeting.review_state,
+                    domain="plone",
+                    context=self.REQUEST)
+                res.append(
+                    (preferred_meeting_uid,
+                     u"{0} ({1})".format(
+                         preferred_meeting.Title(), state_title)))
         res.reverse()
         res.insert(0, (ITEM_NO_PREFERRED_MEETING_VALUE, 'Any meeting'))
         return DisplayList(tuple(res))
