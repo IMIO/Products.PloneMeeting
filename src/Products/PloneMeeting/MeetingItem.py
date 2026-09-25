@@ -3880,9 +3880,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # on fact that current user isManager or not
         for brain in cfg.getMeetingsAcceptingItems(review_states=[]):
             meeting = brain.getObject()
-            state_title = translate(brain.review_state,
-                                      domain="plone",
-                                      context=self.REQUEST)
+            state_title = translate(
+                brain.review_state, domain="plone", context=self.REQUEST)
             res.append((brain.UID,
                         u"{0} ({1})".format(meeting.Title(), state_title)))
         # if one preferred meeting was already defined on self, add it
@@ -3898,7 +3897,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             preferred_meeting = uuidToObject(preferred_meeting_uid, unrestricted=True)
             if preferred_meeting:
                 state_title = translate(
-                    preferred_meeting.review_state,
+                    preferred_meeting.query_state(),
                     domain="plone",
                     context=self.REQUEST)
                 res.append(
