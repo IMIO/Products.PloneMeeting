@@ -19,6 +19,8 @@ Changelog
   (`backTo_itemfrozen_from_returned_to_proposing_group` contains
   `returned_to_proposing_group`).
   [gbastien]
+- Display `meeting.category` in `MeetingItem.preferredMeeting` edit list.
+  [gbastien]
 - Added WFA `return_to_proposing_group_with_before_last_validation`.
   [aduchene]
 - Added possibility to use `set` in restricted python thru `utils`.
