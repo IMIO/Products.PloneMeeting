@@ -5,8 +5,9 @@ Changelog
 4.2.28.24 (unreleased)
 ----------------------
 
-- Nothing changed yet.
-
+- Fixed `MeetingItem.listMeetingsAcceptingItems` when meeting title contains
+  special characters (month name or meeting category id).
+  [gbastien]
 
 4.2.28.23 (2026-09-28)
 ----------------------

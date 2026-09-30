@@ -4097,12 +4097,18 @@ class testMeetingType(PloneMeetingTestCase):
         meeting = self.create('Meeting', date=datetime(2023, 6, 13, 15, 00), category='mcategory1')
         self.assertEqual(
             meeting.get_category(True), cfg.meetingcategories.mcategory1)
-        self.assertEqual(meeting.title, u'MC1 - 13 june 2023 (15:00)')
-        self.assertTrue("title='MC1 - 13/06/2023 (15:00)'" in meeting.get_pretty_link())
+        self.assertEqual(meeting.title, u'MCat\xe91 - 13 june 2023 (15:00)')
+        self.assertEqual(meeting.Title(), 'MCat\xc3\xa91 - 13 june 2023 (15:00)')
+        self.assertTrue(u"title='MCat\xe91 - 13/06/2023 (15:00)'" in meeting.get_pretty_link())
+        # category is displayed in item.preferredMeeting
+        item = self.create('MeetingItem')
+        self.assertEqual(item.listMeetingsAcceptingItems().values(),
+                         ['Any meeting', u'MCat\xe91 - 13 june 2023 (15:00) (Created)'])
         # when no category_id, it is not displayed
         meeting.category = 'mcategory3'
         notify(ObjectModifiedEvent(meeting))
         self.assertEqual(meeting.title, u'13 june 2023 (15:00)')
+        self.assertEqual(meeting.Title(), u'13 june 2023 (15:00)')
         self.assertTrue("title='13/06/2023 (15:00)'" in meeting.get_pretty_link())
 
 
