@@ -3892,7 +3892,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             state_title = translate(
                 brain.review_state, domain="plone", context=self.REQUEST)
             res.append((brain.UID,
-                        u"{0} ({1})".format(meeting.Title(), state_title)))
+                        u"{0} ({1})".format(
+                            safe_unicode(meeting.Title()), state_title)))
         # if one preferred meeting was already defined on self, add it
         # to the vocabulary or editing an older item could loose that information
         preferred_meeting_uid = self.getPreferredMeeting()
