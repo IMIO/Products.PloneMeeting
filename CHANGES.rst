@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.28.24 (unreleased)
+4.2.28.24 (2026-09-30)
 ----------------------
 
 - Fixed `MeetingItem.listMeetingsAcceptingItems` when meeting title contains
