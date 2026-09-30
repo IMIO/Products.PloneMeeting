@@ -1033,10 +1033,16 @@ def onAdviceRemoved(advice, event):
     _advice_update_item(item)
 
 
-def onAnnexAdded(annex, event):
-    ''' '''
+def on_annex_added(annex, event):
+    '''
+    Event registered to the ICategorizedElementUpdatedEvent but we check if we are adding
+    a new annex, in this case annex UID is not in event.old_values.
+    '''
+    is_just_added = annex.UID() not in event.old_values
     # can be the case if migrating annexes or adding several annexes at once
-    if not annex.REQUEST.get('defer_categorized_content_created_event'):
+    if is_just_added and not annex.REQUEST.get('defer_categorized_content_created_event'):
+        # we use event ICategorizedElementUpdatedEvent so we are sure that
+        # categorized_elements is updated, neccesary for correct reindex of annex_index
         parent = annex.aq_inner.aq_parent
 
         if '/++add++annex' in annex.REQUEST.getURL():

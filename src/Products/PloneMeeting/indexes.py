@@ -7,6 +7,7 @@
 
 from collective.contact.core.content.organization import IOrganization
 from collective.iconifiedcategory.indexes import content_category_uid
+from collective.iconifiedcategory.utils import get_category_object
 from datetime import datetime
 from imio.annex.content.annex import IAnnex
 from imio.helpers import EMPTY_STRING
@@ -299,9 +300,10 @@ def to_discuss(obj):
 @indexer(IMeetingItem)
 def annexes_index(obj):
     """
-      Unique index with data relative to stored annexes :
+      Unique index with data relative to stored annex:
+      - the annex type uid (content_category_uid);
       - to_print :
-        - 'not_to_print' if contains annexes not to print;
+        - 'not_to_print' if contains annex not to print;
         - 'to_print' otherwise;
       - confidential :
         - 'not_confidential' if contains not confidential annexes;
@@ -310,37 +312,49 @@ def annexes_index(obj):
         - 'not_publishable' if contains not publishable annexes;
         - 'publishable' otherwise;
       - to_sign/signed :
-        - 'not_to_sign' if contains not to sign annexes;
+        - 'not_to_sign' if contains not to sign annex;
         - 'to_sign' if contains to_sign but not signed annexes;
         - 'signed' if contains signed annexes.
+      - finally the combined value ann type uid and attr value.
     """
     res = []
     # use objectValues because with events order, an annex
     # could be added but still not registered in the categorized_elements dict
     for annex in get_annexes(obj):
+        category_uid = get_category_object(obj, annex.content_category).UID()
+        res.append(category_uid)
         # to_print
         if annex.to_print:
             res.append('to_print')
+            res.append(category_uid + '__to_print')
         else:
             res.append('not_to_print')
+            res.append(category_uid + '__not_to_print')
         # confidential
         if annex.confidential:
             res.append('confidential')
+            res.append(category_uid + '__confidential')
         else:
             res.append('not_confidential')
+            res.append(category_uid + '__not_confidential')
         # publishable
         if annex.publishable:
             res.append('publishable')
+            res.append(category_uid + '__publishable')
         else:
             res.append('not_publishable')
+            res.append(category_uid + '__not_publishable')
         # to_sign/signed
         if annex.to_sign:
             if annex.signed:
                 res.append('signed')
+                res.append(category_uid + '__signed')
             else:
                 res.append('to_sign')
+                res.append(category_uid + '__to_sign')
         else:
             res.append('not_to_sign')
+            res.append(category_uid + '__not_to_sign')
     # remove duplicates
     return list(set(res))
 

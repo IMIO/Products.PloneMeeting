@@ -390,8 +390,9 @@ NO_COMMITTEE = u"no_committee"
 
 ITEM_MOVAL_PREVENTED = "Prevented to rename item no more in initial_state!"
 
-# for performance reason we do not dynamically get the annexes criterion id
+# for performance reason we do not dynamically get the annexes criterion ids
 FACETED_ANNEXES_CRITERION_ID = 'c20'
+FACETED_ANNEX_TYPES_CRITERION_ID = 'c33'
 
 # name of marker specifyng that a reindex is required
 REINDEX_NEEDED_MARKER = "_catalog_reindex_needed"

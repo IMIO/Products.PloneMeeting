@@ -16,6 +16,7 @@ from imio.helpers.content import get_vocab
 from plone import api
 from plone.memoize import ram
 from Products.PloneMeeting.browser.overrides import BaseActionsPanelView
+from Products.PloneMeeting.config import FACETED_ANNEX_TYPES_CRITERION_ID
 from Products.PloneMeeting.config import FACETED_ANNEXES_CRITERION_ID
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.utils import get_annexes
@@ -126,21 +127,27 @@ class CategorizedAnnexesView(CategorizedTabView):
 
 
 def _get_filters(request):
-    """ """
+    """When using filters "annexes" and "annex types", displayed result
+       is adapted accordingly."""
     # caching
     res = request.get("cached_annexes_filters", None)
     if res is None:
         res = {}
         # in request.form, faceted criterion is like 'c20[]'
-        faceted_filter = request.form.get(FACETED_ANNEXES_CRITERION_ID + '[]', None)
-        if faceted_filter is not None:
-            if not hasattr(faceted_filter, '__iter__'):
-                faceted_filter = [faceted_filter]
-            for value in faceted_filter:
+        # annexes filter, manage to_sign, signed, confidential, ...
+        annex_attr_filter = request.form.get(FACETED_ANNEXES_CRITERION_ID + '[]', None)
+        if annex_attr_filter is not None:
+            if not hasattr(annex_attr_filter, '__iter__'):
+                annex_attr_filter = [annex_attr_filter]
+            for value in annex_attr_filter:
                 if value.startswith('not_'):
                     res[value.replace('not_', '')] = False
                 else:
                     res[value] = True
+        # annex types filter will contains selected content_category uids
+        annex_types_filter = request.form.get(FACETED_ANNEX_TYPES_CRITERION_ID + '[]', None)
+        if annex_types_filter is not None:
+            res["category_uid"] = annex_types_filter
         request["cached_annexes_filters"] = res
     return res
 
