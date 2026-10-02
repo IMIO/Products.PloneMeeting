@@ -3913,7 +3913,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 res.append(
                     (preferred_meeting_uid,
                      u"{0} ({1})".format(
-                         preferred_meeting.Title(), state_title)))
+                         safe_unicode(preferred_meeting.Title()), state_title)))
         res.reverse()
         res.insert(0, (ITEM_NO_PREFERRED_MEETING_VALUE, 'Any meeting'))
         return DisplayList(tuple(res))

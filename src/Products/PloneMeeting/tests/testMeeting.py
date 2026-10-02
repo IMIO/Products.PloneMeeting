@@ -4104,6 +4104,13 @@ class testMeetingType(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         self.assertEqual(item.listMeetingsAcceptingItems().values(),
                          ['Any meeting', u'MCat\xe91 - 13 june 2023 (15:00) (Created)'])
+        # works also in listMeetingsAcceptingItems when meeting no more
+        # accepting items but selected on the item
+        item.setPreferredMeeting(meeting.UID())
+        self.closeMeeting(meeting)
+        self.assertEqual(meeting.query_state(), "closed")
+        self.assertEqual(item.listMeetingsAcceptingItems().values(),
+                         ['Any meeting', u'MCat\xe91 - 13 june 2023 (15:00) (Closed)'])
         # when no category_id, it is not displayed
         meeting.category = 'mcategory3'
         notify(ObjectModifiedEvent(meeting))
