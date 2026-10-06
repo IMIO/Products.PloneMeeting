@@ -9,6 +9,8 @@ Changelog
   special characters (month name or meeting category id) and is no more
   a meeting accepting items.
   [gbastien]
+- Add 2027 holidays in profile.
+  [aduchene]
 
 4.2.28.24 (2026-09-30)
 ----------------------
