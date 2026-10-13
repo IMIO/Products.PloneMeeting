@@ -14,6 +14,10 @@ Changelog
 - Adapted `Migrator.updateHolidays` to be able to pass arbitrary new holiday
   values so it can be called directly from the `add_holidays.py` script.
   [gbastien]
+- Hide fields `MeetingItem.copyGroups`, `MeetingItem.restrictedCopyGroups` and
+  `MeetingItem.selectableAdvisers` if it is empty, it can be the case when the
+  functionality is enabled but we are only using auto values.
+  [gbastien]
 
 4.2.28.24 (2026-09-30)
 ----------------------
