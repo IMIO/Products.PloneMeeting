@@ -374,12 +374,13 @@ class Migrator(BaseMigrator):
             logger.info('\n'.join(fixed_output))
         logger.info('Done.')
 
-    def updateHolidays(self):
+    def updateHolidays(self, defaultHolidays=()):
         '''Update holidays using default holidays.'''
         logger.info('Updating holidays...')
-        from Products.PloneMeeting.profiles import PloneMeetingConfiguration
-        defaultPMConfig = PloneMeetingConfiguration('', '', '')
-        defaultHolidays = [holiday['date'] for holiday in defaultPMConfig.holidays]
+        if not defaultHolidays:
+            from Products.PloneMeeting.profiles import PloneMeetingConfiguration
+            defaultPMConfig = PloneMeetingConfiguration('', '', '')
+            defaultHolidays = [holiday['date'] for holiday in defaultPMConfig.holidays]
         currentHolidays = [holiday['date'] for holiday in self.tool.getHolidays()]
         storedHolidays = list(self.tool.getHolidays())
         highestStoredHoliday = DateTime(storedHolidays[-1]['date'])

@@ -11,6 +11,9 @@ Changelog
   [gbastien]
 - Add 2027 holidays in profile.
   [aduchene]
+- Adapted `Migrator.updateHolidays` to be able to pass arbitrary new holiday
+  values so it can be called directly from the `add_holidays.py` script.
+  [gbastien]
 
 4.2.28.24 (2026-09-30)
 ----------------------
