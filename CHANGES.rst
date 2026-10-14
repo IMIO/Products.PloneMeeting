@@ -21,6 +21,8 @@ Changelog
 - Fixed bug where it was not possible to remove a not used `category` if a
   `classifier` with same `id` was used.
   [gbastien]
+- Disable `webspellchecker` in datagrid inputs (mainly used in `MeetingConfig`).
+  [gbastien]
 
 4.2.28.24 (2026-09-30)
 ----------------------
