@@ -18,6 +18,9 @@ Changelog
   `MeetingItem.selectableAdvisers` if it is empty, it can be the case when the
   functionality is enabled but we are only using auto values.
   [gbastien]
+- Fixed bug where it was not possible to remove a not used `category` if a
+  `classifier` with same `id` was used.
+  [gbastien]
 
 4.2.28.24 (2026-09-30)
 ----------------------
