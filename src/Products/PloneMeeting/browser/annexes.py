@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.iconifiedcategory.browser.actionview import BaseView as BaseActionView
 from collective.iconifiedcategory.browser.actionview import ConfidentialChangeView
 from collective.iconifiedcategory.browser.actionview import PublishableChangeView
@@ -201,12 +202,12 @@ class PMCategorizedChildView(CategorizedChildView):
             portal_type, show_nothing, check_can_view)
 
 
-class PMCategorizedChildInfosView(CategorizedChildInfosView):
-    """ """
+class BaseCategorizedChildInfosView(CategorizedChildInfosView):
+    """@@categorized-childs-infos base class."""
 
     def __init__(self, context, request):
         """ """
-        super(PMCategorizedChildInfosView, self).__init__(context, request)
+        super(BaseCategorizedChildInfosView, self).__init__(context, request)
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
 
@@ -217,16 +218,13 @@ class PMCategorizedChildInfosView(CategorizedChildInfosView):
 
     def show_preview(self, element):
         """Show preview if the auto_convert in collective.documentviewer is enabled."""
-        return super(PMCategorizedChildInfosView, self).show_preview(element) or \
+        return super(BaseCategorizedChildInfosView, self).show_preview(element) or \
             self.tool.auto_convert_annexes()
 
     def _show_protected_download(self, element):
         """When "show_preview" is "2", trigger advanced check.
-           Are allowed to download:
-           - proposingGroup members;
-           - (Meeting)Managers."""
-        return self.tool.isManager(self.cfg) or \
-            self.context.getProposingGroup() in self.tool.get_orgs_for_user()
+           By default shown to MeetingManagers."""
+        return self.tool.isManager(self.cfg)
 
     def show_nothing(self):
         """Do not display the 'Nothing' label."""
@@ -241,6 +239,34 @@ class PMCategorizedChildInfosView(CategorizedChildInfosView):
         annex_attr_config = '{0}_display'.format(detail_type)
         check = annex_attr_config in self.cfg.getAnnexRestrictShownAndEditableAttributes()
         return not check or self.tool.isManager(self.cfg)
+
+
+class MeetingCategorizedChildInfosView(BaseCategorizedChildInfosView):
+    """@@categorized-childs-infos for meetings."""
+
+
+class ItemCategorizedChildInfosView(BaseCategorizedChildInfosView):
+    """@@categorized-childs-infos for items."""
+
+    def _show_protected_download(self, element):
+        """When "show_preview" is "2", trigger advanced check.
+           Are allowed to download:
+           - proposingGroup members;
+           - (Meeting)Managers."""
+        return super(ItemCategorizedChildInfosView, self)._show_protected_download(element) or \
+            self.context.getProposingGroup() in self.tool.get_orgs_for_user()
+
+
+class AdviceCategorizedChildInfosView(BaseCategorizedChildInfosView):
+    """@@categorized-childs-infos for advices."""
+
+    def _show_protected_download(self, element):
+        """When "show_preview" is "2", trigger advanced check.
+           Are allowed to download:
+           - advice_group advisers members;
+           - (Meeting)Managers."""
+        return super(AdviceCategorizedChildInfosView, self)._show_protected_download(element) or \
+            get_plone_group_id(self.context.advice_group, 'advisers') in get_plone_groups_for_user()
 
 
 class PMBaseActionView(BaseActionView):

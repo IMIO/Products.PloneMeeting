@@ -135,13 +135,13 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
     cfg2_id = 'plonegov-assembly'
 
     external_image1 = \
-        "https://fastly.picsum.photos/id/22/400/400.jpg?hmac=Id8VAtx7v59BrMxVGFbHMrf-93mskILQzmMJ__Tzww8"
+        "https://fastly.picsum.photos/id/911/300/300.jpg?hmac=qAqGNOX0z5Vh20O29NtYmOJfzaWdZso3iNi4lcvbxJg"
     external_image2 = \
-        "https://fastly.picsum.photos/id/1025/400/300.jpg?hmac=5qUnaqytITcD06pLxsGw7l_twswo9b9p9c8zz_tdpMc"
+        "https://fastly.picsum.photos/id/280/300/300.jpg?hmac=QM0wFQ6yN-v_9qGNVqgk4rHthfSgiKO30s3CF1DVeJ0"
     external_image3 = \
-        "https://fastly.picsum.photos/id/1035/600/400.jpg?hmac=mnooh0fwG-2MIGW-xTUcYO6wyyx9LNdZK4RM6R2SA7A"
+        "https://fastly.picsum.photos/id/813/300/300.jpg?hmac=P1QaCX9HgZK2OE_XcRiYdFI9wkhiSmgYKor-9yDp00c"
     external_image4 = \
-        "https://fastly.picsum.photos/id/1062/600/500.jpg?hmac=ZoUBWDuRcsyqDbBPOj5jEU1kHgJ5iGO1edk1-QYode8"
+        "https://fastly.picsum.photos/id/420/300/300.jpg?hmac=8SS52dAMD_0B1ZLyZQUMzSIbhTuqno6W7diGjLDMKX8"
 
     def setUp(self):
         # enable full diff in failing tests

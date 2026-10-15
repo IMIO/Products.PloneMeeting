@@ -1,5 +1,4 @@
-<button tal:define="dummy view/saveHasActions;"
-        tal:condition="python: not view.useIcons"
+<button tal:condition="python: not view.useIcons"
         i18n:domain="PloneMeeting" class="#"
         i18n:translate=""
         tal:content="string:back"

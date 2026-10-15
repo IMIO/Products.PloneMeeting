@@ -21,6 +21,7 @@ from Products.PloneMeeting.config import PROJECTNAME
 from Products.validation import validation
 from Products.validation.validators.BaseValidators import baseValidators
 from Products.validation.validators.BaseValidators import protocols
+from sets import Set as set
 from validators import ATCertifiedSignaturesValidator
 
 import logging
@@ -101,4 +102,6 @@ def initialize(context):
     allow_module('imio.history.safe_utils')
     allow_module('Products.PloneMeeting.safe_utils')
     allow_module('Products.PloneMeeting.browser.meeting')
+    allow_module('zExceptions.Redirect')
     allow_type(datetime)
+    allow_type(set)

@@ -1622,18 +1622,17 @@ def onCategoryWillBeMovedOrRemoved(category, event):
     catalog = api.portal.get_tool('portal_catalog')
 
     if category in cfg.getCategories(catType='item', onlySelectable=False):
-        brains = catalog.unrestrictedSearchResults(
-            portal_type=(
+        cat_type = category.get_type()
+        query = {
+            "portal_type": (
                 cfg.getItemTypeName(),
                 cfg.getItemTypeName(configType='MeetingItemRecurring'),
-                cfg.getItemTypeName(configType='MeetingItemTemplate')),
-            getCategory=category.getId())
-        brains += catalog.unrestrictedSearchResults(
-            portal_type=(
-                cfg.getItemTypeName(),
-                cfg.getItemTypeName(configType='MeetingItemRecurring'),
-                cfg.getItemTypeName(configType='MeetingItemTemplate')),
-            getRawClassifier=category.getId())
+                cfg.getItemTypeName(configType='MeetingItemTemplate'))}
+        if cat_type == 'categories':
+            query["getCategory"] = category.getId()
+        else:
+            query["getRawClassifier"] = category.getId()
+        brains = catalog.unrestrictedSearchResults(**query)
         if brains:
             # linked to an existing item, we can not delete it
             msg = translate(
@@ -1644,11 +1643,10 @@ def onCategoryWillBeMovedOrRemoved(category, event):
             raise BeforeDeleteException(msg)
         # check field category_mapping_when_cloning_to_other_mc of other MC categories
         cat_mapping_id = '{0}.{1}'.format(cfg.getId(), category.getId())
-        catType = category.get_type()
         for other_cfg in tool.objectValues('MeetingConfig'):
             if other_cfg == cfg:
                 continue
-            for other_cat in other_cfg.getCategories(catType=catType, onlySelectable=False):
+            for other_cat in other_cfg.getCategories(catType=cat_type, onlySelectable=False):
                 if cat_mapping_id in other_cat.category_mapping_when_cloning_to_other_mc:
                     msg = translate(
                         "can_not_delete_meetingcategory_other_category_mapping",

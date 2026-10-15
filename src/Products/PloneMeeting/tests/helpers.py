@@ -47,14 +47,20 @@ class PloneMeetingTestingHelpers(object):
                         'backToItemFrozen',
                         'backToPresented',
                         'backToValidated',
-                        'backToPreValidated',
+                        'backToPrevalidated',
                         'backToProposed',
                         'backToItemCreated', ),
         'proposed': ('backToItemPublished',
                      'backToItemFrozen',
                      'backToPresented',
                      'backToValidated',
+                     'backToPrevalidated',
                      'backToProposed', ),
+        'prevalidated': ('backToItemPublished',
+                         'backToItemFrozen',
+                         'backToPresented',
+                         'backToValidated',
+                         'backToPrevalidated', ),
         'validated': ('backToItemPublished',
                       'backToItemFrozen',
                       'backToPresented',
@@ -313,7 +319,7 @@ class PloneMeetingTestingHelpers(object):
                     self.do(itemOrMeeting, tr, comment=comment)
                     break
         if nb_attempts >= max_attempts or itemOrMeeting.query_state() != state:
-            raise ValueError('impossible to go back to {}'.format(state))
+            raise ValueError('Unable to go back to {}'.format(state))
         if as_manager:
             self.changeUser(currentUser)
 

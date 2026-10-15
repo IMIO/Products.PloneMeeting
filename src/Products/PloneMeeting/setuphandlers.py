@@ -101,7 +101,9 @@ columnInfos = ('getAssociatedGroups',
                'pollType',
                'title_or_id')
 transformsToDisable = ['word_to_html', 'pdf_to_html', 'pdf_to_text']
-
+wsc_disable_autosearch_in = u'["#form-widgets-title", "#form-widgets-description", ' \
+    u'".select2-focusser", ".select2-input", ".goto_meeting", ".number", ' \
+    u'".datagridwidget-cell-input"]'
 
 def isNotPloneMeetingProfile(context):
     return context.readDataFile("PloneMeeting_marker.txt") is None
@@ -255,7 +257,7 @@ def postInstall(context):
     _configureWebspellchecker(site)
 
     # manage safe_html
-    _congfigureSafeHtml(site)
+    _configureSafeHtml(site)
 
     # adapt front-page
     _adaptFrontPage(site)
@@ -592,12 +594,10 @@ def _configureWebspellchecker(site):
                                not pt.startswith('annex') and
                                pt not in ('Message', 'Document', 'News Item', 'Event')]
     wsc_config.set_disallowed_portal_types(disallowed_portal_types)
-    wsc_config.set_disable_autosearch_in(
-        u'["#form-widgets-title", "#form-widgets-description", '
-        u'".select2-focusser", ".select2-input", ".goto_meeting", ".number"]')
+    wsc_config.set_disable_autosearch_in(wsc_disable_autosearch_in)
 
 
-def _congfigureSafeHtml(site):
+def _configureSafeHtml(site):
     '''Add some values to safe_html.'''
     logger.info('Adding \'colgroup\' to the list of nasty_tags in safe_html...')
     if u'colgroup' not in site.portal_transforms.safe_html._config['nasty_tags']:

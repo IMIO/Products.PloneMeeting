@@ -903,6 +903,7 @@ body[class^='template-view portaltype-meetingadvice'] div#viewlet-below-content-
 body[class^='template-view portaltype-configurablepodtemplate'] div#viewlet-below-content-body,
 body[class^='template-view portaltype-dashboardpodtemplate'] div#viewlet-below-content-body,
 body[class^='template-view portaltype-styletemplate'] div#viewlet-below-content-body,
+body[class^='template-listing_view portaltype-dashboardcollection'] div#viewlet-below-content-body,
 body.template-meetingitem_view div#viewlet-below-content-body {
     position: sticky;
     bottom: 10px;
@@ -2737,6 +2738,14 @@ span.add-quick-advice-name {
 div.add-quick-advice-type {
     padding-left: 1em;
     padding-bottom: 0.5em;
+}
+/* when using auto advices or auto (restricted) copyGroups,
+   the manual fields may be empty, hide it if it is the case,
+   in DX fields will be hidden. */
+div#optionalAdvisers:not(:has(div.ArchetypesMultiSelectionValue)),
+div#copyGroups:not(:has(div.ArchetypesMultiSelectionValue)),
+div#restrictedCopyGroups:not(:has(div.ArchetypesMultiSelectionValue)) {
+    display: none;
 }
 
 /* </dtml-with> */

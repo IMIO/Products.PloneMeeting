@@ -2388,9 +2388,10 @@ class Meeting(Container):
         cfg = tool.getMeetingConfig(self)
         meeting_uid = self.UID()
         for recurring_item in recurring_items:
-            # Set current meeting as preffered meeting, this way it will
+            # Set current meeting as preferred meeting, this way it will
             # be considered as "late item" for this meeting if relevant.
             new_items.append(recurring_item.clone(
+                copyDecisionAnnexes=True,
                 cloneEventAction='Add recurring item',
                 destFolder=dest_folder,
                 keepProposingGroup=True,

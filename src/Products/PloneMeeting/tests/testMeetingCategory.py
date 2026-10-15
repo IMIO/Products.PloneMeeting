@@ -22,27 +22,31 @@ class testMeetingCategory(PloneMeetingTestCase):
         cfg2 = self.meetingConfig2
         attr_name = 'category'
         folder_name = TOOL_FOLDER_CATEGORIES
+        other_folder_name = TOOL_FOLDER_CLASSIFIERS
         if classifier:
             self._enableField('classifier')
             self._enableField('classifier', cfg=cfg2)
             attr_name = 'classifier'
             folder_name = TOOL_FOLDER_CLASSIFIERS
+            other_folder_name = TOOL_FOLDER_CATEGORIES
         self._removeConfigObjectsFor(cfg)
         self._removeConfigObjectsFor(cfg2)
         self._enableField('category')
         self._enableField('category', cfg=cfg2)
         # add 3 categories in cfg1 and one in cfg2 having same id as cat1 in cfg1
-        cat1 = self.create('meetingcategory', id="cat1",
-                           title="Category 1", is_classifier=classifier)
-        cat1Id = cat1.getId()
-        cat2 = self.create('meetingcategory', id="cat2",
-                           title="Category 2", is_classifier=classifier)
-        cat2Id = cat2.getId()
-        cat3 = self.create('meetingcategory', id="cat3",
-                           title="Category 3", is_classifier=classifier)
-        cat3Id = cat3.getId()
-        catWithMappingCfg = self.create('meetingcategory', id="catWithMappingCfg",
-                                        title="CatWithMappingCfg", is_classifier=classifier)
+        # add categories and classifiers to check that a category with same id as
+        # a classifier is not a problem
+        categories = []
+        for cat_id, cat_title in (("cat1", "Category 1"), ("cat2", "Category 2"), ("cat3", "Category 3")):
+            categories.append(
+                self.create('meetingcategory', id=cat_id, title=cat_title, is_classifier=classifier))
+            categories.append(
+                self.create('meetingcategory', id=cat_id, title=cat_title, is_classifier=not classifier))
+        cat1Id = categories[0].getId()
+        cat2Id = categories[2].getId()
+        cat3Id = categories[4].getId()
+        catWithMappingCfg = self.create(
+            'meetingcategory', id="catWithMappingCfg", title="CatWithMappingCfg", is_classifier=classifier)
         catWithMappingCfgId = catWithMappingCfg.getId()
 
         # create a recurring item in cfg2 using also category with id 'cat1'
@@ -66,6 +70,8 @@ class testMeetingCategory(PloneMeetingTestCase):
         self.assertRaises(BeforeDeleteException,
                           cfg.get(folder_name).manage_delObjects,
                           [cat2Id])
+        # removing the category/classifier with same id is OK
+        cfg.get(other_folder_name).manage_delObjects([cat2Id])
 
         # Recurring item
         # if a recurring item is using a category, category is not deletable
@@ -114,12 +120,12 @@ class testMeetingCategory(PloneMeetingTestCase):
         itemTemplate.aq_inner.aq_parent.manage_delObjects([itemTemplate.getId(), ])
         cfg.get(folder_name).manage_delObjects([cat3Id])
 
-    def test_pm_CanNotRemoveLinkedCategory(self):
-        '''While removing a category, it should raise if it is linked...'''
+    def test_pm_CanNotRemoveUsedCategory(self):
+        '''While removing a category, it should raise if it is used...'''
         self._checkCategoryRemoval()
 
-    def test_pm_CanNotRemoveLinkedClassifier(self):
-        '''While removing a classifier, it should raise if it is linked...'''
+    def test_pm_CanNotRemoveUsedClassifier(self):
+        '''While removing a classifier, it should raise if it is used...'''
         self._checkCategoryRemoval(classifier=True)
 
     def test_pm_CanNotRenameUsedCategory(self):

@@ -3116,28 +3116,32 @@ class testMeetingType(PloneMeetingTestCase):
                                            date=datetime(2015, 5, 5),
                                            observations=richtextval(text))
         meeting = getattr(pmFolder, meetingId)
-        self.assertIn('1062-600x500.jpg', meeting.objectIds())
-        img = meeting.get('1062-600x500.jpg')
+        self.assertIn('420-300x300.jpg', meeting.objectIds())
+        img = meeting.get('420-300x300.jpg')
         # link to image uses resolveuid
-        self.assertEqual(
-            meeting.observations.output,
-            '<p>Working external image <img src="{0}" alt="1062-600x500.jpg" '
-            'title="1062-600x500.jpg" />.</p>'.format(img.absolute_url()))
         self.assertEqual(
             meeting.observations.raw,
             '<p>Working external image <img src="resolveuid/{0}">.</p>'.format(img.UID()))
+        self.assertEqual(
+            meeting.observations.output,
+            '<p>Working external image <img src="{0}" alt="420-300x300.jpg" '
+            'title="420-300x300.jpg" />.</p>'.format(img.absolute_url()))
+        self.assertEqual(
+            meeting.observations.output_relative_to(meeting),
+            '<p>Working external image <img src="{0}" alt="420-300x300.jpg" loading="lazy" '
+            'title="420-300x300.jpg" />.</p>'.format(img.absolute_url()))
 
         # test using the quickedit
         text = '<p>Working external image <img src="%s"/>.</p>' % self.external_image2
         set_field_from_ajax(meeting, 'observations', text)
-        self.assertIn('1025-400x300.jpg', meeting.objectIds())
-        img2 = meeting.get('1025-400x300.jpg')
+        self.assertIn('280-300x300.jpg', meeting.objectIds())
+        img2 = meeting.get('280-300x300.jpg')
 
         # link to image uses resolveuid
         self.assertEqual(
             meeting.observations.output,
-            '<p>Working external image <img src="{0}" alt="1025-400x300.jpg" '
-            'title="1025-400x300.jpg" />.</p>'.format(img2.absolute_url()))
+            '<p>Working external image <img src="{0}" alt="280-300x300.jpg" '
+            'title="280-300x300.jpg" />.</p>'.format(img2.absolute_url()))
         self.assertEqual(
             meeting.observations.raw,
             '<p>Working external image <img src="resolveuid/{0}">.</p>'.format(img2.UID()))
@@ -3146,14 +3150,14 @@ class testMeetingType(PloneMeetingTestCase):
         text = '<p>Working external image <img src="%s"/>.</p>' % self.external_image1
         meeting.observations = richtextval(text)
         notify(ObjectModifiedEvent(meeting, Attributes(Interface, 'observations')))
-        self.assertIn('22-400x400.jpg', meeting.objectIds())
-        img3 = meeting.get('22-400x400.jpg')
+        self.assertIn('911-300x300.jpg', meeting.objectIds())
+        img3 = meeting.get('911-300x300.jpg')
 
         # link to image uses resolveuid
         self.assertEqual(
             meeting.observations.output,
-            '<p>Working external image <img src="{0}" alt="22-400x400.jpg" '
-            'title="22-400x400.jpg" />.</p>'.format(img3.absolute_url()))
+            '<p>Working external image <img src="{0}" alt="911-300x300.jpg" '
+            'title="911-300x300.jpg" />.</p>'.format(img3.absolute_url()))
         self.assertEqual(
             meeting.observations.raw,
             '<p>Working external image <img src="resolveuid/{0}">.</p>'.format(img3.UID()))
@@ -4122,12 +4126,25 @@ class testMeetingType(PloneMeetingTestCase):
         meeting = self.create('Meeting', date=datetime(2023, 6, 13, 15, 00), category='mcategory1')
         self.assertEqual(
             meeting.get_category(True), cfg.meetingcategories.mcategory1)
-        self.assertEqual(meeting.title, u'MC1 - 13 june 2023 (15:00)')
-        self.assertTrue("title='MC1 - 13/06/2023 (15:00)'" in meeting.get_pretty_link())
+        self.assertEqual(meeting.title, u'MCat\xe91 - 13 june 2023 (15:00)')
+        self.assertEqual(meeting.Title(), 'MCat\xc3\xa91 - 13 june 2023 (15:00)')
+        self.assertTrue(u"title='MCat\xe91 - 13/06/2023 (15:00)'" in meeting.get_pretty_link())
+        # category is displayed in item.preferredMeeting
+        item = self.create('MeetingItem')
+        self.assertEqual(item.listMeetingsAcceptingItems().values(),
+                         ['Any meeting', u'MCat\xe91 - 13 june 2023 (15:00) (Created)'])
+        # works also in listMeetingsAcceptingItems when meeting no more
+        # accepting items but selected on the item
+        item.setPreferredMeeting(meeting.UID())
+        self.closeMeeting(meeting)
+        self.assertEqual(meeting.query_state(), "closed")
+        self.assertEqual(item.listMeetingsAcceptingItems().values(),
+                         ['Any meeting', u'MCat\xe91 - 13 june 2023 (15:00) (Closed)'])
         # when no category_id, it is not displayed
         meeting.category = 'mcategory3'
         notify(ObjectModifiedEvent(meeting))
         self.assertEqual(meeting.title, u'13 june 2023 (15:00)')
+        self.assertEqual(meeting.Title(), u'13 june 2023 (15:00)')
         self.assertTrue("title='13/06/2023 (15:00)'" in meeting.get_pretty_link())
 
 

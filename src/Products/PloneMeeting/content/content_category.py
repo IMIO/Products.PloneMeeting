@@ -50,7 +50,7 @@ class IPMContentCategory(Interface):
     after_scan_change_annex_type_to = schema.Choice(
         title=_(u'after_scan_change_annex_type_to_title'),
         description=_(u"after_scan_change_annex_type_to_descr"),
-        vocabulary="Products.PloneMeeting.vocabularies.item_annex_types_vocabulary",
+        vocabulary="Products.PloneMeeting.vocabularies.content_annex_types_vocabulary",
         required=False,
     )
 
