@@ -2677,10 +2677,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('showField')
 
-    def show_field(self, field_name, mode='view'):
+    def show_field(self, field_name, check_is_privacy_viewable=True, mode='view'):
         '''See doc in interfaces.py.'''
         item = self.getSelf()
-        if item.attribute_is_used(field_name):
+        if item.attribute_is_used(field_name) and \
+                (not check_is_privacy_viewable or self.adapted().isPrivacyViewable()):
             # evaluate TAL expression
             tool = api.portal.get_tool('portal_plonemeeting')
             # bypass for Manager
@@ -3762,16 +3763,26 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 res.append(k.replace(SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY, ''))
         return res
 
+    def _isPrivacyViewablePreCheck(self):
+        """Common pre check between method and cachekey."""
+        # Checking the 'privacy condition' is only done if privacy is 'secret'.
+        if self.getPrivacy().startswith('public'):
+            return True
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        # check if privacy needs to be checked...
+        if not cfg.getRestrictAccessToSecretItems() or tool.isManager(cfg):
+            return True
+        # Bypass privacy check for (Meeting)Manager
+        if tool.isManager(cfg):
+            return True
+        return None
+
     def isPrivacyViewable_cachekey(method, self):
         '''cachekey method for self.isPrivacyViewable.'''
         item = self.getSelf()
-        if item.getPrivacy().startswith('public'):
+        if item._isPrivacyViewablePreCheck() is True:
             return True
-        else:
-            tool = api.portal.get_tool('portal_plonemeeting')
-            cfg = tool.getMeetingConfig(item)
-            if not cfg.getRestrictAccessToSecretItems() or tool.isManager(cfg):
-                return True
         date = get_cachekey_volatile('_users_groups_value')
         return repr(item), item.modified(), get_plone_groups_for_user(), date
 
@@ -3780,21 +3791,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     @ram.cache(isPrivacyViewable_cachekey)
     def isPrivacyViewable(self):
         '''Check doc in interfaces.py.'''
-        # Checking the 'privacy condition' is only done if privacy is 'secret'.
         item = self.getSelf()
-        privacy = item.getPrivacy()
-        # 'public' or 'public_heading' items
-        if privacy.startswith('public'):
-            return True
-        # check if privacy needs to be checked...
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(item)
-        if not cfg.getRestrictAccessToSecretItems():
-            return True
-        # Bypass privacy check for (Meeting)Manager
-        if tool.isManager(cfg):
+        if item._isPrivacyViewablePreCheck() is True:
             return True
 
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(item)
         # now check if among local_roles, a role is giving view access to the item
         # for a group that current user is member of except powerobservers groups
         userGroups = get_plone_groups_for_user()

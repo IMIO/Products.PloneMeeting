@@ -9405,6 +9405,31 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(item.show_field('groupsInChargeNotes'))
         self.assertFalse(item.mayQuickEdit('groupsInChargeNotes'))
 
+    def test_pm_show_field_with_privacy_viewable(self):
+        """If an item is not privacy viewable, field is not viewable neither."""
+        # configure so power observers can access field "groupsInChargeNotes" but
+        # power observer can not access secret items but MeetingConfig.
+        cfg = self.meetingConfig
+        self._enableField('privacy')
+        self._enableField('groupsInChargeNotes')
+        self._setPowerObserverStates(states=(self._stateMappingFor('itemcreated'), ))
+        cfg.setRestrictAccessToSecretItems(True)
+        cfg.setRestrictAccessToSecretItemsTo(("powerobservers", ))
+        self._setupItemFieldsConfig(
+            'groupsInChargeNotes',
+            view='python: utils.isPowerObserverForCfg(cfg)')
+        # create one public and one secret item
+        self.changeUser('pmCreator1')
+        public_item = self.create('MeetingItem')
+        secret_item = self.create('MeetingItem', privacy="secret")
+        self.changeUser('powerobserver1')
+        self.assertTrue(self.hasPermission(View, public_item))
+        self.assertTrue(self.hasPermission(View, secret_item))
+        self.assertTrue(public_item.show_field('groupsInChargeNotes'))
+        self.assertFalse(secret_item.show_field('groupsInChargeNotes'))
+        self.assertTrue(public_item.show_field('groupsInChargeNotes', check_is_privacy_viewable=False))
+        self.assertTrue(secret_item.show_field('groupsInChargeNotes', check_is_privacy_viewable=False))
+
     def test_pm_anonymize_item_title(self):
         """Test the anonymize parameter of MeetingItem.Title that will use
            utils.anonymize_raw_text."""

@@ -23,6 +23,10 @@ Changelog
   [gbastien]
 - Disable `webspellchecker` in datagrid inputs (mainly used in `MeetingConfig`).
   [gbastien]
+- Added parameter `check_is_privacy_viewable=True` to `MeetingItem.show_field`
+  so when using `MeetingConfig.restrictAccessToSecretItems`, the field is not
+  viewable when rendered in a POD template or other indirect access.
+  [gbastien]
 
 4.2.28.24 (2026-09-30)
 ----------------------
