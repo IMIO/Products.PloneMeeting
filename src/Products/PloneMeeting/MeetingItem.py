@@ -2849,7 +2849,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if is_editing(cfg):
                 # when using "auto_from" in MeetingConfig.committees
                 # field is only shown to MeetingManagers
-                if cfg.is_committees_using("auto_from") and not tool.isManager(realManagers=True):
+                if cfg.is_committees_using("auto_from") and not tool.isManager(cfg):
                     res = False
         return res
 
@@ -3016,7 +3016,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         # Only MeetingManagers can sign an item if it is decided
         if not item.showItemIsSigned() or \
-           not tool.isManager(realManagers=True):
+           not tool.isManager(cfg):
             return False
 
         # If the meeting is in a closed state, the item can only be signed but
@@ -3195,7 +3195,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # user must be able to edit the item and must be a Manager
         if item.adviceIsInherited(org_uid) or \
            not _checkPermission(ModifyPortalContent, item) or \
-           not tool.isManager(realManagers=True):
+           not tool.isManager(cfg):
             return False
         return True
 
@@ -3288,7 +3288,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # apart MeetingManagers, the advice can not be set back to previous
         # if editable by the adviser
         if item.adviceIndex[advice.advice_group]['advice_editable'] and \
-           not tool.isManager(realManagers=True):
+           not tool.isManager(cfg):
             return False
 
         if _checkPermission(ModifyPortalContent, item):
