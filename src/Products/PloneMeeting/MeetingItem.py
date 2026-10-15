@@ -410,8 +410,10 @@ class MeetingItemWorkflowConditions(object):
 
     security.declarePublic('mayValidate')
 
-    def mayValidate(self):
-        '''May validate if having ReviewPortalContent and being last item validation level.'''
+    def mayValidate(self, available_on=None):
+        '''May validate if having ReviewPortalContent and being last item validation level.
+           p_available_on is the 'available_on' TAL expression defined on the 'validated'
+           level of MeetingConfig.itemWFValidationLevels, if any.'''
         res = False
         if _checkPermission(ReviewPortalContent, self.context):
             # bypass for Manager, works with adopt_roles
@@ -429,6 +431,13 @@ class MeetingItemWorkflowConditions(object):
                     res = True
                     if self._has_waiting_advices_transitions():
                         res = No(_('has_required_waiting_advices'))
+        if res and available_on:
+            res = _evaluateExpression(
+                self.context,
+                expression=available_on,
+                roles_bypassing_expression=[],
+                extra_expr_ctx=_base_extra_expr_ctx(self.context),
+                raise_on_error=True)
         if res:
             msg = self._check_required_data('validated')
             if msg is not None:

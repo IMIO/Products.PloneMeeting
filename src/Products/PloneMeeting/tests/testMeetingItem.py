@@ -8722,6 +8722,56 @@ class testMeetingItem(PloneMeetingTestCase):
             self.transitions(item),
             ['backToItemCreated', 'backToPrevalidated', 'backToProposed'])
 
+    def test_pm_ItemWFValidationLevels_validated_available_on(self):
+        """A 'validated' level (always disabled) may be defined in
+           MeetingConfig.itemWFValidationLevels, it does not create a new state
+           but its 'available_on' is used by the 'validate' transition guard."""
+        cfg = self.meetingConfig
+        self._setUpDefaultItemWFValidationLevels(cfg)
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.proposeItem(item)
+        self.changeUser('pmReviewer1')
+        self.assertTrue('validate' in self.transitions(item))
+
+        # define an 'available_on' on the default 'validated' level
+        self.changeUser('admin')
+        levels = cfg.getItemWFValidationLevels(include_disabled_validated=True)
+        levels[-1]['state_title'] = 'My validated'
+        levels[-1]['leading_transition_title'] = 'My validate'
+        levels[-1]['back_transition_title'] = 'My backToValidated'
+        levels[-1]['available_on'] = 'python: item.Description()'
+        cfg.setItemWFValidationLevels(levels)
+        notify(ObjectEditedEvent(cfg))
+
+        # the 'validated' level is only returned when asked
+        self.assertFalse('validated' in cfg.getItemWFValidationLevels(data='state'))
+        self.assertFalse('validated' in cfg.getItemWFValidationLevels(data='state', only_enabled=True))
+        self.assertTrue('validated' in cfg.getItemWFValidationLevels(
+            data='state', include_disabled_validated=True))
+        self.assertEqual(
+            cfg.getItemWFValidationLevels(
+                states=['validated'], include_disabled_validated=True)['available_on'],
+            'python: item.Description()')
+
+        # no new state, existing 'validated' state title, transitions title and 'validate' guard updated
+        item_wf = self.wfTool.getWorkflowsFor(item)[0]
+        self.assertEqual(item_wf.states['validated'].title, 'My validated')
+        self.assertEqual(item_wf.transitions['validate'].title, 'My validate')
+        self.assertEqual(item_wf.transitions['backToValidated'].title, 'My backToValidated')
+        self.assertEqual(
+            item_wf.transitions['validate'].guard.expr.text,
+            "python:here.wfConditions().mayValidate(available_on='python: item.Description()')")
+
+        # 'validate' only available when item has a description
+        self.changeUser('pmReviewer1')
+        self.assertFalse(item.Description())
+        self.assertFalse('validate' in self.transitions(item))
+        item.setDescription(self.descriptionText)
+        self.assertTrue('validate' in self.transitions(item))
+        self.do(item, 'validate')
+        self.assertEqual(item.query_state(), 'validated')
+
     def test_pm__update_meeting_link(self):
         """The MeetingItem._update_meeting_link is
            keeping the link between meeting and item."""

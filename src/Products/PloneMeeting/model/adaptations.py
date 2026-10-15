@@ -639,6 +639,11 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
         # so we need to create transitions leading to a new state
         item_validation_levels.reverse()
         allowed_back_from_validated = get_allowed_back_shortcut_from(cfg_id, 'validated')
+        # the 'validated' level (always disabled) does not create a new state,
+        # it is used to update the existing 'validated' state and 'validate' transition
+        validated_level = meetingConfig.getItemWFValidationLevels(
+            states=['validated'], include_disabled_validated=True) or None
+
         for level in item_validation_levels:
             data = {}
             data['new_state_id'] = level['state']
@@ -672,18 +677,36 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
             previous = data
             levels.append(data)
 
-        # make sure we have no leading transition for initial_state, it is the case
-        # by default there is something because datagrid column is required...
-        levels[-1]['leading_transition_id'] = ''
-        levels[-1]['leading_transition_title'] = ''
+        if levels:
+            # make sure we have no leading transition for initial_state, it is the case
+            # by default there is something because datagrid column is required...
+            levels[-1]['leading_transition_id'] = ''
+            levels[-1]['leading_transition_title'] = ''
 
-        # last added level is the new initial state
-        data['new_initial_state'] = True
+            # last added level is the new initial state
+            levels[-1]['new_initial_state'] = True
         for level in levels:
             # remove unneeded 'back_transition/back_transition_title' keys, not used by addState
             level.pop('back_transition')
             level.pop('back_transition_title')
             addState(itemWorkflow.id, **level)
+
+        # update existing 'validated' state title, 'validate' and 'backToValidated'
+        # transitions title and 'validate' transition guard
+        if validated_level is not None:
+            itemWorkflow.states['validated'].title = validated_level['state_title']
+            if 'validate' in itemWorkflow.transitions:
+                itemWorkflow.transitions['validate'].title = validated_level['leading_transition_title']
+            if 'backToValidated' in itemWorkflow.transitions:
+                itemWorkflow.transitions['backToValidated'].title = validated_level['back_transition_title']
+            available_on = validated_level['available_on'].strip()
+            if available_on and 'validate' in itemWorkflow.transitions:
+                transition = itemWorkflow.transitions['validate']
+                guard = transition.getGuard()
+                guard.changeFromProperties(
+                    {'guard_expr': 'python:here.wfConditions().mayValidate(available_on={0})'.format(
+                        repr(available_on))})
+                transition.guard = guard
 
         # manage item_validation_shortcuts when every states and transitions are created
         if 'item_validation_shortcuts' in meetingConfig.getWorkflowAdaptations():

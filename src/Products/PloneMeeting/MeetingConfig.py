@@ -3994,6 +3994,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                   states=[],
                                   data=None,
                                   only_enabled=False,
+                                  include_disabled_validated=False,
                                   value=None,
                                   render_proposing_group=False,
                                   translated_itemWFValidationLevels=False,
@@ -4004,7 +4005,16 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
              and only one row to return (one state given) then a single dict is returned,
              either a list of dict);
            - data : return every values defined for a given datagrid column name;
-           - only_enabled : make sure to return rows having enabled '1'.'''
+           - only_enabled : make sure to return rows having enabled '1';
+           - include_disabled_validated : when p_only_enabled=False, the 'validated' level
+             (always disabled) is not returned unless p_include_disabled_validated=True;
+           - translated_itemWFValidationLevels : append translated values to titles
+             (also enabled by the 'translated_itemWFValidationLevels' REQUEST key),
+             ignored when p_data is given, when used p_include_disabled_validated is forced to True.'''
+        translated_itemWFValidationLevels = self.REQUEST.get(
+            'translated_itemWFValidationLevels', translated_itemWFValidationLevels) and not data
+        if translated_itemWFValidationLevels:
+            include_disabled_validated = True
         res = value if value is not None else self.getField('itemWFValidationLevels').get(self, **kwargs)
         # avoid it modified
         res = deepcopy(res)
@@ -4013,6 +4023,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             enabled = ['1']
         if only_enabled:
             res = [level for level in res if level['enabled'] in enabled]
+        elif not include_disabled_validated:
+            res = [level for level in res if level['state'] != 'validated']
 
         if states:
             res = [level for level in res if level['state'] in states]
@@ -4067,8 +4079,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if return_state_singleton and len(states) == 1:
             res = res and res[0] or res
         # when displayed, append translated values to elements title
-        if self.REQUEST.get('translated_itemWFValidationLevels',
-                            translated_itemWFValidationLevels) and not data:
+        if translated_itemWFValidationLevels:
             translated_res = deepcopy(res)
             translated_titles = ('state_title',
                                  'leading_transition_title',
@@ -6236,8 +6247,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def get_item_validation_transitions(self):
         '''Lists the possible transitions as defined in itemWFValidationLevels.'''
         item_wf_validation_transitions = []
-        for validation_level in self.getItemWFValidationLevels(only_enabled=True,
-                                                               translated_itemWFValidationLevels=True):
+        for validation_level in self.getItemWFValidationLevels(
+                only_enabled=True, translated_itemWFValidationLevels=True):
             if validation_level['leading_transition'] != "-":
                 item_wf_validation_transitions.append((
                     validation_level['leading_transition'],

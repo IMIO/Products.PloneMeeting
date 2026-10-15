@@ -361,7 +361,7 @@ class IMeetingItemWorkflowConditions(Interface):
         '''May this item be pre-validated by a pre-reviewer ?
            [only relevant when workflow adaptation "pre-validation" is
            enabled].'''
-    def mayValidate():
+    def mayValidate(available_on=None):
         '''May this item be validated by a reviewer and proposed to a meeting
            manager ?'''
     def mayPresent():

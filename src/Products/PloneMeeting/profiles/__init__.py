@@ -704,6 +704,19 @@ class MeetingConfigDescriptor(Descriptor):
              'available_on': '',
              'enabled': '0',
              },
+            # the 'validated' level is always disabled, it does not create a new state
+            # but its 'available_on' is used by the 'validate' transition guard
+            {'state': 'validated',
+             'state_title': 'validated',
+             'leading_transition': 'validate',
+             'leading_transition_title': 'validate',
+             'back_transition': 'backToValidated',
+             'back_transition_title': 'backToValidated',
+             'group_managing_item': '{0}observers'.format(GROUP_MANAGING_ITEM_PG_PREFIX),
+             'extra_groups_managing_item': [],
+             'available_on': '',
+             'enabled': '0',
+             },
         )
         # "Transitions to confirm" are Meeting or Item-related transitions for
         # which, in the user interface, a click on the corresponding icon or
