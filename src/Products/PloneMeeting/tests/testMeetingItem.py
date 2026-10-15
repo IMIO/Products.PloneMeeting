@@ -4605,6 +4605,37 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('admin')
         self.failIf(item.validate_category(category.getId()))
 
+    def test_pm_Validate_classifier_using_groups(self):
+        '''MeetingItem.classifier must be usable by the selected proposingGroup
+           when MeetingCategory.using_groups is defined.'''
+        cfg = self.meetingConfig
+        self._enableField('classifier')
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        self.assertTrue(item.attribute_is_used('classifier'))
+        self.assertEqual(item.getProposingGroup(), self.developers_uid)
+        msg = translate('classifier_not_available_for_proposing_group',
+                        domain='PloneMeeting',
+                        context=self.portal.REQUEST)
+        classifier = cfg.classifiers.classifier1
+        # no using_groups, validates
+        classifier.using_groups = ()
+        self.failIf(item.validate_classifier(classifier.getId()))
+        # proposingGroup in using_groups, validates
+        classifier.using_groups = (self.developers_uid, )
+        self.failIf(item.validate_classifier(classifier.getId()))
+        # proposingGroup not in using_groups, does not validate
+        classifier.using_groups = (self.vendors_uid, )
+        self.assertEqual(item.validate_classifier(classifier.getId()), msg)
+        # proposingGroup given in the REQUEST is used
+        self.request.set('proposingGroup', self.vendors_uid)
+        self.failIf(item.validate_classifier(classifier.getId()))
+        self.request.set('proposingGroup', self.developers_uid)
+        self.assertEqual(item.validate_classifier(classifier.getId()), msg)
+        # not checked for a real Manager
+        self.changeUser('admin')
+        self.failIf(item.validate_classifier(classifier.getId()))
+
     def test_pm_Validate_proposingGroup(self):
         '''MeetingItem.proposingGroup is mandatory excepted for item templates.'''
         cfg = self.meetingConfig

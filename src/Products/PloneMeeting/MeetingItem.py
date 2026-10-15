@@ -2441,21 +2441,22 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if self.attribute_is_used('category'):
             if value not in cfg.categories.objectIds():
                 return translate('category_required', domain='PloneMeeting', context=self.REQUEST)
-            # check that currently used proposingGroup may use the category,
-            # not for real Managers
-            using_groups = cfg.categories[value].get_using_groups()
-            if using_groups and not tool.isManager(realManagers=True):
-                proposing_group_uid = self.REQUEST.get('proposingGroup')
-                if not proposing_group_uid:
-                    with_group_in_charge = self.REQUEST.get('proposingGroupWithGroupInCharge')
-                    if with_group_in_charge:
-                        proposing_group_uid = with_group_in_charge.split('__groupincharge__')[0]
-                if not proposing_group_uid:
-                    proposing_group_uid = self.getProposingGroup()
-                if proposing_group_uid and proposing_group_uid not in using_groups:
-                    return translate('category_not_available_for_proposing_group',
-                                     domain='PloneMeeting',
-                                     context=self.REQUEST)
+            return self._validate_using_groups(cfg.categories[value], 'category_not_available_for_proposing_group')
+
+    def _validate_using_groups(self, category, msgid):
+        '''Check that currently used proposingGroup may use p_category
+           (category or classifier), not for real Managers.'''
+        using_groups = category.get_using_groups()
+        if using_groups and not api.portal.get_tool('portal_plonemeeting').isManager(realManagers=True):
+            proposing_group_uid = self.REQUEST.get('proposingGroup')
+            if not proposing_group_uid:
+                with_group_in_charge = self.REQUEST.get('proposingGroupWithGroupInCharge')
+                if with_group_in_charge:
+                    proposing_group_uid = with_group_in_charge.split('__groupincharge__')[0]
+            if not proposing_group_uid:
+                proposing_group_uid = self.getProposingGroup()
+            if proposing_group_uid and proposing_group_uid not in using_groups:
+                return translate(msgid, domain='PloneMeeting', context=self.REQUEST)
 
     security.declarePrivate('validate_committees')
 
@@ -2481,8 +2482,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         # check if value is among classifiers defined in the MeetingConfig
-        if (self.attribute_is_used('classifier')) and value not in cfg.classifiers.objectIds():
-            return translate('classifier_required', domain='PloneMeeting', context=self.REQUEST)
+        if self.attribute_is_used('classifier'):
+            if value not in cfg.classifiers.objectIds():
+                return translate('classifier_required', domain='PloneMeeting', context=self.REQUEST)
+            return self._validate_using_groups(cfg.classifiers[value], 'classifier_not_available_for_proposing_group')
 
     security.declarePrivate('validate_groupsInCharge')
 

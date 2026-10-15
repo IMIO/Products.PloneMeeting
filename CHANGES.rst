@@ -5,8 +5,9 @@ Changelog
 4.2.28.25 (unreleased)
 ----------------------
 
-- Adapted `MeetingItem.validate_category` to check that the selected
-  `proposingGroup` is among the `MeetingCategory.using_groups` when defined.
+- Adapted `MeetingItem.validate_category` and `MeetingItem.validate_classifier`
+  to check that the selected `proposingGroup` is among the
+  `MeetingCategory.using_groups` when defined (not checked for real Managers).
   [gbastien]
 - Fixed `MeetingItem.listMeetingsAcceptingItems` when meeting title contains
   special characters (month name or meeting category id) and is no more
