@@ -497,7 +497,7 @@ class PloneMeetingTestingHelpers(object):
         """Enable the 'prevalidated' state in MeetingConfig.itemWFValidationLevels."""
         currentUser = self.member.getId()
         self.changeUser('admin')
-        itemWFValidationLevels = cfg.getItemWFValidationLevels()
+        itemWFValidationLevels = cfg.getItemWFValidationLevels(include_disabled_validated=True)
         itemWFValidationLevels[1]['group_managing_item'] = 'proposing_group__prereviewers'
         itemWFValidationLevels[2]['enabled'] = '1'
         if enable_extra_suffixes:
@@ -510,9 +510,11 @@ class PloneMeetingTestingHelpers(object):
         """Utility method that enable/disable item validation levels."""
         currentUser = self.member.getId()
         self.changeUser('admin')
-        itemValLevels = cfg.getItemWFValidationLevels()
+        itemValLevels = cfg.getItemWFValidationLevels(include_disabled_validated=True)
         for itemValLevel in itemValLevels:
-            if not item_state or itemValLevel['state'] == item_state:
+            # the 'validated' level is only updated when explicitly given
+            if (not item_state and itemValLevel['state'] != 'validated') or \
+               itemValLevel['state'] == item_state:
                 for k, v in kwargs.items():
                     itemValLevel[k] = v
         cfg.setItemWFValidationLevels(itemValLevels)

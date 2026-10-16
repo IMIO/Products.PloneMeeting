@@ -5,11 +5,18 @@ Changelog
 4.2.21rc5 (unreleased)
 ----------------------
 
-- Nothing changed yet.
-
-4.2.28.25 (unreleased)
-----------------------
-
+- Made the `validated` state configurable in `MeetingConfig.itemWFValidationLevels`:
+  an optional `validated` row (always disabled, must be the last row) does not
+  create a new state but is used to change the `validated` state title,
+  the `validate`/`backToValidated` transitions title and to define an
+  `available_on` condition on the `validate` transition
+  (bypassed for real Managers, `shortcut` and `back_transition` available).
+  `MeetingConfig.validate_itemWFValidationLevels` checks that this row uses
+  `validate`, `backToValidated`, `proposing_group__observers` and no extra groups
+  managing item. Added parameter `include_disabled_validated` to
+  `MeetingConfig.getItemWFValidationLevels`, the `validated` row is not returned
+  by default. See #DLIBBDC-3383.
+  [gbastien]
 - Adapted `MeetingItem.validate_category` and `MeetingItem.validate_classifier`
   to check that the selected `proposingGroup` is among the
   `MeetingCategory.using_groups` when defined (not checked for real Managers).

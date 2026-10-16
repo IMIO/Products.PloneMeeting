@@ -38,6 +38,7 @@ from Products.PloneMeeting.config import DEFAULT_ITEM_COLUMNS
 from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
 from Products.PloneMeeting.config import DEFAULT_MEETING_COLUMNS
 from Products.PloneMeeting.config import EXECUTE_EXPR_VALUE
+from Products.PloneMeeting.config import GROUP_MANAGING_ITEM_PG_PREFIX
 from Products.PloneMeeting.config import ITEM_ICON_COLORS
 from Products.PloneMeeting.config import ITEMTEMPLATESMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETING_REMOVE_MOG_WFA
@@ -2372,6 +2373,69 @@ class testMeetingConfig(PloneMeetingTestCase):
         format_item_wf_val_levels[1]['back_transition'] = "backToProposed"
         self.failIf(cfg.validate_itemWFValidationLevels(format_item_wf_val_levels))
 
+    def test_pm_Validate_itemWFValidationLevels_validated(self):
+        """Test MeetingConfig.validate_itemWFValidationLevels when a "validated"
+           row is defined, it must be the last row, must not be enabled and
+           only titles and available_on may be changed, leading transition
+           must be "validate", back transition must be "backToValidated",
+           group managing item must be "proposing_group__observers" and
+           extra groups managing item must be empty."""
+        cfg = self.meetingConfig
+        validated_error = \
+            translate('item_wf_val_states_validated_wrong_definition',
+                      domain='PloneMeeting',
+                      context=self.request)
+        orig_item_wf_val_levels = list(cfg.getItemWFValidationLevels())
+        validated_level = {
+            'state': 'validated',
+            'state_title': 'validated',
+            'leading_transition': 'validate',
+            'leading_transition_title': 'validate',
+            'back_transition': 'backToValidated',
+            'back_transition_title': 'backToValidated',
+            'group_managing_item': '{0}observers'.format(GROUP_MANAGING_ITEM_PG_PREFIX),
+            'extra_groups_managing_item': [],
+            'available_on': '',
+            'enabled': '0'}
+        # disabled and at the end, OK
+        values = deepcopy(orig_item_wf_val_levels) + [deepcopy(validated_level)]
+        self.failIf(cfg.validate_itemWFValidationLevels(values))
+        # titles and available_on may be changed
+        values[-1]['state_title'] = 'My validated'
+        values[-1]['leading_transition_title'] = 'My validate'
+        values[-1]['back_transition_title'] = 'My backToValidated'
+        values[-1]['available_on'] = 'python: True'
+        self.failIf(cfg.validate_itemWFValidationLevels(values))
+        # leading_transition can not be changed
+        values[-1]['leading_transition'] = 'validateItem'
+        self.assertEqual(cfg.validate_itemWFValidationLevels(values), validated_error)
+        values[-1]['leading_transition'] = 'validate'
+        # back_transition can not be changed
+        values[-1]['back_transition'] = 'backToValidatedItem'
+        self.assertEqual(cfg.validate_itemWFValidationLevels(values), validated_error)
+        values[-1]['back_transition'] = 'backToValidated'
+        self.failIf(cfg.validate_itemWFValidationLevels(values))
+        # group_managing_item must be proposing_group__observers
+        values[-1]['group_managing_item'] = '{0}reviewers'.format(GROUP_MANAGING_ITEM_PG_PREFIX)
+        self.assertEqual(cfg.validate_itemWFValidationLevels(values), validated_error)
+        values[-1]['group_managing_item'] = '{0}observers'.format(GROUP_MANAGING_ITEM_PG_PREFIX)
+        # extra_groups_managing_item must be empty
+        values[-1]['extra_groups_managing_item'] = ['{0}reviewers'.format(GROUP_MANAGING_ITEM_PG_PREFIX)]
+        self.assertEqual(cfg.validate_itemWFValidationLevels(values), validated_error)
+        values[-1]['extra_groups_managing_item'] = []
+        self.failIf(cfg.validate_itemWFValidationLevels(values))
+        # enabled, KO
+        values[-1]['enabled'] = '1'
+        self.assertEqual(cfg.validate_itemWFValidationLevels(values), validated_error)
+        # not at the end, KO
+        values = deepcopy(orig_item_wf_val_levels)
+        values.insert(1, deepcopy(validated_level))
+        self.assertEqual(cfg.validate_itemWFValidationLevels(values), validated_error)
+        # defined several times, KO
+        values = deepcopy(orig_item_wf_val_levels) + \
+            [deepcopy(validated_level), deepcopy(validated_level)]
+        self.assertEqual(cfg.validate_itemWFValidationLevels(values), validated_error)
+
     def test_pm_RemoveAnnexesPreviewsOnMeetingClosure(self):
         """When MeetingConfig.removeAnnexesPreviewsOnMeetingClosure is True,
            previews of annexes are deleted when the meeting is closed."""
@@ -2627,6 +2691,38 @@ class testMeetingConfig(PloneMeetingTestCase):
         for fieldset in fieldsets:
             self.request.set('fieldset', fieldset)
             self.assertTrue(cfg.restrictedTraverse('base_edit')())
+
+    def test_pm_ConfigEditAndViewWithValidatedItemWFValidationLevel(self):
+        """The 'validated' level (always disabled) of itemWFValidationLevels
+           is displayed in the view and kept in the edit form."""
+        cfg = self.meetingConfig
+        self.changeUser('siteadmin')
+        levels = list(cfg.getItemWFValidationLevels(include_disabled_validated=True))
+        levels.append(
+            {'state': 'validated',
+             'state_title': 'My validated',
+             'leading_transition': 'validate',
+             'leading_transition_title': 'My validate',
+             'back_transition': 'backToValidated',
+             'back_transition_title': 'My backToValidated',
+             'group_managing_item': '{0}observers'.format(GROUP_MANAGING_ITEM_PG_PREFIX),
+             'extra_groups_managing_item': [],
+             'available_on': 'python: True',
+             'enabled': '0'})
+        cfg.setItemWFValidationLevels(levels)
+        notify(ObjectEditedEvent(cfg))
+        self.request.set('pageName', 'workflow')
+        view = cfg.restrictedTraverse('base_view')()
+        self.assertTrue('My validated' in view)
+        self.assertTrue('My backToValidated' in view)
+        # the 'translated_itemWFValidationLevels' REQUEST key is reset after field is displayed
+        self.assertFalse(self.request.get('translated_itemWFValidationLevels'))
+        self.assertFalse('validated' in cfg.getItemWFValidationLevels(data='state'))
+        self.assertFalse('validated' in [level['state'] for level in cfg.getItemWFValidationLevels()])
+        self.request.set('fieldset', 'workflow')
+        edit = cfg.restrictedTraverse('base_edit')()
+        self.assertTrue('My validated' in edit)
+        self.assertTrue('My backToValidated' in edit)
 
     def test_pm_Validate_mailItemEvents(self):
         """Some notifications may not be selected together."""
