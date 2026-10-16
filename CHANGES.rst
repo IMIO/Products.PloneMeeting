@@ -5,11 +5,6 @@ Changelog
 4.2.21rc5 (unreleased)
 ----------------------
 
-- Nothing changed yet.
-
-4.2.28.25 (unreleased)
-----------------------
-
 - Made the `validated` state configurable in `MeetingConfig.itemWFValidationLevels`:
   an optional `validated` row (always disabled, must be the last row) does not
   create a new state but is used to change the `validated` state title,
