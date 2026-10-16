@@ -755,6 +755,7 @@
           <td colspan="3" tal:define="field python:here.getField('itemWFValidationLevels');
                                       dummy python:here.REQUEST.set('translated_itemWFValidationLevels', True);">
             <span metal:use-macro="here/widgets/field/macros/view" />
+            <tal:reset define="dummy python:here.REQUEST.set('translated_itemWFValidationLevels', False);" />
           </td>
         </tr>
         <tr valign="top">

@@ -2692,6 +2692,38 @@ class testMeetingConfig(PloneMeetingTestCase):
             self.request.set('fieldset', fieldset)
             self.assertTrue(cfg.restrictedTraverse('base_edit')())
 
+    def test_pm_ConfigEditAndViewWithValidatedItemWFValidationLevel(self):
+        """The 'validated' level (always disabled) of itemWFValidationLevels
+           is displayed in the view and kept in the edit form."""
+        cfg = self.meetingConfig
+        self.changeUser('siteadmin')
+        levels = list(cfg.getItemWFValidationLevels(include_disabled_validated=True))
+        levels.append(
+            {'state': 'validated',
+             'state_title': 'My validated',
+             'leading_transition': 'validate',
+             'leading_transition_title': 'My validate',
+             'back_transition': 'backToValidated',
+             'back_transition_title': 'My backToValidated',
+             'group_managing_item': '{0}observers'.format(GROUP_MANAGING_ITEM_PG_PREFIX),
+             'extra_groups_managing_item': [],
+             'available_on': 'python: True',
+             'enabled': '0'})
+        cfg.setItemWFValidationLevels(levels)
+        notify(ObjectEditedEvent(cfg))
+        self.request.set('pageName', 'workflow')
+        view = cfg.restrictedTraverse('base_view')()
+        self.assertTrue('My validated' in view)
+        self.assertTrue('My backToValidated' in view)
+        # the 'translated_itemWFValidationLevels' REQUEST key is reset after field is displayed
+        self.assertFalse(self.request.get('translated_itemWFValidationLevels'))
+        self.assertFalse('validated' in cfg.getItemWFValidationLevels(data='state'))
+        self.assertFalse('validated' in [level['state'] for level in cfg.getItemWFValidationLevels()])
+        self.request.set('fieldset', 'workflow')
+        edit = cfg.restrictedTraverse('base_edit')()
+        self.assertTrue('My validated' in edit)
+        self.assertTrue('My backToValidated' in edit)
+
     def test_pm_Validate_mailItemEvents(self):
         """Some notifications may not be selected together."""
         cfg = self.meetingConfig

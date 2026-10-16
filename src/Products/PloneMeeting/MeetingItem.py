@@ -413,8 +413,10 @@ class MeetingItemWorkflowConditions(object):
     def mayValidate(self, available_on=None):
         '''May validate if having ReviewPortalContent and being last item validation level.
            p_available_on is the 'available_on' TAL expression defined on the 'validated'
-           level of MeetingConfig.itemWFValidationLevels, if any, it is not checked for real Managers.'''
+           level of MeetingConfig.itemWFValidationLevels, if any, it is not checked for real Managers.
+           Like for other levels, "shortcut" and "back_transition" are available in the expression.'''
         res = False
+        shortcut = False
         if _checkPermission(ReviewPortalContent, self.context):
             # bypass for Manager, works with adopt_roles
             if _checkPermission(ManagePortal, self.context):
@@ -422,6 +424,8 @@ class MeetingItemWorkflowConditions(object):
             else:
                 # user may validate if he is member of the last validation level suffixed group
                 last_validation_state = get_last_validation_state(self.context, self.cfg)
+                # validating from another state than last validation state is a shortcut
+                shortcut = self.review_state != last_validation_state
                 if self.review_state == last_validation_state or \
                    ('item_validation_shortcuts' in self.cfg.getWorkflowAdaptations() and
                     'item_validation_no_validate_shortcuts' not in self.cfg.getWorkflowAdaptations() and
@@ -433,12 +437,18 @@ class MeetingItemWorkflowConditions(object):
                         res = No(_('has_required_waiting_advices'))
         # available_on is bypassed for real Managers
         if res and available_on and not self.tool.isManager(realManagers=True):
+            # same extra context as for other levels, see is_valid_validation_level
+            extra_expr_ctx = _base_extra_expr_ctx(self.context)
+            extra_expr_ctx['shortcut'] = shortcut
+            extra_expr_ctx['back_transition'] = False
             res = _evaluateExpression(
                 self.context,
                 expression=available_on,
                 roles_bypassing_expression=[],
-                extra_expr_ctx=_base_extra_expr_ctx(self.context),
+                extra_expr_ctx=extra_expr_ctx,
                 raise_on_error=True)
+            if not res:
+                res = No(_('validation_level_available_on_not_satisfied'))
         if res:
             msg = self._check_required_data('validated')
             if msg is not None:

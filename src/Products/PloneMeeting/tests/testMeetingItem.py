@@ -8774,11 +8774,147 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmReviewer1')
         self.assertFalse(item.Description())
         self.assertFalse('validate' in self.transitions(item))
+        # a No instance with a message is returned
+        self.assertEqual(
+            item.wfConditions().mayValidate(available_on='python: item.Description()').msg,
+            u'validation_level_available_on_not_satisfied')
         # available_on is bypassed for real Managers
         self.changeUser('admin')
         self.assertTrue('validate' in self.transitions(item))
         self.changeUser('pmReviewer1')
         item.setDescription(self.descriptionText)
+        self.assertTrue('validate' in self.transitions(item))
+        self.do(item, 'validate')
+        self.assertEqual(item.query_state(), 'validated')
+
+        # test helpers keep the 'validated' level and only update it when explicitly given
+        self._enableItemValidationLevel(cfg)
+        self._enablePrevalidation(cfg)
+        validated_level = cfg.getItemWFValidationLevels(
+            states=['validated'], include_disabled_validated=True)
+        self.assertEqual(validated_level['enabled'], '0')
+        self.assertEqual(validated_level['available_on'], 'python: item.Description()')
+
+        # 'validated' level is still applied when no item validation level is enabled
+        self._disableItemValidationLevel(cfg)
+        self._updateItemValidationLevel(
+            cfg,
+            item_state='validated',
+            state_title='My other validated',
+            back_transition_title='My other backToValidated')
+        item_wf = self.wfTool.getWorkflowsFor(item)[0]
+        self.assertEqual(item_wf.initial_state, 'validated')
+        self.assertFalse('validate' in item_wf.transitions)
+        self.assertEqual(item_wf.states['validated'].title, 'My other validated')
+        self.assertEqual(item_wf.transitions['backToValidated'].title, 'My other backToValidated')
+
+    def test_pm_ItemWFValidationLevels_validated_available_on_guard(self):
+        """The 'validate' transition guard is updated when the 'available_on'
+           of the 'validated' level is changed, reset when it is removed and
+           a wrong expression raises an error."""
+        cfg = self.meetingConfig
+        self._setUpDefaultItemWFValidationLevels(cfg)
+        default_guard = 'python:here.wfConditions().mayValidate()'
+        item_wf = cfg.getItemWorkflow(True)
+        self.assertEqual(item_wf.transitions['validate'].guard.expr.text, default_guard)
+        self.changeUser('admin')
+        levels = list(cfg.getItemWFValidationLevels(include_disabled_validated=True))
+        levels.append(
+            {'state': 'validated',
+             'state_title': 'validated',
+             'leading_transition': 'validate',
+             'leading_transition_title': 'validate',
+             'back_transition': 'backToValidated',
+             'back_transition_title': 'backToValidated',
+             'group_managing_item': '{0}observers'.format(GROUP_MANAGING_ITEM_PG_PREFIX),
+             'extra_groups_managing_item': [],
+             'available_on': 'python: False',
+             'enabled': '0'})
+        cfg.setItemWFValidationLevels(levels)
+        notify(ObjectEditedEvent(cfg))
+        item_wf = cfg.getItemWorkflow(True)
+        self.assertEqual(
+            item_wf.transitions['validate'].guard.expr.text,
+            "python:here.wfConditions().mayValidate(available_on='python: False')")
+
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.proposeItem(item)
+        self.changeUser('pmReviewer1')
+        self.assertFalse('validate' in self.transitions(item))
+
+        # a wrong expression raises an error
+        self._updateItemValidationLevel(
+            cfg, item_state='validated', available_on='python: item.unknown()')
+        self.assertRaises(AttributeError, self.transitions, item)
+        # "shortcut" and "back_transition" are available like for other levels
+        self._updateItemValidationLevel(
+            cfg, item_state='validated', available_on='python: shortcut is not True and back_transition is False')
+        self.assertTrue('validate' in self.transitions(item))
+
+        # changing available_on updates the guard
+        self._updateItemValidationLevel(
+            cfg, item_state='validated', available_on='python: True')
+        item_wf = cfg.getItemWorkflow(True)
+        self.assertEqual(
+            item_wf.transitions['validate'].guard.expr.text,
+            "python:here.wfConditions().mayValidate(available_on='python: True')")
+        self.assertTrue('validate' in self.transitions(item))
+
+        # removing available_on resets the guard
+        self._updateItemValidationLevel(
+            cfg, item_state='validated', available_on='')
+        item_wf = cfg.getItemWorkflow(True)
+        self.assertEqual(item_wf.transitions['validate'].guard.expr.text, default_guard)
+        self.assertTrue('validate' in self.transitions(item))
+
+        # removing the 'validated' level resets everything
+        self._updateItemValidationLevel(
+            cfg, item_state='validated', state_title='My validated', available_on='python: False')
+        self.assertFalse('validate' in self.transitions(item))
+        self.changeUser('admin')
+        levels = [level for level in cfg.getItemWFValidationLevels(include_disabled_validated=True)
+                  if level['state'] != 'validated']
+        cfg.setItemWFValidationLevels(levels)
+        notify(ObjectEditedEvent(cfg))
+        item_wf = cfg.getItemWorkflow(True)
+        self.assertEqual(item_wf.states['validated'].title, 'validated')
+        self.assertEqual(item_wf.transitions['validate'].guard.expr.text, default_guard)
+        self.changeUser('pmReviewer1')
+        self.assertTrue('validate' in self.transitions(item))
+
+    def test_pm_ItemWFValidationLevels_validated_available_on_shortcut(self):
+        """When using item validation shortcuts, the "shortcut" variable
+           may be used in the 'available_on' of the 'validated' level."""
+        cfg = self.meetingConfig
+        self._activate_wfas(('item_validation_shortcuts', ))
+        self._setUpDefaultItemWFValidationLevels(cfg)
+        self._addPrincipalToGroup('pmCreator1', self.developers_reviewers)
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        # validate is available as a shortcut from itemcreated
+        self.assertTrue('validate' in self.transitions(item))
+
+        # add a 'validated' level that disables shortcut to 'validated'
+        self.changeUser('admin')
+        levels = list(cfg.getItemWFValidationLevels(include_disabled_validated=True))
+        levels.append(
+            {'state': 'validated',
+             'state_title': 'validated',
+             'leading_transition': 'validate',
+             'leading_transition_title': 'validate',
+             'back_transition': 'backToValidated',
+             'back_transition_title': 'backToValidated',
+             'group_managing_item': '{0}observers'.format(GROUP_MANAGING_ITEM_PG_PREFIX),
+             'extra_groups_managing_item': [],
+             'available_on': 'python: shortcut is not True',
+             'enabled': '0'})
+        cfg.setItemWFValidationLevels(levels)
+        notify(ObjectEditedEvent(cfg))
+        self.changeUser('pmCreator1')
+        self.assertFalse('validate' in self.transitions(item))
+        # still available from last validation level
+        self.do(item, 'propose')
         self.assertTrue('validate' in self.transitions(item))
         self.do(item, 'validate')
         self.assertEqual(item.query_state(), 'validated')
