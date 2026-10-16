@@ -5505,6 +5505,20 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                              domain='PloneMeeting',
                              context=self.REQUEST)
 
+        # if a "validated" row is defined, it must be the last row, must not be enabled
+        # and only the titles and available_on may be changed
+        validated_indexes = [i for i, value in enumerate(values) if value['state'] == 'validated']
+        if validated_indexes and (
+                validated_indexes != [len(values) - 1] or
+                values[-1]['enabled'] == '1' or
+                values[-1]['leading_transition'] != 'validate' or
+                values[-1]['back_transition'] != 'backToValidated' or
+                values[-1]['group_managing_item'] != GROUP_MANAGING_ITEM_PG_PREFIX + 'observers' or
+                [egmi for egmi in values[-1].get('extra_groups_managing_item') or [] if egmi]):
+            return translate('item_wf_val_states_validated_wrong_definition',
+                             domain='PloneMeeting',
+                             context=self.REQUEST)
+
         enabled_stored_states = self.getItemWFValidationLevels(
             data='state',
             only_enabled=True)

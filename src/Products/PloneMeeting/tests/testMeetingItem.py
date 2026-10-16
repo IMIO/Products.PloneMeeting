@@ -8734,13 +8734,20 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmReviewer1')
         self.assertTrue('validate' in self.transitions(item))
 
-        # define an 'available_on' on the default 'validated' level
+        # add a 'validated' level (always disabled) with an 'available_on'
         self.changeUser('admin')
-        levels = cfg.getItemWFValidationLevels(include_disabled_validated=True)
-        levels[-1]['state_title'] = 'My validated'
-        levels[-1]['leading_transition_title'] = 'My validate'
-        levels[-1]['back_transition_title'] = 'My backToValidated'
-        levels[-1]['available_on'] = 'python: item.Description()'
+        levels = list(cfg.getItemWFValidationLevels(include_disabled_validated=True))
+        levels.append(
+            {'state': 'validated',
+             'state_title': 'My validated',
+             'leading_transition': 'validate',
+             'leading_transition_title': 'My validate',
+             'back_transition': 'backToValidated',
+             'back_transition_title': 'My backToValidated',
+             'group_managing_item': '{0}observers'.format(GROUP_MANAGING_ITEM_PG_PREFIX),
+             'extra_groups_managing_item': [],
+             'available_on': 'python: item.Description()',
+             'enabled': '0'})
         cfg.setItemWFValidationLevels(levels)
         notify(ObjectEditedEvent(cfg))
 
@@ -8767,6 +8774,10 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmReviewer1')
         self.assertFalse(item.Description())
         self.assertFalse('validate' in self.transitions(item))
+        # available_on is bypassed for real Managers
+        self.changeUser('admin')
+        self.assertTrue('validate' in self.transitions(item))
+        self.changeUser('pmReviewer1')
         item.setDescription(self.descriptionText)
         self.assertTrue('validate' in self.transitions(item))
         self.do(item, 'validate')
