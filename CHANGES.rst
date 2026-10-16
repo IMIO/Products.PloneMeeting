@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.21rc5 (unreleased)
+4.2.21rc5 (2026-10-16)
 ----------------------
 
 - Made the `validated` state configurable in `MeetingConfig.itemWFValidationLevels`:
