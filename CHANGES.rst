@@ -31,6 +31,8 @@ Changelog
   so when using `MeetingConfig.restrictAccessToSecretItems`, the field is not
   viewable when rendered in a POD template or other indirect access.
   [gbastien]
+- Fix check `scan_id` in migration to 4210
+  [jchandelle]
 
 4.2.28.24 (2026-09-30)
 ----------------------
