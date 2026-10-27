@@ -76,6 +76,28 @@ class testPortlets(PloneMeetingTestCase):
         # no matter actually there are no itemTemplates available for him...
         self.assertFalse(cfg.getItemTemplates(as_brains=True, onlyActive=True, filtered=True))
 
+    def test_pm_PortletPMMeetingSearchesNotUsingMeetings(self):
+        '''When using the 'no_meeting' WFA, meeting related searches
+           ('searches_meetings' and 'searches_decisions') are not displayed.'''
+        if not self._check_wfa_available(['no_meeting']):
+            return
+        cfg = self.meetingConfig
+        searches = cfg.searches
+        searchMeetingsUID = searches.searches_meetings.objectValues()[0].UID()
+        searchDecisionsUID = searches.searches_decisions.objectValues()[0].UID()
+        searchItemsUID = searches.searches_items.objectValues()[0].UID()
+        self._setup_portlets()
+        rendered = self.portlet_pm_renderer.render()
+        self.assertTrue(searchItemsUID in rendered)
+        self.assertTrue(searchMeetingsUID in rendered)
+        self.assertTrue(searchDecisionsUID in rendered)
+        self._activate_wfas(('no_meeting', ))
+        self._setup_portlets()
+        rendered = self.portlet_pm_renderer.render()
+        self.assertTrue(searchItemsUID in rendered)
+        self.assertFalse(searchMeetingsUID in rendered)
+        self.assertFalse(searchDecisionsUID in rendered)
+
     def test_pm_PortletPMRestrictCreateItemFromEmptyTemplate(self):
         '''Test that the "Crate item from empty template" may be restricted
            to some groups, this let's make the link "Create empty item" available

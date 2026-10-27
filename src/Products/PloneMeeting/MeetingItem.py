@@ -1376,7 +1376,7 @@ schema = Schema((
         name='preferredMeeting',
         default=ITEM_NO_PREFERRED_MEETING_VALUE,
         widget=SelectionWidget(
-            condition="python: not here.isDefinedInTool()",
+            condition="python: here.show_preferred_meeting()",
             description="PreferredMeeting",
             description_msgid="preferred_meeting_descr",
             label='Preferredmeeting',
@@ -2798,6 +2798,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         wfAdaptations = cfg.getWorkflowAdaptations()
         return 'accepted_out_of_meeting' in wfAdaptations or \
             'accepted_out_of_meeting_and_duplicated' in wfAdaptations
+
+    security.declarePublic('show_preferred_meeting')
+
+    def show_preferred_meeting(self):
+        '''Show the MeetingItem.preferredMeeting field if not isDefinedInTool
+           and if the MeetingConfig is using meetings.'''
+        if self.isDefinedInTool():
+            return False
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        return cfg.is_using_meetings()
 
     security.declarePublic('showEmergency')
 

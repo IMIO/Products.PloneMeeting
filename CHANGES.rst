@@ -48,6 +48,20 @@ Changelog
   `model.adaptations.get_no_meeting_removed_item_states`.
   Added parameters `check_item_wf_attrs=True` and `check_meeting_wf_attrs=True`
   to `MeetingConfig._check_wf_used_in_config`.
+  When using `no_meeting`, meeting related searches (`searches_meetings` and
+  `searches_decisions`) are not displayed in `portlet_plonemeeting`.
+  Added `MeetingConfig.is_using_meetings` and `config.MEETING_SEARCHES_FOLDER_IDS`.
+  When using `no_meeting`, the meeting portal_type is `global_allow=False`
+  so a `Meeting` can not be added.
+  When using `no_meeting`, field `MeetingItem.preferredMeeting` is hidden on item
+  edit and view forms and the meeting the item is presented in is not shown
+  on the item view, added `MeetingItem.show_preferred_meeting`.
+  [gbastien]
+- Fixed `tal_condition` of searches `searchitemstocorrect` (wrong syntax and use
+  of `set` that is not available in restricted python, use `utils.set`) and
+  `searchcorrecteditems` (wrong syntax) defined in `MeetingConfig._searchesInfo`.
+  Added test `test_pm_SearchesTALCondition` checking syntax of every searches
+  `tal_condition` and that it may be evaluated.
   [gbastien]
 - Fixed `MeetingConfig._check_wf_used_in_config` that failed to compute the
   error message when a removed transition was used in `mailItemEvents` or

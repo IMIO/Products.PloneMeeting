@@ -3419,10 +3419,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_reversed': True,
                     'showNumberOfItems': True,
                     'tal_condition': "python: tool.userIsAmong(['creators'], cfg=cfg) and "
-                                     "set(('return_to_proposing_group', "
+                                     "utils.set(('return_to_proposing_group', "
                                      "'return_to_proposing_group_with_all_validations', "
                                      "'return_to_proposing_group_with_before_last_validation', "
-                                     "'return_to_proposing_group_with_last_validation')."
+                                     "'return_to_proposing_group_with_last_validation'))."
                                      "intersection(cfg.getWorkflowAdaptations())",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
@@ -3522,7 +3522,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                      "utils.set(('return_to_proposing_group', "
                                      "'return_to_proposing_group_with_all_validations', "
                                      "'return_to_proposing_group_with_before_last_validation', "
-                                     "'return_to_proposing_group_with_last_validation')."
+                                     "'return_to_proposing_group_with_last_validation'))."
                                      "intersection(cfg.getWorkflowAdaptations())",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
@@ -6681,7 +6681,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 self.Title(include_config_group=True))
             portalType.i18n_domain = basePortalType.i18n_domain
             # base portal_types 'Meeting' and 'MeetingItem' are global_allow=False
-            portalType.global_allow = True
+            # when not using meetings, a Meeting can not be added
+            portalType.global_allow = metaTypeName != 'Meeting' or self.is_using_meetings()
             # Associate a workflow for this new portal type.
             # keep the method computation because it manages
             # getItemRecurringWorkflow and getItemTemplateWorkflow
@@ -7243,6 +7244,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             type_name = type_name or self.getMeetingTypeName()
             meetingWorkflow = wfTool.getWorkflowsFor(type_name)[0]
         return meetingWorkflow
+
+    security.declarePublic('is_using_meetings')
+
+    def is_using_meetings(self):
+        '''Is this MeetingConfig using meetings? This is not the case when
+           using the 'no_meeting' wfAdaptation.'''
+        return 'no_meeting' not in self.getWorkflowAdaptations()
 
     security.declarePublic('getItemTypeName')
 

@@ -215,6 +215,7 @@
             </div>
         </td>
         <td style="padding-right: 0.5em;" width="50%" align="right">
+            <tal:using_meetings condition="python: cfg.is_using_meetings()">
             <tal:comment replace="nothing">Preferred meeting</tal:comment>
             <div class="discreet">
                 <span class="item_attribute_label" i18n:translate="PloneMeeting_label_preferredMeeting"></span>:&nbsp;&nbsp;
@@ -237,6 +238,7 @@
               </tal:hasMeeting>
               <span tal:condition="not:nocall:meeting">-</span>
             </div>
+            </tal:using_meetings>
 
             <tal:comment replace="nothing">Meeting deadline date</tal:comment>
             <div class="discreet" tal:condition="python: 'meetingDeadlineDate' in usedAttrs">

@@ -1379,6 +1379,9 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._activate_wfas([])
         itemWF = cfg.getItemWorkflow(True)
         self.assertTrue('present' in itemWF.states['validated'].transitions)
+        self.assertTrue(self.portal.portal_types[cfg.getMeetingTypeName()].global_allow)
+        self.assertTrue(cfg.getMeetingTypeName() in
+                        [fti.getId() for fti in self.getMeetingFolder().allowedContentTypes()])
         for state_id in ('presented', 'itemfrozen', 'accepted'):
             self.assertTrue(state_id in itemWF.states)
         # activate the wfAdaptation and check
@@ -1395,6 +1398,14 @@ class testWFAdaptations(PloneMeetingTestCase):
         for state in itemWF.states.values():
             for tr_id in state.transitions:
                 self.assertTrue(tr_id in itemWF.transitions)
+        # meeting portal_type is not addable
+        meeting_type = self.portal.portal_types[cfg.getMeetingTypeName()]
+        self.assertFalse(meeting_type.global_allow)
+        self.changeUser('pmManager')
+        pmFolder = self.getMeetingFolder()
+        self.assertFalse(cfg.getMeetingTypeName() in
+                         [fti.getId() for fti in pmFolder.allowedContentTypes()])
+        self.assertRaises(Exception, self.create, 'Meeting')
         # meeting WF does not have any state nor transition
         meetingWF = cfg.getMeetingWorkflow(True)
         self.assertEqual(meetingWF.states.keys(), [])
@@ -1410,6 +1421,9 @@ class testWFAdaptations(PloneMeetingTestCase):
         # only back transitions to validation levels are available
         self.assertFalse('present' in self.transitions(item))
         self.assertTrue(self.transitions(item))
+        # disabling 'no_meeting' makes the meeting portal_type addable again
+        self._activate_wfas([])
+        self.assertTrue(self.portal.portal_types[cfg.getMeetingTypeName()].global_allow)
 
     def test_pm_WFA_pre_accepted(self):
         '''Test the workflowAdaptation 'pre_accepted'.
