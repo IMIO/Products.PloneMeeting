@@ -2780,6 +2780,34 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission(View, meeting))
         self.assertFalse(MEETING_REMOVE_MOG_WFA in cfg.getWorkflowAdaptations())
 
+    def test_pm_UsingGroupsNoMeeting(self):
+        """When using the 'no_meeting' WFA, the MEETING_REMOVE_MOG_WFA WFA
+           is not enabled when MeetingConfig.usingGroups is defined."""
+        if not self._check_wfa_available(['no_meeting']):
+            return
+        cfg = self.meetingConfig
+        self._activate_wfas(())
+        # enabling usingGroups enables MEETING_REMOVE_MOG_WFA
+        self.changeUser('siteadmin')
+        cfg.setUsingGroups((self.vendors_uid, ))
+        notify(ObjectEditedEvent(cfg))
+        self.assertTrue(MEETING_REMOVE_MOG_WFA in cfg.getWorkflowAdaptations())
+        # enabling 'no_meeting' disables MEETING_REMOVE_MOG_WFA
+        cfg.setWorkflowAdaptations(cfg.getWorkflowAdaptations() + ('no_meeting', ))
+        notify(ObjectEditedEvent(cfg))
+        self.assertEqual(cfg.getWorkflowAdaptations(), ('no_meeting', ))
+        # disable then enable usingGroups again
+        cfg.setUsingGroups([''])
+        notify(ObjectEditedEvent(cfg))
+        self.assertEqual(cfg.getWorkflowAdaptations(), ('no_meeting', ))
+        cfg.setUsingGroups((self.vendors_uid, ))
+        notify(ObjectEditedEvent(cfg))
+        self.assertEqual(cfg.getWorkflowAdaptations(), ('no_meeting', ))
+        # disable usingGroups
+        cfg.setUsingGroups([''])
+        notify(ObjectEditedEvent(cfg))
+        self.assertEqual(cfg.getWorkflowAdaptations(), ('no_meeting', ))
+
     def test_pm_UsingGroupsMailMeetingEvents(self):
         """When MeetingConfig.usingGroups is defined, mail notifications are not
            wrongly sent to wrong user."""

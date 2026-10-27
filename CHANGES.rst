@@ -33,6 +33,26 @@ Changelog
   [gbastien]
 - Fix check `scan_id` in migration to 4210
   [jchandelle]
+- Added workflow adaptation `no_meeting` that removes item states in which
+  an item is linked to a meeting (every states of the base `meetingitem_workflow`
+  except `validated`), the item workflow ends at `validated`.
+  The meeting workflow does not have any state nor transition.
+  It may only be selected together with wfAdaptations defined in
+  `MeetingConfig.noMeetingCompatibleWFAdaptations` and may not be selected
+  if a meeting exists or if removed item states/transitions or any meeting
+  state/transition is used in the config.
+  The `meeting_remove_global_access` wfAdaptation can not be used together with
+  `no_meeting`, it is disabled when enabling `no_meeting` and not enabled when
+  `MeetingConfig.usingGroups` is defined and `no_meeting` is used.
+  Added helpers `model.adaptations.remove_states` and
+  `model.adaptations.get_no_meeting_removed_item_states`.
+  Added parameters `check_item_wf_attrs=True` and `check_meeting_wf_attrs=True`
+  to `MeetingConfig._check_wf_used_in_config`.
+  [gbastien]
+- Fixed `MeetingConfig._check_wf_used_in_config` that failed to compute the
+  error message when a removed transition was used in `mailItemEvents` or
+  `mailMeetingEvents` (values like `item_state_changed_accept`).
+  [gbastien]
 
 4.2.28.24 (2026-09-30)
 ----------------------
