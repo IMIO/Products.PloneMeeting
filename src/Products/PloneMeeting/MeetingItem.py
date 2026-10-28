@@ -1013,7 +1013,10 @@ class MeetingItemWorkflowActions(object):
                 wfTool.doActionFor(clonedItem, "validate")
             else:
                 for tr in self.cfg.getTransitionsForPresentingAnItem(
-                        org_uid=clonedItem.getProposingGroup())[0:-1]:
+                        org_uid=clonedItem.getProposingGroup()):
+                    # stop before 'present'
+                    if tr == 'present':
+                        break
                     if tr in get_transitions(clonedItem):
                         wfTool.doActionFor(clonedItem, tr, comment=wf_comment)
             self.context.REQUEST.set('duplicating_and_validating_item', False)

@@ -2811,6 +2811,27 @@ class testMeetingConfig(PloneMeetingTestCase):
                 except Exception as exc:
                     self.fail('Error evaluating tal_condition of search "{0}": {1}'.format(search.getId(), exc))
 
+    def test_pm_GetTransitionsForPresentingAnItemNoMeeting(self):
+        """When not using meetings, there is no 'present' transition."""
+        if not self._check_wfa_available(['no_meeting']):
+            return
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        cfg_id = cfg.getId()
+        self._activate_wfas(())
+        transitions = cfg.getTransitionsForPresentingAnItem()
+        self.assertEqual(transitions[-1], 'present')
+        until_presented = cfg2.listTransitionsUntilPresented().keys()
+        self.assertTrue('{0}.present'.format(cfg_id) in until_presented)
+        # not using meetings
+        self._activate_wfas(('no_meeting', ))
+        self.assertEqual(cfg.getTransitionsForPresentingAnItem(), transitions[:-1])
+        self.assertFalse('present' in cfg.getTransitionsForPresentingAnItem())
+        until_presented = cfg2.listTransitionsUntilPresented().keys()
+        self.assertFalse('{0}.present'.format(cfg_id) in until_presented)
+        for tr in transitions[:-1]:
+            self.assertTrue('{0}.{1}'.format(cfg_id, tr) in until_presented)
+
     def test_pm_UsingGroupsNoMeeting(self):
         """When using the 'no_meeting' WFA, the MEETING_REMOVE_MOG_WFA WFA
            is not enabled when MeetingConfig.usingGroups is defined."""

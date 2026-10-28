@@ -25,10 +25,12 @@ from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import DeleteObjects
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
+from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import AddAnnex
 from Products.PloneMeeting.config import AddAnnexDecision
 from Products.PloneMeeting.config import HIDE_DECISION_UNDER_WRITING_MSG
 from Products.PloneMeeting.config import MEETING_REMOVE_MOG_WFA
+from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.config import WriteBudgetInfos
 from Products.PloneMeeting.config import WriteDecision
 from Products.PloneMeeting.config import WriteInternalNotes
@@ -493,6 +495,23 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.portal.restrictedTraverse('@@delete_givenuid')(newItem.UID())
         self.failIf(cfg.validate_workflowAdaptations(('no_publication', )))
 
+    def _clean_config_for_no_meeting(self, cfg=None):
+        """Make sure item states/transitions removed by 'no_meeting' and
+           meeting states/transitions are not used in the config."""
+        cfg = cfg or self.meetingConfig
+        self._clean_config_used_wfas()
+        for attr in set(ITEM_WF_STATE_ATTRS + ITEM_WF_TRANSITION_ATTRS +
+                        MEETING_WF_STATE_ATTRS + MEETING_WF_TRANSITION_ATTRS):
+            if "/" not in attr:
+                cfg.getField(attr).set(cfg, ())
+        cfg.setOnTransitionFieldTransforms(())
+        cfg.setOnMeetingTransitionItemActionToExecute(())
+        for po_infos in cfg.getPowerObservers():
+            self._setPowerObserverStates(cfg=cfg,
+                                         observer_type=po_infos['row_id'],
+                                         field_name='meeting_states',
+                                         states=[])
+
     def test_pm_Validate_workflowAdaptations_no_meeting(self):
         """Test MeetingConfig.validate_workflowAdaptations regarding 'no_meeting':
            - may only be selected with some compatible wfAdaptations;
@@ -504,19 +523,7 @@ class testWFAdaptations(PloneMeetingTestCase):
             return
         cfg = self.meetingConfig
         self._activate_wfas([])
-        self._clean_config_used_wfas()
-        # make sure removed item states/transitions and
-        # meeting states/transitions are not used in the config
-        for attr in set(ITEM_WF_STATE_ATTRS + ITEM_WF_TRANSITION_ATTRS +
-                        MEETING_WF_STATE_ATTRS + MEETING_WF_TRANSITION_ATTRS):
-            if "/" not in attr:
-                cfg.getField(attr).set(cfg, ())
-        cfg.setOnTransitionFieldTransforms(())
-        cfg.setOnMeetingTransitionItemActionToExecute(())
-        for po_infos in cfg.getPowerObservers():
-            self._setPowerObserverStates(observer_type=po_infos['row_id'],
-                                         field_name='meeting_states',
-                                         states=[])
+        self._clean_config_for_no_meeting()
 
         # alone or with compatible wfAdaptations
         self.failIf(cfg.validate_workflowAdaptations(('no_meeting', )))
@@ -1424,6 +1431,114 @@ class testWFAdaptations(PloneMeetingTestCase):
         # disabling 'no_meeting' makes the meeting portal_type addable again
         self._activate_wfas([])
         self.assertTrue(self.portal.portal_types[cfg.getMeetingTypeName()].global_allow)
+
+    def test_pm_WFA_no_meeting_usable(self):
+        '''When using 'no_meeting', the application is usable: configuration,
+           item view/edit, dashboards and item WF until decided out of meeting.'''
+        if not self._check_wfa_available(['no_meeting', 'accepted_out_of_meeting_and_duplicated']):
+            return
+        cfg = self.meetingConfig
+        self._activate_wfas(('no_meeting', 'accepted_out_of_meeting_and_duplicated'))
+        # configuration, every fieldsets of view and edit forms
+        self.changeUser('siteadmin')
+        for fieldset in cfg.Schemata().keys():
+            self.request.set('pageName', fieldset)
+            self.assertTrue(cfg.restrictedTraverse('base_view')())
+            self.request.set('fieldset', fieldset)
+            self.assertTrue(cfg.restrictedTraverse('base_edit')())
+        self.assertEqual(cfg.get_transitions_to_close_a_meeting(), [])
+        # dashboards, item view and edit
+        self.changeUser('pmCreator1')
+        pmFolder = self.getMeetingFolder()
+        self.assertTrue(pmFolder.searches_items.restrictedTraverse('base_view')())
+        item = self.create('MeetingItem', decision='<p>My decision</p>')
+        self.assertTrue(item.restrictedTraverse('meetingitem_view')())
+        self.assertTrue(item.restrictedTraverse('base_edit')())
+        # item WF until validated then accepted out of meeting
+        self.validateItem(item)
+        self.assertEqual(item.query_state(), 'validated')
+        self.changeUser('pmManager')
+        self.assertFalse('present' in self.transitions(item))
+        item.setIsAcceptableOutOfMeeting(True)
+        self.do(item, 'accept_out_of_meeting')
+        self.assertEqual(item.query_state(), 'accepted_out_of_meeting')
+        self.assertTrue(item.restrictedTraverse('meetingitem_view')())
+        # duplicated item was validated
+        duplicated_item = item.get_successor()
+        self.assertEqual(duplicated_item.query_state(), 'validated')
+        self.assertTrue(self.getMeetingFolder().searches_items.restrictedTraverse('base_view')())
+        # back to validated
+        self.do(item, 'backToValidatedFromAcceptedOutOfMeeting')
+        self.assertEqual(item.query_state(), 'validated')
+
+    def test_pm_WFA_no_meeting_send_item_to_other_mc(self):
+        '''Items may be sent from and to a MeetingConfig using 'no_meeting'.'''
+        if not self._check_wfa_available(['no_meeting']):
+            return
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        cfgId = cfg.getId()
+        cfg2Id = cfg2.getId()
+        self._activate_wfas([])
+        self._clean_config_for_no_meeting()
+        # cfg2 sends items to cfg until 'present', 'no_meeting' may not be selected
+        cfg2.setItemManualSentToOtherMCStates(('itemcreated', ))
+        cfg2.setMeetingConfigsToCloneTo(
+            ({'meeting_config': cfgId,
+              'trigger_workflow_transitions_until': '{0}.present'.format(cfgId)},))
+        self.assertEqual(
+            cfg.validate_workflowAdaptations(('no_meeting', )),
+            translate('state_or_transition_can_not_be_removed_in_use_other_config',
+                      domain='PloneMeeting',
+                      mapping={
+                          'transition': translate(
+                              cfg.getItemWorkflow(True).transitions['present'].title,
+                              domain="plone",
+                              context=self.request),
+                          'parameter_label': translate(
+                              "PloneMeeting_label_meetingConfigsToCloneTo",
+                              domain="PloneMeeting",
+                              context=self.request),
+                          'other_cfg_title': safe_unicode(cfg2.Title()), },
+                      context=self.request))
+        # trigger until last transition before 'present'
+        last_transition = cfg.getTransitionsForPresentingAnItem()[-2]
+        cfg2.setMeetingConfigsToCloneTo(
+            ({'meeting_config': cfgId,
+              'trigger_workflow_transitions_until': '{0}.{1}'.format(cfgId, last_transition)},))
+        self.failIf(cfg.validate_workflowAdaptations(('no_meeting', )))
+        self._activate_wfas(('no_meeting', ))
+        self.assertTrue('{0}.{1}'.format(cfgId, last_transition) in
+                        cfg2.listTransitionsUntilPresented().keys())
+
+        # send from cfg2 to cfg, item is validated in cfg
+        self.changeUser('pmManager')
+        self.tool.getPloneMeetingFolder(cfgId)
+        self.setMeetingConfig(cfg2Id)
+        item = self.create('MeetingItem', decision='<p>My decision</p>')
+        item.setOtherMeetingConfigsClonableTo((cfgId, ))
+        new_item = item.cloneToOtherMeetingConfig(cfgId)
+        self.assertEqual(self.tool.getMeetingConfig(new_item), cfg)
+        self.assertEqual(new_item.query_state(), 'validated')
+
+        # send from cfg to cfg2, automatically when 'accepted_out_of_meeting'
+        if not self._check_wfa_available(['accepted_out_of_meeting']):
+            return
+        self._activate_wfas(('no_meeting', 'accepted_out_of_meeting'), cfg=cfg)
+        cfg.setItemAutoSentToOtherMCStates(('accepted_out_of_meeting', ))
+        cfg.setMeetingConfigsToCloneTo(
+            ({'meeting_config': cfg2Id,
+              'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL},))
+        self.setMeetingConfig(cfgId)
+        self.tool.getPloneMeetingFolder(cfg2Id)
+        item = self.create('MeetingItem', decision='<p>My decision</p>')
+        item.setOtherMeetingConfigsClonableTo((cfg2Id, ))
+        self.validateItem(item)
+        self.assertIsNone(item.getItemClonedToOtherMC(cfg2Id))
+        item.setIsAcceptableOutOfMeeting(True)
+        self.do(item, 'accept_out_of_meeting')
+        new_item = item.getItemClonedToOtherMC(cfg2Id)
+        self.assertEqual(self.tool.getMeetingConfig(new_item), cfg2)
 
     def test_pm_WFA_pre_accepted(self):
         '''Test the workflowAdaptation 'pre_accepted'.

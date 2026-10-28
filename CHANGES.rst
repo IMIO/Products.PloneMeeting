@@ -54,8 +54,12 @@ Changelog
   When using `no_meeting`, the meeting portal_type is `global_allow=False`
   so a `Meeting` can not be added.
   When using `no_meeting`, field `MeetingItem.preferredMeeting` is hidden on item
-  edit and view forms and the meeting the item is presented in is not shown
-  on the item view, added `MeetingItem.show_preferred_meeting`.
+  edit and view forms and the meeting the item is presented in and the
+  assembly and signatures are not shown on the item view,
+  added `MeetingItem.show_preferred_meeting`.
+  When using `no_meeting`, `MeetingConfig.getTransitionsForPresentingAnItem`
+  does not return the `present` transition and
+  `MeetingConfig.get_transitions_to_close_a_meeting` returns an empty list.
   [gbastien]
 - Fixed `tal_condition` of searches `searchitemstocorrect` (wrong syntax and use
   of `set` that is not available in restricted python, use `utils.set`) and

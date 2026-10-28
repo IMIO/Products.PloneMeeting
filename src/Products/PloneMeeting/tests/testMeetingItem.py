@@ -6574,8 +6574,9 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertRaises(Unauthorized, changeCompletenessView)
 
     def test_pm_PreferredMeetingAndMeetingNotShownWhenNotUsingMeetings(self):
-        '''The preferredMeeting field and the meeting the item is presented in
-           are not shown on item view and edit forms when not using meetings.'''
+        '''The preferredMeeting field, the meeting the item is presented in and
+           the assembly and signatures are not shown on item view and edit forms
+           when not using meetings.'''
         if not self._check_wfa_available(['no_meeting']):
             return
         self.changeUser('pmCreator1')
@@ -6591,6 +6592,7 @@ class testMeetingItem(PloneMeetingTestCase):
         view = item.restrictedTraverse('meetingitem_view')()
         self.assertTrue(preferred_meeting_label in view)
         self.assertTrue(presented_in_meeting_label in view)
+        self.assertTrue('id="assembly-and-signatures"' in view)
         self.assertTrue('name="preferredMeeting"' in item.restrictedTraverse('base_edit')())
         # not using meetings
         self._activate_wfas(('no_meeting', ))
@@ -6598,6 +6600,7 @@ class testMeetingItem(PloneMeetingTestCase):
         view = item.restrictedTraverse('meetingitem_view')()
         self.assertFalse(preferred_meeting_label in view)
         self.assertFalse(presented_in_meeting_label in view)
+        self.assertFalse('id="assembly-and-signatures"' in view)
         self.assertFalse('name="preferredMeeting"' in item.restrictedTraverse('base_edit')())
 
     def test_pm_Emergency(self):

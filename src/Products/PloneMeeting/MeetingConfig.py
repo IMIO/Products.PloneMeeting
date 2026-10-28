@@ -7745,14 +7745,17 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('getTransitionsForPresentingAnItem')
 
     def getTransitionsForPresentingAnItem(self, org_uid=None):
-        '''Return default transitions to present an item.'''
+        '''Return default transitions to present an item.
+           When not using meetings, there is no 'present' transition,
+           so transitions to validate the item are returned.'''
         item_wf_val_levels = self.getItemWFValidationLevels(only_enabled=True)
         transitions = [v['leading_transition'] for v in item_wf_val_levels
                        if v['leading_transition'] != '-']
         # in case items are created "validated", there is no "validate" transition
         if transitions:
             transitions.append('validate')
-        transitions.append('present')
+        if self.is_using_meetings():
+            transitions.append('present')
         if org_uid:
             tool = api.portal.get_tool('portal_plonemeeting')
             tr_suffixes = {v['leading_transition']: v['suffix'] for v in item_wf_val_levels
@@ -7771,8 +7774,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def get_transitions_to_close_a_meeting(self):
         """Return the transitions to close a meeting.
-           WF always go from "created" to "closed"."""
+           WF always go from "created" to "closed".
+           When not using meetings, the meeting WF does not have any state."""
         res = []
+        if not self.is_using_meetings():
+            return res
         meeting_wf = self.getMeetingWorkflow(True)
         state = meeting_wf.states["created"]
         while state.id != "closed":
