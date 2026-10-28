@@ -187,8 +187,11 @@ ITEM_WF_STATE_ATTRS = [
     'itemGroupsInChargeStates',
     'itemManualSentToOtherMCStates',
     'itemObserversStates',
+    'itemRestrictedCopyGroupsStates',
     'recordItemHistoryStates',
     # datagridfields
+    'labelsConfig/edit_states',
+    'labelsConfig/view_states',
     'powerObservers/item_states']
 ITEM_WF_TRANSITION_ATTRS = [
     'transitionsReinitializingDelays',
@@ -3880,11 +3883,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declareProtected(WriteRiskyConfig, 'setWorkflowAdaptations')
 
     def setWorkflowAdaptations(self, value, **kwargs):
-        '''Overrides the field 'workflowAdaptations' mutator to disable
-           the MEETING_REMOVE_MOG_WFA WFA when using 'no_meeting'.'''
-        if 'no_meeting' in value:
-            value = [v for v in value if v != MEETING_REMOVE_MOG_WFA]
+        '''Overrides the field 'workflowAdaptations' mutator to enable or disable
+           the MEETING_REMOVE_MOG_WFA WFA when relevant.'''
         self.getField('workflowAdaptations').set(self, value, **kwargs)
+        self._update_meeting_remove_mog_wfa()
 
     security.declareProtected(WriteRiskyConfig, 'setUsingGroups')
 
@@ -3896,26 +3898,29 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # make sure we do not get a [''] as value
         value = [v for v in value if v]
         stored = self.getField('usingGroups').get(self, **kwargs)
-        self.REQUEST.set('need_update_%s' % MEETING_REMOVE_MOG_WFA, False)
-        if not stored and value:
-            # enabling usingGroups
-            self.REQUEST.set('need_update_%s' % MEETING_REMOVE_MOG_WFA, True)
-            wfas = list(self.getWorkflowAdaptations())
-            # useless when not using meetings
-            if MEETING_REMOVE_MOG_WFA not in wfas and 'no_meeting' not in wfas:
-                wfas.append(MEETING_REMOVE_MOG_WFA)
-                self.setWorkflowAdaptations(wfas)
-        elif stored and not value:
-            # disabling usingGroups
-            self.REQUEST.set('need_update_%s' % MEETING_REMOVE_MOG_WFA, True)
-            wfas = list(self.getWorkflowAdaptations())
-            if MEETING_REMOVE_MOG_WFA in wfas:
-                wfas.remove(MEETING_REMOVE_MOG_WFA)
-                self.setWorkflowAdaptations(wfas)
-        elif stored and value and list(stored) != value:
-            # value changed, need to update local roles but WFA is already selected
-            self.REQUEST.set('need_update_%s' % MEETING_REMOVE_MOG_WFA, True)
         self.getField('usingGroups').set(self, value, **kwargs)
+        # usingGroups changed, meetings local_roles need to be updated
+        if list(stored) != value:
+            self.REQUEST.set('need_update_%s' % MEETING_REMOVE_MOG_WFA, True)
+        self._update_meeting_remove_mog_wfa()
+
+    def _update_meeting_remove_mog_wfa(self):
+        '''The MEETING_REMOVE_MOG_WFA WFA is enabled when MeetingConfig.usingGroups
+           is defined and the MeetingConfig is using meetings, it is disabled otherwise.
+           This is called by the usingGroups and workflowAdaptations mutators so the
+           result is correct no matter the order the fields are set.
+           Updating WF role mappings and every meetings local_roles is managed
+           by the onConfigModified event.'''
+        wfas = list(self.getField('workflowAdaptations').get(self))
+        needed = bool(self.getField('usingGroups').get(self)) and 'no_meeting' not in wfas
+        if needed and MEETING_REMOVE_MOG_WFA not in wfas:
+            wfas.append(MEETING_REMOVE_MOG_WFA)
+        elif not needed and MEETING_REMOVE_MOG_WFA in wfas:
+            wfas.remove(MEETING_REMOVE_MOG_WFA)
+        else:
+            return
+        self.getField('workflowAdaptations').set(self, wfas)
+        self.REQUEST.set('need_update_%s' % MEETING_REMOVE_MOG_WFA, True)
 
     security.declareProtected(WriteRiskyConfig, 'setFolderTitle')
 
@@ -5090,12 +5095,22 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if not check_meeting_wf_attrs:
                 values = [v for v in values if not v.startswith("Meeting.")]
             # keep crossed value and crossed state/transition id
-            crossed_states = [(v, r) for v in values
-                              for r in removed_or_disabled_states
-                              if r in v]
-            crossed_transitions = [(v, r) for v in values
-                                   for r in removed_or_disabled_transitions
-                                   if r in v]
+            # state fields store complete state ids, compare the complete id so
+            # 'accepted' does not match 'accepted_out_of_meeting'
+            # transition fields may embed a transition id ('item_state_changed_accept',
+            # 'MeetingItem.accept') or a state id ('backTo_itemfrozen_from_returned_to_proposing_group')
+            if attr in ITEM_WF_STATE_ATTRS or attr in MEETING_WF_STATE_ATTRS:
+                crossed_states = [(v, r) for v in values
+                                  for r in removed_or_disabled_states
+                                  if r == v]
+                crossed_transitions = []
+            else:
+                crossed_states = [(v, r) for v in values
+                                  for r in removed_or_disabled_states
+                                  if r in v]
+                crossed_transitions = [(v, r) for v in values
+                                       for r in removed_or_disabled_transitions
+                                       if r in v]
             if crossed_states or crossed_transitions:
                 crossed_value, crossed_id = (crossed_states + crossed_transitions)[0]
                 if attr in cfg_item_wf_attrs and not crossed_value.startswith("Meeting."):

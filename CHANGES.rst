@@ -42,8 +42,10 @@ Changelog
   if a meeting exists or if removed item states/transitions or any meeting
   state/transition is used in the config.
   The `meeting_remove_global_access` wfAdaptation can not be used together with
-  `no_meeting`, it is disabled when enabling `no_meeting` and not enabled when
-  `MeetingConfig.usingGroups` is defined and `no_meeting` is used.
+  `no_meeting`, it is now enabled only when `MeetingConfig.usingGroups` is defined
+  and `no_meeting` is not used (managed by `MeetingConfig._update_meeting_remove_mog_wfa`
+  called by `setUsingGroups` and `setWorkflowAdaptations`), so it is disabled when
+  enabling `no_meeting` and enabled again when disabling `no_meeting`.
   Added helpers `model.adaptations.remove_states` and
   `model.adaptations.get_no_meeting_removed_item_states`.
   Added parameters `check_item_wf_attrs=True` and `check_meeting_wf_attrs=True`
@@ -70,6 +72,15 @@ Changelog
 - Fixed `MeetingConfig._check_wf_used_in_config` that failed to compute the
   error message when a removed transition was used in `mailItemEvents` or
   `mailMeetingEvents` (values like `item_state_changed_accept`).
+  State fields now compare the complete state id (`accepted` no more matches
+  `accepted_out_of_meeting`) and do not match transition ids.
+  Added `itemRestrictedCopyGroupsStates`, `labelsConfig/edit_states` and
+  `labelsConfig/view_states` to `MeetingConfig.ITEM_WF_STATE_ATTRS`, added test
+  `test_pm_WFAttrsConstantsComplete` checking WF related attrs constants are complete.
+  Fixed `Migrator.update_cfg_wf_attrs` to manage datagridfield columns
+  (like `powerObservers/item_states`): multivalued columns are managed like other
+  attributes, for single valued columns `to_replace` is applied and rows using
+  a value in `to_remove` are removed.
   [gbastien]
 
 4.2.28.24 (2026-09-30)
