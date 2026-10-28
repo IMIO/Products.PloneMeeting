@@ -187,8 +187,11 @@ ITEM_WF_STATE_ATTRS = [
     'itemGroupsInChargeStates',
     'itemManualSentToOtherMCStates',
     'itemObserversStates',
+    'itemRestrictedCopyGroupsStates',
     'recordItemHistoryStates',
     # datagridfields
+    'labelsConfig/edit_states',
+    'labelsConfig/view_states',
     'powerObservers/item_states']
 ITEM_WF_TRANSITION_ATTRS = [
     'transitionsReinitializingDelays',

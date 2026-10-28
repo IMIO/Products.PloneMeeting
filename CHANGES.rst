@@ -74,6 +74,13 @@ Changelog
   `mailMeetingEvents` (values like `item_state_changed_accept`).
   State fields now compare the complete state id (`accepted` no more matches
   `accepted_out_of_meeting`) and do not match transition ids.
+  Added `itemRestrictedCopyGroupsStates`, `labelsConfig/edit_states` and
+  `labelsConfig/view_states` to `MeetingConfig.ITEM_WF_STATE_ATTRS`, added test
+  `test_pm_WFAttrsConstantsComplete` checking WF related attrs constants are complete.
+  Fixed `Migrator.update_cfg_wf_attrs` to manage datagridfield columns
+  (like `powerObservers/item_states`): multivalued columns are managed like other
+  attributes, for single valued columns `to_replace` is applied and rows using
+  a value in `to_remove` are removed.
   [gbastien]
 
 4.2.28.24 (2026-09-30)

@@ -53,6 +53,10 @@ from Products.PloneMeeting.content.meeting import default_committees
 from Products.PloneMeeting.events import _itemAnnexTypes
 from Products.PloneMeeting.interfaces import IConfigElement
 from Products.PloneMeeting.MeetingConfig import DUPLICATE_SHORT_NAME
+from Products.PloneMeeting.MeetingConfig import ITEM_WF_STATE_ATTRS
+from Products.PloneMeeting.MeetingConfig import ITEM_WF_TRANSITION_ATTRS
+from Products.PloneMeeting.MeetingConfig import MEETING_WF_STATE_ATTRS
+from Products.PloneMeeting.MeetingConfig import MEETING_WF_TRANSITION_ATTRS
 from Products.PloneMeeting.tests.PloneMeetingTestCase import DefaultData
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
@@ -2831,6 +2835,80 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertFalse('{0}.present'.format(cfg_id) in until_presented)
         for tr in transitions[:-1]:
             self.assertTrue('{0}.{1}'.format(cfg_id, tr) in until_presented)
+
+    def test_pm_WFAttrsConstantsComplete(self):
+        """Every field or datagrid column using an item/meeting state or transition
+           vocabulary is listed in ITEM_WF_STATE_ATTRS, ITEM_WF_TRANSITION_ATTRS,
+           MEETING_WF_STATE_ATTRS or MEETING_WF_TRANSITION_ATTRS."""
+        cfg = self.meetingConfig
+        vocab_to_attrs = {
+            'listItemStates': ITEM_WF_STATE_ATTRS,
+            'listItemAutoSentToOtherMCStates': ITEM_WF_STATE_ATTRS,
+            'listMeetingStates': MEETING_WF_STATE_ATTRS,
+            'listItemTransitions': ITEM_WF_TRANSITION_ATTRS,
+            'listExecutableItemActions': ITEM_WF_TRANSITION_ATTRS,
+            'listItemEvents': ITEM_WF_TRANSITION_ATTRS,
+            'listMeetingTransitions': MEETING_WF_TRANSITION_ATTRS,
+            'listMeetingEvents': MEETING_WF_TRANSITION_ATTRS,
+            'listAllTransitions': ITEM_WF_TRANSITION_ATTRS + MEETING_WF_TRANSITION_ATTRS}
+        checked = []
+        for field in cfg.Schema().fields():
+            columns = getattr(field.widget, 'columns', None)
+            if columns:
+                candidates = [('{0}/{1}'.format(field.getName(), col_name),
+                               getattr(column, 'vocabulary', None))
+                              for col_name, column in columns.items()]
+            else:
+                candidates = [(field.getName(), field.vocabulary)]
+            for attr, vocab in candidates:
+                if isinstance(vocab, basestring) and vocab in vocab_to_attrs:
+                    checked.append(attr)
+                    self.assertTrue(attr in vocab_to_attrs[vocab],
+                                    '"{0}" using vocabulary "{1}" is not listed'.format(attr, vocab))
+        # make sure the test really checked something
+        self.assertTrue('itemRestrictedCopyGroupsStates' in checked)
+        self.assertTrue('labelsConfig/view_states' in checked)
+        self.assertTrue('powerObservers/meeting_states' in checked)
+
+    def test_pm_MigratorUpdateCfgWFAttrs(self):
+        """Migrator.update_cfg_wf_attrs manages fields and datagridfield columns."""
+        from Products.PloneMeeting.migrations import Migrator
+        cfg = self.meetingConfig
+        cfg_id = cfg.getId()
+        self.changeUser('siteadmin')
+        cfg.setItemCopyGroupsStates(('itemcreated', 'validated'))
+        self._setPowerObserverStates(states=('itemcreated', 'validated'))
+        cfg.setOnTransitionFieldTransforms(
+            ({'transition': 'validate',
+              'field_name': 'MeetingItem.decision',
+              'tal_expression': 'string:Validated'},
+             {'transition': 'backToItemCreated',
+              'field_name': 'MeetingItem.decision',
+              'tal_expression': 'string:Back'}))
+        migrator = Migrator(self.portal)
+        # states, multivalued field and multivalued datagridfield column
+        migrator.update_cfg_wf_attrs(
+            to_remove=['itemcreated'], to_replace={'validated': 'presented'}, cfg_ids=[cfg_id])
+        self.assertEqual(list(cfg.getItemCopyGroupsStates()), ['presented'])
+        po_infos = [po for po in cfg.getPowerObservers() if po['row_id'] == 'powerobservers'][0]
+        self.assertEqual(list(po_infos['item_states']), ['presented'])
+        migrator.update_cfg_wf_attrs(to_add=['accepted'], cfg_ids=[cfg_id])
+        self.assertEqual(list(cfg.getItemCopyGroupsStates()), ['presented', 'accepted'])
+        po_infos = [po for po in cfg.getPowerObservers() if po['row_id'] == 'powerobservers'][0]
+        self.assertEqual(list(po_infos['item_states']), ['presented', 'accepted'])
+        # transitions, single valued datagridfield column, row using
+        # a removed value is removed, to_add is ignored
+        migrator.update_cfg_wf_attrs(
+            is_review_state=False,
+            to_remove=['backToItemCreated'],
+            to_replace={'validate': 'present'},
+            to_add=['accept'],
+            cfg_ids=[cfg_id])
+        self.assertEqual(
+            [row['transition'] for row in cfg.getOnTransitionFieldTransforms()],
+            ['present'])
+        self.assertEqual(cfg.getOnTransitionFieldTransforms()[0]['tal_expression'],
+                         'string:Validated')
 
     def test_pm_UsingGroupsNoMeeting(self):
         """When using the 'no_meeting' WFA, the MEETING_REMOVE_MOG_WFA WFA

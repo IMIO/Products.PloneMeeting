@@ -10,6 +10,7 @@ from collections import OrderedDict
 from collective.behavior.talcondition.behavior import ITALCondition
 from collective.documentgenerator.search_replace.pod_template import SearchAndReplacePODTemplates
 from collective.iconifiedcategory.utils import _categorized_elements
+from copy import deepcopy
 from DateTime import DateTime
 from eea.facetednavigation.interfaces import ICriteria
 from imio.helpers.cache import cleanRamCacheFor
@@ -536,7 +537,24 @@ class Migrator(BaseMigrator):
 
     def update_cfg_wf_attrs(self, is_review_state=True, to_remove=[], to_add=[], to_replace={}, cfg_ids=[], related_to='MeetingItem'):
         """Clean MeetingConfig WF related attributes.
-           If p_is_state, manage state related attrs, manage transition related attrs otherwise."""
+           If p_is_state, manage state related attrs, manage transition related attrs otherwise.
+           For datagridfield columns (attrs like 'powerObservers/item_states'), every row is managed:
+           - multivalued columns are managed like other attributes;
+           - for single valued columns, p_to_replace is applied, rows using a value
+             in p_to_remove are removed and p_to_add is ignored."""
+
+        def _update_values(values):
+            # to_remove
+            adapted_values = [k for k in values if k not in to_remove]
+            # to_add
+            for v_to_add in to_add:
+                if v_to_add not in adapted_values:
+                    adapted_values.append(v_to_add)
+            # to_replace
+            for orignal_value, new_value in to_replace.items():
+                adapted_values = replace_in_list(adapted_values, orignal_value, new_value)
+            return adapted_values
+
         info = is_review_state and "WF review_state" or "WF transition"
         logger.info('Updating MeetingConfig "%s" "%s" related attributes, '
                     'removing "%s", replacing "%s" and adding "%s"...'
@@ -557,15 +575,20 @@ class Migrator(BaseMigrator):
                 field_name = attr.split("/")[0]
                 field = cfg.getField(field_name)
                 values = field.get(cfg)
-                # to_remove
-                adapted_values = [k for k in values if k not in to_remove]
-                # to_add
-                for v_to_add in to_add:
-                    if v_to_add not in adapted_values:
-                        adapted_values.append(v_to_add)
-                # to_replace
-                for orignal_value, new_value in to_replace.items():
-                    adapted_values = replace_in_list(adapted_values, orignal_value, new_value)
+                if "/" in attr:
+                    col_name = attr.split("/")[1]
+                    adapted_values = []
+                    for row in deepcopy(values):
+                        col_value = row.get(col_name)
+                        if hasattr(col_value, "__iter__"):
+                            row[col_name] = _update_values(col_value)
+                        elif col_value in to_remove:
+                            continue
+                        else:
+                            row[col_name] = to_replace.get(col_value, col_value)
+                        adapted_values.append(row)
+                else:
+                    adapted_values = _update_values(values)
                 field.set(cfg, adapted_values)
 
     def removeUnusedWorkflows(self):
