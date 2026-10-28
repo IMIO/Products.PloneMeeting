@@ -7,6 +7,8 @@
 
 from AccessControl import Unauthorized
 from collections import OrderedDict
+from collective.behavior.talcondition.behavior import ITALCondition
+from collective.behavior.talcondition.utils import evaluateExpressionFor
 from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.contact.plonegroup.utils import select_org_for_function
@@ -2779,6 +2781,84 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         self.assertTrue(self.hasPermission(View, meeting))
         self.assertFalse(MEETING_REMOVE_MOG_WFA in cfg.getWorkflowAdaptations())
+
+    def test_pm_SearchesTALCondition(self):
+        """Make sure every 'tal_condition' defined in MeetingConfig._searchesInfo
+           is a valid python expression and that the 'tal_condition' of every
+           DashboardCollection of the MeetingConfig may be evaluated without error."""
+        cfg = self.meetingConfig
+        # syntax of every tal_condition, including searches not created in the config
+        for search_id, search_info in cfg._searchesInfo().items():
+            tal_condition = search_info.get('tal_condition', '').strip()
+            if not tal_condition:
+                continue
+            self.assertTrue(tal_condition.startswith('python:'), search_id)
+            try:
+                compile(tal_condition[len('python:'):].strip(), search_id, 'eval')
+            except SyntaxError as exc:
+                self.fail('Wrong tal_condition for search "{0}": {1}'.format(search_id, exc))
+        # evaluate every tal_condition, a not Manager user is used
+        # so tal_condition is not bypassed
+        self.changeUser('pmManager')
+        for collection in cfg.searches.objectValues():
+            for search in [collection] + list(getattr(collection, 'objectValues', lambda: [])()):
+                if search.portal_type != 'DashboardCollection':
+                    continue
+                adapted = ITALCondition(search)
+                extra_expr_ctx = adapted.complete_extra_expr_ctx({'fromPortletTodo': False})
+                try:
+                    evaluateExpressionFor(adapted, extra_expr_ctx=extra_expr_ctx, raise_on_error=True)
+                except Exception as exc:
+                    self.fail('Error evaluating tal_condition of search "{0}": {1}'.format(search.getId(), exc))
+
+    def test_pm_GetTransitionsForPresentingAnItemNoMeeting(self):
+        """When not using meetings, there is no 'present' transition."""
+        if not self._check_wfa_available(['no_meeting']):
+            return
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        cfg_id = cfg.getId()
+        self._activate_wfas(())
+        transitions = cfg.getTransitionsForPresentingAnItem()
+        self.assertEqual(transitions[-1], 'present')
+        until_presented = cfg2.listTransitionsUntilPresented().keys()
+        self.assertTrue('{0}.present'.format(cfg_id) in until_presented)
+        # not using meetings
+        self._activate_wfas(('no_meeting', ))
+        self.assertEqual(cfg.getTransitionsForPresentingAnItem(), transitions[:-1])
+        self.assertFalse('present' in cfg.getTransitionsForPresentingAnItem())
+        until_presented = cfg2.listTransitionsUntilPresented().keys()
+        self.assertFalse('{0}.present'.format(cfg_id) in until_presented)
+        for tr in transitions[:-1]:
+            self.assertTrue('{0}.{1}'.format(cfg_id, tr) in until_presented)
+
+    def test_pm_UsingGroupsNoMeeting(self):
+        """When using the 'no_meeting' WFA, the MEETING_REMOVE_MOG_WFA WFA
+           is not enabled when MeetingConfig.usingGroups is defined."""
+        if not self._check_wfa_available(['no_meeting']):
+            return
+        cfg = self.meetingConfig
+        self._activate_wfas(())
+        # enabling usingGroups enables MEETING_REMOVE_MOG_WFA
+        self.changeUser('siteadmin')
+        cfg.setUsingGroups((self.vendors_uid, ))
+        notify(ObjectEditedEvent(cfg))
+        self.assertTrue(MEETING_REMOVE_MOG_WFA in cfg.getWorkflowAdaptations())
+        # enabling 'no_meeting' disables MEETING_REMOVE_MOG_WFA
+        cfg.setWorkflowAdaptations(cfg.getWorkflowAdaptations() + ('no_meeting', ))
+        notify(ObjectEditedEvent(cfg))
+        self.assertEqual(cfg.getWorkflowAdaptations(), ('no_meeting', ))
+        # disable then enable usingGroups again
+        cfg.setUsingGroups([''])
+        notify(ObjectEditedEvent(cfg))
+        self.assertEqual(cfg.getWorkflowAdaptations(), ('no_meeting', ))
+        cfg.setUsingGroups((self.vendors_uid, ))
+        notify(ObjectEditedEvent(cfg))
+        self.assertEqual(cfg.getWorkflowAdaptations(), ('no_meeting', ))
+        # disable usingGroups
+        cfg.setUsingGroups([''])
+        notify(ObjectEditedEvent(cfg))
+        self.assertEqual(cfg.getWorkflowAdaptations(), ('no_meeting', ))
 
     def test_pm_UsingGroupsMailMeetingEvents(self):
         """When MeetingConfig.usingGroups is defined, mail notifications are not

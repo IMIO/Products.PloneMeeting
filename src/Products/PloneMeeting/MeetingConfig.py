@@ -115,6 +115,7 @@ from Products.PloneMeeting.interfaces import IMeetingWorkflowConditions
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.model.adaptations import _getValidationReturnedStates
 from Products.PloneMeeting.model.adaptations import _performWorkflowAdaptations
+from Products.PloneMeeting.model.adaptations import get_no_meeting_removed_item_states
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import computeCertifiedSignatures
@@ -3071,8 +3072,34 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                      'accepted_out_of_meeting_emergency_and_duplicated',
                      'transfered',
                      'transfered_and_duplicated',
+                     # 'no_meeting' removes item states after 'validated', it must be applied after
+                     # adaptations adding states from 'validated' as these use 'accepted' as base state
+                     'no_meeting',
                      'meetingmanager_correct_closed_meeting',
                      MEETING_REMOVE_MOG_WFA)
+
+    # Names of workflow adaptations that may be selected together with 'no_meeting'
+    noMeetingCompatibleWFAdaptations = (
+        'no_meeting',
+        'item_validation_shortcuts',
+        'item_validation_no_validate_shortcuts',
+        'only_creator_may_delete',
+        'reviewers_take_back_validated_item',
+        'waiting_advices',
+        'waiting_advices_from_every_val_levels',
+        'waiting_advices_from_before_last_val_level',
+        'waiting_advices_from_last_val_level',
+        'waiting_advices_adviser_send_back',
+        'waiting_advices_proposing_group_send_back',
+        'waiting_advices_adviser_may_validate',
+        'waiting_advices_given_advices_required_to_validate',
+        'waiting_advices_given_and_signed_advices_required_to_validate',
+        'accepted_out_of_meeting',
+        'accepted_out_of_meeting_and_duplicated',
+        'accepted_out_of_meeting_emergency',
+        'accepted_out_of_meeting_emergency_and_duplicated',
+        'transfered',
+        'transfered_and_duplicated')
 
     def getId(self, real_id=False):
         """Override to take __real_id__ into account (used in some tests)."""
@@ -3392,10 +3419,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_reversed': True,
                     'showNumberOfItems': True,
                     'tal_condition': "python: tool.userIsAmong(['creators'], cfg=cfg) and "
-                                     "set(('return_to_proposing_group', "
+                                     "utils.set(('return_to_proposing_group', "
                                      "'return_to_proposing_group_with_all_validations', "
                                      "'return_to_proposing_group_with_before_last_validation', "
-                                     "'return_to_proposing_group_with_last_validation')."
+                                     "'return_to_proposing_group_with_last_validation'))."
                                      "intersection(cfg.getWorkflowAdaptations())",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
@@ -3495,7 +3522,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                      "utils.set(('return_to_proposing_group', "
                                      "'return_to_proposing_group_with_all_validations', "
                                      "'return_to_proposing_group_with_before_last_validation', "
-                                     "'return_to_proposing_group_with_last_validation')."
+                                     "'return_to_proposing_group_with_last_validation'))."
                                      "intersection(cfg.getWorkflowAdaptations())",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
@@ -3850,6 +3877,15 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 criteria.edit(criterion.__name__, **{'default': value})
         self.getField('maxShownListings').set(self, value, **kwargs)
 
+    security.declareProtected(WriteRiskyConfig, 'setWorkflowAdaptations')
+
+    def setWorkflowAdaptations(self, value, **kwargs):
+        '''Overrides the field 'workflowAdaptations' mutator to disable
+           the MEETING_REMOVE_MOG_WFA WFA when using 'no_meeting'.'''
+        if 'no_meeting' in value:
+            value = [v for v in value if v != MEETING_REMOVE_MOG_WFA]
+        self.getField('workflowAdaptations').set(self, value, **kwargs)
+
     security.declareProtected(WriteRiskyConfig, 'setUsingGroups')
 
     def setUsingGroups(self, value, **kwargs):
@@ -3865,15 +3901,17 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # enabling usingGroups
             self.REQUEST.set('need_update_%s' % MEETING_REMOVE_MOG_WFA, True)
             wfas = list(self.getWorkflowAdaptations())
-            if MEETING_REMOVE_MOG_WFA not in wfas:
+            # useless when not using meetings
+            if MEETING_REMOVE_MOG_WFA not in wfas and 'no_meeting' not in wfas:
                 wfas.append(MEETING_REMOVE_MOG_WFA)
                 self.setWorkflowAdaptations(wfas)
         elif stored and not value:
             # disabling usingGroups
             self.REQUEST.set('need_update_%s' % MEETING_REMOVE_MOG_WFA, True)
             wfas = list(self.getWorkflowAdaptations())
-            wfas.remove(MEETING_REMOVE_MOG_WFA)
-            self.setWorkflowAdaptations(wfas)
+            if MEETING_REMOVE_MOG_WFA in wfas:
+                wfas.remove(MEETING_REMOVE_MOG_WFA)
+                self.setWorkflowAdaptations(wfas)
         elif stored and value and list(stored) != value:
             # value changed, need to update local roles but WFA is already selected
             self.REQUEST.set('need_update_%s' % MEETING_REMOVE_MOG_WFA, True)
@@ -5023,10 +5061,16 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _check_wf_used_in_config(self,
                                  removed_or_disabled_states=[],
-                                 removed_or_disabled_transitions=[]):
-        """Check if given p_states or p_transitions are used in any MeetingConfig fields."""
-        cfg_item_wf_attrs = list(ITEM_WF_STATE_ATTRS) + list(ITEM_WF_TRANSITION_ATTRS)
-        cfg_meeting_wf_attrs = list(MEETING_WF_STATE_ATTRS) + list(MEETING_WF_TRANSITION_ATTRS)
+                                 removed_or_disabled_transitions=[],
+                                 check_item_wf_attrs=True,
+                                 check_meeting_wf_attrs=True):
+        """Check if given p_states or p_transitions are used in any MeetingConfig fields.
+           p_check_item_wf_attrs and p_check_meeting_wf_attrs define if fields
+           related to item WF and meeting WF are checked."""
+        cfg_item_wf_attrs = check_item_wf_attrs and \
+            list(ITEM_WF_STATE_ATTRS) + list(ITEM_WF_TRANSITION_ATTRS) or []
+        cfg_meeting_wf_attrs = check_meeting_wf_attrs and \
+            list(MEETING_WF_STATE_ATTRS) + list(MEETING_WF_TRANSITION_ATTRS) or []
         for attr in cfg_item_wf_attrs + cfg_meeting_wf_attrs:
             # if attr contains a "/" it means it is a column of a datagridfield
             field = self.getField(attr.split("/")[0])
@@ -5039,14 +5083,21 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # manage multivalued columns
                 if values and hasattr(values[0], "__iter__"):
                     values = itertools.chain.from_iterable(values)
-            crossed_states = [v for v in values
+            # some fields are shared between item and meeting WF
+            # (like 'transitionsToConfirm'), ignore values of not checked WF
+            if not check_item_wf_attrs:
+                values = [v for v in values if not v.startswith("MeetingItem.")]
+            if not check_meeting_wf_attrs:
+                values = [v for v in values if not v.startswith("Meeting.")]
+            # keep crossed value and crossed state/transition id
+            crossed_states = [(v, r) for v in values
                               for r in removed_or_disabled_states
                               if r in v]
-            crossed_transitions = [v for v in values
+            crossed_transitions = [(v, r) for v in values
                                    for r in removed_or_disabled_transitions
                                    if r in v]
             if crossed_states or crossed_transitions:
-                crossed_value = (crossed_states + crossed_transitions)[0]
+                crossed_value, crossed_id = (crossed_states + crossed_transitions)[0]
                 if attr in cfg_item_wf_attrs and not crossed_value.startswith("Meeting."):
                     wf = self.getItemWorkflow(True)
                 else:
@@ -5058,10 +5109,17 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # "backTo_itemfrozen_from_returned_to_proposing_group"
                 if crossed_states and crossed_value in wf.states:
                     state_or_transition_title = wf.states[crossed_value].title
-                else:
+                elif crossed_value in wf.transitions:
                     # manage values like MeetingItem.propose
                     state_or_transition_title = \
                         wf.transitions[crossed_value].title
+                elif crossed_id in wf.states:
+                    # manage values containing a state id
+                    state_or_transition_title = wf.states[crossed_id].title
+                else:
+                    # manage values containing a transition id,
+                    # like 'meeting_state_changed_freeze' in 'mailMeetingEvents'
+                    state_or_transition_title = wf.transitions[crossed_id].title
                 return translate(
                     'state_or_transition_can_not_be_removed_in_use_config',
                     domain='PloneMeeting',
@@ -5216,6 +5274,25 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             v for v in values if v.startswith('return_to_proposing_group')]
         if len(return_to_prop_group_wf_adaptations) > 1:
             return msg
+        # 'no_meeting' may only be selected together with some wfAdaptations
+        # when enabling 'no_meeting', MEETING_REMOVE_MOG_WFA is accepted as it
+        # will be disabled by setWorkflowAdaptations
+        enabling_no_meeting = 'no_meeting' in values and \
+            'no_meeting' not in self.getWorkflowAdaptations()
+        if 'no_meeting' in values:
+            no_meeting_conflicts = [v for v in values
+                                    if v not in self.noMeetingCompatibleWFAdaptations and
+                                    not (enabling_no_meeting and v == MEETING_REMOVE_MOG_WFA)]
+            if no_meeting_conflicts:
+                return translate(
+                    'wa_no_meeting_conflicts',
+                    mapping={
+                        'wfa': translate(
+                            "wa_%s" % no_meeting_conflicts[0],
+                            domain="PloneMeeting",
+                            context=self.REQUEST)},
+                    domain='PloneMeeting',
+                    context=self.REQUEST)
         # check removed_checks taking into account the "optional_with" values
         # that links 2 wfa that can not be used together
         for conflict_wfa, infos in removed_and_conflicts_checks.items():
@@ -5310,6 +5387,34 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 return translate('wa_added_no_decide_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
+        if 'no_meeting' in added:
+            # this will remove item states in which an item is linked to a meeting
+            # check that no meeting exists and that no more items are in these states
+            no_meeting_removed_item_states = get_no_meeting_removed_item_states()
+            if catalog.unrestrictedSearchResults(portal_type=meeting_type) or \
+               catalog.unrestrictedSearchResults(
+                    portal_type=item_type, review_state=no_meeting_removed_item_states):
+                return translate('wa_added_no_meeting_error',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+            # check that removed states/transitions are no more used in config
+            removed_transitions = [tr.id for tr in itemWF.transitions.values()
+                                   if tr.new_state_id in no_meeting_removed_item_states]
+            used_in_cfg_error_msg = self._check_wf_used_in_config(
+                removed_or_disabled_states=[state_id for state_id in no_meeting_removed_item_states
+                                            if state_id in itemWF.states],
+                removed_or_disabled_transitions=removed_transitions,
+                check_meeting_wf_attrs=False)
+            if used_in_cfg_error_msg:
+                return used_in_cfg_error_msg
+            # this will also remove every states/transitions of the meeting WF
+            # check that these are no more used in config
+            used_in_cfg_error_msg = self._check_wf_used_in_config(
+                removed_or_disabled_states=list(meetingWF.states.keys()),
+                removed_or_disabled_transitions=list(meetingWF.transitions.keys()),
+                check_item_wf_attrs=False)
+            if used_in_cfg_error_msg:
+                return used_in_cfg_error_msg
 
         # validate removed workflowAdaptations, in case we removed a wfAdaptation that added
         # a state for example, double check that no more element (item or meeting) is in that state...
@@ -5379,7 +5484,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                         return used_in_cfg_error_msg
 
         # MEETING_REMOVE_MOG_WFA can not be managed manually
-        if MEETING_REMOVE_MOG_WFA in added or MEETING_REMOVE_MOG_WFA in removed:
+        # except when enabling 'no_meeting' as it will be disabled
+        if not enabling_no_meeting and \
+           (MEETING_REMOVE_MOG_WFA in added or MEETING_REMOVE_MOG_WFA in removed):
             return translate('wa_meeting_remove_mog_error',
                              domain='PloneMeeting',
                              context=self.REQUEST)
@@ -6574,7 +6681,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 self.Title(include_config_group=True))
             portalType.i18n_domain = basePortalType.i18n_domain
             # base portal_types 'Meeting' and 'MeetingItem' are global_allow=False
-            portalType.global_allow = True
+            # when not using meetings, a Meeting can not be added
+            portalType.global_allow = metaTypeName != 'Meeting' or self.is_using_meetings()
             # Associate a workflow for this new portal type.
             # keep the method computation because it manages
             # getItemRecurringWorkflow and getItemTemplateWorkflow
@@ -7137,6 +7245,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             meetingWorkflow = wfTool.getWorkflowsFor(type_name)[0]
         return meetingWorkflow
 
+    security.declarePublic('is_using_meetings')
+
+    def is_using_meetings(self):
+        '''Is this MeetingConfig using meetings? This is not the case when
+           using the 'no_meeting' wfAdaptation.'''
+        return 'no_meeting' not in self.getWorkflowAdaptations()
+
     security.declarePublic('getItemTypeName')
 
     def getItemTypeName(self, configType=None):
@@ -7630,14 +7745,17 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('getTransitionsForPresentingAnItem')
 
     def getTransitionsForPresentingAnItem(self, org_uid=None):
-        '''Return default transitions to present an item.'''
+        '''Return default transitions to present an item.
+           When not using meetings, there is no 'present' transition,
+           so transitions to validate the item are returned.'''
         item_wf_val_levels = self.getItemWFValidationLevels(only_enabled=True)
         transitions = [v['leading_transition'] for v in item_wf_val_levels
                        if v['leading_transition'] != '-']
         # in case items are created "validated", there is no "validate" transition
         if transitions:
             transitions.append('validate')
-        transitions.append('present')
+        if self.is_using_meetings():
+            transitions.append('present')
         if org_uid:
             tool = api.portal.get_tool('portal_plonemeeting')
             tr_suffixes = {v['leading_transition']: v['suffix'] for v in item_wf_val_levels
@@ -7656,8 +7774,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def get_transitions_to_close_a_meeting(self):
         """Return the transitions to close a meeting.
-           WF always go from "created" to "closed"."""
+           WF always go from "created" to "closed".
+           When not using meetings, the meeting WF does not have any state."""
         res = []
+        if not self.is_using_meetings():
+            return res
         meeting_wf = self.getMeetingWorkflow(True)
         state = meeting_wf.states["created"]
         while state.id != "closed":

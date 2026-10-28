@@ -923,6 +923,34 @@ class testFaceted(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         self.assertFalse(searchAllItems_path in vocab(searches, real_context=pmFolder))
 
+    def test_pm_MeetingSearchesIgnoredWhenNotUsingMeetings(self):
+        """When using the 'no_meeting' WFA, the meeting related searches
+           ('searches_meetings' and 'searches_decisions') are not displayed."""
+        if not self._check_wfa_available(['no_meeting']):
+            return
+        cfg = self.meetingConfig
+        searches = cfg.searches
+        searchAllItems_path = searches.searches_items.searchallitems.absolute_url_path()
+        searchMeetings = searches.searches_meetings.objectValues()[0]
+        searchMeetings_path = searchMeetings.absolute_url_path()
+        searchDecisions = searches.searches_decisions.objectValues()[0]
+        searchDecisions_path = searchDecisions.absolute_url_path()
+        self.changeUser('pmManager')
+        pmFolder = self.getMeetingFolder()
+        vocab = get_vocab(pmFolder,
+                          "Products.PloneMeeting.vocabularies.conditionawarecollectionvocabulary",
+                          only_factory=True)
+        self.assertTrue(cfg.is_using_meetings())
+        self.assertTrue(searchAllItems_path in vocab(searches, real_context=pmFolder))
+        self.assertTrue(searchMeetings_path in vocab(searches, real_context=pmFolder))
+        self.assertTrue(searchDecisions_path in vocab(searches, real_context=pmFolder))
+        # enable 'no_meeting'
+        self._activate_wfas(('no_meeting', ))
+        self.assertFalse(cfg.is_using_meetings())
+        self.assertTrue(searchAllItems_path in vocab(searches, real_context=pmFolder))
+        self.assertFalse(searchMeetings_path in vocab(searches, real_context=pmFolder))
+        self.assertFalse(searchDecisions_path in vocab(searches, real_context=pmFolder))
+
     def test_pm_SearchableTextQueryOnSpecialCharacters(self):
         """Make sure it is possible to query on "décision" and "decision"."""
         self.changeUser('pmCreator1')
