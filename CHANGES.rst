@@ -72,6 +72,8 @@ Changelog
 - Fixed `MeetingConfig._check_wf_used_in_config` that failed to compute the
   error message when a removed transition was used in `mailItemEvents` or
   `mailMeetingEvents` (values like `item_state_changed_accept`).
+  State fields now compare the complete state id (`accepted` no more matches
+  `accepted_out_of_meeting`) and do not match transition ids.
   [gbastien]
 
 4.2.28.24 (2026-09-30)

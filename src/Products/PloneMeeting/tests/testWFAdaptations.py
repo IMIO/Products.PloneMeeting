@@ -563,6 +563,14 @@ class testWFAdaptations(PloneMeetingTestCase):
                 context=self.request))
         cfg.setItemCopyGroupsStates(())
         self.failIf(cfg.validate_workflowAdaptations(('no_meeting', )))
+        # state fields compare the complete state id, a state containing
+        # a removed state id ('accepted') is not considered
+        if self._check_wfa_available(['accepted_out_of_meeting']):
+            self._activate_wfas(('accepted_out_of_meeting', ))
+            cfg.setItemCopyGroupsStates(('accepted_out_of_meeting', ))
+            self.failIf(cfg.validate_workflowAdaptations(('accepted_out_of_meeting', 'no_meeting')))
+            cfg.setItemCopyGroupsStates(())
+            self._activate_wfas(())
 
         # meeting state used in the config
         meetingWF = cfg.getMeetingWorkflow(True)

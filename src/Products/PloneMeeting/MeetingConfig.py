@@ -5092,12 +5092,22 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if not check_meeting_wf_attrs:
                 values = [v for v in values if not v.startswith("Meeting.")]
             # keep crossed value and crossed state/transition id
-            crossed_states = [(v, r) for v in values
-                              for r in removed_or_disabled_states
-                              if r in v]
-            crossed_transitions = [(v, r) for v in values
-                                   for r in removed_or_disabled_transitions
-                                   if r in v]
+            # state fields store complete state ids, compare the complete id so
+            # 'accepted' does not match 'accepted_out_of_meeting'
+            # transition fields may embed a transition id ('item_state_changed_accept',
+            # 'MeetingItem.accept') or a state id ('backTo_itemfrozen_from_returned_to_proposing_group')
+            if attr in ITEM_WF_STATE_ATTRS or attr in MEETING_WF_STATE_ATTRS:
+                crossed_states = [(v, r) for v in values
+                                  for r in removed_or_disabled_states
+                                  if r == v]
+                crossed_transitions = []
+            else:
+                crossed_states = [(v, r) for v in values
+                                  for r in removed_or_disabled_states
+                                  if r in v]
+                crossed_transitions = [(v, r) for v in values
+                                       for r in removed_or_disabled_transitions
+                                       if r in v]
             if crossed_states or crossed_transitions:
                 crossed_value, crossed_id = (crossed_states + crossed_transitions)[0]
                 if attr in cfg_item_wf_attrs and not crossed_value.startswith("Meeting."):
