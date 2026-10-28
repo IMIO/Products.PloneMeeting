@@ -42,8 +42,10 @@ Changelog
   if a meeting exists or if removed item states/transitions or any meeting
   state/transition is used in the config.
   The `meeting_remove_global_access` wfAdaptation can not be used together with
-  `no_meeting`, it is disabled when enabling `no_meeting` and not enabled when
-  `MeetingConfig.usingGroups` is defined and `no_meeting` is used.
+  `no_meeting`, it is now enabled only when `MeetingConfig.usingGroups` is defined
+  and `no_meeting` is not used (managed by `MeetingConfig._update_meeting_remove_mog_wfa`
+  called by `setUsingGroups` and `setWorkflowAdaptations`), so it is disabled when
+  enabling `no_meeting` and enabled again when disabling `no_meeting`.
   Added helpers `model.adaptations.remove_states` and
   `model.adaptations.get_no_meeting_removed_item_states`.
   Added parameters `check_item_wf_attrs=True` and `check_meeting_wf_attrs=True`

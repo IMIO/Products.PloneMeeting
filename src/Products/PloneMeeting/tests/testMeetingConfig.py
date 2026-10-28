@@ -2848,6 +2848,24 @@ class testMeetingConfig(PloneMeetingTestCase):
         cfg.setWorkflowAdaptations(cfg.getWorkflowAdaptations() + ('no_meeting', ))
         notify(ObjectEditedEvent(cfg))
         self.assertEqual(cfg.getWorkflowAdaptations(), ('no_meeting', ))
+        # disabling 'no_meeting' enables MEETING_REMOVE_MOG_WFA again
+        self.failIf(cfg.validate_workflowAdaptations(()))
+        cfg.setWorkflowAdaptations(())
+        notify(ObjectEditedEvent(cfg))
+        self.assertEqual(cfg.getWorkflowAdaptations(), (MEETING_REMOVE_MOG_WFA, ))
+        # enabling 'no_meeting' and disabling usingGroups at the same time,
+        # works no matter the order fields are set
+        cfg.setWorkflowAdaptations(('no_meeting', ))
+        cfg.setUsingGroups([])
+        self.assertEqual(cfg.getWorkflowAdaptations(), ('no_meeting', ))
+        cfg.setUsingGroups((self.vendors_uid, ))
+        cfg.setWorkflowAdaptations(())
+        self.assertEqual(cfg.getWorkflowAdaptations(), (MEETING_REMOVE_MOG_WFA, ))
+        cfg.setUsingGroups([])
+        cfg.setWorkflowAdaptations(('no_meeting', ))
+        cfg.setUsingGroups((self.vendors_uid, ))
+        notify(ObjectEditedEvent(cfg))
+        self.assertEqual(cfg.getWorkflowAdaptations(), ('no_meeting', ))
         # disable then enable usingGroups again
         cfg.setUsingGroups([''])
         notify(ObjectEditedEvent(cfg))
