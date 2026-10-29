@@ -27,6 +27,17 @@ Changelog
   `MeetingItem.selectableAdvisers` if it is empty, it can be the case when the
   functionality is enabled but we are only using auto values.
   [gbastien]
+- Hide batch action `UpdateCopyGroupsBatchActionForm` when
+  `MeetingConfig.selectableCopyGroups` is empty, it is the case when copy groups
+  are only set automatically (`organization.as_copy_group_on`).
+  [gbastien]
+- Added batch action `UpdateRestrictedCopyGroupsBatchActionForm` to update the
+  `restrictedCopyGroups` of selected items, only available to `MeetingManagers`.
+  Factorized it with `UpdateCopyGroupsBatchActionForm` in
+  `BaseUpdateCopyGroupsBatchActionForm`, the copy groups batch action now only
+  proposes `MeetingConfig.selectableCopyGroups` (no more selectable restricted
+  copy groups).
+  [gbastien]
 - Fixed bug where it was not possible to remove a not used `category` if a
   `classifier` with same `id` was used.
   [gbastien]
@@ -86,6 +97,11 @@ Changelog
   (like `powerObservers/item_states`): multivalued columns are managed like other
   attributes, for single valued columns `to_replace` is applied and rows using
   a value in `to_remove` are removed.
+  [gbastien]
+- Fixed test `test_pm_Validate_workflowAdaptations_removed_return_to_proposing_group_with_before_last_validation`
+  to use `_stateMappingFor('proposed_first_level')` to get the before last
+  validation state so it works when `proposed` is mapped to another state
+  in subproducts (like `Products.MeetingCharleroi`).
   [gbastien]
 
 4.2.28.24 (2026-09-30)
