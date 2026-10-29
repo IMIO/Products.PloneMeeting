@@ -2239,19 +2239,31 @@ class testViews(PloneMeetingTestCase):
         self.assertRaises(Unauthorized,
                           searches_items.restrictedTraverse,
                           '@@update-proposing-group-batch-action')
-        # create 2 items
+        # create 3 items
         item1 = self.create('MeetingItem', proposingGroup=self.developers_uid)
-        item2 = self.create('MeetingItem', proposingGroup=self.vendors_uid)
+        item2 = self.create('MeetingItem', proposingGroup=self.developers_uid)
+        vendors_item = self.create('MeetingItem', proposingGroup=self.vendors_uid)
         self.changeUser('siteadmin')
         searches_items = self.getMeetingFolder().searches_items
         self.assertTrue(searches_items.unrestrictedTraverse(
             '@@update-proposing-group-batch-action').available())
+        # selected items must have the same proposing group
+        self.request.form['form.widgets.uids'] = u','.join([item1.UID(), vendors_item.UID()])
+        form = searches_items.restrictedTraverse('@@update-proposing-group-batch-action')
+        form.update()
+        self.assertFalse(form.do_apply)
+        self.assertFalse('proposing_group' in form.fields)
+        self.assertTrue('must have the same proposing group' in form.description)
+        self.assertRaises(Unauthorized, form.handleApply, form, None)
+        # same proposing group
         self.assertFalse(self.vendors_creators in item1.__ac_local_roles__)
         self.assertEqual(item1.getGroupsInCharge(), [])
-        self.request.form['form.widgets.uids'] = ','.join([item1.UID(), item2.UID()])
+        self.request.form['form.widgets.uids'] = u','.join([item1.UID(), item2.UID()])
         form = searches_items.restrictedTraverse('@@update-proposing-group-batch-action')
         form.update()
         self.assertTrue(form.do_apply)
+        self.assertTrue('proposing_group' in form.fields)
+        self.assertFalse('must have the same proposing group' in form.description)
         self.request['form.widgets.proposing_group'] = [self.vendors_uid]
         form.handleApply(form, None)
         self.assertEqual(item1.getProposingGroup(), self.vendors_uid)
@@ -2264,9 +2276,10 @@ class testViews(PloneMeetingTestCase):
         # reindexed
         self.assertTrue(self.catalog.unrestrictedSearchResults(getProposingGroup=self.vendors_uid, UID=item1.UID()))
         self.assertTrue(self.catalog.unrestrictedSearchResults(getGroupsInCharge=self.developers_uid, UID=item1.UID()))
-        # data change historized for item1 but not for item2 that was not changed
+        # data change historized
         self.assertTrue(hasHistory(item1, 'proposingGroup'))
-        self.assertFalse(hasHistory(item2, 'proposingGroup'))
+        self.assertTrue(hasHistory(item2, 'proposingGroup'))
+        self.assertFalse(hasHistory(vendors_item, 'proposingGroup'))
 
         # item reference is recomputed when it uses the proposingGroup
         # item reference is computed when item is in a meeting that is at least frozen
@@ -2285,7 +2298,7 @@ class testViews(PloneMeetingTestCase):
         self.assertIsNone(queryMultiAdapter(
             (meeting, self.request), name='update-proposing-group-batch-action'))
         self.changeUser('siteadmin')
-        self.request.form['form.widgets.uids'] = item3.UID()
+        self.request.form['form.widgets.uids'] = unicode(item3.UID())
         form = searches_items.restrictedTraverse('@@update-proposing-group-batch-action')
         form.update()
         self.assertTrue(form.do_apply)
@@ -2307,7 +2320,13 @@ class testViews(PloneMeetingTestCase):
         self.changeUser('siteadmin')
         self.assertEqual(item4.getProposingGroup(), self.developers_uid)
         self.assertEqual(item4.getGroupsInCharge(), [self.vendors_uid])
-        self.request.form['form.widgets.uids'] = item4.UID()
+        # also checked on the proposingGroup, item1 is now a vendors item
+        self.request.form['form.widgets.uids'] = u','.join([item1.UID(), item4.UID()])
+        form = searches_items.restrictedTraverse('@@update-proposing-group-batch-action')
+        form.update()
+        self.assertFalse(form.do_apply)
+        self.assertFalse('proposing_group' in form.fields)
+        self.request.form['form.widgets.uids'] = unicode(item4.UID())
         form = searches_items.restrictedTraverse('@@update-proposing-group-batch-action')
         form.update()
         self.assertTrue(form.do_apply)

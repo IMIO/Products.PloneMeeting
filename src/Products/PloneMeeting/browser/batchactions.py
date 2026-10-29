@@ -30,8 +30,6 @@ from Products.PloneMeeting.utils import addDataChange
 from Products.PloneMeeting.utils import displaying_available_items
 from Products.PloneMeeting.utils import is_operational_user
 from Products.PloneMeeting.utils import rememberPreviousData
-from Products.PloneMeeting.vocabularies import UserProposingGroupsVocabularyFactory
-from Products.PloneMeeting.vocabularies import UserProposingGroupsWithGroupsInChargeVocabularyFactory
 from Products.PloneMeeting.widgets.pm_richtext import PMRichTextFieldWidget
 from z3c.form.browser.radio import RadioFieldWidget
 from z3c.form.field import Fields
@@ -237,17 +235,36 @@ class UpdateProposingGroupBatchActionForm(BaseBatchActionForm):
     def _vocabulary(self):
         """Every organizations selectable in the MeetingConfig."""
         orgs = self.tool.get_selectable_orgs(self.cfg, only_selectable=False)
+        # use the vocabulary factory used by the item field
+        vocab_name = 'Products.PloneMeeting.vocabularies.userproposinggroupsvocabulary'
         if self.field_name == 'proposingGroupWithGroupInCharge':
-            factory = UserProposingGroupsWithGroupsInChargeVocabularyFactory
-        else:
-            factory = UserProposingGroupsVocabularyFactory
+            vocab_name = 'Products.PloneMeeting.vocabularies.userproposinggroupswithgroupsinchargevocabulary'
+        factory = get_vocab(self.context, vocab_name, only_factory=True)
         term_values, terms = factory._terms_for_orgs(orgs)
         if 'proposingGroup' not in self.cfg.getItemFieldsToKeepConfigSortingFor():
             terms = humansorted(terms, key=attrgetter('title'))
         return SimpleVocabulary(terms)
 
+    @property
+    def description(self):
+        """Warn when selected items do not have the same proposing group."""
+        description = super(UpdateProposingGroupBatchActionForm, self).description
+        if not getattr(self, 'same_proposing_group', True):
+            description = translate(description, context=self.request) + translate(
+                'proposing_group_batch_action_different_proposing_groups',
+                domain='PloneMeeting',
+                context=self.request,
+                default=u"<p class='discreet'><strong>Warning</strong>, selected elements "
+                        u"must have the same proposing group, modify your selection.</p>")
+        return description
+
     def _update(self):
-        self.do_apply = is_permitted(self.brains)
+        # selected items must have the same proposing group, this is checked
+        # on proposingGroup only even when using proposingGroupWithGroupInCharge
+        self.same_proposing_group = len(set([brain.getProposingGroup for brain in self.brains])) <= 1
+        self.do_apply = self.same_proposing_group and is_permitted(self.brains)
+        if not self.same_proposing_group:
+            return
         self.fields += Fields(schema.Choice(
             __name__='proposing_group',
             title=_(u'PloneMeeting_label_{0}'.format(self.field_name)),
