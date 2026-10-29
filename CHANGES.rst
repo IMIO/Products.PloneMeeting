@@ -27,6 +27,17 @@ Changelog
   `MeetingItem.selectableAdvisers` if it is empty, it can be the case when the
   functionality is enabled but we are only using auto values.
   [gbastien]
+- Hide batch action `UpdateCopyGroupsBatchActionForm` when
+  `MeetingConfig.selectableCopyGroups` is empty, it is the case when copy groups
+  are only set automatically (`organization.as_copy_group_on`).
+  [gbastien]
+- Added batch action `UpdateRestrictedCopyGroupsBatchActionForm` to update the
+  `restrictedCopyGroups` of selected items, only available to `MeetingManagers`.
+  Factorized it with `UpdateCopyGroupsBatchActionForm` in
+  `BaseUpdateCopyGroupsBatchActionForm`, the copy groups batch action now only
+  proposes `MeetingConfig.selectableCopyGroups` (no more selectable restricted
+  copy groups).
+  [gbastien]
 - Fixed bug where it was not possible to remove a not used `category` if a
   `classifier` with same `id` was used.
   [gbastien]

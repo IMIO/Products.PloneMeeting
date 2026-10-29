@@ -170,15 +170,48 @@ class UpdateGroupsInChargeBatchActionForm(PMBaseARUOBatchActionForm):
         return 'Products.PloneMeeting.vocabularies.itemgroupsinchargevocabulary'
 
 
-class UpdateCopyGroupsBatchActionForm(PMBaseARUOBatchActionForm):
+class BaseUpdateCopyGroupsBatchActionForm(PMBaseARUOBatchActionForm):
+    """Base class to update copyGroups or restrictedCopyGroups."""
+
+    required = False
+    restricted = False
+
+    def _selectable_copy_groups(self):
+        return self.cfg.getSelectableRestrictedCopyGroups() if self.restricted \
+            else self.cfg.getSelectableCopyGroups()
+
+    def available(self):
+        """Not available if no selectable copy groups, this is the case when
+           copy groups are only set automatically (organization.as_copy_group_on)."""
+        return super(BaseUpdateCopyGroupsBatchActionForm, self).available() and \
+            bool(self._selectable_copy_groups())
+
+    def _vocabulary(self):
+        return get_vocab(
+            self.context,
+            'Products.PloneMeeting.vocabularies.copygroupsvocabulary',
+            restricted=self.restricted,
+            include_both=False)
+
+
+class UpdateCopyGroupsBatchActionForm(BaseUpdateCopyGroupsBatchActionForm):
     """ """
 
     label = _CEBA("Update copy groups for selected elements")
     modified_attr_name = "copyGroups"
-    required = False
 
-    def _vocabulary(self):
-        return 'Products.PloneMeeting.vocabularies.copygroupsvocabulary'
+
+class UpdateRestrictedCopyGroupsBatchActionForm(BaseUpdateCopyGroupsBatchActionForm):
+    """ """
+
+    label = _CEBA("Update restricted copy groups for selected elements")
+    modified_attr_name = "restrictedCopyGroups"
+    restricted = True
+
+    def available(self):
+        """Field restrictedCopyGroups is only editable by MeetingManagers."""
+        return super(UpdateRestrictedCopyGroupsBatchActionForm, self).available() and \
+            self.tool.isManager(self.cfg)
 
 
 class UpdateCommitteesBatchActionForm(PMBaseARUOBatchActionForm):

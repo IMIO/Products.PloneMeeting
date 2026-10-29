@@ -2108,6 +2108,14 @@ class testViews(PloneMeetingTestCase):
         self._enableField('copyGroups')
         self.assertTrue(searches_items.unrestrictedTraverse(
             '@@update-copy-groups-batch-action').available())
+        # not available when no selectable copy groups (only auto copy groups)
+        selectable_copy_groups = cfg.getSelectableCopyGroups()
+        cfg.setSelectableCopyGroups(())
+        self.assertFalse(searches_items.unrestrictedTraverse(
+            '@@update-copy-groups-batch-action').available())
+        cfg.setSelectableCopyGroups(selectable_copy_groups)
+        self.assertTrue(searches_items.unrestrictedTraverse(
+            '@@update-copy-groups-batch-action').available())
 
         # not available to non operational users
         self.changeUser('powerobserver1')
@@ -2146,6 +2154,55 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(item2.getCopyGroups(), (self.vendors_reviewers, ))
         # adapted elements were reindexed
         self.assertTrue(self.catalog(getCopyGroups=self.vendors_reviewers, UID=item1_uid))
+
+    def test_pm_UpdateRestrictedCopyGroupsBatchActionForm(self):
+        """This will update restrictedCopyGroups for selected items."""
+        cfg = self.meetingConfig
+        cfg.setItemRestrictedCopyGroupsStates(('itemcreated', ))
+        cfg.setSelectableRestrictedCopyGroups((self.developers_observers, self.vendors_observers))
+        # not available when not using restrictedCopyGroups
+        self.changeUser('pmManager')
+        searches_items = self.getMeetingFolder().searches_items
+        self.assertFalse(searches_items.unrestrictedTraverse(
+            '@@update-restricted-copy-groups-batch-action').available())
+        # enable restrictedCopyGroups
+        self._enableField('restrictedCopyGroups')
+        self.assertTrue(searches_items.unrestrictedTraverse(
+            '@@update-restricted-copy-groups-batch-action').available())
+        # not available when no selectable restricted copy groups
+        cfg.setSelectableRestrictedCopyGroups(())
+        self.assertFalse(searches_items.unrestrictedTraverse(
+            '@@update-restricted-copy-groups-batch-action').available())
+        cfg.setSelectableRestrictedCopyGroups((self.developers_observers, self.vendors_observers))
+        # not available to non MeetingManagers
+        self.changeUser('pmCreator1')
+        self.assertFalse(self.getMeetingFolder().searches_items.unrestrictedTraverse(
+            '@@update-restricted-copy-groups-batch-action').available())
+
+        # create 2 items
+        self.changeUser('pmManager')
+        item1 = self.create('MeetingItem', restrictedCopyGroups=[self.developers_observers])
+        item1_uid = item1.UID()
+        item2 = self.create('MeetingItem', restrictedCopyGroups=[self.vendors_observers])
+        item2_uid = item2.UID()
+        self.request.form['form.widgets.uids'] = ','.join([item1_uid, item2_uid])
+        form = searches_items.restrictedTraverse('@@update-restricted-copy-groups-batch-action')
+        form.update()
+        # only selectable restricted copy groups are proposed
+        self.assertEqual(
+            [term.value for term in form.widgets['added_values'].terms.terms._terms],
+            [self.developers_observers, self.vendors_observers])
+        # add vendors
+        self.request['form.widgets.action_choice'] = 'add'
+        self.request['form.widgets.added_values'] = [self.vendors_observers]
+        self.assertFalse(self.vendors_observers in item1.__ac_local_roles__)
+        form.handleApply(form, None)
+        # was added
+        self.assertEqual(item1.getRestrictedCopyGroups(), (self.developers_observers, self.vendors_observers))
+        # local_roles are set
+        self.assertTrue(self.vendors_observers in item1.__ac_local_roles__)
+        # already selected, not changed
+        self.assertEqual(item2.getRestrictedCopyGroups(), (self.vendors_observers, ))
 
     def test_pm_UpdateCommitteesBatchActionForm(self):
         """This will update copyGroups for selected items."""
