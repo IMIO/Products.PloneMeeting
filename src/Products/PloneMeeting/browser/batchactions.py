@@ -7,11 +7,15 @@ from collective.eeafaceted.batchactions.browser.views import BaseBatchActionForm
 from collective.eeafaceted.batchactions.browser.views import DeleteBatchActionForm
 from collective.eeafaceted.batchactions.browser.views import LabelsBatchActionForm
 from collective.eeafaceted.batchactions.browser.views import TransitionBatchActionForm
+from collective.eeafaceted.batchactions.utils import cannot_modify_field_msg
+from collective.eeafaceted.batchactions.utils import is_permitted
 from collective.eeafaceted.batchactions.utils import listify_uids
 from collective.z3cform.select2.widget.widget import SingleSelect2FieldWidget
 from imio.annex.browser.views import ConcatenateAnnexesBatchActionForm
 from imio.annex.browser.views import DownloadAnnexesBatchActionForm
 from imio.helpers.content import get_vocab
+from natsort import humansorted
+from operator import attrgetter
 from plone import api
 from plone.app.textfield import RichText
 from Products.CMFCore.permissions import ManagePortal
@@ -22,8 +26,10 @@ from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.content.advice import _advice_type_default
 from Products.PloneMeeting.ftw_labels.utils import filter_access_global_labels
 from Products.PloneMeeting.utils import _add_advice
+from Products.PloneMeeting.utils import addDataChange
 from Products.PloneMeeting.utils import displaying_available_items
 from Products.PloneMeeting.utils import is_operational_user
+from Products.PloneMeeting.utils import rememberPreviousData
 from Products.PloneMeeting.widgets.pm_richtext import PMRichTextFieldWidget
 from z3c.form.browser.radio import RadioFieldWidget
 from z3c.form.field import Fields
@@ -31,6 +37,7 @@ from zope import schema
 from zope.i18n import translate
 from zope.interface import provider
 from zope.schema._bootstrapinterfaces import IContextAwareDefaultFactory
+from zope.schema.vocabulary import SimpleVocabulary
 
 
 #
@@ -204,6 +211,87 @@ class UpdateCommitteesBatchActionForm(PMBaseARUOBatchActionForm):
 
     def _vocabulary(self):
         return 'Products.PloneMeeting.vocabularies.item_selectable_committees_vocabulary'
+
+
+class UpdateProposingGroupBatchActionForm(BaseBatchActionForm):
+    """Update the proposingGroup of selected items, only available to real Managers."""
+
+    label = _CEBA("Update proposing group for selected elements")
+    available_permission = ManagePortal
+    button_with_icon = False
+
+    def __init__(self, context, request):
+        super(UpdateProposingGroupBatchActionForm, self).__init__(context, request)
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(context)
+
+    @property
+    def field_name(self):
+        """Fields proposingGroup and proposingGroupWithGroupInCharge are exclusive."""
+        if 'proposingGroupWithGroupInCharge' in self.cfg.getUsedItemAttributes():
+            return 'proposingGroupWithGroupInCharge'
+        return 'proposingGroup'
+
+    def _vocabulary(self):
+        """Every organizations selectable in the MeetingConfig."""
+        orgs = self.tool.get_selectable_orgs(self.cfg, only_selectable=False)
+        # use the vocabulary factory used by the item field
+        vocab_name = 'Products.PloneMeeting.vocabularies.userproposinggroupsvocabulary'
+        if self.field_name == 'proposingGroupWithGroupInCharge':
+            vocab_name = 'Products.PloneMeeting.vocabularies.userproposinggroupswithgroupsinchargevocabulary'
+        factory = get_vocab(self.context, vocab_name, only_factory=True)
+        term_values, terms = factory._terms_for_orgs(orgs)
+        if 'proposingGroup' not in self.cfg.getItemFieldsToKeepConfigSortingFor():
+            terms = humansorted(terms, key=attrgetter('title'))
+        return SimpleVocabulary(terms)
+
+    @property
+    def description(self):
+        """Warn when selected items do not have the same proposing group."""
+        description = super(UpdateProposingGroupBatchActionForm, self).description
+        if not getattr(self, 'same_proposing_group', True):
+            description = translate(description, context=self.request) + translate(
+                'proposing_group_batch_action_different_proposing_groups',
+                domain='PloneMeeting',
+                context=self.request,
+                default=u"<p class='discreet'><strong>Warning</strong>, selected elements "
+                        u"must have the same proposing group, modify your selection.</p>")
+        return description
+
+    def _update(self):
+        # selected items must have the same proposing group, this is checked
+        # on proposingGroup only even when using proposingGroupWithGroupInCharge
+        self.same_proposing_group = len(set([brain.getProposingGroup for brain in self.brains])) <= 1
+        self.do_apply = self.same_proposing_group and is_permitted(self.brains)
+        if not self.same_proposing_group:
+            return
+        self.fields += Fields(schema.Choice(
+            __name__='proposing_group',
+            title=_(u'PloneMeeting_label_{0}'.format(self.field_name)),
+            description=(not self.do_apply and cannot_modify_field_msg or u''),
+            vocabulary=self._vocabulary(),
+            required=self.do_apply))
+        self.fields["proposing_group"].widgetFactory = SingleSelect2FieldWidget
+
+    def _apply(self, **data):
+        """ """
+        value = data['proposing_group']
+        for brain in self.brains:
+            item = brain.getObject()
+            field = item.getField(self.field_name)
+            if field.get(item) == value:
+                continue
+            # remember previous data so a data change is added to history
+            item._v_previousData = rememberPreviousData(item, self.field_name)
+            # setProposingGroup (also called by setProposingGroupWithGroupInCharge)
+            # will mark what needs to be updated in the REQUEST
+            # (groupsInCharge, committees, item reference)
+            field.getMutator(item)(value)
+            indexes = ['getProposingGroup', 'getGroupsInCharge']
+            indexes += item.update_committees()
+            # will update groupsInCharge, local roles and call onEdit
+            item._update_after_edit(idxs=indexes)
+            addDataChange(item)
 
 
 @provider(IContextAwareDefaultFactory)
