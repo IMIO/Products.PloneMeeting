@@ -15,6 +15,10 @@ Changelog
   [gbastien]
 - Add 2027 holidays in profile.
   [aduchene]
+- Added batch action `UpdateProposingGroupBatchActionForm` to update the
+  `proposingGroup` (or `proposingGroupWithGroupInCharge` when used) of
+  selected items, only available to real `Managers` on items dashboards.
+  [gbastien]
 - Adapted `Migrator.updateHolidays` to be able to pass arbitrary new holiday
   values so it can be called directly from the `add_holidays.py` script.
   [gbastien]

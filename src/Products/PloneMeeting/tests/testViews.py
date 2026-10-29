@@ -51,12 +51,14 @@ from Products.PloneMeeting.utils import get_advice_alive_states
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import get_dx_widget
 from Products.PloneMeeting.utils import getAvailableMailingLists
+from Products.PloneMeeting.utils import hasHistory
 from Products.PloneMeeting.utils import set_field_from_ajax
 from Products.statusmessages.interfaces import IStatusMessage
 from z3c.form.interfaces import DISPLAY_MODE
 from z3c.form.interfaces import INPUT_MODE
 from zope.component import getAdapter
 from zope.component import getMultiAdapter
+from zope.component import queryMultiAdapter
 from zope.event import notify
 from zope.i18n import translate
 
@@ -2215,6 +2217,113 @@ class testViews(PloneMeetingTestCase):
         self.assertFalse(com1_editors_group_id in item1.__ac_local_roles__)
         self.assertFalse(com2_editors_group_id in item1.__ac_local_roles__)
         self.assertTrue(com3_editors_group_id in item1.__ac_local_roles__)
+
+    def test_pm_UpdateProposingGroupBatchActionForm(self):
+        """This will update proposingGroup for selected items."""
+        cfg = self.meetingConfig
+        cfg.setHistorizedItemAttributes(('proposingGroup', ))
+        cfg.setRecordItemHistoryStates(('itemcreated', ))
+        # groupsInCharge defined on proposing group are updated
+        cfg.setIncludeGroupsInChargeDefinedOnProposingGroup(True)
+        self.vendors.groups_in_charge = (self.developers_uid, )
+        # only available to real Managers
+        self.changeUser('pmCreator1')
+        searches_items = self.getMeetingFolder().searches_items
+        self.assertFalse(searches_items.unrestrictedTraverse(
+            '@@update-proposing-group-batch-action').available())
+        self.changeUser('pmManager')
+        searches_items = self.getMeetingFolder().searches_items
+        self.assertFalse(searches_items.unrestrictedTraverse(
+            '@@update-proposing-group-batch-action').available())
+        # the view is protected by "Manage portal"
+        self.assertRaises(Unauthorized,
+                          searches_items.restrictedTraverse,
+                          '@@update-proposing-group-batch-action')
+        # create 2 items
+        item1 = self.create('MeetingItem', proposingGroup=self.developers_uid)
+        item2 = self.create('MeetingItem', proposingGroup=self.vendors_uid)
+        self.changeUser('siteadmin')
+        searches_items = self.getMeetingFolder().searches_items
+        self.assertTrue(searches_items.unrestrictedTraverse(
+            '@@update-proposing-group-batch-action').available())
+        self.assertFalse(self.vendors_creators in item1.__ac_local_roles__)
+        self.assertEqual(item1.getGroupsInCharge(), [])
+        self.request.form['form.widgets.uids'] = ','.join([item1.UID(), item2.UID()])
+        form = searches_items.restrictedTraverse('@@update-proposing-group-batch-action')
+        form.update()
+        self.assertTrue(form.do_apply)
+        self.request['form.widgets.proposing_group'] = [self.vendors_uid]
+        form.handleApply(form, None)
+        self.assertEqual(item1.getProposingGroup(), self.vendors_uid)
+        self.assertEqual(item2.getProposingGroup(), self.vendors_uid)
+        # local roles updated
+        self.assertTrue(self.vendors_creators in item1.__ac_local_roles__)
+        self.assertFalse(self.developers_creators in item1.__ac_local_roles__)
+        # groupsInCharge updated
+        self.assertEqual(item1.getGroupsInCharge(), [self.developers_uid])
+        # reindexed
+        self.assertTrue(self.catalog.unrestrictedSearchResults(getProposingGroup=self.vendors_uid, UID=item1.UID()))
+        self.assertTrue(self.catalog.unrestrictedSearchResults(getGroupsInCharge=self.developers_uid, UID=item1.UID()))
+        # data change historized for item1 but not for item2 that was not changed
+        self.assertTrue(hasHistory(item1, 'proposingGroup'))
+        self.assertFalse(hasHistory(item2, 'proposingGroup'))
+
+        # item reference is recomputed when it uses the proposingGroup
+        # item reference is computed when item is in a meeting that is at least frozen
+        self._removeConfigObjectsFor(cfg)
+        cfg.setItemReferenceFormat(
+            "python: here.getMeeting().date.strftime('%Y%m%d') + '/' + "
+            "str(here.getProposingGroup(True).get_acronym().upper()) + '/' + "
+            "here.getItemNumber(for_display=True)")
+        self.changeUser('pmManager')
+        item3 = self.create('MeetingItem', proposingGroup=self.developers_uid)
+        meeting = self.create('Meeting', date=datetime(2026, 10, 28))
+        self.presentItem(item3)
+        self.freezeMeeting(meeting)
+        self.assertEqual(item3.getItemReference(), '20261028/DEVEL/1')
+        # not available on the meeting
+        self.assertIsNone(queryMultiAdapter(
+            (meeting, self.request), name='update-proposing-group-batch-action'))
+        self.changeUser('siteadmin')
+        self.request.form['form.widgets.uids'] = item3.UID()
+        form = searches_items.restrictedTraverse('@@update-proposing-group-batch-action')
+        form.update()
+        self.assertTrue(form.do_apply)
+        self.request['form.widgets.proposing_group'] = [self.vendors_uid]
+        form.handleApply(form, None)
+        self.assertEqual(item3.getProposingGroup(), self.vendors_uid)
+        self.assertEqual(item3.getItemReference(), '20261028/DEVIL/1')
+
+        # also works when using proposingGroupWithGroupInCharge
+        self._enableField('proposingGroupWithGroupInCharge')
+        cfg.setHistorizedItemAttributes(('proposingGroupWithGroupInCharge', ))
+        self.developers.groups_in_charge = (self.vendors_uid, )
+        dev_ven = '{0}__groupincharge__{1}'.format(self.developers_uid, self.vendors_uid)
+        ven_dev = '{0}__groupincharge__{1}'.format(self.vendors_uid, self.developers_uid)
+        self.changeUser('pmManager')
+        item4 = self.create('MeetingItem')
+        item4.setProposingGroupWithGroupInCharge(dev_ven)
+        item4._update_after_edit(idxs=['getProposingGroup', 'getGroupsInCharge'])
+        self.changeUser('siteadmin')
+        self.assertEqual(item4.getProposingGroup(), self.developers_uid)
+        self.assertEqual(item4.getGroupsInCharge(), [self.vendors_uid])
+        self.request.form['form.widgets.uids'] = item4.UID()
+        form = searches_items.restrictedTraverse('@@update-proposing-group-batch-action')
+        form.update()
+        self.assertTrue(form.do_apply)
+        self.assertEqual(form.fields['proposing_group'].field.title,
+                         u'PloneMeeting_label_proposingGroupWithGroupInCharge')
+        self.assertEqual(
+            sorted([term.value for term in form.widgets['proposing_group'].terms.terms._terms]),
+            sorted([dev_ven, ven_dev]))
+        self.request['form.widgets.proposing_group'] = [ven_dev]
+        form.handleApply(form, None)
+        self.assertEqual(item4.getProposingGroupWithGroupInCharge(), ven_dev)
+        self.assertEqual(item4.getProposingGroup(), self.vendors_uid)
+        self.assertEqual(item4.getGroupsInCharge(), [self.developers_uid])
+        self.assertTrue(self.vendors_creators in item4.__ac_local_roles__)
+        self.assertFalse(self.developers_creators in item4.__ac_local_roles__)
+        self.assertTrue(hasHistory(item4, 'proposingGroupWithGroupInCharge'))
 
     def test_pm_DownloadAnnexesActionForm(self):
         """This batch action will download annexes as a zip file."""

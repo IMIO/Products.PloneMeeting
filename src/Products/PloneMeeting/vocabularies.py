@@ -368,6 +368,10 @@ class UserProposingGroupsVocabulary(object):
     def _user_proposing_group_terms(self, context, tool, cfg):
         """ """
         orgs = self._get_selectable_orgs(context, tool, cfg)
+        return self._terms_for_orgs(orgs)
+
+    def _terms_for_orgs(self, orgs):
+        """Return term values and terms for given p_orgs."""
         terms = []
         term_values = []
         for org in orgs:
@@ -426,8 +430,13 @@ class UserProposingGroupsWithGroupsInChargeVocabulary(UserProposingGroupsVocabul
     """ """
 
     def _user_proposing_group_terms(self, context, tool, cfg):
-        """ """
+        """Not cached as depends on organizations groups_in_charge."""
         orgs = self._get_selectable_orgs(context, tool, cfg)
+        return self._terms_for_orgs(orgs)
+
+    def _terms_for_orgs(self, orgs):
+        """Return term values and terms for given p_orgs, one term
+           for each proposingGroup/groupInCharge combination."""
         terms = []
         term_values = []
         active_org_uids = get_registry_organizations()
