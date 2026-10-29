@@ -98,6 +98,11 @@ Changelog
   attributes, for single valued columns `to_replace` is applied and rows using
   a value in `to_remove` are removed.
   [gbastien]
+- Fixed test `test_pm_Validate_workflowAdaptations_removed_return_to_proposing_group_with_before_last_validation`
+  to use `_stateMappingFor('proposed_first_level')` to get the before last
+  validation state so it works when `proposed` is mapped to another state
+  in subproducts (like `Products.MeetingCharleroi`).
+  [gbastien]
 
 4.2.28.24 (2026-09-30)
 ----------------------

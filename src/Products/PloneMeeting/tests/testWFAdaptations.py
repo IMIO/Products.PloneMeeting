@@ -1104,7 +1104,7 @@ class testWFAdaptations(PloneMeetingTestCase):
 
         # déplacer le point vers l'avant-dernier état de validation
         returned_to_proposing_group_before_last_state = \
-            'returned_to_proposing_group_' + self._stateMappingFor('proposed')
+            'returned_to_proposing_group_' + self._stateMappingFor('proposed_first_level')
         returned_to_proposing_group_before_last_tr = 'goTo_' + returned_to_proposing_group_before_last_state
         self.assertEqual(self.transitions(item), [returned_to_proposing_group_before_last_tr])
         self.do(item, returned_to_proposing_group_before_last_tr)
