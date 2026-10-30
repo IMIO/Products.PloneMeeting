@@ -12,24 +12,26 @@ class Migrate_To_4215(Migrator):
     def _initGroupsManagingItemToCfgItemWFValidationLevels(self):
         """Update existing MeetingConfig.itemWFValidationLevels to initialize
            "group_managing_item/extra_groups_managing_item" based on
-           "suffix/extra_suffixes" that are removed."""
+           "suffix/extra_suffixes" that are removed and add the "available_on" column."""
         logger.info('Updating MeetingConfig.itemWFValidationLevels to initialize '
-                    '"group_managing_item/extra_groups_managing_item"...')
+                    '"group_managing_item/extra_groups_managing_item/available_on"...')
         for cfg in self.tool.objectValues('MeetingConfig'):
             stored = getattr(cfg, 'itemWFValidationLevels', [])
             for level in stored:
-                if 'suffix' not in level:
-                    return self._already_migrated()
-                # migrate columns 'suffix' to 'group_managing_item' and
-                # 'extra_suffixes' to 'extra_groups_managing_item'
-                # and remove 'suffix/extra_suffixes'
-                level['group_managing_item'] = GROUP_MANAGING_ITEM_PG_PREFIX + level['suffix']
-                level['extra_groups_managing_item'] = [
-                    GROUP_MANAGING_ITEM_PG_PREFIX + suffix
-                    for suffix in list(level['extra_suffixes'])]
-                del level['suffix']
-                del level['extra_suffixes']
+                if 'suffix' in level:
+                    # migrate columns 'suffix' to 'group_managing_item' and
+                    # 'extra_suffixes' to 'extra_groups_managing_item'
+                    # and remove 'suffix/extra_suffixes'
+                    level['group_managing_item'] = GROUP_MANAGING_ITEM_PG_PREFIX + level['suffix']
+                    level['extra_groups_managing_item'] = [
+                        GROUP_MANAGING_ITEM_PG_PREFIX + suffix
+                        for suffix in list(level.get('extra_suffixes') or [])]
+                    del level['suffix']
+                    level.pop('extra_suffixes', None)
+                if 'available_on' not in level:
+                    level['available_on'] = ''
             cfg.setItemWFValidationLevels(stored)
+        logger.info('Done.')
 
     def _migrateItemsWaitingAdviceState(self):
         """When using MeetingConfig.itemWFValidationLevels to compute

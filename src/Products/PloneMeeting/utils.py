@@ -84,6 +84,7 @@ from Products.PloneMeeting.config import AddAnnex
 from Products.PloneMeeting.config import AddAnnexDecision
 from Products.PloneMeeting.config import ADVICE_STATES_ENDED
 from Products.PloneMeeting.config import ADVICE_STATES_MAPPING
+from Products.PloneMeeting.config import GROUP_MANAGING_ITEM_PG_PREFIX
 from Products.PloneMeeting.config import PloneMeetingError
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import REINDEX_NEEDED_MARKER
@@ -2271,6 +2272,15 @@ def duplicate_portal_type(portalTypeName, duplicatedPortalTypeId):
     return duplicatedPortalType
 
 
+def get_group_managing_item_suffix(group_managing_item):
+    '''Return the suffix of a MeetingConfig.itemWFValidationLevels group managing item,
+       that is either "proposing_group__suffix" or a Plone group id "org_uid_suffix".
+       A suffix may contain a "_" so we only split on the first "_".'''
+    if group_managing_item.startswith(GROUP_MANAGING_ITEM_PG_PREFIX):
+        return group_managing_item[len(GROUP_MANAGING_ITEM_PG_PREFIX):]
+    return group_managing_item.split('_', 1)[-1]
+
+
 def get_item_validation_wf_suffixes(cfg, org_uid=None, only_enabled=True):
     """Returns suffixes related to MeetingItem validation WF,
        so the 'creators', 'observers' and suffixes managed by
@@ -2302,22 +2312,40 @@ def get_item_validation_wf_suffixes(cfg, org_uid=None, only_enabled=True):
     return suffixes
 
 
-def get_last_validation_state_cachekey(method, item, cfg, before_last=False, return_level=False):
-    '''cachekey method for self.get_last_validation_state.'''
-    return get_cachekey_volatile('_users_groups_value'), \
-        item.getProposingGroup(), cfg.getId(), before_last, return_level
-
-# not ramcached because is_valid_validation_level evaluates a TAL expression
-# that may change upon context
-# XXX enable cache if not using available_on TAL expression
-# @ram.cache(get_last_validation_state_cachekey)
 def get_last_validation_state(item, cfg, before_last=False, return_level=False):
     '''Last validation state is validation level state defined in
        MeetingConfig.itemWFValidationLevels for which the linked
        suffixed Plone group is not empty.
        If p_before_last=True, then we return before_last level.
        If p_return_level=True we return the last validation state and
-       the full validation level from cfg.getItemWFValidationLevels.'''
+       the full validation level from cfg.getItemWFValidationLevels.
+       Result is ram.cached when no enabled validation level uses an
+       "available_on" TAL expression as it may depend on context.'''
+    if cfg.getItemWFValidationLevels(data='available_on', only_enabled=True):
+        return _get_last_validation_state(item, cfg, before_last, return_level)
+    res = _get_last_validation_state_cached(item, cfg, before_last, return_level)
+    if return_level:
+        # avoid cached level being modified
+        return res[0], dict(res[1])
+    return res
+
+
+def _get_last_validation_state_cachekey(method, item, cfg, before_last=False, return_level=False):
+    '''cachekey method for _get_last_validation_state_cached.'''
+    # without "available_on", result only depends on the groups managing item,
+    # so on the proposingGroup, the Plone groups content and the MeetingConfig
+    return get_cachekey_volatile('_users_groups_value'), \
+        item.getProposingGroup(), cfg.getId(), cfg._p_mtime, before_last, return_level
+
+
+@ram.cache(_get_last_validation_state_cachekey)
+def _get_last_validation_state_cached(item, cfg, before_last=False, return_level=False):
+    '''See get_last_validation_state.'''
+    return _get_last_validation_state(item, cfg, before_last, return_level)
+
+
+def _get_last_validation_state(item, cfg, before_last=False, return_level=False):
+    '''See get_last_validation_state.'''
     levels = list(cfg.getItemWFValidationLevels(
         item=item, render_proposing_group=True, only_enabled=True))
     res = 'itemcreated'

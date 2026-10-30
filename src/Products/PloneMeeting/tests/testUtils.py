@@ -11,15 +11,19 @@ from copy import deepcopy
 from ftw.labels.interfaces import ILabeling
 from imio.helpers.content import richtextval
 from os import path
+from plone import api
 from plone.app.controlpanel.events import ConfigurationChangedEvent
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import EXECUTE_EXPR_VALUE
+from Products.PloneMeeting.config import GROUP_MANAGING_ITEM_PG_PREFIX
 from Products.PloneMeeting.ftw_labels.utils import get_labels
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
+from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import duplicate_portal_type
 from Products.PloneMeeting.utils import escape
+from Products.PloneMeeting.utils import get_last_validation_state
 from Products.PloneMeeting.utils import is_proposing_group_editor
 from Products.PloneMeeting.utils import isPowerObserverForCfg
 from Products.PloneMeeting.utils import org_id_to_uid
@@ -111,6 +115,56 @@ class testUtils(PloneMeetingTestCase):
         # will raise Unauthorized if user can not edit
         self.validateItem(item)
         self.assertRaises(Unauthorized, set_field_from_ajax, item, 'description', new_value)
+
+    def test_pm_base_extra_expr_ctx(self):
+        '''"item" and "meeting" are available in the TAL expression context.'''
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        ctx = _base_extra_expr_ctx(item)
+        self.assertEqual(ctx['obj'], item)
+        self.assertEqual(ctx['item'], item)
+        self.assertIsNone(ctx['meeting'])
+        meeting = self.create('Meeting')
+        self.presentItem(item)
+        ctx = _base_extra_expr_ctx(item)
+        self.assertEqual(ctx['item'], item)
+        self.assertEqual(ctx['meeting'], meeting)
+        # on a meeting
+        ctx = _base_extra_expr_ctx(meeting)
+        self.assertEqual(ctx['obj'], meeting)
+        self.assertIsNone(ctx['item'])
+        self.assertEqual(ctx['meeting'], meeting)
+
+    def test_pm_get_last_validation_state(self):
+        '''utils.get_last_validation_state is ram.cached when no "available_on" is used,
+           the cache is invalidated when the groups managing item change.'''
+        cfg = self.meetingConfig
+        levels = cfg.getItemWFValidationLevels(only_enabled=True)
+        last_level = levels[-1]
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem', title='My item')
+        self.assertEqual(get_last_validation_state(item, cfg), last_level['state'])
+        state, level = get_last_validation_state(item, cfg, return_level=True)
+        self.assertEqual(state, last_level['state'])
+        self.assertEqual(level['state'], last_level['state'])
+        # returned level may be modified without changing cached value
+        level['state'] = 'modified'
+        self.assertEqual(get_last_validation_state(item, cfg, return_level=True)[1]['state'],
+                         last_level['state'])
+        # "available_on" depends on context, result is not cached
+        self._updateItemValidationLevel(
+            cfg, last_level['state'], available_on="python: item.Title() != 'skip'")
+        self.assertEqual(get_last_validation_state(item, cfg), last_level['state'])
+        item.setTitle('skip')
+        self.assertEqual(get_last_validation_state(item, cfg), levels[-2]['state'])
+        # without "available_on", cache is invalidated when groups managing item change
+        self._updateItemValidationLevel(cfg, last_level['state'], available_on='')
+        self.assertEqual(get_last_validation_state(item, cfg), last_level['state'])
+        self.changeUser('siteadmin')
+        plone_group = api.group.get(last_level['group_managing_item'].replace(
+            GROUP_MANAGING_ITEM_PG_PREFIX, self.developers_uid + '_'))
+        self._removeAllMembers(plone_group, plone_group.getMemberIds())
+        self.assertEqual(get_last_validation_state(item, cfg), levels[-2]['state'])
 
     def test_pm_SendMailIfRelevant(self):
         """ """

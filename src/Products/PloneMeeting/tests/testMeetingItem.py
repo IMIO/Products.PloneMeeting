@@ -23,6 +23,7 @@ from ftw.labels.interfaces import ILabeling
 from imio.actionspanel.interfaces import IContentDeletable
 from imio.helpers.cache import cleanRamCache
 from imio.helpers.cache import cleanRamCacheFor
+from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.content import get_vocab
 from imio.helpers.content import get_vocab_values
 from imio.helpers.content import richtextval
@@ -79,7 +80,9 @@ from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import get_dx_field
 from Products.PloneMeeting.utils import getFieldVersion
 from Products.PloneMeeting.utils import getTransitionToReachState
+from Products.PloneMeeting.utils import may_view_field
 from Products.PloneMeeting.utils import ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR
+from Products.PloneMeeting.utils import sendMailIfRelevant
 from Products.PloneMeeting.utils import set_field_from_ajax
 from Products.PluginIndexes.common.UnIndex import _marker
 from Products.statusmessages.interfaces import IStatusMessage
@@ -1762,7 +1765,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(newItem.fieldIsEmpty('otherMeetingConfigsClonableToFieldMotivation'))
         self.assertTrue(newItem.fieldIsEmpty('otherMeetingConfigsClonableToFieldDecision'))
         # otherMeetingConfigsClonableToFieldXXX order is correct (schema)
-        self.assertEqual(item.get_enable_clone_to_other_mc_fields(cfg),
+        self.assertEqual(item.get_enable_clone_to_other_mc_fields(),
                          ['otherMeetingConfigsClonableToFieldTitle',
                           'otherMeetingConfigsClonableToFieldItemReference',
                           'otherMeetingConfigsClonableToFieldMotivation',
@@ -1819,6 +1822,112 @@ class testMeetingItem(PloneMeetingTestCase):
         self.freezeMeeting(meeting)
         self.assertEqual(cloned_item.query_state(), 'itemfrozen')
         self.assertEqual(cloned_item.getItemReference(), '124/1/2024')
+
+    def test_pm_OtherMeetingConfigsClonableToFieldsEditCondition(self):
+        '''MeetingConfig.meetingConfigsToCloneToEditFieldsTALExpr defines if the
+           otherMeetingConfigsClonableToFieldXXX fields are editable (edit form and quick edit),
+           the fields are always viewable when used.'''
+        cfg = self.meetingConfig
+        self._enableField(('otherMeetingConfigsClonableToFieldTitle',
+                           'otherMeetingConfigsClonableToFieldDescription'))
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem', title='My item')
+        # not used field is never shown
+        self.assertFalse(item.show_othermcs_clonable_to_field('decision'))
+        # no expression, used fields are shown and editable
+        self.assertEqual(cfg.getMeetingConfigsToCloneToEditFieldsTALExpr(), '')
+        self.assertTrue(item.show_othermcs_clonable_to_field('title'))
+        self.assertTrue(item.show_othermcs_clonable_to_field('description'))
+        self.assertTrue(item.mayQuickEdit('otherMeetingConfigsClonableToFieldTitle'))
+        self.assertTrue(item.mayQuickEdit('otherMeetingConfigsClonableToFieldDescription'))
+        # expression using "field_name" and "item"
+        cfg.setMeetingConfigsToCloneToEditFieldsTALExpr(
+            "python: field_name == 'description' and item.Title() == 'My item'")
+        # in the view, fields are still shown
+        self.assertTrue(item.show_othermcs_clonable_to_field('title'))
+        self.assertTrue(item.show_othermcs_clonable_to_field('description'))
+        # but quick edit depends on the expression
+        self.assertFalse(item.mayQuickEdit('otherMeetingConfigsClonableToFieldTitle'))
+        self.assertTrue(item.mayQuickEdit('otherMeetingConfigsClonableToFieldDescription'))
+        # in the edit form, fields are shown depending on the expression
+        self.request.set('URL', item.absolute_url() + '/edit')
+        self.assertFalse(item.show_othermcs_clonable_to_field('title'))
+        self.assertTrue(item.show_othermcs_clonable_to_field('description'))
+        item.setTitle('Other title')
+        self.assertFalse(item.show_othermcs_clonable_to_field('description'))
+        self.request.set('URL', item.absolute_url())
+        self.assertFalse(item.mayQuickEdit('otherMeetingConfigsClonableToFieldDescription'))
+        self.assertTrue(item.show_othermcs_clonable_to_field('description'))
+
+    def test_pm_MotivationSuite(self):
+        '''Field MeetingItem.motivationSuite is optional, kept when item is duplicated
+           and may be defined for another MeetingConfig using
+           MeetingItem.otherMeetingConfigsClonableToFieldMotivationSuite.'''
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        cfg2Id = cfg2.getId()
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.assertFalse(item.attribute_is_used('motivationSuite'))
+        self.assertFalse(may_view_field(item, 'motivationSuite'))
+        self._enableField('motivationSuite')
+        self.assertTrue(item.attribute_is_used('motivationSuite'))
+        self.assertTrue(may_view_field(item, 'motivationSuite'))
+        item.setMotivationSuite('<p>Motivation suite</p>')
+        self.assertTrue('Motivation suite' in item.restrictedTraverse('meetingitem_view')())
+        # kept when duplicated
+        self.assertTrue('motivationSuite' in DEFAULT_COPIED_FIELDS)
+        self.assertEqual(item.clone().getMotivationSuite(), '<p>Motivation suite</p>')
+        # sent to another MeetingConfig
+        self._enableField('category', cfg=cfg2, enable=False)
+        self._enableField('motivationSuite', cfg=cfg2)
+        cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
+                                         'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL},))
+        cfg.setItemManualSentToOtherMCStates(('itemcreated', ))
+        self._enableField('otherMeetingConfigsClonableToFieldMotivationSuite')
+        item.setOtherMeetingConfigsClonableToFieldMotivationSuite('<p>Field motivation suite</p>')
+        item.setOtherMeetingConfigsClonableTo((cfg2Id,))
+        new_item = item.cloneToOtherMeetingConfig(cfg2Id)
+        self.assertEqual(new_item.getMotivationSuite(), '<p>Field motivation suite</p>')
+        self.assertTrue(new_item.fieldIsEmpty('otherMeetingConfigsClonableToFieldMotivationSuite'))
+        # not set if motivationSuite not used in destination MeetingConfig
+        self._enableField('motivationSuite', cfg=cfg2, enable=False)
+        item2 = item.clone()
+        item2.setOtherMeetingConfigsClonableToFieldMotivationSuite('<p>Field motivation suite</p>')
+        item2.setOtherMeetingConfigsClonableTo((cfg2Id,))
+        new_item2 = item2.cloneToOtherMeetingConfig(cfg2Id)
+        self.assertNotEqual(new_item2.getMotivationSuite(), '<p>Field motivation suite</p>')
+
+    def test_pm_ItemReferenceOptional(self):
+        '''MeetingItem.itemReference is an optional field,
+           when used it is shown in the item edit form.'''
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self._enableField('itemReference', enable=False)
+        self.assertFalse(item.attribute_is_used('itemReference'))
+        self.assertFalse(may_view_field(item, 'itemReference'))
+        self.assertFalse('name="itemReference"' in item.restrictedTraverse('base_edit')())
+        self._enableField('itemReference')
+        self.assertTrue(may_view_field(item, 'itemReference'))
+        self.assertTrue('name="itemReference"' in item.restrictedTraverse('base_edit')())
+
+    def test_pm_FindOrderForNotSelectableValue(self):
+        '''When inserting items "on_privacy" or "on_poll_type", an item using
+           a value that is not selectable is inserted at the end.
+           For poll types, the vocabulary includes the item value so it is after used values.'''
+        cfg = self.meetingConfig
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        cfg.setSelectablePrivacies(('public', 'secret'))
+        item.setPrivacy('secret')
+        self.assertEqual(item._findOrderFor('on_privacy'), 1)
+        item.setPrivacy('public_ending')
+        self.assertEqual(item._findOrderFor('on_privacy'), 99)
+        poll_types = get_vocab_values(item, 'Products.PloneMeeting.vocabularies.polltypesvocabulary')
+        item.setPollType(poll_types[0])
+        self.assertEqual(item._findOrderFor('on_poll_type'), 0)
+        item.setPollType('unknown_poll_type')
+        self.assertEqual(item._findOrderFor('on_poll_type'), len(cfg.getUsedPollTypes()))
 
     def test_pm_CloneItemWithSetCurrentAsPredecessor(self):
         '''When an item is cloned with option setCurrentAsPredecessor=True,
@@ -8677,6 +8786,73 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmCreator2')
         self.assertTrue(self.hasPermission(View, item))
         self.assertTrue(self.hasPermission(ModifyPortalContent, item))
+
+    def test_pm_GetOrgsManagingItem(self):
+        """MeetingItem.get_orgs_managing_item returns the organizations managing the item
+           in a validation level state and the proposingGroup when the item is out of
+           the validation process (validated, presented, ...)."""
+        cfg = self.meetingConfig
+        # level 'itemcreated' managed by vendors
+        self._updateItemValidationLevel(
+            cfg, 'itemcreated', group_managing_item=self.vendors_creators)
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        self.assertEqual(item.getProposingGroup(), self.developers_uid)
+        self.assertEqual(item.get_orgs_managing_item(cfg, 'itemcreated'), [self.vendors_uid])
+        self.assertEqual(
+            item.get_orgs_managing_item(cfg, 'itemcreated', only_group_managing_item=True),
+            self.vendors_uid)
+        # out of the validation process, the proposingGroup manages the item
+        self.create('Meeting')
+        self.presentItem(item)
+        self.assertEqual(item.query_state(), 'presented')
+        for item_state in ('validated', 'presented'):
+            self.assertEqual(item.get_orgs_managing_item(cfg, item_state), [self.developers_uid])
+        self.assertEqual(
+            item.get_orgs_managing_item(cfg, 'presented', only_group_managing_item=True),
+            self.developers_uid)
+        # reviewProcessInfo index
+        self.assertEqual(
+            len(self.catalog(UID=item.UID(),
+                             reviewProcessInfo='{0}__reviewprocess__presented'.format(
+                                 self.developers_uid))), 1)
+        # mail sent to proposingGroup creators when item presented
+        cfg.setMailMode("activated")
+        cfg.setMailItemEvents(("itemPresented", ))
+        recipients, subject, body = sendMailIfRelevant(
+            item, 'itemPresented', 'creators', isSuffix=True, debug=True)
+        self.assertEqual(recipients,
+                         [u'M. PMCreator One bee <pmcreator1b@plonemeeting.org>',
+                          u'M. PMCreator One <pmcreator1@plonemeeting.org>'])
+
+    def test_pm_GetPreviousValLevel(self):
+        """MeetingItemWorkflowConditions._get_previous_val_level returns the closest
+           valid validation level before given state, None when there is none."""
+        cfg = self.meetingConfig
+        states = cfg.getItemWFValidationLevels(data='state', only_enabled=True)
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        wf_conditions = item.wfConditions()
+        # no previous level for the first level, it does not wrap to the last level
+        self.assertIsNone(wf_conditions._get_previous_val_level(states[0]))
+        self.assertEqual(wf_conditions._get_previous_val_level(states[1]), states[0])
+        self.assertEqual(wf_conditions._get_previous_val_level('validated'), states[-1])
+        # with shortcuts, members of the last level may shortcut to the first level
+        self._activate_wfas(('item_validation_shortcuts', ))
+        last_level_plone_group_ids = item.get_plone_groups_managing_item(cfg, [states[-1]])
+        self.assertTrue(set(last_level_plone_group_ids).intersection(
+            get_plone_groups_for_user(user_id='pmReviewer1')))
+        self.changeUser('pmReviewer1')
+        self.assertTrue(item.wfConditions()._mayShortcutToValidationLevel(states[0]))
+        # invalid levels (empty group managing item) are skipped
+        self.changeUser('siteadmin')
+        for plone_group_id in last_level_plone_group_ids:
+            plone_group = api.group.get(plone_group_id)
+            self._removeAllMembers(plone_group, plone_group.getMemberIds())
+        self.assertEqual(item.wfConditions()._get_previous_val_level('validated'), states[-2])
+        # no validation levels
+        self._disableItemValidationLevel(cfg)
+        self.assertIsNone(item.wfConditions()._get_previous_val_level('validated'))
 
     def test_pm_ItemWFValidationLevels_available_on(self):
         """Test when using available_on that uses a TAL expression to enable

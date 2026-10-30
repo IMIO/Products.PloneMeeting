@@ -242,30 +242,18 @@ class MeetingItemWorkflowConditions(object):
         return msg
 
     def _get_previous_val_level(self, review_state):
-        """ """
+        """Return the closest valid validation level state before p_review_state
+           (a validation level state or "validated"), None if there is none,
+           for example when p_review_state is the first validation level."""
         item_val_levels_states = self.cfg.getItemWFValidationLevels(
             data='state',
             only_enabled=True,
             return_state_singleton=False)
-        # check if previous validation state is valid
-        index = len(item_val_levels_states) - 1 if review_state == "validated" else \
-            item_val_levels_states.index(review_state) - 1
-        while not self.is_valid_validation_level(
-                item_val_levels_states[index]):
-            index -= 1
-            # no previous valid state was found
-            if index < 0:
-                return
-        return item_val_levels_states[index]
-
-    def _mayShortcutToValidationLevel_cachekey(method, self, destinationState):
-        '''cachekey method for self._mayShortcutToValidationLevel.'''
-        # for a state, either group managing item is fixed or it is the proposing group
-        # so cache on proposingGroup is sufficient and sometimes even "too much"
-        # but it would be to expensive to use get_plone_groups_managing_item
-        return destinationState, self.context.getProposingGroup()
-
-    # @ram.cache(_mayShortcutToValidationLevel_cachekey)
+        index = len(item_val_levels_states) if review_state == "validated" else \
+            item_val_levels_states.index(review_state)
+        for state in reversed(item_val_levels_states[:index]):
+            if self.is_valid_validation_level(state):
+                return state
 
     def _mayShortcutToValidationLevel(self, destinationState):
         '''When using WFAdaptation 'item_validation_shortcuts',
@@ -278,6 +266,10 @@ class MeetingItemWorkflowConditions(object):
             if self.is_valid_validation_level(destinationState, shortcut=True):
                 previous_val_state = self._get_previous_val_level(
                     destinationState)
+                # there is no previous level for the first validation level,
+                # members of the last valid validation level may shortcut to it
+                if previous_val_state is None:
+                    previous_val_state = self._get_previous_val_level("validated")
                 # now that we have previous valid validation state, check if correct with shortcut
                 if self.is_valid_validation_level(previous_val_state):
                     previous_plone_group_ids = self.context.get_plone_groups_managing_item(
@@ -300,11 +292,10 @@ class MeetingItemWorkflowConditions(object):
         return res
 
     def is_valid_validation_level(self, review_state, user_id=None, shortcut=None, back_transition=False):
-        """ """
-        # i = self.context.REQUEST.get('i_counter', 0)
-        # self.context.REQUEST.set('i_counter', i + 1)
-        # logger.info(self.context.REQUEST.get('i_counter'))
-        # logger.info("%s: %s >> %s >> %s" % (back, self.review_state, review_state, shortcut))
+        """A validation level is valid if it is an enabled MeetingConfig.itemWFValidationLevels
+           state, its "available_on" TAL expression is True (p_shortcut and p_back_transition
+           are available in the expression) and a group managing item is not empty
+           (or contains p_user_id if given)."""
         # check if level is a validation level
         level = self.cfg.getItemWFValidationLevels(
             states=[review_state],
@@ -658,7 +649,7 @@ class MeetingItemWorkflowConditions(object):
         # when using validation states, may only return to the meeting from the
         # last validation state, plus the before-last one when using
         # 'return_to_proposing_group_with_before_last_validation'.  A validation level
-        # is skipped by _getLastValidationState when its Plone group is empty, so the
+        # is skipped by utils.get_last_validation_state when it is not valid, so the
         # returned state may match either the last or before-last level, hence we accept both.
         if 'return_to_proposing_group' not in wf_adaptations:
             current_validation_state = 'itemcreated' \
@@ -3269,15 +3260,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if item_state.endswith("_waiting_advices") and \
            "waiting_advices_proposing_group_send_back" in cfg.getWorkflowAdaptations() and \
            item.adviceIndex[adviser_uid]["advice_editable"]:
-            # check that current user is member of the proposingGroup suffix
+            # check that current user is member of a group managing a state
             # to which the item state could go back to
-            org_uids = self.get_orgs_managing_item(cfg, item_state)
             # get the "back" states, item_state is like "proposed_waiting_advices"
             # of "itemcreated__or__proposed_waiting_advices"
             # or when using WAITING_ADVICES_FROM_STATES 'new_state_id',
             # we use the "from_states"
-            states = []
-            if item_state != "any_validation_state_waiting_advices":
+            if item_state == "any_validation_state_waiting_advices":
+                # item may go back to any validation state
+                states = cfg.getItemWFValidationLevels(data='state', only_enabled=True)
+            else:
                 states = item_state.replace("_waiting_advices", "")
                 if "__or__" in states:
                     states = states.split("__or__")
@@ -3292,12 +3284,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                         states = [states]
             # make sure user actually able to back to states in case it was overrided
             states = [state for state in states if item.wfConditions().mayCorrect(state)]
-            if states:
-                suffixes = cfg.getItemWFValidationLevels(
-                    states=states, data='suffix', only_enabled=True, return_state_singleton=False)
-                for org_uid in org_uids:
-                    if tool.user_is_in_org(org_uid=org_uid, suffixes=suffixes):
-                        return True
+            if states and set(item.get_plone_groups_managing_item(cfg, states)).intersection(
+                    get_plone_groups_for_user()):
+                return True
         return False
 
     security.declarePublic('mayBackToPreviousAdvice')
@@ -7432,12 +7421,20 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return res
 
     def get_orgs_managing_item(self, cfg, item_state, only_group_managing_item=False):
-        """Return the organization uids currently managing the item."""
+        """Return the organization uids currently managing the item.
+           p_item_state is mapped to the corresponding validation level state
+           (returned_to_proposing_group, waiting_advices, ...) and when the item
+           is not in a validation level state (validated, presented, decided, ...),
+           the proposingGroup is considered managing the item."""
+        item_state = cfg.adapted().get_item_corresponding_state_to_assign_local_roles(item_state)
         org_uids = [gmi.split('_')[0]
                     for gmi in self.get_plone_groups_managing_item(
                          cfg,
                          [item_state],
                          only_group_managing_item=only_group_managing_item)]
+        if not org_uids:
+            proposing_group_uid = self.getProposingGroup()
+            org_uids = [proposing_group_uid] if proposing_group_uid else []
         return org_uids if not only_group_managing_item else (org_uids[0] if org_uids else None)
 
     def get_all_plone_groups_accessing_item(self, cfg, item_state):
@@ -7491,7 +7488,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         """ """
         res = defaultdict(lambda: defaultdict())
         for plone_group_id in plone_group_ids:
-            org_uid, suffix = plone_group_id.split('_')
+            # a suffix may contain a "_"
+            org_uid, suffix = plone_group_id.split('_', 1)
             roles = roles_config.get(suffix, roles_config.get('*'))
             res[org_uid][suffix] = roles
         return res

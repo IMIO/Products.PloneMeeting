@@ -126,6 +126,7 @@ from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import get_datagridfield_column_value
 from Products.PloneMeeting.utils import get_dx_attrs
 from Products.PloneMeeting.utils import get_dx_schema
+from Products.PloneMeeting.utils import get_group_managing_item_suffix
 from Products.PloneMeeting.utils import get_item_validation_wf_suffixes
 from Products.PloneMeeting.utils import getAdvicePortalTypeIds
 from Products.PloneMeeting.utils import getCustomAdapter
@@ -4080,19 +4081,18 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # will replace prefix with PG uid _
                 pg_uid_pattern = item.getProposingGroup() + '_'
             else:
-                raise Exception('Parameter item can not be None when ...')
+                raise ValueError(
+                    'Parameter "item" is required when using "render_proposing_group" '
+                    'or data "group_managing_item"/"extra_groups_managing_item"!')
 
         if data:
             if data == 'suffix':
-                res = [level['group_managing_item'].split('_')[-1]
+                res = [get_group_managing_item_suffix(level['group_managing_item'])
                        for level in res if level['group_managing_item']]
             elif data == 'extra_suffixes':
-                res = [level['extra_groups_managing_item']
-                       for level in res if level['group_managing_item']]
-                # res is a list of lists
-                res = list(itertools.chain.from_iterable(res))
-                res = [egmi.split('_')[-1] for egmi in res]
-                res = list(set(res))
+                res = list(set([get_group_managing_item_suffix(egmi)
+                                for level in res
+                                for egmi in level['extra_groups_managing_item'] or []]))
             elif data == 'group_managing_item':
                 # replace special value GROUP_MANAGING_ITEM_PG_PREFIX
                 res = [row['group_managing_item'].replace(GROUP_MANAGING_ITEM_PG_PREFIX, pg_uid_pattern)
@@ -4311,10 +4311,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            - using "using_groups" column is exclusive from "auto_groups" and
              restrict available committees to selected proposing groups;
            - "enabled" and "enable_editors" columns will have "0" when not using
-           and "1" when using."""
-        for committee in value or self.getCommittees(only_enabled=True):
+           and "1" when using.
+           Disabled committees are not considered, committees enabled "item_only" are."""
+        committees = value or [committee for committee in self.getCommittees()
+                               if committee['enabled'] != '0']
+        for committee in committees:
             if committee[column] and committee[column] != '0':
                 return True
+        return False
 
     def get_committee(self, row_id):
         """ """
@@ -7429,7 +7433,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # try to get custom reviewersFor, necessary for too complex workflows
         res = self.adapted()._custom_reviewersFor()
         if res is None:
-
             suffixes = list(self.getItemWFValidationLevels(data='suffix', only_enabled=True))[1:]
             # we need from highest level to lowest
             suffixes.reverse()
@@ -7885,32 +7888,21 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if self.is_using_meetings():
             transitions.append('present')
         if org_uid:
+            # skip transitions leading to a validation level for which
+            # every groups managing item (proposing group or fixed groups) are empty
             tool = api.portal.get_tool('portal_plonemeeting')
             tr_plone_groups = {}
             for row in item_wf_val_levels:
                 if row['leading_transition'] == '-':
                     continue
-                tr_plone_groups[row['leading_transition']] = []
-                # group_managing_item
-                gp_managing_item = row['group_managing_item'].replace(
-                    GROUP_MANAGING_ITEM_PG_PREFIX, org_uid + "_")
-                if gp_managing_item.startswith(org_uid):
-                    tr_plone_groups[row['leading_transition']].append(gp_managing_item)
-                # extra_groups_managing_item
-                for extra_gp_managing_item in row['extra_groups_managing_item']:
-                    extra_gp_managing_item = extra_gp_managing_item.replace(
-                        GROUP_MANAGING_ITEM_PG_PREFIX, org_uid + "_")
-                    if extra_gp_managing_item.startswith(org_uid):
-                        tr_plone_groups[row['leading_transition']].append(extra_gp_managing_item)
-            res = []
-            for transition in transitions:
-                if transition in tr_plone_groups and \
-                   transition != "present" and \
-                   not [tool.group_is_not_empty(plone_group_id=plone_group_id)
-                        for plone_group_id in tr_plone_groups[transition]]:
-                    continue
-                res.append(transition)
-            transitions = res
+                tr_plone_groups[row['leading_transition']] = [
+                    gmi.replace(GROUP_MANAGING_ITEM_PG_PREFIX, org_uid + "_")
+                    for gmi in [row['group_managing_item']] + list(row['extra_groups_managing_item'])]
+            transitions = [
+                transition for transition in transitions
+                if transition not in tr_plone_groups or
+                any(tool.group_is_not_empty(plone_group_id=plone_group_id)
+                    for plone_group_id in tr_plone_groups[transition])]
         return transitions
 
     security.declarePublic('get_transitions_to_close_a_meeting')

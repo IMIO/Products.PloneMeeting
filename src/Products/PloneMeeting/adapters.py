@@ -1338,19 +1338,27 @@ class BaseItemsToCorrectAdapter(CompoundCriterionBaseAdapter):
     def _query(self, review_states):
         if not self.cfg:
             return {}
-        # for every review_states check what roles are able to edit
-        # so we will get groups suffixes linked to these roles and find relevant groups
+        # for every review_states get the suffixes of the groups managing the item
+        # (group_managing_item and extra_groups_managing_item) and find relevant groups
         wfTool = api.portal.get_tool('portal_workflow')
         itemWF = wfTool.getWorkflowsFor(self.cfg.getItemTypeName())[0]
         reviewProcessInfos = []
         for review_state in review_states:
             if review_state in itemWF.states:
-                corresponding_item_state = \
-                    self.cfg.get_item_corresponding_state_to_assign_local_roles(review_state)
-                # keep suffixes having relevant roles
+                corresponding_item_state = self.cfg.adapted().\
+                    get_item_corresponding_state_to_assign_local_roles(review_state)
                 suffixes = self.cfg.getItemWFValidationLevels(
                     states=[corresponding_item_state],
-                    data='suffix')
+                    data='suffix',
+                    return_state_singleton=False) + \
+                    self.cfg.getItemWFValidationLevels(
+                        states=[corresponding_item_state],
+                        data='extra_suffixes',
+                        return_state_singleton=False)
+                # no group managing item in this state, nobody may correct
+                # (passing no suffixes would return every orgs of the user)
+                if not suffixes:
+                    continue
                 userOrgUids = self.tool.get_orgs_for_user(suffixes=suffixes)
                 for userOrgUid in userOrgUids:
                     reviewProcessInfos.append('%s__reviewprocess__%s' % (userOrgUid, review_state))

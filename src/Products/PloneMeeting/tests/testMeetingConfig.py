@@ -67,6 +67,8 @@ from zope.event import notify
 from zope.i18n import translate
 from zope.lifecycleevent import ObjectModifiedEvent
 
+import re
+
 
 MC_GROUP_SUFFIXES = (
     BUDGETIMPACTEDITORS_GROUP_SUFFIX,
@@ -2931,6 +2933,147 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertFalse('{0}.present'.format(cfg_id) in until_presented)
         for tr in transitions[:-1]:
             self.assertTrue('{0}.{1}'.format(cfg_id, tr) in until_presented)
+
+    def test_pm_GetTransitionsForPresentingAnItemWithOrgUid(self):
+        """When p_org_uid is given, transitions leading to a validation level
+           for which every groups managing item are empty are skipped,
+           this also works when the group managing item is a fixed group."""
+        cfg = self.meetingConfig
+        self.changeUser('siteadmin')
+        level =[lvl for lvl in cfg.getItemWFValidationLevels(only_enabled=True)
+                 if lvl['leading_transition'] != '-'][0]
+        transition = level['leading_transition']
+        self._updateItemValidationLevel(cfg, level['state'], extra_groups_managing_item=[])
+        self.assertTrue(transition in cfg.getTransitionsForPresentingAnItem(org_uid=self.developers_uid))
+        # empty the proposingGroup group managing this level
+        plone_group = api.group.get(
+            level['group_managing_item'].replace(
+                GROUP_MANAGING_ITEM_PG_PREFIX, self.developers_uid + '_'))
+        self._removeAllMembers(plone_group, plone_group.getMemberIds())
+        self.assertFalse(transition in cfg.getTransitionsForPresentingAnItem(org_uid=self.developers_uid))
+        # level managed by a not empty fixed group of another organization
+        self._updateItemValidationLevel(cfg, level['state'], group_managing_item=self.vendors_reviewers)
+        self.assertTrue(transition in cfg.getTransitionsForPresentingAnItem(org_uid=self.developers_uid))
+
+    def test_pm_IsCommitteesUsing(self):
+        """MeetingConfig.is_committees_using does not consider disabled committees
+           but considers committees enabled "item_only", "0" means not used.
+           Searches of committees editors are only available when using committees editors."""
+        cfg = self.meetingConfig
+        self.changeUser('siteadmin')
+
+        def _committee(row_id, enabled, enable_editors='0', auto_from=[]):
+            return {'row_id': row_id, 'label': row_id, 'acronym': row_id,
+                    'enabled': enabled, 'enable_editors': enable_editors,
+                    'auto_from': auto_from, 'using_groups': [], 'supplements': '0'}
+
+        def _set_committees(committees):
+            # editors Plone groups are managed when MeetingConfig is edited
+            cfg.setCommittees(committees)
+            notify(ObjectEditedEvent(cfg))
+
+        def _searches_available():
+            # Managers bypass the condition
+            self.changeUser('pmCreator1')
+            res = []
+            for search_id in ('searchitemsofmycommittees', 'searchitemsofmycommitteeseditable'):
+                adapted = ITALCondition(getattr(cfg.searches.searches_items, search_id))
+                self.assertEqual(adapted.tal_condition, "python: cfg.is_committees_using('enable_editors')")
+                res.append(evaluateExpressionFor(
+                    adapted, extra_expr_ctx=adapted.complete_extra_expr_ctx({'fromPortletTodo': False})))
+            self.changeUser('siteadmin')
+            return res
+
+        _set_committees([_committee('committee_a', '1'), _committee('committee_b', 'item_only')])
+        self.assertFalse(cfg.is_committees_using('enable_editors'))
+        self.assertFalse(cfg.is_committees_using('auto_from'))
+        self.assertEqual(_searches_available(), [False, False])
+        # editors on an "item_only" committee
+        _set_committees([_committee('committee_a', '1'),
+                           _committee('committee_b', 'item_only', enable_editors='1')])
+        self.assertTrue(cfg.is_committees_using('enable_editors'))
+        self.assertEqual(_searches_available(), [True, True])
+        # disabled committees are not considered
+        _set_committees([_committee('committee_a', '1'),
+                           _committee('committee_b', '0', enable_editors='1',
+                                      auto_from=['proposing_group__' + self.developers_uid])])
+        self.assertFalse(cfg.is_committees_using('enable_editors'))
+        self.assertFalse(cfg.is_committees_using('auto_from'))
+        self.assertEqual(_searches_available(), [False, False])
+        # list columns
+        _set_committees([_committee('committee_a', '1', auto_from=['proposing_group__' + self.developers_uid])])
+        self.assertTrue(cfg.is_committees_using('auto_from'))
+        # when a value is given, every rows are considered
+        self.assertTrue(cfg.is_committees_using(
+            'enable_editors', value=[_committee('committee_c', '0', enable_editors='1')]))
+
+    def test_pm_VoteConditionStoredAsString(self):
+        """MeetingConfig.voteCondition was a StringField, it is now a TextField,
+           values stored as a string by the StringField still work."""
+        cfg = self.meetingConfig
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        # value stored like the StringField did (AttributeStorage, a str)
+        cfg.voteCondition = 'python: item.Title() == "votable"'
+        self.assertEqual(cfg.getVoteCondition(), 'python: item.Title() == "votable"')
+        self.assertFalse(cfg.isVotable(item))
+        item.setTitle('votable')
+        self.assertTrue(cfg.isVotable(item))
+        # empty legacy value means votable
+        cfg.voteCondition = ''
+        self.assertEqual(cfg.getVoteCondition(), '')
+        self.assertTrue(cfg.isVotable(item))
+        # values set with the TextField
+        cfg.setVoteCondition('python: False')
+        self.assertEqual(cfg.getVoteCondition(), 'python: False')
+        self.assertFalse(cfg.isVotable(item))
+        # the edit and view forms render it, it is on the "votes" fieldset/page
+        cfg.voteCondition = 'python: item.Title() == "votable"'
+        self.changeUser('siteadmin')
+        self.request.form['fieldset'] = 'votes'
+        self.assertTrue(
+            re.search(r'<textarea[^>]*voteCondition[^>]*>python: item.Title\(\) == "votable"</textarea>',
+                      cfg.restrictedTraverse('base_edit')()))
+        self.request.form['pageName'] = 'votes'
+        self.assertTrue('python: item.Title() == &quot;votable&quot;' in cfg.restrictedTraverse('meetingconfig_view')() or
+                        'python: item.Title() == "votable"' in cfg.restrictedTraverse('meetingconfig_view')())
+
+    def test_pm_GetItemWFValidationLevelsSuffixes(self):
+        """data 'suffix' and 'extra_suffixes' manage suffixes containing a '_',
+           parameter item is required to render the proposing group."""
+        cfg = self.meetingConfig
+        levels = [
+            {'state': 'itemcreated',
+             'group_managing_item': GROUP_MANAGING_ITEM_PG_PREFIX + 'creators',
+             'extra_groups_managing_item': [],
+             'available_on': '',
+             'enabled': '1'},
+            {'state': 'proposed',
+             'group_managing_item': self.vendors_uid + '_my_reviewers',
+             'extra_groups_managing_item': [GROUP_MANAGING_ITEM_PG_PREFIX + 'my_observers',
+                                            self.vendors_uid + '_my_observers'],
+             'available_on': '',
+             'enabled': '1'},
+            {'state': 'prevalidated',
+             'group_managing_item': GROUP_MANAGING_ITEM_PG_PREFIX + 'other_reviewers',
+             'extra_groups_managing_item': [GROUP_MANAGING_ITEM_PG_PREFIX + 'other_observers'],
+             'available_on': '',
+             'enabled': '0'}]
+        self.assertEqual(cfg.getItemWFValidationLevels(value=levels, data='suffix', only_enabled=True),
+                         ['creators', 'my_reviewers'])
+        self.assertEqual(cfg.getItemWFValidationLevels(value=levels, data='extra_suffixes', only_enabled=True),
+                         ['my_observers'])
+        self.assertEqual(sorted(cfg.getItemWFValidationLevels(value=levels, data='extra_suffixes')),
+                         ['my_observers', 'other_observers'])
+        self.assertRaises(ValueError, cfg.getItemWFValidationLevels, value=levels, data='group_managing_item')
+        # local roles computation also manages suffixes containing a '_'
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.assertEqual(
+            {org_uid: dict(suffix_roles) for org_uid, suffix_roles in
+             item._turn_plone_group_ids_to_group_suffixes(
+                [self.vendors_uid + '_my_reviewers', self.vendors_uid + '_creators']).items()},
+            {self.vendors_uid: {'my_reviewers': ['Reader'], 'creators': ['Reader']}})
 
     def test_pm_WFAttrsConstantsComplete(self):
         """Every field or datagrid column using an item/meeting state or transition

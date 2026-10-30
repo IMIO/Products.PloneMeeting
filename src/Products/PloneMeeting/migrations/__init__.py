@@ -159,9 +159,14 @@ class Migrator(BaseMigrator):
             for attr in attrs:
                 # state_attr may be a datagridfield field_name/column_name
                 # like powerObservers/item_states
+                field_name = attr.split('/')[0]
+                original_values = getattr(obj, field_name, None)
+                # nothing to update, an organization may have no value
+                if not original_values:
+                    continue
+                values = original_values
                 if "/" in attr:
-                    field_name, col_name = attr.split('/')
-                    values = getattr(obj, field_name)
+                    col_name = attr.split('/')[1]
                     for row in values:
                         if hasattr(row[col_name], '__iter__'):
                             col_values = _replace_values_in_list(
@@ -170,10 +175,10 @@ class Migrator(BaseMigrator):
                             col_values = mappings.get(row[col_name], row[col_name])
                         row[col_name] = col_values
                 else:
-                    field_name = attr
-                    values = getattr(obj, field_name)
                     values = _replace_values_in_list(values, mappings)
-                setattr(obj, field_name, tuple(values))
+                # organization fields store a list, MeetingConfig fields a tuple
+                setattr(obj, field_name,
+                        list(values) if isinstance(original_values, list) else tuple(values))
 
         # MeetingConfigs
         state_attrs = ITEM_WF_STATE_ATTRS if related_to == 'MeetingItem' else MEETING_WF_STATE_ATTRS

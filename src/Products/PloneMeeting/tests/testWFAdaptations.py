@@ -3071,6 +3071,42 @@ class testWFAdaptations(PloneMeetingTestCase):
                              'waiting_advices_from_every_val_levels'))
         self._check_waiting_advices_from_every_levels(cfg)
 
+    def test_pm_WFA_waiting_advices_proposing_group_may_ask_advice_again(self):
+        '''When using 'waiting_advices_proposing_group_send_back' with
+           'waiting_advices_from_every_val_levels', a proposingGroup member
+           able to send the item back may ask an advice again.'''
+        cfg = self.meetingConfig
+        # ease override by subproducts
+        if not self._check_wfa_available(['waiting_advices',
+                                          'waiting_advices_proposing_group_send_back',
+                                          'waiting_advices_from_every_val_levels']):
+            return
+        self._activate_wfas(('waiting_advices',
+                             'waiting_advices_proposing_group_send_back',
+                             'waiting_advices_from_every_val_levels'))
+        waiting_advices_state = self._default_waiting_advices_state()
+        cfg.setItemAdviceStates((waiting_advices_state, ))
+        cfg.setItemAdviceEditStates((waiting_advices_state, ))
+        cfg.setItemAdviceViewStates((waiting_advices_state, ))
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem', optionalAdvisers=(self.vendors_uid, ))
+        self.do(item, 'wait_advices_from_itemcreated')
+        self.assertEqual(item.query_state(), waiting_advices_state)
+        self.changeUser('pmReviewer2')
+        advice = createContentInContainer(
+            item,
+            'meetingadvice',
+            **{'advice_group': self.vendors_uid,
+               'advice_type': u'negative',
+               'advice_hide_during_redaction': False,
+               'advice_comment': richtextval(u'My comment')})
+        # proposingGroup member able to send item back may ask advice again
+        self.changeUser('pmCreator1')
+        self.assertTrue(item.adapted().mayAskAdviceAgain(advice))
+        # not for a member of another group
+        self.changeUser('pmCreator2')
+        self.assertFalse(item.adapted().mayAskAdviceAgain(advice))
+
     def _waiting_advices_adviser_send_back_states(self):
         return ['backTo_itemcreated_from_waiting_advices', self._wait_advice_from_proposed_state_back_transition()]
 

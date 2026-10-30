@@ -24,6 +24,7 @@ from plone.namedfile.file import NamedImage
 from Products.CMFPlone.interfaces.constrains import IConstrainTypes
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting import logger
+from Products.PloneMeeting.config import GROUP_MANAGING_ITEM_PG_PREFIX
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import PloneMeetingError
@@ -63,6 +64,23 @@ def update_labels_jar(jar, values):
         jar.add(title=value['title'],
                 color=value['color'],
                 by_user=value['by_user'])
+
+
+def adapt_item_wf_validation_level(level):
+    """Adapt a MeetingConfig.itemWFValidationLevels row defined in a profile,
+       a fixed group managing item is defined with the organization id
+       (like "developers_reviewers"), turn it into the Plone group id."""
+    level = dict(level)
+
+    def _org_id_to_uid(group_managing_item):
+        if not group_managing_item or group_managing_item.startswith(GROUP_MANAGING_ITEM_PG_PREFIX):
+            return group_managing_item
+        return org_id_to_uid(group_managing_item, raise_on_error=False) or group_managing_item
+
+    level['group_managing_item'] = _org_id_to_uid(level.get('group_managing_item', ''))
+    level['extra_groups_managing_item'] = [
+        _org_id_to_uid(extra) for extra in level.get('extra_groups_managing_item') or []]
+    return level
 
 
 class ToolInitializer:
@@ -391,6 +409,10 @@ class ToolInitializer:
             new_value['org'] = org_id_to_uid(new_value['org'])
             adapted_ca.append(new_value)
         cData['customAdvisers'] = adapted_ca
+        # manage itemWFValidationLevels, turn fixed groups managing item org ids into org uids
+        cData['itemWFValidationLevels'] = [
+            adapt_item_wf_validation_level(level)
+            for level in cData.get('itemWFValidationLevels') or []]
         # return if already exists
         if cData['id'] in self.tool.objectIds():
             logger.info(
