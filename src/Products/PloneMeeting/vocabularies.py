@@ -64,6 +64,7 @@ from Products.PloneMeeting.config import CONSIDERED_NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import GROUP_MANAGING_ITEM_PG_PREFIX
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
+from Products.PloneMeeting.config import MEETING_SEARCHES_FOLDER_IDS
 from Products.PloneMeeting.config import NO_COMMITTEE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import PMMessageFactory as _
@@ -106,7 +107,8 @@ class PMConditionAwareCollectionVocabulary(CachedCollectionVocabulary):
         return original_checks + (get_plone_groups_for_user(), )
 
     def _brains(self, context):
-        """We override the method because Meetings also provides the ICollection interface..."""
+        """We override the method because Meetings also provides the ICollection interface...
+           Meeting related searches are not returned when not using meetings."""
         root = context
         while IFacetedNavigable.providedBy(root.aq_inner.aq_parent):
             root = root.aq_inner.aq_parent
@@ -117,6 +119,11 @@ class PMConditionAwareCollectionVocabulary(CachedCollectionVocabulary):
             enabled=True,
             sort_on='getObjPositionInParent'
         )
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        if cfg is not None and not cfg.is_using_meetings():
+            brains = [brain for brain in brains
+                      if brain.getPath().split('/')[-2] not in MEETING_SEARCHES_FOLDER_IDS]
         return brains
 
     def _compute_redirect_to(self, collection, criterion):
@@ -364,6 +371,10 @@ class UserProposingGroupsVocabulary(object):
     def _user_proposing_group_terms(self, context, tool, cfg):
         """ """
         orgs = self._get_selectable_orgs(context, tool, cfg)
+        return self._terms_for_orgs(orgs)
+
+    def _terms_for_orgs(self, orgs):
+        """Return term values and terms for given p_orgs."""
         terms = []
         term_values = []
         for org in orgs:
@@ -422,8 +433,13 @@ class UserProposingGroupsWithGroupsInChargeVocabulary(UserProposingGroupsVocabul
     """ """
 
     def _user_proposing_group_terms(self, context, tool, cfg):
-        """ """
+        """Not cached as depends on organizations groups_in_charge."""
         orgs = self._get_selectable_orgs(context, tool, cfg)
+        return self._terms_for_orgs(orgs)
+
+    def _terms_for_orgs(self, orgs):
+        """Return term values and terms for given p_orgs, one term
+           for each proposingGroup/groupInCharge combination."""
         terms = []
         term_values = []
         active_org_uids = get_registry_organizations()

@@ -7,6 +7,8 @@
 
 from AccessControl import Unauthorized
 from collections import OrderedDict
+from collective.behavior.talcondition.behavior import ITALCondition
+from collective.behavior.talcondition.utils import evaluateExpressionFor
 from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.contact.plonegroup.utils import select_org_for_function
@@ -52,6 +54,10 @@ from Products.PloneMeeting.content.meeting import default_committees
 from Products.PloneMeeting.events import _itemAnnexTypes
 from Products.PloneMeeting.interfaces import IConfigElement
 from Products.PloneMeeting.MeetingConfig import DUPLICATE_SHORT_NAME
+from Products.PloneMeeting.MeetingConfig import ITEM_WF_STATE_ATTRS
+from Products.PloneMeeting.MeetingConfig import ITEM_WF_TRANSITION_ATTRS
+from Products.PloneMeeting.MeetingConfig import MEETING_WF_STATE_ATTRS
+from Products.PloneMeeting.MeetingConfig import MEETING_WF_TRANSITION_ATTRS
 from Products.PloneMeeting.tests.PloneMeetingTestCase import DefaultData
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
@@ -2875,6 +2881,176 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         self.assertTrue(self.hasPermission(View, meeting))
         self.assertFalse(MEETING_REMOVE_MOG_WFA in cfg.getWorkflowAdaptations())
+
+    def test_pm_SearchesTALCondition(self):
+        """Make sure every 'tal_condition' defined in MeetingConfig._searchesInfo
+           is a valid python expression and that the 'tal_condition' of every
+           DashboardCollection of the MeetingConfig may be evaluated without error."""
+        cfg = self.meetingConfig
+        # syntax of every tal_condition, including searches not created in the config
+        for search_id, search_info in cfg._searchesInfo().items():
+            tal_condition = search_info.get('tal_condition', '').strip()
+            if not tal_condition:
+                continue
+            self.assertTrue(tal_condition.startswith('python:'), search_id)
+            try:
+                compile(tal_condition[len('python:'):].strip(), search_id, 'eval')
+            except SyntaxError as exc:
+                self.fail('Wrong tal_condition for search "{0}": {1}'.format(search_id, exc))
+        # evaluate every tal_condition, a not Manager user is used
+        # so tal_condition is not bypassed
+        self.changeUser('pmManager')
+        for collection in cfg.searches.objectValues():
+            for search in [collection] + list(getattr(collection, 'objectValues', lambda: [])()):
+                if search.portal_type != 'DashboardCollection':
+                    continue
+                adapted = ITALCondition(search)
+                extra_expr_ctx = adapted.complete_extra_expr_ctx({'fromPortletTodo': False})
+                try:
+                    evaluateExpressionFor(adapted, extra_expr_ctx=extra_expr_ctx, raise_on_error=True)
+                except Exception as exc:
+                    self.fail('Error evaluating tal_condition of search "{0}": {1}'.format(search.getId(), exc))
+
+    def test_pm_GetTransitionsForPresentingAnItemNoMeeting(self):
+        """When not using meetings, there is no 'present' transition."""
+        if not self._check_wfa_available(['no_meeting']):
+            return
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        cfg_id = cfg.getId()
+        self._activate_wfas(())
+        transitions = cfg.getTransitionsForPresentingAnItem()
+        self.assertEqual(transitions[-1], 'present')
+        until_presented = cfg2.listTransitionsUntilPresented().keys()
+        self.assertTrue('{0}.present'.format(cfg_id) in until_presented)
+        # not using meetings
+        self._activate_wfas(('no_meeting', ))
+        self.assertEqual(cfg.getTransitionsForPresentingAnItem(), transitions[:-1])
+        self.assertFalse('present' in cfg.getTransitionsForPresentingAnItem())
+        until_presented = cfg2.listTransitionsUntilPresented().keys()
+        self.assertFalse('{0}.present'.format(cfg_id) in until_presented)
+        for tr in transitions[:-1]:
+            self.assertTrue('{0}.{1}'.format(cfg_id, tr) in until_presented)
+
+    def test_pm_WFAttrsConstantsComplete(self):
+        """Every field or datagrid column using an item/meeting state or transition
+           vocabulary is listed in ITEM_WF_STATE_ATTRS, ITEM_WF_TRANSITION_ATTRS,
+           MEETING_WF_STATE_ATTRS or MEETING_WF_TRANSITION_ATTRS."""
+        cfg = self.meetingConfig
+        vocab_to_attrs = {
+            'listItemStates': ITEM_WF_STATE_ATTRS,
+            'listItemAutoSentToOtherMCStates': ITEM_WF_STATE_ATTRS,
+            'listMeetingStates': MEETING_WF_STATE_ATTRS,
+            'listItemTransitions': ITEM_WF_TRANSITION_ATTRS,
+            'listExecutableItemActions': ITEM_WF_TRANSITION_ATTRS,
+            'listItemEvents': ITEM_WF_TRANSITION_ATTRS,
+            'listMeetingTransitions': MEETING_WF_TRANSITION_ATTRS,
+            'listMeetingEvents': MEETING_WF_TRANSITION_ATTRS,
+            'listAllTransitions': ITEM_WF_TRANSITION_ATTRS + MEETING_WF_TRANSITION_ATTRS}
+        checked = []
+        for field in cfg.Schema().fields():
+            columns = getattr(field.widget, 'columns', None)
+            if columns:
+                candidates = [('{0}/{1}'.format(field.getName(), col_name),
+                               getattr(column, 'vocabulary', None))
+                              for col_name, column in columns.items()]
+            else:
+                candidates = [(field.getName(), field.vocabulary)]
+            for attr, vocab in candidates:
+                if isinstance(vocab, basestring) and vocab in vocab_to_attrs:
+                    checked.append(attr)
+                    self.assertTrue(attr in vocab_to_attrs[vocab],
+                                    '"{0}" using vocabulary "{1}" is not listed'.format(attr, vocab))
+        # make sure the test really checked something
+        self.assertTrue('itemRestrictedCopyGroupsStates' in checked)
+        self.assertTrue('labelsConfig/view_states' in checked)
+        self.assertTrue('powerObservers/meeting_states' in checked)
+
+    def test_pm_MigratorUpdateCfgWFAttrs(self):
+        """Migrator.update_cfg_wf_attrs manages fields and datagridfield columns."""
+        from Products.PloneMeeting.migrations import Migrator
+        cfg = self.meetingConfig
+        cfg_id = cfg.getId()
+        self.changeUser('siteadmin')
+        cfg.setItemCopyGroupsStates(('itemcreated', 'validated'))
+        self._setPowerObserverStates(states=('itemcreated', 'validated'))
+        cfg.setOnTransitionFieldTransforms(
+            ({'transition': 'validate',
+              'field_name': 'MeetingItem.decision',
+              'tal_expression': 'string:Validated'},
+             {'transition': 'backToItemCreated',
+              'field_name': 'MeetingItem.decision',
+              'tal_expression': 'string:Back'}))
+        migrator = Migrator(self.portal)
+        # states, multivalued field and multivalued datagridfield column
+        migrator.update_cfg_wf_attrs(
+            to_remove=['itemcreated'], to_replace={'validated': 'presented'}, cfg_ids=[cfg_id])
+        self.assertEqual(list(cfg.getItemCopyGroupsStates()), ['presented'])
+        po_infos = [po for po in cfg.getPowerObservers() if po['row_id'] == 'powerobservers'][0]
+        self.assertEqual(list(po_infos['item_states']), ['presented'])
+        migrator.update_cfg_wf_attrs(to_add=['accepted'], cfg_ids=[cfg_id])
+        self.assertEqual(list(cfg.getItemCopyGroupsStates()), ['presented', 'accepted'])
+        po_infos = [po for po in cfg.getPowerObservers() if po['row_id'] == 'powerobservers'][0]
+        self.assertEqual(list(po_infos['item_states']), ['presented', 'accepted'])
+        # transitions, single valued datagridfield column, row using
+        # a removed value is removed, to_add is ignored
+        migrator.update_cfg_wf_attrs(
+            is_review_state=False,
+            to_remove=['backToItemCreated'],
+            to_replace={'validate': 'present'},
+            to_add=['accept'],
+            cfg_ids=[cfg_id])
+        self.assertEqual(
+            [row['transition'] for row in cfg.getOnTransitionFieldTransforms()],
+            ['present'])
+        self.assertEqual(cfg.getOnTransitionFieldTransforms()[0]['tal_expression'],
+                         'string:Validated')
+
+    def test_pm_UsingGroupsNoMeeting(self):
+        """When using the 'no_meeting' WFA, the MEETING_REMOVE_MOG_WFA WFA
+           is not enabled when MeetingConfig.usingGroups is defined."""
+        if not self._check_wfa_available(['no_meeting']):
+            return
+        cfg = self.meetingConfig
+        self._activate_wfas(())
+        # enabling usingGroups enables MEETING_REMOVE_MOG_WFA
+        self.changeUser('siteadmin')
+        cfg.setUsingGroups((self.vendors_uid, ))
+        notify(ObjectEditedEvent(cfg))
+        self.assertTrue(MEETING_REMOVE_MOG_WFA in cfg.getWorkflowAdaptations())
+        # enabling 'no_meeting' disables MEETING_REMOVE_MOG_WFA
+        cfg.setWorkflowAdaptations(cfg.getWorkflowAdaptations() + ('no_meeting', ))
+        notify(ObjectEditedEvent(cfg))
+        self.assertEqual(cfg.getWorkflowAdaptations(), ('no_meeting', ))
+        # disabling 'no_meeting' enables MEETING_REMOVE_MOG_WFA again
+        self.failIf(cfg.validate_workflowAdaptations(()))
+        cfg.setWorkflowAdaptations(())
+        notify(ObjectEditedEvent(cfg))
+        self.assertEqual(cfg.getWorkflowAdaptations(), (MEETING_REMOVE_MOG_WFA, ))
+        # enabling 'no_meeting' and disabling usingGroups at the same time,
+        # works no matter the order fields are set
+        cfg.setWorkflowAdaptations(('no_meeting', ))
+        cfg.setUsingGroups([])
+        self.assertEqual(cfg.getWorkflowAdaptations(), ('no_meeting', ))
+        cfg.setUsingGroups((self.vendors_uid, ))
+        cfg.setWorkflowAdaptations(())
+        self.assertEqual(cfg.getWorkflowAdaptations(), (MEETING_REMOVE_MOG_WFA, ))
+        cfg.setUsingGroups([])
+        cfg.setWorkflowAdaptations(('no_meeting', ))
+        cfg.setUsingGroups((self.vendors_uid, ))
+        notify(ObjectEditedEvent(cfg))
+        self.assertEqual(cfg.getWorkflowAdaptations(), ('no_meeting', ))
+        # disable then enable usingGroups again
+        cfg.setUsingGroups([''])
+        notify(ObjectEditedEvent(cfg))
+        self.assertEqual(cfg.getWorkflowAdaptations(), ('no_meeting', ))
+        cfg.setUsingGroups((self.vendors_uid, ))
+        notify(ObjectEditedEvent(cfg))
+        self.assertEqual(cfg.getWorkflowAdaptations(), ('no_meeting', ))
+        # disable usingGroups
+        cfg.setUsingGroups([''])
+        notify(ObjectEditedEvent(cfg))
+        self.assertEqual(cfg.getWorkflowAdaptations(), ('no_meeting', ))
 
     def test_pm_UsingGroupsMailMeetingEvents(self):
         """When MeetingConfig.usingGroups is defined, mail notifications are not

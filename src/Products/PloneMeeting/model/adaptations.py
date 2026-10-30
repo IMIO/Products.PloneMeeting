@@ -302,6 +302,31 @@ def removeState(wf, state_id, transition_id, back_transition_id):
         wf.states.deleteStates([state_id])
 
 
+def get_no_meeting_removed_item_states():
+    '''Item states removed by the 'no_meeting' wfAdaptation, these are the states
+       where the item is linked to a meeting, so every states of the base
+       'meetingitem_workflow' except 'validated'.'''
+    wfTool = api.portal.get_tool('portal_workflow')
+    return [state_id for state_id in wfTool.get('meetingitem_workflow').states
+            if state_id != 'validated']
+
+
+def remove_states(wf, state_ids):
+    '''Remove p_state_ids from p_wf, every transition leading to one of
+       these states is removed as well.'''
+    state_ids = [state_id for state_id in state_ids if state_id in wf.states]
+    transition_ids = [tr.id for tr in wf.transitions.values()
+                      if tr.new_state_id in state_ids]
+    for state in wf.states.values():
+        if state.id not in state_ids:
+            state.transitions = tuple(
+                [tr for tr in state.transitions if tr not in transition_ids])
+    if transition_ids:
+        wf.transitions.deleteTransitions(transition_ids)
+    if state_ids:
+        wf.states.deleteStates(state_ids)
+
+
 def clone_permissions(wf_id, base_state_id, new_state_id):
     ''' '''
     wfTool = api.portal.get_tool('portal_workflow')
@@ -769,6 +794,14 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
         if applied:
             logger.info(WF_APPLIED_CUSTOM % (wfAdaptation, meetingConfig.getId()))
             continue
+
+        # "no_meeting" removes every item states after 'validated' (states
+        # where the item is linked to a meeting), the item WF ends at 'validated'.
+        # The meeting WF does not have any state nor transition.
+        if wfAdaptation == 'no_meeting':
+            remove_states(itemWorkflow, get_no_meeting_removed_item_states())
+            remove_states(meetingWorkflow, meetingWorkflow.states.keys())
+            meetingWorkflow.initial_state = None
 
         # "no_freeze" removes state 'frozen' in the meeting workflow and
         # corresponding state 'itemfrozen' in the item workflow.
