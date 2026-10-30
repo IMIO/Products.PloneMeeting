@@ -113,6 +113,7 @@ bin/test -s Products.PloneMeeting -t test_method_name # Single test method
 ```
 
 Tests use `unittest` + `plone.app.testing`. The base test class is `PloneMeetingTestCase` (`tests/PloneMeetingTestCase.py`). The test profile (`PM_TESTING_PROFILE_FUNCTIONAL`) sets up a full Plone site with sample meeting configurations.
+Take into account PloneMeetingTestCase.subproductIgnoredTestFiles also when executing tests for PloneMeeting except if it really relevant.
 
 ## Code style & conventions
 

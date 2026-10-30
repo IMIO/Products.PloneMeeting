@@ -7,6 +7,7 @@ from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from plone.api.validation import at_least_one_of
 from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
 from Products.PloneMeeting.config import DEFAULT_USER_PASSWORD
+from Products.PloneMeeting.config import GROUP_MANAGING_ITEM_PG_PREFIX
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 
 import copy
@@ -581,6 +582,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.inheritedAdviceRemoveableByAdviser = False
         self.enableAddQuickAdvice = False
         self.itemInternalNotesEditableBy = []
+        self.meetingConfigsToCloneToEditFieldsTALExpr = ''
         self.itemFieldsConfig = (
             {'name': "neededFollowUp",
              'view': "python: item.may_view_follow_up()",
@@ -626,8 +628,9 @@ class MeetingConfigDescriptor(Descriptor):
              'leading_transition_title': '-',
              'back_transition': 'backToItemCreated',
              'back_transition_title': 'backToItemCreated',
-             'suffix': 'creators',
-             'extra_suffixes': [],
+             'group_managing_item': '{0}creators'.format(GROUP_MANAGING_ITEM_PG_PREFIX),
+             'extra_groups_managing_item': [],
+             'available_on': '',
              'enabled': '1',
              },
             {'state': 'proposed',
@@ -636,8 +639,9 @@ class MeetingConfigDescriptor(Descriptor):
              'leading_transition_title': 'propose',
              'back_transition': 'backToProposed',
              'back_transition_title': 'backToProposed',
-             'suffix': 'reviewers',
-             'extra_suffixes': [],
+             'group_managing_item': '{0}reviewers'.format(GROUP_MANAGING_ITEM_PG_PREFIX),
+             'extra_groups_managing_item': [],
+             'available_on': '',
              'enabled': '1',
              },
             {'state': 'prevalidated',
@@ -646,8 +650,8 @@ class MeetingConfigDescriptor(Descriptor):
              'leading_transition_title': 'prevalidate',
              'back_transition': 'backToPrevalidated',
              'back_transition_title': 'backToPrevalidated',
-             'suffix': 'reviewers',
-             'extra_suffixes': [],
+             'group_managing_item': '{0}reviewers'.format(GROUP_MANAGING_ITEM_PG_PREFIX),
+             'available_on': '',
              'enabled': '0',
              },
             {'state': 'proposedToValidationLevel1',
@@ -656,8 +660,8 @@ class MeetingConfigDescriptor(Descriptor):
              'leading_transition_title': 'proposeToValidationLevel1',
              'back_transition': 'backToProposedToValidationLevel1',
              'back_transition_title': 'backToProposedToValidationLevel1',
-             'suffix': 'level1reviewers',
-             'extra_suffixes': [],
+             'group_managing_item': '{0}level1reviewers'.format(GROUP_MANAGING_ITEM_PG_PREFIX),
+             'available_on': '',
              'enabled': '0',
              },
             {'state': 'proposedToValidationLevel2',
@@ -666,8 +670,8 @@ class MeetingConfigDescriptor(Descriptor):
              'leading_transition_title': 'proposeToValidationLevel2',
              'back_transition': 'backToProposedToValidationLevel2',
              'back_transition_title': 'backToProposedToValidationLevel2',
-             'suffix': 'level2reviewers',
-             'extra_suffixes': [],
+             'group_managing_item': '{0}level2reviewers'.format(GROUP_MANAGING_ITEM_PG_PREFIX),
+             'available_on': '',
              'enabled': '0',
              },
             {'state': 'proposedToValidationLevel3',
@@ -676,8 +680,8 @@ class MeetingConfigDescriptor(Descriptor):
              'leading_transition_title': 'proposeToValidationLevel3',
              'back_transition': 'backToProposedToValidationLevel3',
              'back_transition_title': 'backToProposedToValidationLevel3',
-             'suffix': 'level3reviewers',
-             'extra_suffixes': [],
+             'group_managing_item': '{0}level3reviewers'.format(GROUP_MANAGING_ITEM_PG_PREFIX),
+             'available_on': '',
              'enabled': '0',
              },
             {'state': 'proposedToValidationLevel4',
@@ -686,8 +690,8 @@ class MeetingConfigDescriptor(Descriptor):
              'leading_transition_title': 'proposeToValidationLevel4',
              'back_transition': 'backToProposedToValidationLevel4',
              'back_transition_title': 'backToProposedToValidationLevel4',
-             'suffix': 'level4reviewers',
-             'extra_suffixes': [],
+             'group_managing_item': '{0}level4reviewers'.format(GROUP_MANAGING_ITEM_PG_PREFIX),
+             'available_on': '',
              'enabled': '0',
              },
             {'state': 'proposedToValidationLevel5',
@@ -696,8 +700,8 @@ class MeetingConfigDescriptor(Descriptor):
              'leading_transition_title': 'proposeToValidationLevel5',
              'back_transition': 'backToProposedToValidationLevel5',
              'back_transition_title': 'backToProposedToValidationLevel5',
-             'suffix': 'level5reviewers',
-             'extra_suffixes': [],
+             'group_managing_item': '{0}level5reviewers'.format(GROUP_MANAGING_ITEM_PG_PREFIX),
+             'available_on': '',
              'enabled': '0',
              },
         )

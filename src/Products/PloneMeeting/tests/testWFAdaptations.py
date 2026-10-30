@@ -28,6 +28,7 @@ from Products.CMFCore.permissions import View
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import AddAnnex
 from Products.PloneMeeting.config import AddAnnexDecision
+from Products.PloneMeeting.config import GROUP_MANAGING_ITEM_PG_PREFIX
 from Products.PloneMeeting.config import HIDE_DECISION_UNDER_WRITING_MSG
 from Products.PloneMeeting.config import MEETING_REMOVE_MOG_WFA
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
@@ -57,7 +58,12 @@ class testWFAdaptations(PloneMeetingTestCase):
        This way too, we will be able to check multiple activated wfAdaptations.'''
 
     def _default_waiting_advices_state(self):
-        return 'itemcreated__or__proposed_waiting_advices'
+        wfas = self.meetingConfig.getWorkflowAdaptations()
+        is_using_item_wf_val_levels = 'waiting_advices_from_every_val_levels' in wfas or \
+           'waiting_advices_from_before_last_val_level' in wfas or \
+           'waiting_advices_from_last_val_level' in wfas
+        return 'any_validation_state_waiting_advices' \
+            if is_using_item_wf_val_levels else 'itemcreated__or__proposed_waiting_advices'
 
     def _wait_advice_from_proposed_state_transition(self):
         return 'wait_advices_from_' + self._stateMappingFor('proposed')
@@ -1903,22 +1909,26 @@ class testWFAdaptations(PloneMeetingTestCase):
             creators_roles.append('Contributor')
         self.assertEqual(item.__ac_local_roles__[self.developers_creators], creators_roles)
         self.assertEqual(item.__ac_local_roles__[self.developers_observers], ['Reader'])
-        # localroles keep what is defined for 'state': 'itemcreated' in self.meetingConfig.getItemWFValidationLevels
-        # if there are some extra suffixes they still havve REader access to this item
+        # localroles keep what is defined for 'state': 'itemcreated' in cfg.getItemWFValidationLevels
+        # if there are some extra suffixes they still have Reader access to this item
         self.assertNotIn(self.developers_reviewers, item.__ac_local_roles__)
 
     def _no_validation_extra_suffixes(self):
         '''By default, when using no validation (items are created "validated")
            validation suffixes have no access except if some extra_suffixes
            are defined on the "itemcreated" item WF validation leve.'''
+        cfg = self.meetingConfig
         self._updateItemValidationLevel(
-            self.meetingConfig, "itemcreated", extra_suffixes=["reviewers"], enable=False)
+            cfg,
+            item_state="itemcreated",
+            extra_groups_managing_item=[GROUP_MANAGING_ITEM_PG_PREFIX + "reviewers"],
+            enabled='0')
         item = self.create('MeetingItem')
         self.assertEqual(item.query_state(), 'validated')
         # creators always have access
         # adding decision annex may be adapted
         creators_roles = ['Reader']
-        if item.may_add_annex_decision(self.meetingConfig, item.query_state()):
+        if item.may_add_annex_decision(cfg, item.query_state()):
             creators_roles.append('Contributor')
         self.assertEqual(item.__ac_local_roles__[self.developers_creators], creators_roles)
         self.assertEqual(item.__ac_local_roles__[self.developers_observers], ['Reader'])
@@ -2572,6 +2582,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         # ease override by subproducts
         if not self._check_wfa_available(['waiting_advices']):
             return
+        cfg = self.meetingConfig
         self.changeUser('pmManager')
         # check while the wfAdaptation is not activated
         self._activate_wfas(())
@@ -2589,13 +2600,11 @@ class testWFAdaptations(PloneMeetingTestCase):
              'use_custom_back_transition_title_for': (),
              'use_custom_state_title': True, },), }
         # change the from_state title to check that it is not changed by the WFA (was the case...)
-        levels = self.meetingConfig.getItemWFValidationLevels()
-        levels[0]['state_title'] = "h\xc3\xa9h\xc3\xa9"
-        self.meetingConfig.setItemWFValidationLevels(levels)
+        self._updateItemValidationLevel(cfg, 'itemcreated', state_title="h\xc3\xa9h\xc3\xa9")
         self._activate_wfas(
             ('waiting_advices', 'waiting_advices_proposing_group_send_back'),
             keep_existing=True)
-        itemWF = self.meetingConfig.getItemWorkflow(True)
+        itemWF = cfg.getItemWorkflow(True)
         self.assertEqual(itemWF.states['itemcreated'].title, "h\xc3\xa9h\xc3\xa9")
 
         self._waiting_advices_active()
@@ -2948,10 +2957,10 @@ class testWFAdaptations(PloneMeetingTestCase):
                                           'waiting_advices_from_before_last_val_level']):
             return
 
-        cfg.setItemAdviceStates((self._default_waiting_advices_state(), ))
         self._activate_wfas(('waiting_advices',
                              'waiting_advices_proposing_group_send_back',
                              'waiting_advices_from_before_last_val_level'))
+        cfg.setItemAdviceStates((self._default_waiting_advices_state(), ))
 
         # make itemcreated last validation level for vendors and proposed for developers
         # select developers for suffix reviewers
@@ -3061,6 +3070,42 @@ class testWFAdaptations(PloneMeetingTestCase):
                              'waiting_advices_proposing_group_send_back',
                              'waiting_advices_from_every_val_levels'))
         self._check_waiting_advices_from_every_levels(cfg)
+
+    def test_pm_WFA_waiting_advices_proposing_group_may_ask_advice_again(self):
+        '''When using 'waiting_advices_proposing_group_send_back' with
+           'waiting_advices_from_every_val_levels', a proposingGroup member
+           able to send the item back may ask an advice again.'''
+        cfg = self.meetingConfig
+        # ease override by subproducts
+        if not self._check_wfa_available(['waiting_advices',
+                                          'waiting_advices_proposing_group_send_back',
+                                          'waiting_advices_from_every_val_levels']):
+            return
+        self._activate_wfas(('waiting_advices',
+                             'waiting_advices_proposing_group_send_back',
+                             'waiting_advices_from_every_val_levels'))
+        waiting_advices_state = self._default_waiting_advices_state()
+        cfg.setItemAdviceStates((waiting_advices_state, ))
+        cfg.setItemAdviceEditStates((waiting_advices_state, ))
+        cfg.setItemAdviceViewStates((waiting_advices_state, ))
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem', optionalAdvisers=(self.vendors_uid, ))
+        self.do(item, 'wait_advices_from_itemcreated')
+        self.assertEqual(item.query_state(), waiting_advices_state)
+        self.changeUser('pmReviewer2')
+        advice = createContentInContainer(
+            item,
+            'meetingadvice',
+            **{'advice_group': self.vendors_uid,
+               'advice_type': u'negative',
+               'advice_hide_during_redaction': False,
+               'advice_comment': richtextval(u'My comment')})
+        # proposingGroup member able to send item back may ask advice again
+        self.changeUser('pmCreator1')
+        self.assertTrue(item.adapted().mayAskAdviceAgain(advice))
+        # not for a member of another group
+        self.changeUser('pmCreator2')
+        self.assertFalse(item.adapted().mayAskAdviceAgain(advice))
 
     def _waiting_advices_adviser_send_back_states(self):
         return ['backTo_itemcreated_from_waiting_advices', self._wait_advice_from_proposed_state_back_transition()]

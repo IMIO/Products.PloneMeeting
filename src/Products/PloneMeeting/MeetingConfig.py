@@ -77,6 +77,7 @@ from Products.PloneMeeting.config import DEFAULT_ITEM_COLUMNS
 from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
 from Products.PloneMeeting.config import DEFAULT_MEETING_COLUMNS
 from Products.PloneMeeting.config import EXECUTE_EXPR_VALUE
+from Products.PloneMeeting.config import GROUP_MANAGING_ITEM_PG_PREFIX
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import ITEM_ICON_COLORS
 from Products.PloneMeeting.config import ITEM_INSERT_METHODS
@@ -125,6 +126,7 @@ from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import get_datagridfield_column_value
 from Products.PloneMeeting.utils import get_dx_attrs
 from Products.PloneMeeting.utils import get_dx_schema
+from Products.PloneMeeting.utils import get_group_managing_item_suffix
 from Products.PloneMeeting.utils import get_item_validation_wf_suffixes
 from Products.PloneMeeting.utils import getAdvicePortalTypeIds
 from Products.PloneMeeting.utils import getCustomAdapter
@@ -148,7 +150,6 @@ from zope.interface import implements
 from zope.schema.interfaces import IVocabularyFactory
 from zope.schema.vocabulary import SimpleVocabulary
 
-import copy
 import html
 import itertools
 import logging
@@ -216,7 +217,7 @@ schema = Schema((
     StringField(
         name='folderTitle',
         widget=StringField._properties['widget'](
-            size=70,
+            size=100,
             description="FolderTitle",
             description_msgid="folder_title_descr",
             label='Foldertitle',
@@ -1078,13 +1079,14 @@ schema = Schema((
         name='itemConditionsInterface',
         default=defValues.itemConditionsInterface,
         widget=StringField._properties['widget'](
-            size=70,
+            size=100,
             description="ItemConditionsInterface",
             description_msgid="item_conditions_interface_descr",
             format="checkbox",
             label='Itemconditionsinterface',
             label_msgid='PloneMeeting_label_itemConditionsInterface',
             i18n_domain='PloneMeeting',
+            maxlength=750,
         ),
         schemata="workflow",
         write_permission="PloneMeeting: Write risky config",
@@ -1093,12 +1095,13 @@ schema = Schema((
         name='itemActionsInterface',
         default=defValues.itemActionsInterface,
         widget=StringField._properties['widget'](
-            size=70,
+            size=100,
             description="ItemActionsInterface",
             description_msgid="item_actions_interface_descr",
             label='Itemactionsinterface',
             label_msgid='PloneMeeting_label_itemActionsInterface',
             i18n_domain='PloneMeeting',
+            maxlength=750,
         ),
         schemata="workflow",
         write_permission="PloneMeeting: Write risky config",
@@ -1124,12 +1127,13 @@ schema = Schema((
         name='meetingConditionsInterface',
         default=defValues.meetingConditionsInterface,
         widget=StringField._properties['widget'](
-            size=70,
+            size=100,
             description="MeetingConditionsInterface",
             description_msgid="meeting_conditions_interface_descr",
             label='Meetingconditionsinterface',
             label_msgid='PloneMeeting_label_meetingConditionsInterface',
             i18n_domain='PloneMeeting',
+            maxlength=750,
         ),
         schemata="workflow",
         write_permission="PloneMeeting: Write risky config",
@@ -1138,12 +1142,13 @@ schema = Schema((
         name='meetingActionsInterface',
         default=defValues.meetingActionsInterface,
         widget=StringField._properties['widget'](
-            size=70,
+            size=100,
             description="MeetingActionsInterface",
             description_msgid="meeting_actions_interface_descr",
             label='Meetingactionsinterface',
             label_msgid='PloneMeeting_label_meetingActionsInterface',
             i18n_domain='PloneMeeting',
+            maxlength=750,
         ),
         schemata="workflow",
         write_permission="PloneMeeting: Write risky config",
@@ -1194,16 +1199,24 @@ schema = Schema((
                         Column("Item WF validation levels back transition title",
                                col_description="Item WF validation levels back transition title description.",
                                required=True),
-                     'suffix':
-                        SelectColumn("Item WF validation levels suffix",
-                                     vocabulary_factory=u'collective.contact.plonegroup.functions',
-                                     col_description="Item WF validation levels suffix description.",
-                                     default='1'),
-                     'extra_suffixes':
+                     'group_managing_item':
+                        SelectColumn(
+                            "Item WF validation levels group managing item",
+                            vocabulary_factory=u'Products.PloneMeeting.vocabularies.'
+                            'groups_managing_item_vocabulary',
+                            col_description="Item WF validation levels group managing item description.",
+                            required=True),
+                     'extra_groups_managing_item':
                         MultiSelectColumn(
-                            "Item WF validation levels extra suffixes",
-                            vocabulary_factory=u'collective.contact.plonegroup.functions',
-                            col_description="Item WF validation levels extra suffixes description."),
+                            "Item WF validation levels extra groups managing item",
+                            vocabulary_factory=u'Products.PloneMeeting.vocabularies.'
+                            'groups_managing_item_vocabulary',
+                            col_description="Item WF validation levels extra groups managing item description.",
+                            required=False),
+                     'available_on':
+                        Column("Item WF validation levels available on",
+                               col_description="Item WF validation levels available on description.",
+                               required=False),
                      'enabled':
                         SelectColumn("Item WF validation levels enabled",
                                      vocabulary="listBooleanVocabulary",
@@ -1224,8 +1237,9 @@ schema = Schema((
                  'leading_transition_title',
                  'back_transition',
                  'back_transition_title',
-                 'suffix',
-                 'extra_suffixes',
+                 'group_managing_item',
+                 'extra_groups_managing_item',
+                 'available_on',
                  'enabled'),
         allow_empty_rows=False,
     ),
@@ -2255,7 +2269,7 @@ schema = Schema((
         ),
         schemata="advices",
         multiValued=1,
-        vocabulary='listSelectableCopyGroups',
+        vocabulary_factory='Products.PloneMeeting.vocabularies.suffixed_plone_groups_vocabulary',
         default=defValues.selectableCopyGroups,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
@@ -2290,7 +2304,7 @@ schema = Schema((
         ),
         schemata="advices",
         multiValued=1,
-        vocabulary='listSelectableCopyGroups',
+        vocabulary_factory='Products.PloneMeeting.vocabularies.suffixed_plone_groups_vocabulary',
         default=defValues.selectableRestrictedCopyGroups,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
@@ -2617,6 +2631,21 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
+    TextField(
+        name='meetingConfigsToCloneToEditFieldsTALExpr',
+        allowable_content_types=('text/plain',),
+        widget=TextAreaWidget(
+            description="MeetingConfigsToCloneToEditFieldsTALExpr",
+            description_msgid="meeting_configs_to_clone_to_edit_fields_tal_expr_descr",
+            label='Meetingconfigstoclonetoeditfieldstalexpr',
+            label_msgid='PloneMeeting_label_meetingConfigsToCloneToEditFieldsTALExpr',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
+        default=defValues.meetingConfigsToCloneToEditFieldsTALExpr,
+        default_content_type='text/plain',
+        write_permission="PloneMeeting: Write risky config",
+    ),
     DataGridField(
         name='itemFieldsConfig',
         widget=DataGridField._properties['widget'](
@@ -2894,18 +2923,19 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
-    StringField(
+    TextField(
         name='voteCondition',
         default=defValues.voteCondition,
-        widget=StringField._properties['widget'](
+        allowable_content_types=('text/plain',),
+        widget=TextAreaWidget(
             description="VoteCondition",
             description_msgid="vote_condition_descr",
-            size=70,
             label='Votecondition',
             label_msgid='PloneMeeting_label_voteCondition',
             i18n_domain='PloneMeeting',
         ),
         schemata="votes",
+        default_content_type='text/plain',
         write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
@@ -2914,10 +2944,11 @@ schema = Schema((
         widget=StringField._properties['widget'](
             description="VotesResultTALExpr",
             description_msgid="votes_result_tal_expr_descr",
-            size=70,
+            size=100,
             label='Votesresulttalexpr',
             label_msgid='PloneMeeting_label_votesResultTALExpr',
             i18n_domain='PloneMeeting',
+            maxlength=750,
         ),
         schemata="votes",
         write_permission="PloneMeeting: Write risky config",
@@ -3580,8 +3611,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: tool.get_orgs_for_user(omitted_suffixes=['observers', ]) "
-                        "and cfg.getCommittees()",
+                    'tal_condition': "python: cfg.is_committees_using('enable_editors')",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items of my committees editable
@@ -3597,8 +3627,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: tool.get_orgs_for_user(omitted_suffixes=['observers', ]) "
-                        "and cfg.getCommittees()",
+                    'tal_condition': "python: cfg.is_committees_using('enable_editors')",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items of my groups with neededFollowUp
@@ -4005,10 +4034,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('getItemWFValidationLevels')
 
     def getItemWFValidationLevels(self,
+                                  item=None,
                                   states=[],
                                   data=None,
                                   only_enabled=False,
+                                  include_disabled_validated=False,
                                   value=None,
+                                  render_proposing_group=False,
                                   translated_itemWFValidationLevels=False,
                                   return_state_singleton=True,
                                   **kwargs):
@@ -4017,23 +4049,80 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
              and only one row to return (one state given) then a single dict is returned,
              either a list of dict);
            - data : return every values defined for a given datagrid column name;
-           - only_enabled : make sure to return rows having enabled '1'.'''
+           - only_enabled : make sure to return rows having enabled '1';
+           - include_disabled_validated : when p_only_enabled=False, the 'validated' level
+             (always disabled) is not returned unless p_include_disabled_validated=True;
+           - translated_itemWFValidationLevels : append translated values to titles
+             (also enabled by the 'translated_itemWFValidationLevels' REQUEST key),
+             ignored when p_data is given, when used p_include_disabled_validated is forced to True.'''
+        translated_itemWFValidationLevels = self.REQUEST.get(
+            'translated_itemWFValidationLevels', translated_itemWFValidationLevels) and not data
+        if translated_itemWFValidationLevels:
+            include_disabled_validated = True
         res = value if value is not None else self.getField('itemWFValidationLevels').get(self, **kwargs)
+        # avoid it modified
+        res = deepcopy(res)
         enabled = ['0', '1']
         if only_enabled:
             enabled = ['1']
         if only_enabled:
             res = [level for level in res if level['enabled'] in enabled]
+        elif not include_disabled_validated:
+            res = [level for level in res if level['state'] != 'validated']
 
         if states:
             res = [level for level in res if level['state'] in states]
+        # when having to manage special value proposing_group prefix
+        # we need an item
+        if render_proposing_group or \
+           data == 'group_managing_item' or \
+           data == 'extra_groups_managing_item':
+            if item:
+                # will replace prefix with PG uid _
+                pg_uid_pattern = item.getProposingGroup() + '_'
+            else:
+                raise ValueError(
+                    'Parameter "item" is required when using "render_proposing_group" '
+                    'or data "group_managing_item"/"extra_groups_managing_item"!')
+
         if data:
-            res = [level[data] for level in res if level[data]]
+            if data == 'suffix':
+                res = [get_group_managing_item_suffix(level['group_managing_item'])
+                       for level in res if level['group_managing_item']]
+            elif data == 'extra_suffixes':
+                res = list(set([get_group_managing_item_suffix(egmi)
+                                for level in res
+                                for egmi in level['extra_groups_managing_item'] or []]))
+            elif data == 'group_managing_item':
+                # replace special value GROUP_MANAGING_ITEM_PG_PREFIX
+                res = [row['group_managing_item'].replace(GROUP_MANAGING_ITEM_PG_PREFIX, pg_uid_pattern)
+                       for row in res]
+                # remove duplicates
+                res = list(set(res))
+            elif data == 'extra_groups_managing_item':
+                # replace special value GROUP_MANAGING_ITEM_PG_PREFIX
+                res = [gmi.replace(GROUP_MANAGING_ITEM_PG_PREFIX, pg_uid_pattern)
+                       for row in res
+                       for gmi in row['extra_groups_managing_item']]
+                # remove duplicates
+                res = list(set(res))
+            else:
+                res = [level[data] for level in res if level[data]]
+
+        if render_proposing_group:
+            # replace special value GROUP_MANAGING_ITEM_PG_PREFIX
+            for level in res:
+                level['group_managing_item'] = level['group_managing_item'].replace(
+                    GROUP_MANAGING_ITEM_PG_PREFIX, pg_uid_pattern)
+            for level in res:
+                level['extra_groups_managing_item'] = [
+                    gmi.replace(GROUP_MANAGING_ITEM_PG_PREFIX, pg_uid_pattern)
+                    for gmi in level['extra_groups_managing_item']]
+
         if return_state_singleton and len(states) == 1:
             res = res and res[0] or res
         # when displayed, append translated values to elements title
-        if self.REQUEST.get('translated_itemWFValidationLevels',
-                            translated_itemWFValidationLevels) and not data:
+        if translated_itemWFValidationLevels:
             translated_res = deepcopy(res)
             translated_titles = ('state_title',
                                  'leading_transition_title',
@@ -4047,8 +4136,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     line[translated_title] = u"{0} ({1})".format(
                         translated_value, line_translated_title)
             res = translated_res
-        # when returning for example extra_suffixes as list, avoid it modified
-        return copy.deepcopy(res)
+        return res
 
     security.declarePublic('getLabelsConfig')
 
@@ -4221,13 +4309,16 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         """Return True if using committees given p_column :
            - using "auto_from" column mean that committee on item is determined automatically;
            - using "using_groups" column is exclusive from "auto_groups" and
-             restrict available committees to selected proposing groups."""
-        res = False
-        for committee in value or self.getCommittees():
-            if committee[column]:
-                res = True
-                break
-        return res
+             restrict available committees to selected proposing groups;
+           - "enabled" and "enable_editors" columns will have "0" when not using
+           and "1" when using.
+           Disabled committees are not considered, committees enabled "item_only" are."""
+        committees = value or [committee for committee in self.getCommittees()
+                               if committee['enabled'] != '0']
+        for committee in committees:
+            if committee[column] and committee[column] != '0':
+                return True
+        return False
 
     def get_committee(self, row_id):
         """ """
@@ -5332,11 +5423,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 return translate(
                     'wa_dependencies', domain='PloneMeeting', context=self.REQUEST)
 
-        # dependency on 'MeetingConfig.itemWFValidationLevels'
-        msg = translate('wa_item_validation_levels_dependency',
-                        domain='PloneMeeting',
-                        context=self.REQUEST)
-
         # item validation levels
         itemWFValidationLevels = self.REQUEST.get(
             'itemWFValidationLevels', self.getItemWFValidationLevels())
@@ -5347,13 +5433,22 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
         back_from_presented = [v for v in values
                                if v.startswith('presented_item_back_to_')]
-        if not item_validation_states:
-            if 'reviewers_take_back_validated_item' in values or \
-               'return_to_proposing_group_with_all_validations' in values or \
-               'return_to_proposing_group_with_before_last_validation' in values or \
-               'return_to_proposing_group_with_last_validation' in values or \
-               back_from_presented:
-                return msg
+        # dependency on 'MeetingConfig.itemWFValidationLevels'
+        # if no validation state or only "itemcreated", some WFA are not selectable
+        if (not item_validation_states and
+            ('reviewers_take_back_validated_item' in values or
+             'return_to_proposing_group_with_all_validations' in values or
+             'return_to_proposing_group_with_last_validation' in values or
+             'return_to_proposing_group_with_before_last_validation' in values or \
+             back_from_presented)) or \
+           (len(item_validation_states) == 1 and
+            ('return_to_proposing_group_with_last_validation' in values or
+             'return_to_proposing_group_with_before_last_validation' in values or
+             'return_to_proposing_group_with_all_validations' in values)):
+            return translate(
+                'wa_item_validation_levels_dependency',
+                domain='PloneMeeting',
+                context=self.REQUEST)
 
         # check that selected back_from_presented transitions
         # exists in MeetingConfig.itemWFValidationLevels
@@ -5439,7 +5534,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # check that no more items are in this state
             # get every 'waiting_advices'-like states, we could have 'itemcreated_waiting_advices',
             # 'proposed_waiting_advices' or
-            # 'itemcreated__or__proposedToValidationLevel1__or__..._waiting_advices' for example
+            # 'any_validation_state_waiting_advices' for example
             waiting_advices_states = [state for state in itemWF.states if 'waiting_advices' in state]
             if catalog.unrestrictedSearchResults(
                     portal_type=item_type, review_state=waiting_advices_states):
@@ -5536,6 +5631,20 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                              domain='PloneMeeting',
                              context=self.REQUEST)
 
+        # if a "validated" row is defined, it must be the last row, must not be enabled
+        # and only the titles and available_on may be changed
+        validated_indexes = [i for i, value in enumerate(values) if value['state'] == 'validated']
+        if validated_indexes and (
+                validated_indexes != [len(values) - 1] or
+                values[-1]['enabled'] == '1' or
+                values[-1]['leading_transition'] != 'validate' or
+                values[-1]['back_transition'] != 'backToValidated' or
+                values[-1]['group_managing_item'] != GROUP_MANAGING_ITEM_PG_PREFIX + 'observers' or
+                [egmi for egmi in values[-1].get('extra_groups_managing_item') or [] if egmi]):
+            return translate('item_wf_val_states_validated_wrong_definition',
+                             domain='PloneMeeting',
+                             context=self.REQUEST)
+
         enabled_stored_states = self.getItemWFValidationLevels(
             data='state',
             only_enabled=True)
@@ -5549,6 +5658,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # if some states are enabled, then first state 'itemcreated' is mandatory
         if enabled_values_states and not enabled_values_states[0] == "itemcreated":
             return translate('item_wf_val_states_itemcreated_mandatory',
+                             domain='PloneMeeting',
+                             context=self.REQUEST)
+
+        # for "itemcreated", group_managing_item must be "proposing_group__creators"
+        if enabled_values_states and \
+           itemcreated_values_state['group_managing_item'] != GROUP_MANAGING_ITEM_PG_PREFIX + "creators":
+            return translate('item_wf_val_states_itemcreated_group_managing_item_creators_error',
                              domain='PloneMeeting',
                              context=self.REQUEST)
 
@@ -6271,8 +6387,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def get_item_validation_transitions(self):
         '''Lists the possible transitions as defined in itemWFValidationLevels.'''
         item_wf_validation_transitions = []
-        for validation_level in self.getItemWFValidationLevels(only_enabled=True,
-                                                               translated_itemWFValidationLevels=True):
+        for validation_level in self.getItemWFValidationLevels(
+                only_enabled=True, translated_itemWFValidationLevels=True):
             if validation_level['leading_transition'] != "-":
                 item_wf_validation_transitions.append((
                     validation_level['leading_transition'],
@@ -7772,17 +7888,21 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if self.is_using_meetings():
             transitions.append('present')
         if org_uid:
+            # skip transitions leading to a validation level for which
+            # every groups managing item (proposing group or fixed groups) are empty
             tool = api.portal.get_tool('portal_plonemeeting')
-            tr_suffixes = {v['leading_transition']: v['suffix'] for v in item_wf_val_levels
-                           if v['leading_transition'] != '-'}
-            res = []
-            for transition in transitions:
-                if transition in tr_suffixes and \
-                   not transition == "present" and \
-                   not tool.group_is_not_empty(org_uid, tr_suffixes[transition]):
+            tr_plone_groups = {}
+            for row in item_wf_val_levels:
+                if row['leading_transition'] == '-':
                     continue
-                res.append(transition)
-            transitions = res
+                tr_plone_groups[row['leading_transition']] = [
+                    gmi.replace(GROUP_MANAGING_ITEM_PG_PREFIX, org_uid + "_")
+                    for gmi in [row['group_managing_item']] + list(row['extra_groups_managing_item'])]
+            transitions = [
+                transition for transition in transitions
+                if transition not in tr_plone_groups or
+                any(tool.group_is_not_empty(plone_group_id=plone_group_id)
+                    for plone_group_id in tr_plone_groups[transition])]
         return transitions
 
     security.declarePublic('get_transitions_to_close_a_meeting')
@@ -8467,11 +8587,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # waiting_advices WFAdaptation
         elif item_state.endswith('_waiting_advices'):
             corresponding_item_state = item_state.split('_waiting_advices')[0]
-        return corresponding_item_state
+        return corresponding_item_state or item_state
 
     def get_item_custom_suffix_roles(self, item, item_state):
         '''See doc in interfaces.py.'''
-        return True, []
+        return []
 
     def render_editform_errors(self, errors):
         """Render errors in the edit form in case it comes from another fieldset."""

@@ -324,15 +324,6 @@ class IMeetingItemDocumentation:
         """Condition to update item reference.  By default the item reference
            will be updated if item is in a meeting and meeting review_state is
            not 'before frozen'."""
-    def _getGroupManagingItem(self, review_state, theObject=False):
-        """Returns the group managing the item.
-           By default this will be the proposingGroup.
-           Given p_review_state may be used to know what group manage item in which review_state.
-           This method must return an organization UID (or organization when theObject=True)."""
-    def _getAllGroupsManagingItem(self, review_state, theObjects=False):
-        """Returns the list of groups that manages the item until given p_review_state.
-           This method must return a list of organizations UID (or organizations when theObjects=True).
-           See _getGroupManagingItem docstring for more informations."""
     def custom_validate_optionalAdvisers(value, storedOptionalAdvisers, removedAdvisers):
         '''This is called by MeetingItem.validate_optionalAdvisers and let
            a plugin validates selected optional advisers.'''
@@ -354,14 +345,6 @@ class IMeetingItemDocumentation:
         """Return states in which annex decision are addable in the WF states after
            the validation process (so when item is validated and after).
            By default this will be when item is decided."""
-    def _assign_roles_to_non_managing_proposing_group_suffixes(self,
-                                                               cfg,
-                                                               item_state,
-                                                               proposing_group_uid,
-                                                               org_uid):
-        """In case the group currently managing the item is not the proposingGroup,
-           by default every suffixes of the proposingGroup will have the "Reader"
-           role on the item so it may see it."""
 
 
 class IMeetingItemWorkflowConditions(Interface):
@@ -373,7 +356,7 @@ class IMeetingItemWorkflowConditions(Interface):
         '''May this item be pre-validated by a pre-reviewer ?
            [only relevant when workflow adaptation "pre-validation" is
            enabled].'''
-    def mayValidate():
+    def mayValidate(available_on=None):
         '''May this item be validated by a reviewer and proposed to a meeting
            manager ?'''
     def mayPresent():
@@ -587,11 +570,17 @@ class IMeetingConfigDocumentation:
     def get_item_corresponding_state_to_assign_local_roles(self, item_state):
         '''If an item_state is not managed by MeetingItem.assign_roles_to_group_suffixes,
            maybe there is a correspondence between current item_state and
-           a managed item state.'''
+           a managed item state (a MeetingConfig.itemWFValidationLevels state).
+           Returns the corresponding item state or p_item_state if there is no correspondence.
+           This is also used to find the groups managing the item
+           (MeetingItem.get_orgs_managing_item) so in the reviewProcessInfo index.'''
     def get_item_custom_suffix_roles(self, item, item_state):
         """If an item_state is not managed by MeetingItem.assign_roles_to_group_suffixes,
            and no corresponding item state exists by default, we can manage
-           suffix_roles manually."""
+           local roles manually.
+           Must return a dict like {org_uid: {suffix: [roles]}}, or an empty value
+           to use the default local roles.  MeetingManagers access is managed
+           in every cases."""
     def extra_item_decided_states(self):
         """Returns additional item decided states."""
     def extra_item_positive_decided_states(self):

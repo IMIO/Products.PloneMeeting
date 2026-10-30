@@ -40,6 +40,7 @@ from Products.PloneMeeting.config import DEFAULT_ITEM_COLUMNS
 from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
 from Products.PloneMeeting.config import DEFAULT_MEETING_COLUMNS
 from Products.PloneMeeting.config import EXECUTE_EXPR_VALUE
+from Products.PloneMeeting.config import GROUP_MANAGING_ITEM_PG_PREFIX
 from Products.PloneMeeting.config import ITEM_ICON_COLORS
 from Products.PloneMeeting.config import ITEMTEMPLATESMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETING_REMOVE_MOG_WFA
@@ -65,6 +66,8 @@ from Products.PloneMeeting.utils import sendMailIfRelevant
 from zope.event import notify
 from zope.i18n import translate
 from zope.lifecycleevent import ObjectModifiedEvent
+
+import re
 
 
 MC_GROUP_SUFFIXES = (
@@ -2153,9 +2156,9 @@ class testMeetingConfig(PloneMeetingTestCase):
                       domain='PloneMeeting',
                       context=self.request)
         # values_disabled_itemcreated
-        self._disableItemValidationLevel(cfg, level='itemcreated')
+        self._disableItemValidationLevel(cfg, item_state='itemcreated')
         values_disabled_itemcreated = deepcopy(cfg.getItemWFValidationLevels())
-        self._enableItemValidationLevel(cfg, level='itemcreated')
+        self._enableItemValidationLevel(cfg, item_state='itemcreated')
         self.assertEqual(cfg.validate_itemWFValidationLevels(values_disabled_itemcreated),
                          level_itemcreated_error)
 
@@ -2163,9 +2166,9 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertEqual(cfg.getItemWFValidationLevels(data='state', only_enabled=True),
                          ['itemcreated', 'proposed'])
         # values_disabled_proposed
-        self._disableItemValidationLevel(cfg, level='proposed')
+        self._disableItemValidationLevel(cfg, item_state='proposed')
         values_disabled_proposed = deepcopy(cfg.getItemWFValidationLevels())
-        self._enableItemValidationLevel(cfg, level='proposed')
+        self._enableItemValidationLevel(cfg, item_state='proposed')
         self.failIf(cfg.validate_itemWFValidationLevels(values_disabled_proposed))
 
         # create an item that will be itemcreated
@@ -2223,9 +2226,9 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.proposeItem(item)
         self._setItemToWaitingAdvices(item, 'wait_advices_from_{}'.format(proposed_state))
         # values_disabled_proposed
-        self._disableItemValidationLevel(cfg, level=proposed_state)
+        self._disableItemValidationLevel(cfg, item_state=proposed_state)
         values_disabled_proposed = deepcopy(cfg.getItemWFValidationLevels())
-        self._enableItemValidationLevel(cfg, level=proposed_state)
+        self._enableItemValidationLevel(cfg, item_state=proposed_state)
         proposed_state = cfg.getItemWorkflow(True).states['%s_waiting_advices' % proposed_state]
         translated_proposed_state = translate(
             safe_unicode(proposed_state.title), domain="plone", context=self.request)
@@ -2257,9 +2260,9 @@ class testMeetingConfig(PloneMeetingTestCase):
                       domain='PloneMeeting',
                       context=self.request)
         # values_disabled_proposed
-        self._disableItemValidationLevel(cfg, level=proposed_state_id)
+        self._disableItemValidationLevel(cfg, item_state=proposed_state_id)
         values_disabled_proposed = deepcopy(cfg.getItemWFValidationLevels())
-        self._enableItemValidationLevel(cfg, level=proposed_state_id)
+        self._enableItemValidationLevel(cfg, item_state=proposed_state_id)
         # used in itemAdviceStates, as state
         self.assertEqual(cfg.validate_itemWFValidationLevels(values_disabled_proposed),
                          level_removed_config_error)
@@ -2377,6 +2380,69 @@ class testMeetingConfig(PloneMeetingTestCase):
                          wrong_format_error)
         format_item_wf_val_levels[1]['back_transition'] = "backToProposed"
         self.failIf(cfg.validate_itemWFValidationLevels(format_item_wf_val_levels))
+
+    def test_pm_Validate_itemWFValidationLevels_validated(self):
+        """Test MeetingConfig.validate_itemWFValidationLevels when a "validated"
+           row is defined, it must be the last row, must not be enabled and
+           only titles and available_on may be changed, leading transition
+           must be "validate", back transition must be "backToValidated",
+           group managing item must be "proposing_group__observers" and
+           extra groups managing item must be empty."""
+        cfg = self.meetingConfig
+        validated_error = \
+            translate('item_wf_val_states_validated_wrong_definition',
+                      domain='PloneMeeting',
+                      context=self.request)
+        orig_item_wf_val_levels = list(cfg.getItemWFValidationLevels())
+        validated_level = {
+            'state': 'validated',
+            'state_title': 'validated',
+            'leading_transition': 'validate',
+            'leading_transition_title': 'validate',
+            'back_transition': 'backToValidated',
+            'back_transition_title': 'backToValidated',
+            'group_managing_item': '{0}observers'.format(GROUP_MANAGING_ITEM_PG_PREFIX),
+            'extra_groups_managing_item': [],
+            'available_on': '',
+            'enabled': '0'}
+        # disabled and at the end, OK
+        values = deepcopy(orig_item_wf_val_levels) + [deepcopy(validated_level)]
+        self.failIf(cfg.validate_itemWFValidationLevels(values))
+        # titles and available_on may be changed
+        values[-1]['state_title'] = 'My validated'
+        values[-1]['leading_transition_title'] = 'My validate'
+        values[-1]['back_transition_title'] = 'My backToValidated'
+        values[-1]['available_on'] = 'python: True'
+        self.failIf(cfg.validate_itemWFValidationLevels(values))
+        # leading_transition can not be changed
+        values[-1]['leading_transition'] = 'validateItem'
+        self.assertEqual(cfg.validate_itemWFValidationLevels(values), validated_error)
+        values[-1]['leading_transition'] = 'validate'
+        # back_transition can not be changed
+        values[-1]['back_transition'] = 'backToValidatedItem'
+        self.assertEqual(cfg.validate_itemWFValidationLevels(values), validated_error)
+        values[-1]['back_transition'] = 'backToValidated'
+        self.failIf(cfg.validate_itemWFValidationLevels(values))
+        # group_managing_item must be proposing_group__observers
+        values[-1]['group_managing_item'] = '{0}reviewers'.format(GROUP_MANAGING_ITEM_PG_PREFIX)
+        self.assertEqual(cfg.validate_itemWFValidationLevels(values), validated_error)
+        values[-1]['group_managing_item'] = '{0}observers'.format(GROUP_MANAGING_ITEM_PG_PREFIX)
+        # extra_groups_managing_item must be empty
+        values[-1]['extra_groups_managing_item'] = ['{0}reviewers'.format(GROUP_MANAGING_ITEM_PG_PREFIX)]
+        self.assertEqual(cfg.validate_itemWFValidationLevels(values), validated_error)
+        values[-1]['extra_groups_managing_item'] = []
+        self.failIf(cfg.validate_itemWFValidationLevels(values))
+        # enabled, KO
+        values[-1]['enabled'] = '1'
+        self.assertEqual(cfg.validate_itemWFValidationLevels(values), validated_error)
+        # not at the end, KO
+        values = deepcopy(orig_item_wf_val_levels)
+        values.insert(1, deepcopy(validated_level))
+        self.assertEqual(cfg.validate_itemWFValidationLevels(values), validated_error)
+        # defined several times, KO
+        values = deepcopy(orig_item_wf_val_levels) + \
+            [deepcopy(validated_level), deepcopy(validated_level)]
+        self.assertEqual(cfg.validate_itemWFValidationLevels(values), validated_error)
 
     def test_pm_RemoveAnnexesPreviewsOnMeetingClosure(self):
         """When MeetingConfig.removeAnnexesPreviewsOnMeetingClosure is True,
@@ -2634,6 +2700,38 @@ class testMeetingConfig(PloneMeetingTestCase):
             self.request.set('fieldset', fieldset)
             self.assertTrue(cfg.restrictedTraverse('base_edit')())
 
+    def test_pm_ConfigEditAndViewWithValidatedItemWFValidationLevel(self):
+        """The 'validated' level (always disabled) of itemWFValidationLevels
+           is displayed in the view and kept in the edit form."""
+        cfg = self.meetingConfig
+        self.changeUser('siteadmin')
+        levels = list(cfg.getItemWFValidationLevels(include_disabled_validated=True))
+        levels.append(
+            {'state': 'validated',
+             'state_title': 'My validated',
+             'leading_transition': 'validate',
+             'leading_transition_title': 'My validate',
+             'back_transition': 'backToValidated',
+             'back_transition_title': 'My backToValidated',
+             'group_managing_item': '{0}observers'.format(GROUP_MANAGING_ITEM_PG_PREFIX),
+             'extra_groups_managing_item': [],
+             'available_on': 'python: True',
+             'enabled': '0'})
+        cfg.setItemWFValidationLevels(levels)
+        notify(ObjectEditedEvent(cfg))
+        self.request.set('pageName', 'workflow')
+        view = cfg.restrictedTraverse('base_view')()
+        self.assertTrue('My validated' in view)
+        self.assertTrue('My backToValidated' in view)
+        # the 'translated_itemWFValidationLevels' REQUEST key is reset after field is displayed
+        self.assertFalse(self.request.get('translated_itemWFValidationLevels'))
+        self.assertFalse('validated' in cfg.getItemWFValidationLevels(data='state'))
+        self.assertFalse('validated' in [level['state'] for level in cfg.getItemWFValidationLevels()])
+        self.request.set('fieldset', 'workflow')
+        edit = cfg.restrictedTraverse('base_edit')()
+        self.assertTrue('My validated' in edit)
+        self.assertTrue('My backToValidated' in edit)
+
     def test_pm_Validate_mailItemEvents(self):
         """Some notifications may not be selected together."""
         cfg = self.meetingConfig
@@ -2835,6 +2933,147 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertFalse('{0}.present'.format(cfg_id) in until_presented)
         for tr in transitions[:-1]:
             self.assertTrue('{0}.{1}'.format(cfg_id, tr) in until_presented)
+
+    def test_pm_GetTransitionsForPresentingAnItemWithOrgUid(self):
+        """When p_org_uid is given, transitions leading to a validation level
+           for which every groups managing item are empty are skipped,
+           this also works when the group managing item is a fixed group."""
+        cfg = self.meetingConfig
+        self.changeUser('siteadmin')
+        level =[lvl for lvl in cfg.getItemWFValidationLevels(only_enabled=True)
+                 if lvl['leading_transition'] != '-'][0]
+        transition = level['leading_transition']
+        self._updateItemValidationLevel(cfg, level['state'], extra_groups_managing_item=[])
+        self.assertTrue(transition in cfg.getTransitionsForPresentingAnItem(org_uid=self.developers_uid))
+        # empty the proposingGroup group managing this level
+        plone_group = api.group.get(
+            level['group_managing_item'].replace(
+                GROUP_MANAGING_ITEM_PG_PREFIX, self.developers_uid + '_'))
+        self._removeAllMembers(plone_group, plone_group.getMemberIds())
+        self.assertFalse(transition in cfg.getTransitionsForPresentingAnItem(org_uid=self.developers_uid))
+        # level managed by a not empty fixed group of another organization
+        self._updateItemValidationLevel(cfg, level['state'], group_managing_item=self.vendors_reviewers)
+        self.assertTrue(transition in cfg.getTransitionsForPresentingAnItem(org_uid=self.developers_uid))
+
+    def test_pm_IsCommitteesUsing(self):
+        """MeetingConfig.is_committees_using does not consider disabled committees
+           but considers committees enabled "item_only", "0" means not used.
+           Searches of committees editors are only available when using committees editors."""
+        cfg = self.meetingConfig
+        self.changeUser('siteadmin')
+
+        def _committee(row_id, enabled, enable_editors='0', auto_from=[]):
+            return {'row_id': row_id, 'label': row_id, 'acronym': row_id,
+                    'enabled': enabled, 'enable_editors': enable_editors,
+                    'auto_from': auto_from, 'using_groups': [], 'supplements': '0'}
+
+        def _set_committees(committees):
+            # editors Plone groups are managed when MeetingConfig is edited
+            cfg.setCommittees(committees)
+            notify(ObjectEditedEvent(cfg))
+
+        def _searches_available():
+            # Managers bypass the condition
+            self.changeUser('pmCreator1')
+            res = []
+            for search_id in ('searchitemsofmycommittees', 'searchitemsofmycommitteeseditable'):
+                adapted = ITALCondition(getattr(cfg.searches.searches_items, search_id))
+                self.assertEqual(adapted.tal_condition, "python: cfg.is_committees_using('enable_editors')")
+                res.append(evaluateExpressionFor(
+                    adapted, extra_expr_ctx=adapted.complete_extra_expr_ctx({'fromPortletTodo': False})))
+            self.changeUser('siteadmin')
+            return res
+
+        _set_committees([_committee('committee_a', '1'), _committee('committee_b', 'item_only')])
+        self.assertFalse(cfg.is_committees_using('enable_editors'))
+        self.assertFalse(cfg.is_committees_using('auto_from'))
+        self.assertEqual(_searches_available(), [False, False])
+        # editors on an "item_only" committee
+        _set_committees([_committee('committee_a', '1'),
+                           _committee('committee_b', 'item_only', enable_editors='1')])
+        self.assertTrue(cfg.is_committees_using('enable_editors'))
+        self.assertEqual(_searches_available(), [True, True])
+        # disabled committees are not considered
+        _set_committees([_committee('committee_a', '1'),
+                           _committee('committee_b', '0', enable_editors='1',
+                                      auto_from=['proposing_group__' + self.developers_uid])])
+        self.assertFalse(cfg.is_committees_using('enable_editors'))
+        self.assertFalse(cfg.is_committees_using('auto_from'))
+        self.assertEqual(_searches_available(), [False, False])
+        # list columns
+        _set_committees([_committee('committee_a', '1', auto_from=['proposing_group__' + self.developers_uid])])
+        self.assertTrue(cfg.is_committees_using('auto_from'))
+        # when a value is given, every rows are considered
+        self.assertTrue(cfg.is_committees_using(
+            'enable_editors', value=[_committee('committee_c', '0', enable_editors='1')]))
+
+    def test_pm_VoteConditionStoredAsString(self):
+        """MeetingConfig.voteCondition was a StringField, it is now a TextField,
+           values stored as a string by the StringField still work."""
+        cfg = self.meetingConfig
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        # value stored like the StringField did (AttributeStorage, a str)
+        cfg.voteCondition = 'python: item.Title() == "votable"'
+        self.assertEqual(cfg.getVoteCondition(), 'python: item.Title() == "votable"')
+        self.assertFalse(cfg.isVotable(item))
+        item.setTitle('votable')
+        self.assertTrue(cfg.isVotable(item))
+        # empty legacy value means votable
+        cfg.voteCondition = ''
+        self.assertEqual(cfg.getVoteCondition(), '')
+        self.assertTrue(cfg.isVotable(item))
+        # values set with the TextField
+        cfg.setVoteCondition('python: False')
+        self.assertEqual(cfg.getVoteCondition(), 'python: False')
+        self.assertFalse(cfg.isVotable(item))
+        # the edit and view forms render it, it is on the "votes" fieldset/page
+        cfg.voteCondition = 'python: item.Title() == "votable"'
+        self.changeUser('siteadmin')
+        self.request.form['fieldset'] = 'votes'
+        self.assertTrue(
+            re.search(r'<textarea[^>]*voteCondition[^>]*>python: item.Title\(\) == "votable"</textarea>',
+                      cfg.restrictedTraverse('base_edit')()))
+        self.request.form['pageName'] = 'votes'
+        self.assertTrue('python: item.Title() == &quot;votable&quot;' in cfg.restrictedTraverse('meetingconfig_view')() or
+                        'python: item.Title() == "votable"' in cfg.restrictedTraverse('meetingconfig_view')())
+
+    def test_pm_GetItemWFValidationLevelsSuffixes(self):
+        """data 'suffix' and 'extra_suffixes' manage suffixes containing a '_',
+           parameter item is required to render the proposing group."""
+        cfg = self.meetingConfig
+        levels = [
+            {'state': 'itemcreated',
+             'group_managing_item': GROUP_MANAGING_ITEM_PG_PREFIX + 'creators',
+             'extra_groups_managing_item': [],
+             'available_on': '',
+             'enabled': '1'},
+            {'state': 'proposed',
+             'group_managing_item': self.vendors_uid + '_my_reviewers',
+             'extra_groups_managing_item': [GROUP_MANAGING_ITEM_PG_PREFIX + 'my_observers',
+                                            self.vendors_uid + '_my_observers'],
+             'available_on': '',
+             'enabled': '1'},
+            {'state': 'prevalidated',
+             'group_managing_item': GROUP_MANAGING_ITEM_PG_PREFIX + 'other_reviewers',
+             'extra_groups_managing_item': [GROUP_MANAGING_ITEM_PG_PREFIX + 'other_observers'],
+             'available_on': '',
+             'enabled': '0'}]
+        self.assertEqual(cfg.getItemWFValidationLevels(value=levels, data='suffix', only_enabled=True),
+                         ['creators', 'my_reviewers'])
+        self.assertEqual(cfg.getItemWFValidationLevels(value=levels, data='extra_suffixes', only_enabled=True),
+                         ['my_observers'])
+        self.assertEqual(sorted(cfg.getItemWFValidationLevels(value=levels, data='extra_suffixes')),
+                         ['my_observers', 'other_observers'])
+        self.assertRaises(ValueError, cfg.getItemWFValidationLevels, value=levels, data='group_managing_item')
+        # local roles computation also manages suffixes containing a '_'
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.assertEqual(
+            {org_uid: dict(suffix_roles) for org_uid, suffix_roles in
+             item._turn_plone_group_ids_to_group_suffixes(
+                [self.vendors_uid + '_my_reviewers', self.vendors_uid + '_creators']).items()},
+            {self.vendors_uid: {'my_reviewers': ['Reader'], 'creators': ['Reader']}})
 
     def test_pm_WFAttrsConstantsComplete(self):
         """Every field or datagrid column using an item/meeting state or transition

@@ -29,6 +29,7 @@ from Products.CMFCore.permissions import View
 from Products.Five import zcml
 from Products.PloneMeeting.adapters import CAN_NOT_DELETE_MEETING_ERROR
 from Products.PloneMeeting.browser.meeting import get_default_attendees
+from Products.PloneMeeting.browser.meeting import get_default_signatories
 from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
@@ -889,7 +890,7 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertEqual([item.getPrivacy() for item in meeting.get_items(ordered=True)],
                          ['secret', 'secret', 'public', 'public', 'public', 'public', 'public'])
 
-    def test_pm_InsertItemOnPrivacyUsingHeading(self):
+    def test_pm_InsertItemOnPrivacyUsingHeadingAndEnding(self):
         '''Sort method tested here is "on_privacy" when values '_heading' are used.'''
         cfg = self.meetingConfig
         cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_privacy',
@@ -919,6 +920,19 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertEqual([item.getPrivacy() for item in meeting2.get_items(ordered=True)],
                          ['public_heading', 'secret', 'secret', 'public',
                           'public', 'public', 'public', 'public'])
+
+        # use public_ending and reorder
+        cfg.setSelectablePrivacies(('public_heading', 'public', 'public_ending', 'secret'))
+        public_item = meeting2.get_items(ordered=True)[-1]
+        self.assertEqual(public_item.getPrivacy(), 'public')
+        public_item.setPrivacy('public_ending')
+        view = meeting2.restrictedTraverse('@@reorder-items')
+        view()
+        self.assertEqual([item.getPrivacy() for item in meeting2.get_items(ordered=True)],
+                         ['public_heading',
+                          'public', 'public', 'public', 'public',
+                          'public_ending',
+                          'secret', 'secret'])
 
     def test_pm_InsertItemOnPollType(self):
         '''Sort method tested here is "on_poll_type" not reverse and reverse.'''
@@ -3703,6 +3717,21 @@ class testMeetingType(PloneMeetingTestCase):
         self.request.set('validate_attendees_done', False)
         self.assertEqual(len(errors), 1)
         self.assertEqual(errors[0].message, error_msg)
+
+    def test_pm_get_default_signatories(self):
+        """Returns default signatories, can return uids,
+           held_position objects and by signature number or not."""
+        cfg = self.meetingConfig
+        self.changeUser('pmManager')
+        self.assertEqual(get_default_signatories(cfg), {})
+        self.assertEqual(get_default_signatories(cfg, the_objects=True), {})
+        self.assertEqual(get_default_signatories(cfg, by_signature_number=True), {})
+        self._setUpOrderedContacts()
+        self.assertEqual(get_default_signatories(cfg),
+                         {self.hp1_uid: '1', self.hp4_uid: '2'})
+        self.assertEqual(
+            get_default_signatories(cfg, the_objects=True, by_signature_number=True),
+            {'1': self.hp1, '2': self.hp4})
 
     def test_pm_Votes_observations(self):
         """Fields Meeting.votes_observations and MeetingItem.votesObservations

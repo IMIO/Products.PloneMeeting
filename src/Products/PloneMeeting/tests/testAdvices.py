@@ -6,7 +6,8 @@
 #
 
 from AccessControl import Unauthorized
-from collective.contact.plonegroup.config import ORGANIZATIONS_REGISTRY
+from collective.contact.plonegroup.config import get_registry_organizations
+from collective.contact.plonegroup.config import set_registry_organizations
 from collective.iconifiedcategory.utils import get_categorized_elements
 from datetime import datetime
 from datetime import timedelta
@@ -18,7 +19,6 @@ from imio.history.interfaces import IImioHistory
 from imio.history.utils import getLastAction
 from imio.history.utils import getLastWFAction
 from os import path
-from plone import api
 from plone.dexterity.schema import SchemaInvalidatedEvent
 from plone.dexterity.utils import createContentInContainer
 from Products.Archetypes.event import ObjectEditedEvent
@@ -3269,9 +3269,9 @@ class testAdvices(PloneMeetingTestCase):
         """ """
         self.changeUser('siteadmin')
         cfg = self.meetingConfig
-        selected_orgs = list(api.portal.get_registry_record(ORGANIZATIONS_REGISTRY))
+        selected_orgs = get_registry_organizations()
         selected_orgs.append(self.endUsers_uid)
-        api.portal.set_registry_record(ORGANIZATIONS_REGISTRY, selected_orgs)
+        set_registry_organizations(selected_orgs)
         self._addPrincipalToGroup('pmAdviser1', '{0}_advisers'.format(self.endUsers_uid))
         cfg.setSelectableAdvisers(cfg.getSelectableAdvisers() + (self.endUsers_uid, ))
         cfg.setPowerAdvisersGroups((self.endUsers_uid, ))
@@ -4195,7 +4195,7 @@ class testAdvices(PloneMeetingTestCase):
 
     def test_pm_AdvicesInfosOnItemTemplate(self):
         """Test that the advices icons infos are correctly displayed in an
-           itemTemplate for which proposingGroup may be empty and adviceIndex
+           item_template for which proposingGroup may be empty and adviceIndex
            is partially computed."""
         cfg = self.meetingConfig
         cfg.setCustomAdvisers(
@@ -4206,7 +4206,7 @@ class testAdvices(PloneMeetingTestCase):
               'delay': '5',
               'delay_label': ''}, ])
         self.changeUser('templatemanager1')
-        item_template = cfg.getItemTemplates(as_brains=False)[0]
+        item_template = cfg.get_default_item_template()
         self.assertEqual(item_template.getProposingGroup(), '')
         item_template.setOptionalAdvisers(
             (self.developers_uid,
