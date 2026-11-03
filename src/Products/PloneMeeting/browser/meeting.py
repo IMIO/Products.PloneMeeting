@@ -281,11 +281,14 @@ def get_default_signatories(cfg, the_objects=False, by_signature_number=False):
         signers = [held_pos for held_pos in get_all_usable_held_positions(cfg)
                    if held_pos.defaults and 'present' in
                    held_pos.defaults and held_pos.signature_number]
-        res = {signer if the_objects else signer.UID():
-               signer.signature_number for signer in signers}
         if by_signature_number:
-            # keys are values, values are keys
-            res = {v: k for k, v in res.items()}
+            # signers are ordered, when several same signature_number, the first win
+            for signer in signers:
+                res.setdefault(signer.signature_number,
+                               signer if the_objects else signer.UID())
+        else:
+            res = {signer if the_objects else signer.UID():
+                   signer.signature_number for signer in signers}
     return res
 
 

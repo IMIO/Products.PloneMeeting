@@ -3732,6 +3732,19 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertEqual(
             get_default_signatories(cfg, the_objects=True, by_signature_number=True),
             {'1': self.hp1, '2': self.hp4})
+        # when several same signature_number, the first in contacts order win
+        self.hp2.signature_number = '2'
+        self.hp3.signature_number = '2'
+        self.assertEqual(get_default_signatories(cfg),
+                         {self.hp1_uid: '1', self.hp2_uid: '2', self.hp3_uid: '2', self.hp4_uid: '2'})
+        self.assertEqual(get_default_signatories(cfg, by_signature_number=True),
+                         {'1': self.hp1_uid, '2': self.hp2_uid})
+        self.assertEqual(
+            get_default_signatories(cfg, the_objects=True, by_signature_number=True),
+            {'1': self.hp1, '2': self.hp2})
+        self.hp2.signature_number = None
+        self.assertEqual(get_default_signatories(cfg, by_signature_number=True),
+                         {'1': self.hp1_uid, '2': self.hp3_uid})
 
     def test_pm_Votes_observations(self):
         """Fields Meeting.votes_observations and MeetingItem.votesObservations

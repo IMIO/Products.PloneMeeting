@@ -70,7 +70,8 @@ Changelog
 - Added parameter `days=60` to `ToolPloneMeeting.showHolidaysWarning`.
   [gbastien]
 - Added parameters `the_objects=False` and `by_signature_number=False` to
-  `browser.meeting.get_default_signatories`.
+  `browser.meeting.get_default_signatories`, when `by_signature_number=True` and
+  several signatories use the same `signature_number`, the first in contacts order is kept.
   [gbastien]
 - Added parameter `portal_type=None` to `MeetingItem.get_predecessor` and
   `MeetingItem.get_predecessors` to only get predecessors of a given `portal_type`.
