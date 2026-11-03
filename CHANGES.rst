@@ -157,6 +157,10 @@ Changelog
   validation state so it works when `proposed` is mapped to another state
   in subproducts (like `Products.MeetingCharleroi`).
   [gbastien]
+- Fixed test `test_pm_SendMailIfRelevantIsGroupIds` to pass `item_state` instead
+  of `level` to `_updateItemValidationLevel` so only the `proposed` validation level
+  titles are updated and not every validation level.
+  [gbastien]
 
 4.2.21rc5 (2026-10-16)
 ----------------------
