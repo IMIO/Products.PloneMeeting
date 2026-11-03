@@ -2776,6 +2776,69 @@ class testWFAdaptations(PloneMeetingTestCase):
         # back to original configuration
         adaptations.WAITING_ADVICES_FROM_STATES = original_WAITING_ADVICES_FROM_STATES
 
+    def test_pm_WFA_waiting_advices_proposing_group_send_back_may_ask_advice_again(self):
+        '''When using 'waiting_advices_proposing_group_send_back', a member of the proposingGroup
+           able to send the item back may ask an advice again, this works also when using
+           a custom 'new_state_id' defined in WAITING_ADVICES_FROM_STATES, in this case
+           the 'from_states' are used.'''
+        cfg = self.meetingConfig
+        if not self._check_wfa_available(['waiting_advices',
+                                          'waiting_advices_proposing_group_send_back']):
+            return
+        from Products.PloneMeeting.model import adaptations
+        original_WAITING_ADVICES_FROM_STATES = deepcopy(adaptations.WAITING_ADVICES_FROM_STATES)
+
+        def _restore():
+            adaptations.WAITING_ADVICES_FROM_STATES = original_WAITING_ADVICES_FROM_STATES
+        self.addCleanup(_restore)
+        proposed_state = self._stateMappingFor('proposed')
+        custom_state = 'custom_waiting_advices'
+        adaptations.WAITING_ADVICES_FROM_STATES = {'*': (
+            # no 'new_state_id'
+            {'from_states': (proposed_state, ),
+             'back_states': (proposed_state, ),
+             'perm_cloned_states': (proposed_state, ),
+             'remove_modify_access': True,
+             'use_custom_icon': False,
+             'use_custom_back_transition_title_for': (),
+             'use_custom_state_title': True, },
+            # custom 'new_state_id'
+            {'from_states': ('itemcreated', ),
+             'back_states': ('itemcreated', ),
+             'perm_cloned_states': ('itemcreated', ),
+             'remove_modify_access': True,
+             'use_custom_icon': False,
+             'use_custom_back_transition_title_for': (),
+             'use_custom_state_title': True,
+             'new_state_id': custom_state, },), }
+        self._activate_wfas(
+            ('waiting_advices', 'waiting_advices_proposing_group_send_back'), keep_existing=True)
+        self.assertTrue(custom_state in cfg.getItemWorkflow(True).states)
+        cfg.setItemAdviceStates((custom_state, ))
+        cfg.setItemAdviceEditStates((custom_state, ))
+        cfg.setItemAdviceViewStates((custom_state, ))
+
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem', optionalAdvisers=(self.vendors_uid, ))
+        self.do(item, 'wait_advices_from_itemcreated')
+        self.assertEqual(item.query_state(), custom_state)
+        self.changeUser('pmReviewer2')
+        advice = createContentInContainer(
+            item,
+            'meetingadvice',
+            **{'advice_group': self.vendors_uid,
+               'advice_type': u'positive',
+               'advice_comment': richtextval(u'My comment')})
+        self.assertTrue(item.adviceIndex[self.vendors_uid]['advice_editable'])
+        # pmCreator1 may send the item back to 'itemcreated' so may ask the advice again
+        self.changeUser('pmCreator1')
+        self.assertFalse(self.hasPermission(ModifyPortalContent, item))
+        self.assertTrue(item.wfConditions().mayCorrect('itemcreated'))
+        self.assertTrue(item.adapted().mayAskAdviceAgain(advice))
+        # a member of another group may not
+        self.changeUser('pmCreator2')
+        self.assertFalse(item.adapted().mayAskAdviceAgain(advice))
+
     def test_pm_WFA_waiting_advices_several_states(self):
         '''Test the workflowAdaptation 'waiting_advices'.
            By default WAITING_ADVICES_FROM_STATES is going from proposed/prevaliated

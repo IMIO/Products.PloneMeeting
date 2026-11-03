@@ -3289,8 +3289,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 else:
                     found = False
                     for infos in get_waiting_advices_infos(cfg.getId()):
-                        if infos['new_state_id'] == states:
-                            states = infos['new_state_id']
+                        # 'new_state_id' is optional and ends with "_waiting_advices"
+                        if infos.get('new_state_id') == item_state:
+                            states = list(infos['from_states'])
+                            found = True
                             break
                     if not found:
                         # make sure we have a list

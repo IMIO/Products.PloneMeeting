@@ -175,6 +175,11 @@ Changelog
   also when using `adopt_roles` (when presenting recurring items or sending an item
   to another `MeetingConfig`), and not only for real Managers.
   [gbastien]
+- Fixed `MeetingItem.mayAskAdviceAgain` when item is in a waiting advices state
+  using a custom `new_state_id` defined in `WAITING_ADVICES_FROM_STATES`, the
+  `from_states` were never found (and a `KeyError` was raised if `new_state_id`
+  was not defined).
+  [gbastien]
 
 4.2.21rc5 (2026-10-16)
 ----------------------
