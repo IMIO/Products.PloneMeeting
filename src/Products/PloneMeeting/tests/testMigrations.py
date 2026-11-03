@@ -5,8 +5,9 @@
 # GNU General Public License (GPL)
 #
 
+from Products.PloneMeeting.config import GROUP_MANAGING_ITEM_PG_PREFIX
 from Products.PloneMeeting.migrations import Migrator
-from Products.PloneMeeting.migrations.migrate_to_4215 import Migrate_To_4215
+from Products.PloneMeeting.migrations.migrate_to_4217_4 import Migrate_To_4217_4
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 
 
@@ -63,7 +64,7 @@ class testMigrations(PloneMeetingTestCase):
             query={'UID': item.UID()},
             review_state_mappings={'any_validation_state_waiting_advices': old_state_id})
         self.assertEqual(item.query_state(), old_state_id)
-        Migrate_To_4215(self.portal)._migrateItemsWaitingAdviceState()
+        Migrate_To_4217_4(self.portal)._migrateItemsWaitingAdviceState()
         self.assertEqual(item.query_state(), 'any_validation_state_waiting_advices')
         self.assertEqual(
             len(self.catalog(UID=item.UID(), review_state='any_validation_state_waiting_advices')), 1)
@@ -77,11 +78,32 @@ class testMigrations(PloneMeetingTestCase):
             "and cfg.getCommittees()"
         searches.searchitemsofmycommittees.tal_condition = old_condition
         searches.searchitemsofmycommitteeseditable.tal_condition = old_condition
-        Migrate_To_4215(self.portal)._updateSearchItemsOfMyCommitteesSearchesCondition()
+        Migrate_To_4217_4(self.portal)._updateSearchItemsOfMyCommitteesSearchesCondition()
         self.assertEqual(searches.searchitemsofmycommittees.tal_condition,
                          "python: cfg.is_committees_using('enable_editors')")
         self.assertEqual(searches.searchitemsofmycommitteeseditable.tal_condition,
                          "python: cfg.is_committees_using('enable_editors')")
+
+    def test_pm_Migrate_To_4217_4(self):
+        '''MeetingConfig.itemWFValidationLevels using old "suffix/extra_suffixes" columns
+           are migrated, running the migration on a migrated site changes nothing.'''
+        cfg = self.meetingConfig
+        self.changeUser('siteadmin')
+        levels = cfg.getItemWFValidationLevels(include_disabled_validated=True)
+        # old format
+        old_levels = cfg.getItemWFValidationLevels(include_disabled_validated=True)
+        for level in old_levels:
+            level['suffix'] = level.pop('group_managing_item').replace(GROUP_MANAGING_ITEM_PG_PREFIX, '')
+            level['extra_suffixes'] = [
+                egmi.replace(GROUP_MANAGING_ITEM_PG_PREFIX, '')
+                for egmi in level.pop('extra_groups_managing_item')]
+            level.pop('available_on')
+        cfg.itemWFValidationLevels = old_levels
+        Migrate_To_4217_4(self.portal).run()
+        self.assertEqual(cfg.getItemWFValidationLevels(include_disabled_validated=True), levels)
+        # run again, nothing changed
+        Migrate_To_4217_4(self.portal).run()
+        self.assertEqual(cfg.getItemWFValidationLevels(include_disabled_validated=True), levels)
 
 
 def test_suite():

@@ -54,6 +54,11 @@ Changelog
   `MeetingItemWorkflowConditions.is_valid_validation_level`, when given it is used
   instead of the `available_on` defined on the level.  See #DLIBBDC-3383.
   [gbastien]
+- Added migration to 4217.4 that migrates `MeetingConfig.itemWFValidationLevels`
+  to the `group_managing_item/extra_groups_managing_item/available_on` columns,
+  items in the `waiting_advices` state and the committees editors searches condition
+  (moved from migration to 4215) and reloads every `MeetingConfigs`.
+  [gbastien]
 - Added privacies `public_ending` and `secret_ending`.  When inserting items
   `on_privacy`, an item using a privacy that is not selectable is inserted
   at the end instead of raising an error.
