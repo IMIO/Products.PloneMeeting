@@ -255,15 +255,17 @@ class MeetingItemWorkflowConditions(object):
             if self.is_valid_validation_level(state):
                 return state
 
-    def _mayShortcutToValidationLevel(self, destinationState):
+    def _mayShortcutToValidationLevel(self, destinationState, available_on=None):
         '''When using WFAdaptation 'item_validation_shortcuts',
-           is current user able to use the shortcut to p_destinationState?'''
+           is current user able to use the shortcut to p_destinationState?
+           p_available_on is passed to is_valid_validation_level.'''
         res = True
         # if using shortcut and allowed to shortcut to this destinationState
         # check that user can manage previous review_state
         if 'item_validation_shortcuts' in self.cfg.getWorkflowAdaptations():
             res = False
-            if self.is_valid_validation_level(destinationState, shortcut=True):
+            if self.is_valid_validation_level(
+                    destinationState, shortcut=True, available_on=available_on):
                 previous_val_state = self._get_previous_val_level(
                     destinationState)
                 # there is no previous level for the first validation level,
@@ -291,11 +293,14 @@ class MeetingItemWorkflowConditions(object):
                 break
         return res
 
-    def is_valid_validation_level(self, review_state, user_id=None, shortcut=None, back_transition=False):
+    def is_valid_validation_level(self, review_state, user_id=None, shortcut=None,
+                                  back_transition=False, available_on=None):
         """A validation level is valid if it is an enabled MeetingConfig.itemWFValidationLevels
            state, its "available_on" TAL expression is True (p_shortcut and p_back_transition
            are available in the expression) and a group managing item is not empty
-           (or contains p_user_id if given)."""
+           (or contains p_user_id if given).
+           If p_available_on is given (passed by the transition guard), it is used
+           instead of the "available_on" defined on the level."""
         # check if level is a validation level
         level = self.cfg.getItemWFValidationLevels(
             states=[review_state],
@@ -305,13 +310,16 @@ class MeetingItemWorkflowConditions(object):
             return
         # check available_on
         res = True
-        if level['available_on'].strip():
+        if available_on is None:
+            available_on = level['available_on']
+        available_on = available_on.strip()
+        if available_on:
             extra_expr_ctx = _base_extra_expr_ctx(self.context)
             extra_expr_ctx['shortcut'] = shortcut
             extra_expr_ctx['back_transition'] = back_transition
             res = _evaluateExpression(
                 self.context,
-                expression=level['available_on'],
+                expression=available_on,
                 roles_bypassing_expression=[],
                 extra_expr_ctx=extra_expr_ctx,
                 raise_on_error=True)
@@ -334,11 +342,14 @@ class MeetingItemWorkflowConditions(object):
 
     security.declarePublic('mayProposeToNextValidationLevel')
 
-    def mayProposeToNextValidationLevel(self, destinationState):
-        '''Check if able to propose to next validation level.'''
+    def mayProposeToNextValidationLevel(self, destinationState, available_on=None):
+        '''Check if able to propose to next validation level.
+           p_available_on is the 'available_on' TAL expression defined on the
+           p_destinationState level of MeetingConfig.itemWFValidationLevels, if any,
+           it is passed by the transition guard so it is visible when auditing the workflow.'''
         res = False
         if _checkPermission(ReviewPortalContent, self.context):
-            res = self.is_valid_validation_level(destinationState)
+            res = self.is_valid_validation_level(destinationState, available_on=available_on)
             # shortcuts are available to (Meeting)Managers
             # this also manage returned_to_proposing_group_proposed so
             # we use get_item_corresponding_state_to_assign_local_roles
@@ -347,7 +358,7 @@ class MeetingItemWorkflowConditions(object):
                     self.cfg.adapted().get_item_corresponding_state_to_assign_local_roles(
                         self.review_state)) != destinationState:
                 # check if available when using shortcuts
-                res = self._mayShortcutToValidationLevel(destinationState)
+                res = self._mayShortcutToValidationLevel(destinationState, available_on=available_on)
         # check required data only if transition is doable or we would display
         # a No button for a transition that is actually not triggerable...
         if res:

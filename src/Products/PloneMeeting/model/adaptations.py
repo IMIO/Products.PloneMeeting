@@ -454,6 +454,17 @@ def get_base_item_validation_state():
     return wfTool.get('meetingitem_workflow').states['validated']
 
 
+def _get_validation_level_guard_name(level):
+    """Return the guard name of the transition leading to the given
+       MeetingConfig.itemWFValidationLevels p_level, the "available_on"
+       TAL expression is passed when defined so it is visible in the workflow."""
+    guard_name = 'mayProposeToNextValidationLevel(destinationState="{0}"'.format(level['state'])
+    available_on = level['available_on'].strip()
+    if available_on:
+        guard_name += ', available_on={0}'.format(repr(available_on))
+    return guard_name + ')'
+
+
 def _performWorkflowAdaptations(meetingConfig, logger=logger):
     '''This function applies workflow adaptations as specified by the p_meetingConfig.'''
 
@@ -543,9 +554,9 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
             actbox_name=transition_id, actbox_url='',
             actbox_icon=image_url, actbox_category='workflow',
             props={
-                'guard_expr': 'python:here.wfConditions()'
-                '.mayProposeToNextValidationLevel(destinationState="{0}")'.format(
-                    transition_id.replace('goTo_returned_to_proposing_group_', ''))})
+                'guard_expr': 'python:here.wfConditions().{0}'.format(
+                    _get_validation_level_guard_name(
+                        meetingConfig.getItemWFValidationLevels(states=[base_state_id])))})
 
         wf.states[last_returned_state_id].transitions = \
             wf.states[last_returned_state_id].transitions + (transition_id, )
@@ -699,8 +710,7 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
             data['leading_transition_title'] = level['leading_transition_title']
             data['back_transition'] = level['back_transition']
             data['back_transition_title'] = level['back_transition_title']
-            data['guard_name'] = \
-                'mayProposeToNextValidationLevel(destinationState="{0}")'.format(level['state'])
+            data['guard_name'] = _get_validation_level_guard_name(level)
             # add transition from validated to every validation levels if allowed
             data['back_transitions'] = []
             if allowed_back_from_validated == '*' or \

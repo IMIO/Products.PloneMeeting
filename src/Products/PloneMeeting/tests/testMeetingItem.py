@@ -9089,6 +9089,57 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmReviewer1')
         self.assertTrue('validate' in self.transitions(item))
 
+    def test_pm_ItemWFValidationLevels_available_on_guard(self):
+        """The 'available_on' of a validation level is passed to the
+           'mayProposeToNextValidationLevel' guard of the transition leading to it,
+           this way it is visible when auditing the workflow."""
+        cfg = self.meetingConfig
+        self._setUpDefaultItemWFValidationLevels(cfg)
+        wfas = ('return_to_proposing_group_with_last_validation', )
+        use_returned = self._check_wfa_available(wfas)
+        if use_returned:
+            self._activate_wfas(wfas)
+        default_guard = 'python:here.wfConditions().mayProposeToNextValidationLevel(destinationState="proposed")'
+        item_wf = cfg.getItemWorkflow(True)
+        self.assertEqual(item_wf.transitions['propose'].guard.expr.text, default_guard)
+        if use_returned:
+            self.assertEqual(
+                item_wf.transitions['goTo_returned_to_proposing_group_proposed'].guard.expr.text,
+                default_guard)
+
+        # define an available_on, it is passed to the guard
+        self._updateItemValidationLevel(
+            cfg, item_state='proposed', available_on=' python: item.Description() ')
+        item_wf = cfg.getItemWorkflow(True)
+        guard = 'python:here.wfConditions().mayProposeToNextValidationLevel(' \
+            'destinationState="proposed", available_on=\'python: item.Description()\')'
+        self.assertEqual(item_wf.transitions['propose'].guard.expr.text, guard)
+        if use_returned:
+            self.assertEqual(
+                item_wf.transitions['goTo_returned_to_proposing_group_proposed'].guard.expr.text,
+                guard)
+        # other levels guard is not changed
+        self.assertEqual(
+            item_wf.transitions['validate'].guard.expr.text,
+            'python:here.wfConditions().mayValidate()')
+
+        # the given available_on is evaluated
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.assertFalse('propose' in self.transitions(item))
+        item.setDescription(self.descriptionText)
+        self.assertTrue('propose' in self.transitions(item))
+        wf_conditions = item.wfConditions()
+        self.assertTrue(wf_conditions.mayProposeToNextValidationLevel(
+            destinationState='proposed', available_on='python: item.Description()'))
+        self.assertFalse(wf_conditions.mayProposeToNextValidationLevel(
+            destinationState='proposed', available_on='python: False'))
+
+        # removing available_on resets the guard
+        self._updateItemValidationLevel(cfg, item_state='proposed', available_on='')
+        item_wf = cfg.getItemWorkflow(True)
+        self.assertEqual(item_wf.transitions['propose'].guard.expr.text, default_guard)
+
     def test_pm_ItemWFValidationLevels_validated_available_on_shortcut(self):
         """When using item validation shortcuts, the "shortcut" variable
            may be used in the 'available_on' of the 'validated' level."""

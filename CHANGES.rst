@@ -45,6 +45,15 @@ Changelog
   in the expression context.  `utils.checkMayQuickEdit` passes `in_check_may_quick_edit=True`
   in the expression context.  See #DLIBBDC-3383.
   [gbastien]
+- The `available_on` of a `MeetingConfig.itemWFValidationLevels` level is now passed
+  to the `mayProposeToNextValidationLevel` guard of the transitions leading to it
+  (like it is already the case for `mayValidate`) so it is visible when auditing
+  the workflow.  Added parameter `available_on=None` to
+  `MeetingItemWorkflowConditions.mayProposeToNextValidationLevel`,
+  `MeetingItemWorkflowConditions._mayShortcutToValidationLevel` and
+  `MeetingItemWorkflowConditions.is_valid_validation_level`, when given it is used
+  instead of the `available_on` defined on the level.  See #DLIBBDC-3383.
+  [gbastien]
 - Added privacies `public_ending` and `secret_ending`.  When inserting items
   `on_privacy`, an item using a privacy that is not selectable is inserted
   at the end instead of raising an error.
