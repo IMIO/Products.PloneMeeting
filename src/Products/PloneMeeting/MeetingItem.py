@@ -415,7 +415,8 @@ class MeetingItemWorkflowConditions(object):
     def mayValidate(self, available_on=None):
         '''May validate if having ReviewPortalContent and being last item validation level.
            p_available_on is the 'available_on' TAL expression defined on the 'validated'
-           level of MeetingConfig.itemWFValidationLevels, if any, it is not checked for real Managers.
+           level of MeetingConfig.itemWFValidationLevels, if any, it is not checked for Managers
+           (also when using adopt_roles).
            Like for other levels, "shortcut" and "back_transition" are available in the expression.'''
         res = False
         shortcut = False
@@ -437,8 +438,9 @@ class MeetingItemWorkflowConditions(object):
                     res = True
                     if self._has_waiting_advices_transitions():
                         res = No(_('has_required_waiting_advices'))
-        # available_on is bypassed for real Managers
-        if res and available_on and not self.tool.isManager(realManagers=True):
+        # available_on is bypassed for Manager, works with adopt_roles
+        # (used when presenting recurring items or sending items to another MC)
+        if res and available_on and not _checkPermission(ManagePortal, self.context):
             # same extra context as for other levels, see is_valid_validation_level
             extra_expr_ctx = _base_extra_expr_ctx(self.context)
             extra_expr_ctx['shortcut'] = shortcut

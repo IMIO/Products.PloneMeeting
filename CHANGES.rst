@@ -170,6 +170,11 @@ Changelog
   and that matched suffixes ending with the selected suffix (`reviewers` was matching
   `prereviewers` and `level1reviewers`), suffix must now be exactly the selected suffix.
   [gbastien]
+- Fixed `MeetingItemWorkflowConditions.mayValidate`, the `available_on` of the
+  `validated` level of `MeetingConfig.itemWFValidationLevels` is bypassed for `Manager`
+  also when using `adopt_roles` (when presenting recurring items or sending an item
+  to another `MeetingConfig`), and not only for real Managers.
+  [gbastien]
 
 4.2.21rc5 (2026-10-16)
 ----------------------

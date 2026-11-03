@@ -9025,7 +9025,14 @@ class testMeetingItem(PloneMeetingTestCase):
         # available_on is bypassed for real Managers
         self.changeUser('admin')
         self.assertTrue('validate' in self.transitions(item))
+        # and also when using adopt_roles (recurring items, item sent to another MC),
+        # in this case user is not a real Manager
         self.changeUser('pmReviewer1')
+        with api.env.adopt_roles(['Manager']):
+            self.assertFalse(self.tool.isManager(realManagers=True))
+            self.assertTrue(item.wfConditions().mayValidate(available_on='python: item.Description()'))
+            self.assertTrue('validate' in self.transitions(item))
+        self.assertFalse('validate' in self.transitions(item))
         item.setDescription(self.descriptionText)
         self.assertTrue('validate' in self.transitions(item))
         self.do(item, 'validate')
