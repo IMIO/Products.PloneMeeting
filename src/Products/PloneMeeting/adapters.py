@@ -9,8 +9,8 @@ from collective.compoundcriterion.adapters import NegativePersonalLabelsAdapter
 from collective.compoundcriterion.adapters import NegativePreviousIndexValuesAdapter
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_own_organization
-from collective.contact.plonegroup.utils import get_plone_groups
 from collective.contact.plonegroup.utils import get_plone_group_id
+from collective.contact.plonegroup.utils import get_plone_groups
 from collective.documentgenerator.adapters import GenerablePODTemplatesAdapter
 from collective.eeafaceted.dashboard.adapters import DashboardGenerablePODTemplatesAdapter
 from collective.eeafaceted.dashboard.content.pod_template import IDashboardPODTemplate
@@ -1852,19 +1852,22 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
         res = []
         # item, we take plone groups accessing item
         if item:
-            observers_have_access, plone_group_ids = \
+            _observers_have_access, plone_group_ids = \
                 item.get_all_plone_groups_accessing_item(
                     self.cfg, item.query_state())
         else:
-            # every enabled organizations plone group ids
-            plone_group_ids = itertools.chain.from_iterable(
+            # every enabled organizations plone group ids,
+            # use a list as it is iterated for every suffix
+            plone_group_ids = list(itertools.chain.from_iterable(
                 [get_plone_groups(org_uid, ids_only=True, verify_group_exist=False)
-                 for org_uid in get_organizations(the_objects=False)])
+                 for org_uid in get_organizations(the_objects=False)]))
         for visible_for in visible_fors:
             if visible_for.startswith(PROPOSINGGROUPPREFIX):
                 suffix = visible_for.replace(PROPOSINGGROUPPREFIX, '')
                 for plone_group_id in plone_group_ids:
-                    if plone_group_id.endswith(suffix):
+                    # Plone group id is "org_uid_suffix", a suffix may contain a "_"
+                    # and we must not match "reviewers" for "prereviewers"
+                    if plone_group_id.split('_', 1)[-1] == suffix:
                         res.append(plone_group_id)
         return res
 

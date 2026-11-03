@@ -163,6 +163,11 @@ Changelog
   of `level` to `_updateItemValidationLevel` so only the `proposed` validation level
   titles are updated and not every validation level.
   [gbastien]
+- Fixed `PMCategorizedObjectInfoAdapter._suffix_proposinggroup` that only took into account
+  the first `suffix_proposing_group_xxx` value when no item is given (like for labels access)
+  and that matched suffixes ending with the selected suffix (`reviewers` was matching
+  `prereviewers` and `level1reviewers`), suffix must now be exactly the selected suffix.
+  [gbastien]
 
 4.2.21rc5 (2026-10-16)
 ----------------------
