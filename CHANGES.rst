@@ -90,6 +90,7 @@ Changelog
   organizations (`item_advice_states`, `item_advice_edit_states` and
   `item_advice_view_states`, organizations without value are ignored)
   and only reindexes the `review_state` and review_state related indexes of updated elements.
+  Added parameter `cfg_ids=[]` to only update the attributes of given `MeetingConfigs`.
   Replaced `MeetingItem.getReviewStateRelatedIndexes` by constant
   `config.ITEM_REVIEW_STATE_RELATED_INDEXES` (no more adaptable but may be extended).
   [gbastien]

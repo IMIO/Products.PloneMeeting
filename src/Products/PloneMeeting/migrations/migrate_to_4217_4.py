@@ -92,7 +92,10 @@ class Migrate_To_4217_4(Migrator):
                                'meta_type': 'MeetingItem'},
                         review_state_mappings={
                             state_id: NEW_WAITING_ADVICES_STATE_ID
-                            for state_id in old_state_ids})
+                            for state_id in old_state_ids},
+                        # only update this MeetingConfig, another may use a
+                        # real state with same id (like "itemcreated_waiting_advices")
+                        cfg_ids=[cfg_id])
             else:
                 # not using validation levels for waiting_advices, items may be in an old
                 # state if a WFA was removed, we can not fix it, just warn
@@ -100,7 +103,8 @@ class Migrate_To_4217_4(Migrator):
                     state_id for state_id in self._get_old_val_levels_waiting_advices_states(
                         cfg, cfg_used_states) if state_id not in item_wf_states]
                 if orphan_state_ids:
-                    logger.warning(
+                    self.warn(
+                        logger,
                         'Items of "{0}" are in states "{1}" that do not exist in the item '
                         'workflow, they need to be fixed manually!'.format(
                             cfg_id, ', '.join(sorted(orphan_state_ids))))

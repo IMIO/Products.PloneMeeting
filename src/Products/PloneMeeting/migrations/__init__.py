@@ -137,11 +137,14 @@ class Migrator(BaseMigrator):
                                      query={},
                                      review_state_mappings={},
                                      transition_mappings={},
-                                     update_local_roles=False):
+                                     update_local_roles=False,
+                                     cfg_ids=[]):
         """Update for given p_brains the workflow_history keys 'review_state' and 'action'
            depending on given p_review_state_mappings and p_action_mappings.
            Update also various parameters of the MeetingConfig
-           that are using states and transitions."""
+           that are using states and transitions, if p_cfg_ids are given,
+           only these MeetingConfigs (and related organizations values) are updated,
+           every MeetingConfigs otherwise."""
         logger.info(
             'Updating workflow states/transitions changes for elements of type "%s"...'
             % query or related_to)
@@ -186,6 +189,8 @@ class Migrator(BaseMigrator):
         state_attrs = ITEM_WF_STATE_ATTRS if related_to == 'MeetingItem' else MEETING_WF_STATE_ATTRS
         tr_attrs = ITEM_WF_TRANSITION_ATTRS if related_to == 'MeetingItem' else MEETING_WF_TRANSITION_ATTRS
         for cfg in self.tool.objectValues('MeetingConfig'):
+            if cfg_ids and cfg.getId() not in cfg_ids:
+                continue
             # cfg state_attrs
             _update_attrs(cfg, state_attrs, review_state_mappings)
             # cfg transition_attrs
