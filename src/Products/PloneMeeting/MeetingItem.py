@@ -4481,7 +4481,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def update_item_reference(self, clear=False):
         '''Update the item reference, recompute it,
            stores it and reindex 'getItemReference'.
-           This rely on _may_update_item_reference.'''
+           This rely on _may_update_item_reference.
+           When field MeetingItem.itemReference is used, the reference is
+           manually managed so it is kept and never computed nor cleared.'''
+        if self.attribute_is_used('itemReference'):
+            return self.getField('itemReference').get(self)
         res = ''
         if not clear and self.adapted()._may_update_item_reference():
             meeting = self.getMeeting()
@@ -5125,8 +5129,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         res = False
         item = self.getSelf()
         meeting = item.getMeeting()
-        tool = api.portal.get_tool('portal_plonemeeting')
-        if meeting and item.getMeeting().is_late():
+        if item.attribute_is_used('itemReference') or \
+           (meeting and meeting.is_late()):
             res = True
         else:
             tool = api.portal.get_tool('portal_plonemeeting')

@@ -1796,12 +1796,11 @@ class testMeetingItem(PloneMeetingTestCase):
     def test_pm_SendItemToOtherMCItemReference(self):
         '''Test when item sent to other MC and original item
            is using otherMeetingConfigsClonableToFieldItemReference field.'''
-        # if we want to keep a stored itemReference, we need to configure it
+        # when itemReference is used in cfg2, the stored itemReference is kept
         cfg = self.meetingConfig
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
-        cfg2.setItemReferenceFormat('python:here.getItemReference()')
-        cfg2.setComputeItemReferenceForItemsOutOfMeeting(True)
+        self.assertTrue(cfg2.getItemReferenceFormat())
         self._enableField('otherMeetingConfigsClonableToFieldItemReference')
         self._enableField('itemReference', cfg=cfg2)
         self._enableField('category', cfg=cfg2, enable=False)
@@ -1910,6 +1909,45 @@ class testMeetingItem(PloneMeetingTestCase):
         self._enableField('itemReference')
         self.assertTrue(may_view_field(item, 'itemReference'))
         self.assertTrue('name="itemReference"' in item.restrictedTraverse('base_edit')())
+
+    def test_pm_ItemReferenceManuallyEnteredKept(self):
+        '''When MeetingItem.itemReference is used, the reference is manually
+           managed, it is kept and MeetingConfig.itemReferenceFormat is ignored.'''
+        cfg = self.meetingConfig
+        self.assertTrue(cfg.getItemReferenceFormat())
+        self.assertFalse(cfg.getComputeItemReferenceForItemsOutOfMeeting())
+        self._enableField('itemReference')
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem', itemReference='Manual/1')
+        self.assertEqual(item.getItemReference(), 'Manual/1')
+        self.assertTrue(item.adapted().show_item_reference())
+        # kept when edited
+        item.setItemReference('Manual/2')
+        item._update_after_edit()
+        self.assertEqual(item.getItemReference(), 'Manual/2')
+        # kept when item in a meeting, the item reference format is ignored
+        meeting = self.create('Meeting')
+        self.presentItem(item)
+        self.assertEqual(item.getItemReference(), 'Manual/2')
+        self.freezeMeeting(meeting)
+        self.assertEqual(item.query_state(), 'itemfrozen')
+        self.assertEqual(item.getItemReference(), 'Manual/2')
+        meeting.update_item_references()
+        self.assertEqual(item.getItemReference(), 'Manual/2')
+        # not cleared when meeting back to created
+        self.backToState(meeting, 'created')
+        self.assertEqual(item.getItemReference(), 'Manual/2')
+        # not cleared when item removed from meeting
+        self.backToState(item, 'validated')
+        self.assertEqual(item.getItemReference(), 'Manual/2')
+        # when field not used, the reference is computed again
+        self._enableField('itemReference', enable=False)
+        item.update_item_reference()
+        self.assertEqual(item.getItemReference(), '')
+        self.presentItem(item)
+        self.freezeMeeting(meeting)
+        self.assertNotEqual(item.getItemReference(), 'Manual/2')
+        self.assertTrue(item.getItemReference())
 
     def test_pm_FindOrderForNotSelectableValue(self):
         '''When inserting items "on_privacy" or "on_poll_type", an item using

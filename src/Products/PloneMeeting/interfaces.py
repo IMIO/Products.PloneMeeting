@@ -188,8 +188,9 @@ class IMeetingItemDocumentation:
            MeetingConfig.usedItemAttributes.'''
     def show_item_reference():
         '''When must I show the item reference ? In the default implementation,
-           item references are shown as soon as a meeting is frozen or when
-           using MeetingConfig.computeItemReferenceForItemsOutOfMeeting.'''
+           item references are shown as soon as a meeting is frozen, when
+           using MeetingConfig.computeItemReferenceForItemsOutOfMeeting or
+           when field MeetingItem.itemReference is used (manual reference).'''
     def get_predecessors():
         '''Returns the entire chain of predecessors and successors.'''
     def addRecurringItemToMeeting(meeting):
@@ -323,7 +324,8 @@ class IMeetingItemDocumentation:
     def _may_update_item_reference(self):
         """Condition to update item reference.  By default the item reference
            will be updated if item is in a meeting and meeting review_state is
-           not 'before frozen'."""
+           not 'before frozen'.  This is not used when field MeetingItem.itemReference
+           is used as the reference is then manually managed."""
     def custom_validate_optionalAdvisers(value, storedOptionalAdvisers, removedAdvisers):
         '''This is called by MeetingItem.validate_optionalAdvisers and let
            a plugin validates selected optional advisers.'''

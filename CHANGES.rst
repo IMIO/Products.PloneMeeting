@@ -37,7 +37,9 @@ Changelog
 - Added fields `MeetingItem.otherMeetingConfigsClonableToFieldItemReference` and
   `MeetingItem.otherMeetingConfigsClonableToFieldMotivationSuite` used when sending
   an item to another `MeetingConfig`.  `MeetingItem.itemReference` is now an optional
-  field, when enabled in `MeetingConfig.usedItemAttributes` it is editable in the item edit form.
+  field, when enabled in `MeetingConfig.usedItemAttributes` it is editable in the item edit form,
+  the reference is then manually managed: it is kept and always shown, `MeetingConfig.itemReferenceFormat`
+  and `MeetingConfig.computeItemReferenceForItemsOutOfMeeting` are ignored.
   [gbastien]
 - Added `MeetingConfig.meetingConfigsToCloneToEditFieldsTALExpr`, a TAL expression
   to define if `MeetingItem.otherMeetingConfigsClonableToFieldXXX` fields are editable
