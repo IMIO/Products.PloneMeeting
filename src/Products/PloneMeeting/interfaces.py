@@ -330,8 +330,6 @@ class IMeetingItemDocumentation:
     def getAdviceRelatedIndexes(self):
         '''Return item indexes related to advices, by default
            only the 'indexAdvisers' index is returned.'''
-    def getReviewStateRelatedIndexes(self, check_deferred=True):
-        '''Return item indexes related to review_state.'''
     def getIndexesRelatedTo(self, related_to='annex', check_deferred=True):
         '''Return catalog indexes related to given p_related_to and
            manage defering SearchableText reindex.'''

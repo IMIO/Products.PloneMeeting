@@ -405,6 +405,14 @@ REINDEX_NEEDED_MARKER = "_catalog_reindex_needed"
 # prefix used in pm_technical_index to store item initiators
 ITEM_INITIATOR_INDEX_PATTERN = "item_initiator_{0}"
 
+# item catalog indexes depending on the review_state or the workflow_history,
+# reindexed after an item transition, a subproduct may extend it in place
+ITEM_REVIEW_STATE_RELATED_INDEXES = [
+    'downOrUpWorkflowAgain',
+    'getTakenOverBy',
+    'reviewProcessInfo',
+    'previous_review_state']
+
 # various place where attendees infos are stored on meeting
 MEETING_ATTENDEES_ATTRS = (
     # place to store item absents

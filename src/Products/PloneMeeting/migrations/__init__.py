@@ -26,6 +26,7 @@ from operator import attrgetter
 from plone import api
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFPlone.utils import base_hasattr
+from Products.PloneMeeting.config import ITEM_REVIEW_STATE_RELATED_INDEXES
 from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.content.organization import WF_STATE_ATTRS
 from Products.PloneMeeting.MeetingConfig import ITEM_WF_STATE_ATTRS
@@ -153,7 +154,8 @@ class Migrator(BaseMigrator):
                 original = '%s.%s' % (related_to, original)
                 replacement = '%s.%s' % (related_to, replacement)
                 values = replace_in_list(values, original, replacement)
-            return values
+            # several values may be replaced by the same value, avoid duplicates
+            return list(OrderedDict.fromkeys(values))
 
         def _update_attrs(obj, attrs, mappings):
             for attr in attrs:
@@ -210,7 +212,8 @@ class Migrator(BaseMigrator):
         pghandler = ZLogHandler(steps=1000)
         pghandler.init('Updating workflow_history', len(brains))
         i = 0
-        objsToUpdate = []
+        # objects for which a review_state changed, by UID to avoid duplicates
+        objsToUpdate = OrderedDict()
         for brain in brains:
             i += 1
             pghandler.report(i)
@@ -220,20 +223,26 @@ class Migrator(BaseMigrator):
                     if event['review_state'] in review_state_mappings:
                         event['review_state'] = review_state_mappings[event['review_state']]
                         itemOrMeeting.workflow_history._p_changed = True
-                        objsToUpdate.append(itemOrMeeting)
+                        objsToUpdate[brain.UID] = itemOrMeeting
                     if event['action'] in transition_mappings:
                         event['action'] = transition_mappings[event['action']]
                         itemOrMeeting.workflow_history._p_changed = True
                         # not necessary if just an action changed?
-                        # objsToUpdate.append(itemOrMeeting)
-            itemOrMeeting.reindexObject(idxs=['review_state'])
+                        # objsToUpdate[brain.UID] = itemOrMeeting
+        pghandler.finish()
         # update fixed objects
-        if update_local_roles:
-            for obj in objsToUpdate:
+        for obj in objsToUpdate.values():
+            if update_local_roles:
                 obj.update_local_roles()
                 # use reindex_object and pass some no_idxs because
                 # calling reindexObject will update modified
                 reindex_object(obj, no_idxs=['SearchableText', 'Title', 'Description'])
+            else:
+                # review_state and workflow_history related indexes
+                idxs = ['review_state']
+                if related_to == 'MeetingItem':
+                    idxs += ITEM_REVIEW_STATE_RELATED_INDEXES
+                obj.reindexObject(idxs=idxs)
 
 
     def addCatalogIndexesAndColumns(self, indexes=True, columns=True, update_metadata=True):

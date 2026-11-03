@@ -58,6 +58,8 @@ Changelog
   to the `group_managing_item/extra_groups_managing_item/available_on` columns,
   items in the `waiting_advices` state and the committees editors searches condition
   (moved from migration to 4215) and reloads every `MeetingConfigs`.
+  Old `waiting_advices` state ids are also looked up among states used by items
+  to manage items in a state generated before a validation level was enabled.
   [gbastien]
 - Added privacies `public_ending` and `secret_ending`.  When inserting items
   `on_privacy`, an item using a privacy that is not selectable is inserted
@@ -84,7 +86,9 @@ Changelog
 - `Migrator.updateWFStatesAndTransitions` also updates the item states stored on
   organizations (`item_advice_states`, `item_advice_edit_states` and
   `item_advice_view_states`, organizations without value are ignored)
-  and reindexes the `review_state` of updated elements.
+  and only reindexes the `review_state` and review_state related indexes of updated elements.
+  Replaced `MeetingItem.getReviewStateRelatedIndexes` by constant
+  `config.ITEM_REVIEW_STATE_RELATED_INDEXES` (no more adaptable but may be extended).
   [gbastien]
 - `MeetingConfig` fields holding a TAL expression (`itemConditionsInterface`,
   `itemActionsInterface`, `meetingConditionsInterface`, `meetingActionsInterface`

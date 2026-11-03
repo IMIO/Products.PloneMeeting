@@ -8635,13 +8635,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''See doc in interfaces.py.'''
         return ['indexAdvisers']
 
-    security.declarePrivate('getReviewStateRelatedIndexes')
-
-    def getReviewStateRelatedIndexes(self):
-        '''See doc in interfaces.py.'''
-        return ['downOrUpWorkflowAgain', 'getTakenOverBy',
-                'reviewProcessInfo', 'previous_review_state']
-
     def getIndexesRelatedTo(self, related_to='annex', check_deferred=True):
         '''See doc in interfaces.py.'''
         tool = api.portal.get_tool('portal_plonemeeting')

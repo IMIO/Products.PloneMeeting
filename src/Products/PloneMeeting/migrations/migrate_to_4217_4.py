@@ -3,6 +3,11 @@
 from Products.PloneMeeting.config import GROUP_MANAGING_ITEM_PG_PREFIX
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
+from Products.PloneMeeting.model.adaptations import get_waiting_advices_infos
+
+
+NEW_WAITING_ADVICES_STATE_ID = 'any_validation_state_waiting_advices'
+WAITING_ADVICES_SUFFIX = '_waiting_advices'
 
 
 class Migrate_To_4217_4(Migrator):
@@ -31,27 +36,74 @@ class Migrate_To_4217_4(Migrator):
             cfg.setItemWFValidationLevels(stored)
         logger.info('Done.')
 
+    def _get_old_val_levels_waiting_advices_states(self, cfg, waiting_advices_states):
+        """Return the old waiting_advices state ids among p_waiting_advices_states generated
+           from MeetingConfig.itemWFValidationLevels for p_cfg, aka states like
+           "itemcreated__or__proposed_waiting_advices" made of validation level states.
+           A "new_state_id" defined in WAITING_ADVICES_FROM_STATES is kept."""
+        custom_state_ids = [infos['new_state_id'] for infos in
+                            get_waiting_advices_infos(cfg.getId(real_id=True))
+                            if infos.get('new_state_id')]
+        # enabled or disabled validation levels, an old state id may contain
+        # a validation level that was enabled after items were set in it
+        val_states = set(cfg.getItemWFValidationLevels(data='state'))
+        res = []
+        for state_id in waiting_advices_states:
+            if state_id == NEW_WAITING_ADVICES_STATE_ID or state_id in custom_state_ids:
+                continue
+            if set(state_id[:-len(WAITING_ADVICES_SUFFIX)].split('__or__')).issubset(val_states):
+                res.append(state_id)
+        return res
+
     def _migrateItemsWaitingAdviceState(self):
         """When using MeetingConfig.itemWFValidationLevels to compute
            the waiting_advices state id, we were generating a __or__ complex
-           state name, now we go back to any_validation_state_waiting_advices."""
+           state name, now we go back to any_validation_state_waiting_advices.
+           Old state ids are the ones of the current item workflow but also the ones
+           still used by items, an item may have been set in a state generated before
+           a validation level was enabled (that changed the generated state id)."""
         logger.info('Migrating items waiting advices state name...')
-        new_state_id_pattern = '{0}_waiting_advices'
+        # every waiting_advices review_state used by items of every MeetingConfigs
+        used_waiting_advices_states = [
+            state_id for state_id in self.catalog.uniqueValuesFor('review_state')
+            if state_id.endswith(WAITING_ADVICES_SUFFIX)]
         for cfg in self.tool.objectValues('MeetingConfig'):
+            cfg_id = cfg.getId()
+            item_wf_states = cfg.getItemWorkflow(True).states
             wfas = cfg.getWorkflowAdaptations()
+            # states used by items of this MeetingConfig
+            cfg_used_states = [
+                state_id for state_id in used_waiting_advices_states
+                if self.catalog.unrestrictedSearchResults(
+                    getConfigId=cfg_id, meta_type='MeetingItem', review_state=state_id)]
             if 'waiting_advices_from_every_val_levels' in wfas or \
                'waiting_advices_from_before_last_val_level' in wfas or \
                'waiting_advices_from_last_val_level' in wfas:
-                # generate old state id
-                item_validation_states = cfg.getItemWFValidationLevels(
-                    data='state', only_enabled=True)
-                state_id = new_state_id_pattern.format(
-                    '__or__'.join(item_validation_states))
-                self.updateWFStatesAndTransitions(
-                    query={'getConfigId': cfg.getId(),
-                           'meta_type': 'MeetingItem'},
-                    review_state_mappings={
-                        state_id: 'any_validation_state_waiting_advices'})
+                old_state_ids = self._get_old_val_levels_waiting_advices_states(
+                    cfg,
+                    set(cfg_used_states).union(
+                        [state_id for state_id in item_wf_states
+                         if state_id.endswith(WAITING_ADVICES_SUFFIX)]))
+                if old_state_ids:
+                    logger.info('Migrating states "{0}" for "{1}"...'.format(
+                        ', '.join(sorted(old_state_ids)), cfg_id))
+                    self.updateWFStatesAndTransitions(
+                        query={'getConfigId': cfg_id,
+                               'meta_type': 'MeetingItem'},
+                        review_state_mappings={
+                            state_id: NEW_WAITING_ADVICES_STATE_ID
+                            for state_id in old_state_ids})
+            else:
+                # not using validation levels for waiting_advices, items may be in an old
+                # state if a WFA was removed, we can not fix it, just warn
+                orphan_state_ids = [
+                    state_id for state_id in self._get_old_val_levels_waiting_advices_states(
+                        cfg, cfg_used_states) if state_id not in item_wf_states]
+                if orphan_state_ids:
+                    logger.warning(
+                        'Items of "{0}" are in states "{1}" that do not exist in the item '
+                        'workflow, they need to be fixed manually!'.format(
+                            cfg_id, ', '.join(sorted(orphan_state_ids))))
         logger.info('Done.')
 
     def _updateSearchItemsOfMyCommitteesSearchesCondition(self):

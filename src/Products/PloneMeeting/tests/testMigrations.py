@@ -45,29 +45,67 @@ class testMigrations(PloneMeetingTestCase):
 
     def test_pm_MigrateItemsWaitingAdviceState(self):
         '''When using MeetingConfig.itemWFValidationLevels to generate the waiting_advices state,
-           items using the old "__or__" state id are moved to "any_validation_state_waiting_advices".'''
+           items using the old "__or__" state id are moved to "any_validation_state_waiting_advices",
+           including items in a state generated before a validation level was enabled.
+           Items of a MeetingConfig not using validation levels are not changed.'''
         cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
         if not self._check_wfa_available(['waiting_advices',
                                           'waiting_advices_from_every_val_levels']):
             return
         self._activate_wfas(('waiting_advices', 'waiting_advices_from_every_val_levels'))
-        cfg.setItemAdviceStates(('any_validation_state_waiting_advices', ))
+        self._activate_wfas(('waiting_advices', ), cfg=cfg2)
+        new_state_id = 'any_validation_state_waiting_advices'
+        cfg.setItemAdviceStates((new_state_id, ))
+        enabled_states = cfg.getItemWFValidationLevels(data='state', only_enabled=True)
+        self.assertTrue(len(enabled_states) > 1)
+        # old state id generated with current validation levels
+        old_state_id = '{0}_waiting_advices'.format('__or__'.join(enabled_states))
+        # old state id generated before a validation level was enabled
+        stale_state_id = '{0}_waiting_advices'.format(enabled_states[0])
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem', optionalAdvisers=(self.vendors_uid, ))
-        self.do(item, 'wait_advices_from_itemcreated')
-        self.assertEqual(item.query_state(), 'any_validation_state_waiting_advices')
-        # set item in the old state like before migration
-        old_state_id = '{0}_waiting_advices'.format(
-            '__or__'.join(cfg.getItemWFValidationLevels(data='state', only_enabled=True)))
+        stale_item = self.create('MeetingItem', optionalAdvisers=(self.vendors_uid, ))
+        # item that was in the old state then went back to itemcreated
+        back_item = self.create('MeetingItem', optionalAdvisers=(self.vendors_uid, ))
+        for an_item in (item, stale_item, back_item):
+            self.do(an_item, 'wait_advices_from_itemcreated')
+            self.assertEqual(an_item.query_state(), new_state_id)
         self.changeUser('siteadmin')
-        Migrator(self.portal).updateWFStatesAndTransitions(
-            query={'UID': item.UID()},
-            review_state_mappings={'any_validation_state_waiting_advices': old_state_id})
+        self.do(back_item, 'backTo_itemcreated_from_waiting_advices')
+        # item of cfg2 in the "itemcreated_waiting_advices" state generated without validation levels
+        self.setMeetingConfig(cfg2.getId())
+        cfg2_state_id = 'itemcreated_waiting_advices'
+        self.assertTrue(cfg2_state_id in cfg2.getItemWorkflow(True).states)
+        cfg2_item = self.create('MeetingItem')
+        # set items in the old states like before migration
+        migrator = Migrator(self.portal)
+        migrator.updateWFStatesAndTransitions(
+            query={'UID': [item.UID(), back_item.UID()]},
+            review_state_mappings={new_state_id: old_state_id})
+        migrator.updateWFStatesAndTransitions(
+            query={'UID': stale_item.UID()},
+            review_state_mappings={new_state_id: stale_state_id})
+        migrator.updateWFStatesAndTransitions(
+            query={'UID': cfg2_item.UID()},
+            review_state_mappings={'itemcreated': cfg2_state_id})
         self.assertEqual(item.query_state(), old_state_id)
+        self.assertEqual(stale_item.query_state(), stale_state_id)
+        self.assertEqual(back_item.query_state(), 'itemcreated')
+        self.assertEqual(cfg2_item.query_state(), cfg2_state_id)
+        self.assertEqual(len(self.catalog(UID=back_item.UID(), previous_review_state=old_state_id)), 1)
+
         Migrate_To_4217_4(self.portal)._migrateItemsWaitingAdviceState()
-        self.assertEqual(item.query_state(), 'any_validation_state_waiting_advices')
-        self.assertEqual(
-            len(self.catalog(UID=item.UID(), review_state='any_validation_state_waiting_advices')), 1)
+        for an_item in (item, stale_item):
+            self.assertEqual(an_item.query_state(), new_state_id)
+            self.assertEqual(len(self.catalog(UID=an_item.UID(), review_state=new_state_id)), 1)
+        # workflow_history and previous_review_state of item that left the old state
+        self.assertEqual(back_item.query_state(), 'itemcreated')
+        self.assertEqual(len(self.catalog(UID=back_item.UID(), previous_review_state=new_state_id)), 1)
+        # MeetingConfig using the old state id is migrated, without duplicates
+        self.assertEqual(cfg.getItemAdviceStates(), (new_state_id, ))
+        # cfg2 not using validation levels is not changed
+        self.assertEqual(cfg2_item.query_state(), cfg2_state_id)
 
     def test_pm_UpdateSearchItemsOfMyCommitteesSearchesCondition(self):
         '''Committees editors searches are only available when using committees editors.'''
