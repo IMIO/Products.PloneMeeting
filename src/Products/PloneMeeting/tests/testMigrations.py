@@ -160,6 +160,19 @@ class testMigrations(PloneMeetingTestCase):
         self.assertEqual(searches.searchitemsofmycommitteeseditable.tal_condition,
                          "python: cfg.is_committees_using('enable_editors')")
 
+    def test_pm_UpdateSearchDecidedItemsCondition(self):
+        '''"searchdecideditems" is hidden when using the "no_meeting" WFA,
+           a customized "tal_condition" is kept.'''
+        cfg = self.meetingConfig
+        self.changeUser('siteadmin')
+        search = cfg.searches.searches_items.searchdecideditems
+        search.tal_condition = ''
+        Migrate_To_4217_4(self.portal)._updateSearchDecidedItemsCondition()
+        self.assertEqual(search.tal_condition, "python: cfg.is_using_meetings()")
+        search.tal_condition = 'python: False'
+        Migrate_To_4217_4(self.portal)._updateSearchDecidedItemsCondition()
+        self.assertEqual(search.tal_condition, 'python: False')
+
     def test_pm_Migrate_To_4217_4(self):
         '''MeetingConfig.itemWFValidationLevels using old "suffix/extra_suffixes" columns
            are migrated, running the migration on a migrated site changes nothing.'''

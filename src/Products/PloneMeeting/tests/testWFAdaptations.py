@@ -8,6 +8,7 @@
 from AccessControl import Unauthorized
 from collective.behavior.internalnumber.browser.settings import get_settings
 from collective.behavior.internalnumber.browser.settings import set_settings
+from collective.behavior.talcondition.behavior import ITALCondition
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import select_org_for_function
 from copy import deepcopy
@@ -1445,6 +1446,19 @@ class testWFAdaptations(PloneMeetingTestCase):
         # disabling 'no_meeting' makes the meeting portal_type addable again
         self._activate_wfas([])
         self.assertTrue(self.portal.portal_types[cfg.getMeetingTypeName()].global_allow)
+
+    def test_pm_WFA_no_meeting_searchdecideditems(self):
+        '''The "searchdecideditems" search is hidden when using 'no_meeting'.'''
+        if not self._check_wfa_available(['no_meeting']):
+            return
+        cfg = self.meetingConfig
+        adapted = ITALCondition(cfg.searches.searches_items.searchdecideditems)
+        # a not Manager user so tal_condition is not bypassed
+        self.changeUser('pmManager')
+        self._activate_wfas([])
+        self.assertTrue(adapted.evaluate())
+        self._activate_wfas(('no_meeting', ))
+        self.assertFalse(adapted.evaluate())
 
     def test_pm_WFA_no_meeting_usable(self):
         '''When using 'no_meeting', the application is usable: configuration,

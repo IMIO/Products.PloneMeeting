@@ -3573,7 +3573,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': '',
+                    'tal_condition': "python: cfg.is_using_meetings()",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Unread decided items

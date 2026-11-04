@@ -123,12 +123,24 @@ class Migrate_To_4217_4(Migrator):
                     "python: cfg.is_committees_using('enable_editors')"
         logger.info('Done.')
 
+    def _updateSearchDecidedItemsCondition(self):
+        """The "searchdecideditems" search is only relevant when using meetings,
+           so hide it when using the "no_meeting" WFA.
+           Only update the search if its "tal_condition" was not customized."""
+        logger.info('Updating "searchdecideditems" TAL condition in every MeetingConfigs...')
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            searchdecideditems = cfg.searches.searches_items.get('searchdecideditems')
+            if searchdecideditems and not searchdecideditems.tal_condition:
+                searchdecideditems.tal_condition = "python: cfg.is_using_meetings()"
+        logger.info('Done.')
+
     def run(self, extra_omitted=[], from_migration_to_4200=False):
 
         logger.info('Migrating to PloneMeeting 4217.4...')
         self._initGroupsManagingItemToCfgItemWFValidationLevels()
         self._migrateItemsWaitingAdviceState()
         self._updateSearchItemsOfMyCommitteesSearchesCondition()
+        self._updateSearchDecidedItemsCondition()
         if not from_migration_to_4200:
             # regenerate item workflows as validation levels changed
             self.reloadMeetingConfigs()
@@ -141,7 +153,8 @@ def migrate(context):
        1) Add "groups_managing_item" and "available_on" to every MeetingConfig.itemWFValidationLevels;
        2) Move item waiting_advices states to "any_validation_state_waiting_advices";
        3) Adapt committees editors searches "tal_condition";
-       4) Reload MeetingConfigs so item workflows are regenerated.
+       4) Hide "searchdecideditems" when using the "no_meeting" WFA;
+       5) Reload MeetingConfigs so item workflows are regenerated.
     """
     migrator = Migrate_To_4217_4(context)
     migrator.run()

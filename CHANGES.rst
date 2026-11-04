@@ -5,7 +5,10 @@ Changelog
 4.2.21rc7 (unreleased)
 ----------------------
 
-- Nothing changed yet.
+- Hide the `searchdecideditems` search when using the `no_meeting` WFA
+  (`tal_condition` is now `python: cfg.is_using_meetings()`), existing searches
+  with an empty `tal_condition` are migrated.
+  [gbastien]
 
 
 4.2.21rc6 (2026-11-04)
