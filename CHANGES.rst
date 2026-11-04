@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.21rc6 (unreleased)
+4.2.21rc6 (2026-11-04)
 ----------------------
 
 - Replaced columns `suffix/extra_suffixes` of `MeetingConfig.itemWFValidationLevels`
