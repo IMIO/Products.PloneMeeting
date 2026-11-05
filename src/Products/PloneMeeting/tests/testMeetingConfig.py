@@ -2725,6 +2725,13 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertTrue('My backToValidated' in view)
         # the 'translated_itemWFValidationLevels' REQUEST key is reset after field is displayed
         self.assertFalse(self.request.get('translated_itemWFValidationLevels'))
+        # but this does not disable translation when explicitly asked,
+        # titles using special characters are managed in listItemEvents
+        levels[0]['back_transition_title'] = 'My back \xc3\xa9'
+        cfg.setItemWFValidationLevels(levels)
+        self.assertTrue((levels[0]['back_transition'], u'My back \xe9 (My back \xe9)')
+                        in cfg.get_item_validation_transitions())
+        self.assertTrue(cfg.listItemEvents())
         self.assertFalse('validated' in cfg.getItemWFValidationLevels(data='state'))
         self.assertFalse('validated' in [level['state'] for level in cfg.getItemWFValidationLevels()])
         self.request.set('fieldset', 'workflow')

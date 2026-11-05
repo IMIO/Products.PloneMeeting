@@ -4056,8 +4056,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            - translated_itemWFValidationLevels : append translated values to titles
              (also enabled by the 'translated_itemWFValidationLevels' REQUEST key),
              ignored when p_data is given, when used p_include_disabled_validated is forced to True.'''
-        translated_itemWFValidationLevels = self.REQUEST.get(
-            'translated_itemWFValidationLevels', translated_itemWFValidationLevels) and not data
+        # the REQUEST key may only enable translation, not disable it
+        translated_itemWFValidationLevels = (
+            translated_itemWFValidationLevels or
+            self.REQUEST.get('translated_itemWFValidationLevels', False)) and not data
         if translated_itemWFValidationLevels:
             include_disabled_validated = True
         res = value if value is not None else self.getField('itemWFValidationLevels').get(self, **kwargs)
@@ -7769,7 +7771,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         for item_transition_id, item_transition_name in item_transitions:
             translated_msg = translate('transition_event',
                                        domain="PloneMeeting",
-                                       mapping={'state_info': item_transition_name},
+                                       mapping={'state_info': safe_unicode(item_transition_name)},
                                        context=self.REQUEST)
             res_transitions.append(("item_state_changed_%s" % item_transition_id, translated_msg))
         res = DisplayList(tuple(res)) + DisplayList(res_transitions).sortedByValue()
@@ -7782,7 +7784,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             id = "item_state_changed_%s__history_aware" % item_transition_id
             translated_msg = translate('transition_event_history_aware',
                                        domain="PloneMeeting",
-                                       mapping={'state_info': item_transition_name},
+                                       mapping={'state_info': safe_unicode(item_transition_name)},
                                        context=self.REQUEST)
             res_transitions.append((id, translated_msg))
         res = res + DisplayList(res_transitions).sortedByValue()
@@ -7792,7 +7794,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             id = "item_state_changed_%s__proposing_group_suffix" % item_transition_id
             translated_msg = translate('transition_event_proposing_group_suffix',
                                        domain="PloneMeeting",
-                                       mapping={'state_info': item_transition_name},
+                                       mapping={'state_info': safe_unicode(item_transition_name)},
                                        context=self.REQUEST)
             res_transitions.append((id, translated_msg))
         res = res + DisplayList(res_transitions).sortedByValue()
@@ -7802,7 +7804,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             id = "item_state_changed_%s__proposing_group_suffix_except_manager" % item_transition_id
             translated_msg = translate('transition_event_proposing_group_except_manager',
                                        domain="PloneMeeting",
-                                       mapping={'state_info': item_transition_name},
+                                       mapping={'state_info': safe_unicode(item_transition_name)},
                                        context=self.REQUEST)
             res_transitions.append((id, translated_msg))
         res = res + DisplayList(res_transitions).sortedByValue()

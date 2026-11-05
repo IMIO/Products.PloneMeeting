@@ -11,6 +11,11 @@ Changelog
   used in the `tal_condition`, existing searches with a not customized `tal_condition`
   are migrated.
   [gbastien]
+- Fixed `MeetingConfig.getItemWFValidationLevels` where the
+  `translated_itemWFValidationLevels` REQUEST key set to `False` was disabling
+  translation even when explicitly asked, this was leading to an `UnicodeDecodeError`
+  in `MeetingConfig.listItemEvents` when using transition titles with special characters.
+  [gbastien]
 
 
 4.2.21rc6 (2026-11-04)
