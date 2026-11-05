@@ -28,6 +28,7 @@ from email import Encoders
 from email.MIMEBase import MIMEBase
 from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
+from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_current_user_id
 from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.content import base_getattr
@@ -83,6 +84,7 @@ from Products.PloneMeeting.config import AddAnnex
 from Products.PloneMeeting.config import AddAnnexDecision
 from Products.PloneMeeting.config import ADVICE_STATES_ENDED
 from Products.PloneMeeting.config import ADVICE_STATES_MAPPING
+from Products.PloneMeeting.config import GROUP_MANAGING_ITEM_PG_PREFIX
 from Products.PloneMeeting.config import PloneMeetingError
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import REINDEX_NEEDED_MARKER
@@ -679,13 +681,19 @@ def sendMailIfRelevant(obj,
     userIds = []
     membershipTool = api.portal.get_tool('portal_membership')
     if isSuffix:
-        org_uid = obj.adapted()._getGroupManagingItem(obj.query_state(), theObject=False)
-        plone_group = get_plone_group(org_uid, value)
-        if not plone_group:
+        org_uids = obj.get_orgs_managing_item(cfg, obj.query_state())
+        plone_groups = []
+        for org_uid in org_uids:
+            plone_group = get_plone_group(org_uid, value)
+            if plone_group:
+                plone_groups.append(plone_group)
+        if not plone_groups:
             # maybe the suffix is a MeetingConfig related suffix, like _meetingmanagers
             plone_group = get_plone_group(cfg.getId(), value)
-        if plone_group:
-            userIds = plone_group.getGroupMemberIds()
+            if plone_group:
+                plone_groups.append(plone_group)
+        for plone_group in plone_groups:
+            userIds += list(plone_group.getGroupMemberIds())
     elif isRole:
         if value == 'Owner':
             userIds = [obj.Creator()]
@@ -2167,9 +2175,13 @@ def checkMayQuickEdit(obj,
     tool = api.portal.get_tool('portal_plonemeeting')
     res = False
     meeting = obj.getTagName() == "Meeting" and obj or (obj.hasMeeting() and obj.getMeeting())
+    # we _base_extra_expr_ctx when calling _evaluateExpression for performance...
     if (not onlyForManagers or (onlyForManagers and tool.isManager(tool.getMeetingConfig(obj)))) and \
        (bypassWritePermissionCheck or _checkPermission(permission, obj)) and \
-       (_evaluateExpression(obj, expression)) and \
+       (_evaluateExpression(
+            obj,
+            expression,
+            extra_expr_ctx=dict(_base_extra_expr_ctx(obj).items() + {'in_check_may_quick_edit': True}.items()))) and \
        (not (not bypassMeetingClosedCheck and
         meeting and
         meeting.query_state() in Meeting.MEETINGCLOSEDSTATES) or
@@ -2260,6 +2272,15 @@ def duplicate_portal_type(portalTypeName, duplicatedPortalTypeId):
     return duplicatedPortalType
 
 
+def get_group_managing_item_suffix(group_managing_item):
+    '''Return the suffix of a MeetingConfig.itemWFValidationLevels group managing item,
+       that is either "proposing_group__suffix" or a Plone group id "org_uid_suffix".
+       A suffix may contain a "_" so we only split on the first "_".'''
+    if group_managing_item.startswith(GROUP_MANAGING_ITEM_PG_PREFIX):
+        return group_managing_item[len(GROUP_MANAGING_ITEM_PG_PREFIX):]
+    return group_managing_item.split('_', 1)[-1]
+
+
 def get_item_validation_wf_suffixes(cfg, org_uid=None, only_enabled=True):
     """Returns suffixes related to MeetingItem validation WF,
        so the 'creators', 'observers' and suffixes managed by
@@ -2282,8 +2303,7 @@ def get_item_validation_wf_suffixes(cfg, org_uid=None, only_enabled=True):
     else:
         config_extra_suffixes = cfg.getItemWFValidationLevels(
             data='extra_suffixes', only_enabled=only_enabled)
-    # flatten, config_extra_suffixes is a list of lists
-    config_extra_suffixes = list(itertools.chain.from_iterable(config_extra_suffixes))
+    # remove duplicates
     suffixes = list(set(base_suffixes + config_suffixes + config_extra_suffixes))
     if org_uid:
         # only return suffixes that are available for p_org
@@ -2292,81 +2312,62 @@ def get_item_validation_wf_suffixes(cfg, org_uid=None, only_enabled=True):
     return suffixes
 
 
-def compute_item_roles_to_assign_to_suffixes_cachekey(method, cfg, item, item_state, org_uid=None):
-    '''cachekey method for compute_item_roles_to_assign_to_suffixes.'''
-    # we do not use item in the key, cfg and item_state is sufficient
-    return cfg.getId(), cfg.modified(), item_state, org_uid
+def get_last_validation_state(item, cfg, before_last=False, return_level=False):
+    '''Last validation state is validation level state defined in
+       MeetingConfig.itemWFValidationLevels for which the linked
+       suffixed Plone group is not empty.
+       If p_before_last=True, then we return before_last level.
+       If p_return_level=True we return the last validation state and
+       the full validation level from cfg.getItemWFValidationLevels.
+       Result is ram.cached when no enabled validation level uses an
+       "available_on" TAL expression as it may depend on context.'''
+    if cfg.getItemWFValidationLevels(data='available_on', only_enabled=True):
+        return _get_last_validation_state(item, cfg, before_last, return_level)
+    res = _get_last_validation_state_cached(item, cfg, before_last, return_level)
+    if return_level:
+        # avoid cached level being modified
+        return res[0], dict(res[1])
+    return res
 
 
-@ram.cache(compute_item_roles_to_assign_to_suffixes_cachekey)
-def compute_item_roles_to_assign_to_suffixes(cfg, item, item_state, org_uid=None):
-    """ """
-    apply_meetingmanagers_access = True
-    suffix_roles = {}
+def _get_last_validation_state_cachekey(method, item, cfg, before_last=False, return_level=False):
+    '''cachekey method for _get_last_validation_state_cached.'''
+    # without "available_on", result only depends on the groups managing item,
+    # so on the proposingGroup, the Plone groups content and the MeetingConfig
+    return get_cachekey_volatile('_users_groups_value'), \
+        item.getProposingGroup(), cfg.getId(), cfg._p_mtime, before_last, return_level
 
-    # roles given to item_state are managed automatically
-    # it is possible to manage it manually for extra states (coming from wfAdaptations for example)
-    # try to find corresponding item state
-    corresponding_auto_item_state = cfg.adapted().get_item_corresponding_state_to_assign_local_roles(
-        item_state)
-    if corresponding_auto_item_state:
-        item_state = corresponding_auto_item_state
-    else:
-        # if no corresponding item state, check if we manage state suffix roles manually
-        apply_meetingmanagers_access, suffix_roles = cfg.adapted().get_item_custom_suffix_roles(
-            item, item_state)
 
-    # find suffix_roles if it was not managed manually
-    if suffix_roles:
-        return apply_meetingmanagers_access, suffix_roles
+@ram.cache(_get_last_validation_state_cachekey)
+def _get_last_validation_state_cached(item, cfg, before_last=False, return_level=False):
+    '''See get_last_validation_state.'''
+    return _get_last_validation_state(item, cfg, before_last, return_level)
 
-    # we get every states, including disabled ones so for example we may use
-    # "itemcreated" even if it is disabled
-    item_val_levels_states = cfg.getItemWFValidationLevels(
-        data='state', only_enabled=False)
 
-    # by default, observers may View in every states as well as creators
-    # for observers, this also depends on MeetingConfig.itemObserversStates if defined
-    suffix_roles = {'creators': ['Reader'], }
-    if not cfg.getItemObserversStates() or item_state in cfg.getItemObserversStates():
-        suffix_roles['observers'] = ['Reader']
-
-    # MeetingConfig.itemWFValidationLevels
-    # states before validated
-    if item_state in item_val_levels_states:
-        # find Editor suffixes
-        # walk every defined validation levels so we give 'Reader'
-        # to levels already behind us
-        for level in cfg.getItemWFValidationLevels(only_enabled=False):
-            suffixes = [level['suffix']] + list(level['extra_suffixes'])
-            for suffix in suffixes:
-                if suffix not in suffix_roles:
-                    suffix_roles[suffix] = []
-                # 'Contributor' will allow add annex decision
-                given_roles = ['Reader', 'Contributor']
-                # we are on the current state
-                if level['state'] == item_state:
-                    given_roles.append('Editor')
-                    given_roles.append('Reviewer')
-                for role in given_roles:
-                    if role not in suffix_roles[suffix]:
-                        suffix_roles[suffix].append(role)
-            if level['state'] == item_state:
+def _get_last_validation_state(item, cfg, before_last=False, return_level=False):
+    '''See get_last_validation_state.'''
+    levels = list(cfg.getItemWFValidationLevels(
+        item=item, render_proposing_group=True, only_enabled=True))
+    res = 'itemcreated'
+    # get suffixed Plone group in reverse order of defined validation levels
+    levels.reverse()
+    found_last = False
+    found_before_last = False
+    level = {}
+    wf_conditions = item.wfConditions()
+    for level in levels:
+        if wf_conditions.is_valid_validation_level(level['state']):
+            res = level['state']
+            if found_last:
+                found_before_last = True
+            else:
+                found_last = True
+            if (found_last and not before_last) or found_before_last:
                 break
-
-    # states out of item validation (validated and following states)
+    if return_level:
+        return res, level
     else:
-        # every item validation suffixes get View access
-        # we also give the Contributor except to 'observers'
-        # so every editors roles get the "PloneMeeting: Add decision annex"
-        # permission that let add decision annex
-        for suffix in get_item_validation_wf_suffixes(cfg, org_uid):
-            given_roles = ['Reader']
-            if item.may_add_annex_decision(cfg, item_state) and suffix != 'observers':
-                given_roles.append('Contributor')
-            suffix_roles[suffix] = given_roles
-
-    return apply_meetingmanagers_access, suffix_roles
+        return res
 
 
 def is_proposing_group_editor(org_uid, cfg, suffixes=[]):
@@ -2489,12 +2490,16 @@ def _base_extra_expr_ctx(obj, extra_ctx={}):
     cfg = tool.getMeetingConfig(obj)
     # member, context and portal are managed by
     # collective.behavior.talcondition or collective.documentgenerator
+    item = obj if obj.__class__.__name__ == 'MeetingItem' else None
+    meeting = obj if obj.__class__.__name__ == 'Meeting' else \
+        (item.getMeeting() if item else None)
     data = {'obj': obj,
             'tool': tool,
             'cfg': cfg,
             # backward compatibility
             'meetingConfig': cfg,
-            'meeting': obj.getMeeting() if obj.__class__.__name__ == 'MeetingItem' else None,
+            'item': item,
+            'meeting': meeting,
             # backward compatibility, "member" will be available by default
             'user': api.user.get_current(),
             'catalog': api.portal.get_tool('portal_catalog'),

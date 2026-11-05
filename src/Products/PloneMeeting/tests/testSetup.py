@@ -5,11 +5,14 @@
 # GNU General Public License (GPL)
 #
 
+from collective.documentgenerator.config import set_raiseOnError_for_non_managers
 from imio.helpers.content import object_values
 from pkgutil import iter_importers
 from plone import api
 from Products.GenericSetup.context import DirectoryImportContext
+from Products.PloneMeeting.config import GROUP_MANAGING_ITEM_PG_PREFIX
 from Products.PloneMeeting.config import HAS_SOLR
+from Products.PloneMeeting.exportimport.content import adapt_item_wf_validation_level
 from Products.PloneMeeting.exportimport.content import ToolInitializer
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
@@ -69,11 +72,7 @@ class testSetup(PloneMeetingTestCase):
            containing an import_data works as expected."""
         ToolInitializer.getProfileData = getProfileData
         self.changeUser('admin')
-
-        api.portal.set_registry_record(
-            'collective.documentgenerator.browser.controlpanel.'
-            'IDocumentGeneratorControlPanelSchema.raiseOnError_for_non_managers',
-            True)
+        set_raiseOnError_for_non_managers(True)
 
         # get current package name based on testing layer
         profile_names = self._currentSetupProfileNames(excluded=(':default', ':testing'))
@@ -194,6 +193,30 @@ class testSetup(PloneMeetingTestCase):
         self.portal.portal_setup.runAllImportStepsFromProfile(u'profile-' + profile_name)
         # restrictUsers is still True
         self.assertTrue(self.tool.restrictUsers)
+
+    def test_pm_AdaptItemWFValidationLevel(self):
+        """Profiles define fixed groups managing item with organization ids."""
+        self.changeUser('siteadmin')
+        # fixed groups defined with organization ids
+        self.assertEqual(
+            adapt_item_wf_validation_level(
+                {'state': 'proposed',
+                 'group_managing_item': 'vendors_reviewers',
+                 'extra_groups_managing_item': [GROUP_MANAGING_ITEM_PG_PREFIX + 'observers', 'developers_observers'],
+                 'available_on': 'python: True',
+                 'enabled': '1'}),
+            {'state': 'proposed',
+             'group_managing_item': self.vendors_reviewers,
+             'extra_groups_managing_item': [GROUP_MANAGING_ITEM_PG_PREFIX + 'observers', self.developers_observers],
+             'available_on': 'python: True',
+             'enabled': '1'})
+        # already adapted values are kept
+        level = {'state': 'proposed',
+                 'group_managing_item': self.vendors_reviewers,
+                 'extra_groups_managing_item': [],
+                 'available_on': '',
+                 'enabled': '1'}
+        self.assertEqual(adapt_item_wf_validation_level(level), level)
 
     def test_pm_TypesNotSearched(self):
         """Searchable types are only items and meetings of existing MeetingConfigs."""

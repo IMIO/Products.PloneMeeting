@@ -497,47 +497,39 @@ class PloneMeetingTestingHelpers(object):
         """Enable the 'prevalidated' state in MeetingConfig.itemWFValidationLevels."""
         currentUser = self.member.getId()
         self.changeUser('admin')
-        itemWFValidationLevels = cfg.getItemWFValidationLevels()
-        itemWFValidationLevels[1]['suffix'] = 'prereviewers'
+        itemWFValidationLevels = cfg.getItemWFValidationLevels(include_disabled_validated=True)
+        itemWFValidationLevels[1]['group_managing_item'] = 'proposing_group__prereviewers'
         itemWFValidationLevels[2]['enabled'] = '1'
         if enable_extra_suffixes:
-            itemWFValidationLevels[2]['extra_suffixes'] = ['reviewers']
+            itemWFValidationLevels[2]['extra_groups_managing_item'] = ['proposing_group__reviewers']
         cfg.setItemWFValidationLevels(itemWFValidationLevels)
         notify(ObjectEditedEvent(cfg))
         self.changeUser(currentUser)
 
-    def _updateItemValidationLevel(self, cfg, level=None, enable=True, **kwargs):
+    def _updateItemValidationLevel(self, cfg, item_state=None, **kwargs):
         """Utility method that enable/disable item validation levels."""
         currentUser = self.member.getId()
         self.changeUser('admin')
-        itemValLevels = cfg.getItemWFValidationLevels()
+        itemValLevels = cfg.getItemWFValidationLevels(include_disabled_validated=True)
         for itemValLevel in itemValLevels:
-            if not level or itemValLevel['state'] == level:
-                itemValLevel['enabled'] = enable and '1' or '0'
-                for k in itemValLevel.keys():
-                    if k in kwargs:
-                        itemValLevel[k] = kwargs[k]
+            # the 'validated' level is only updated when explicitly given
+            if (not item_state and itemValLevel['state'] != 'validated') or \
+               itemValLevel['state'] == item_state:
+                for k, v in kwargs.items():
+                    itemValLevel[k] = v
         cfg.setItemWFValidationLevels(itemValLevels)
         notify(ObjectEditedEvent(cfg))
         self.changeUser(currentUser)
 
-    def _enableItemValidationLevel(self, cfg, level=None, suffix=None):
+    def _enableItemValidationLevel(self, cfg, item_state=None, **kwargs):
         """Enable one or every item validation levels."""
-        kwargs = {}
-        if level is not None:
-            kwargs['level'] = level
-        if suffix is not None:
-            kwargs['suffix'] = suffix
-        self._updateItemValidationLevel(cfg, enable=True, **kwargs)
+        kwargs['enabled'] = '1'
+        self._updateItemValidationLevel(cfg, item_state, **kwargs)
 
-    def _disableItemValidationLevel(self, cfg, level=None, suffix=None):
+    def _disableItemValidationLevel(self, cfg, item_state=None, **kwargs):
         """Disable one or every item validation levels."""
-        kwargs = {}
-        if level is not None:
-            kwargs['level'] = level
-        if suffix is not None:
-            kwargs['suffix'] = suffix
-        self._updateItemValidationLevel(cfg, enable=False, **kwargs)
+        kwargs['enabled'] = '0'
+        self._updateItemValidationLevel(cfg, item_state, **kwargs)
 
     def _setUpOrderedContacts(
             self,

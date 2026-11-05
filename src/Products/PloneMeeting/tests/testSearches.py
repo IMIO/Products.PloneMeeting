@@ -20,6 +20,7 @@ from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.PloneMeeting.adapters import _find_nothing_query
+from Products.PloneMeeting.config import GROUP_MANAGING_ITEM_PG_PREFIX
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.utils import getAdvicePortalTypes
@@ -881,7 +882,48 @@ class testSearches(PloneMeetingTestCase):
         self.failUnless(len(collection.results()) == 1)
         self.failUnless(collection.results()[0].UID == item2.UID())
 
-    def test_pm_SearchItemsToCorrect(self):
+    def test_pm_SearchItemsToCorrectGroupsManagingItemSuffixes(self):
+        '''The 'items-to-correct' query uses the suffixes of the groups managing the item
+           (group_managing_item and extra_groups_managing_item) in the corresponding
+           validation state, a suffix contained in another suffix does not match.'''
+        cfg = self.meetingConfig
+        if not self._check_wfa_available(['return_to_proposing_group']):
+            return
+        self._activate_wfas(('return_to_proposing_group', ))
+        itemTypeName = cfg.getItemTypeName()
+        adapter = getAdapter(cfg,
+                             ICompoundCriterionFilter,
+                             name='items-to-correct')
+        developers_query = {
+            'portal_type': {'query': itemTypeName},
+            'reviewProcessInfo': {
+                'query': ['{0}__reviewprocess__returned_to_proposing_group'.format(self.developers_uid)]}}
+        corresponding_item_state = cfg.adapted().get_item_corresponding_state_to_assign_local_roles(
+            'returned_to_proposing_group')
+        self._updateItemValidationLevel(
+            cfg,
+            corresponding_item_state,
+            group_managing_item=GROUP_MANAGING_ITEM_PG_PREFIX + 'prereviewers',
+            extra_groups_managing_item=[])
+        # 'reviewers' is contained in 'prereviewers' but does not match
+        self.changeUser('pmReviewer1')
+        self.assertFalse(self.developers_prereviewers in self.member.getGroups())
+        cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstocorrect')
+        self.assertEqual(adapter.query, _find_nothing_query(itemTypeName))
+        # member of the group managing item
+        self._addPrincipalToGroup('pmReviewer1', self.developers_prereviewers)
+        cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstocorrect')
+        self.assertEqual(adapter.query, developers_query)
+        # member of an extra group managing item
+        self._removePrincipalFromGroups('pmReviewer1', [self.developers_prereviewers])
+        self._updateItemValidationLevel(
+            cfg,
+            corresponding_item_state,
+            extra_groups_managing_item=[GROUP_MANAGING_ITEM_PG_PREFIX + 'reviewers'])
+        cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstocorrect')
+        self.assertEqual(adapter.query, developers_query)
+
+    def test_pm_SearchItemsToCorrectDefault(self):
         '''Test the 'items-to-correct' CompoundCriterion adapter.  This should return
            a list of items in state 'returned_to_proposing_group' the current user is able to edit.'''
         cfg = self.meetingConfig
@@ -933,8 +975,9 @@ class testSearches(PloneMeetingTestCase):
         self.do(developersItem, 'return_to_proposing_group')
         self.do(vendorsItem, 'return_to_proposing_group')
 
-        # pmManager may only edit developersItem
+        # pmManager may only manage developersItem
         self.assertTrue(self.hasPermission(ModifyPortalContent, developersItem))
+        self.assertTrue(self.hasPermission(ModifyPortalContent, vendorsItem))
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstocorrect')
         res = collection.results()
         self.failUnless(len(res) == 1)
@@ -1133,7 +1176,6 @@ class testSearches(PloneMeetingTestCase):
             wfAdaptations.remove('return_to_proposing_group')
         cfg.setWorkflowAdaptations(wfAdaptations)
         self._enablePrevalidation(cfg)
-        notify(ObjectEditedEvent(cfg))
 
         # normally this search is not available to users that are not able to review items
         # nevertheless, if a user is in not able to edit items to correct in proposed, the special

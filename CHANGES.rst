@@ -2,53 +2,127 @@ Changelog
 =========
 
 
-4.2.28.25 (unreleased)
+4.2.21rc7 (unreleased)
 ----------------------
 
-- Adapted `MeetingItem.validate_category` and `MeetingItem.validate_classifier`
-  to check that the selected `proposingGroup` is among the
-  `MeetingCategory.using_groups` when defined (not checked for real Managers).
+- Hide the `searchdecideditems` and `searchunreaddecideditems` searches when the
+  item WF does not have any decided state (when using the `no_meeting` WFA without
+  a WFA deciding items out of meeting), added `MeetingConfig.has_item_decided_states`
+  used in the `tal_condition`, existing searches with a not customized `tal_condition`
+  are migrated.
   [gbastien]
-- Fixed `MeetingItem.listMeetingsAcceptingItems` when meeting title contains
-  special characters (month name or meeting category id) and is no more
-  a meeting accepting items.
+- Fixed `MeetingConfig.getItemWFValidationLevels` where the
+  `translated_itemWFValidationLevels` REQUEST key set to `False` was disabling
+  translation even when explicitly asked, this was leading to an `UnicodeDecodeError`
+  in `MeetingConfig.listItemEvents` when using transition titles with special characters.
   [gbastien]
-- Add 2027 holidays in profile.
-  [aduchene]
-- Added batch action `UpdateProposingGroupBatchActionForm` to update the
-  `proposingGroup` (or `proposingGroupWithGroupInCharge` when used) of
-  selected items, only available to real `Managers` on items dashboards.
-  Selected items must have the same `proposingGroup`.
+
+
+4.2.21rc6 (2026-11-04)
+----------------------
+
+- Replaced columns `suffix/extra_suffixes` of `MeetingConfig.itemWFValidationLevels`
+  by `group_managing_item/extra_groups_managing_item` so a validation level may be
+  managed by another group than the proposing group (special value
+  `proposing_group__<suffix>` or a fixed Plone group) and added column `available_on`,
+  a TAL expression to make a validation level available or not.
+  Profiles must use the new columns, fixed groups managing item are defined with
+  organization ids (like `developers_reviewers`) that are turned into uids when imported.
+  Removed `MeetingItem._getGroupManagingItem`, `MeetingItem._getAllGroupsManagingItem`
+  and `MeetingItemWorkflowConditions._getLastValidationState`, use
+  `MeetingItem.get_orgs_managing_item`, `MeetingItem.get_all_plone_groups_accessing_item`
+  and `utils.get_last_validation_state` instead.
+  Removed `utils.compute_item_roles_to_assign_to_suffixes` and
+  `MeetingItem._assign_roles_to_all_groups_managing_item_suffixes`.
+  `MeetingConfig.get_item_custom_suffix_roles` must now return `{org_uid: {suffix: roles}}`.
+  `MeetingItemWorkflowConditions._userIsPGMemberAbleToSendItemBack` and
+  `_userIsPGMemberAbleToSendItemBackExtraCondition` no more receive the proposing group uid
+  and `MeetingItem.get_enable_clone_to_other_mc_fields` no more receives the `cfg`.
+  See #MPMCHAC-5.
   [gbastien]
-- Adapted `Migrator.updateHolidays` to be able to pass arbitrary new holiday
-  values so it can be called directly from the `add_holidays.py` script.
+- When using `MeetingConfig.itemWFValidationLevels` to generate the `waiting_advices`
+  state (WFAs `waiting_advices_from_every_val_levels`,
+  `waiting_advices_from_before_last_val_level` or `waiting_advices_from_last_val_level`),
+  the state is now `any_validation_state_waiting_advices` instead of a state id
+  concatenating every validation states with `__or__`, existing items are migrated.
+  See #MPMCHAC-5.
   [gbastien]
-- Hide fields `MeetingItem.copyGroups`, `MeetingItem.restrictedCopyGroups` and
-  `MeetingItem.selectableAdvisers` if it is empty, it can be the case when the
-  functionality is enabled but we are only using auto values.
+- Added new field `MeetingItem.motivationSuite` displayed after `MeetingItem.motivation`
+  and kept when an item is duplicated.
   [gbastien]
-- Hide batch action `UpdateCopyGroupsBatchActionForm` when
-  `MeetingConfig.selectableCopyGroups` is empty, it is the case when copy groups
-  are only set automatically (`organization.as_copy_group_on`).
+- Added fields `MeetingItem.otherMeetingConfigsClonableToFieldItemReference` and
+  `MeetingItem.otherMeetingConfigsClonableToFieldMotivationSuite` used when sending
+  an item to another `MeetingConfig`.  `MeetingItem.itemReference` is now an optional
+  field, when enabled in `MeetingConfig.usedItemAttributes` it is editable in the item edit form,
+  the reference is then manually managed: it is kept and always shown, `MeetingConfig.itemReferenceFormat`
+  and `MeetingConfig.computeItemReferenceForItemsOutOfMeeting` are ignored.
   [gbastien]
-- Added batch action `UpdateRestrictedCopyGroupsBatchActionForm` to update the
-  `restrictedCopyGroups` of selected items, only available to `MeetingManagers`.
-  Factorized it with `UpdateCopyGroupsBatchActionForm` in
-  `BaseUpdateCopyGroupsBatchActionForm`, the copy groups batch action now only
-  proposes `MeetingConfig.selectableCopyGroups` (no more selectable restricted
-  copy groups).
+- Added `MeetingConfig.meetingConfigsToCloneToEditFieldsTALExpr`, a TAL expression
+  to define if `MeetingItem.otherMeetingConfigsClonableToFieldXXX` fields are editable
+  in the item edit form and in the item view (quick edit), `field_name` is available
+  in the expression context.  `utils.checkMayQuickEdit` passes `in_check_may_quick_edit=True`
+  in the expression context.  See #DLIBBDC-3383.
   [gbastien]
-- Fixed bug where it was not possible to remove a not used `category` if a
-  `classifier` with same `id` was used.
+- The `available_on` of a `MeetingConfig.itemWFValidationLevels` level is now passed
+  to the `mayProposeToNextValidationLevel` guard of the transitions leading to it
+  (like it is already the case for `mayValidate`) so it is visible when auditing
+  the workflow.  Added parameter `available_on=None` to
+  `MeetingItemWorkflowConditions.mayProposeToNextValidationLevel`,
+  `MeetingItemWorkflowConditions._mayShortcutToValidationLevel` and
+  `MeetingItemWorkflowConditions.is_valid_validation_level`, when given it is used
+  instead of the `available_on` defined on the level.  See #DLIBBDC-3383.
   [gbastien]
-- Disable `webspellchecker` in datagrid inputs (mainly used in `MeetingConfig`).
+- Added migration to 4217.4 that migrates `MeetingConfig.itemWFValidationLevels`
+  to the `group_managing_item/extra_groups_managing_item/available_on` columns,
+  items in the `waiting_advices` state and the committees editors searches condition
+  (moved from migration to 4215) and reloads every `MeetingConfigs`.
+  Old `waiting_advices` state ids are also looked up among states used by items
+  to manage items in a state generated before a validation level was enabled.
   [gbastien]
-- Added parameter `check_is_privacy_viewable=True` to `MeetingItem.show_field`
-  so when using `MeetingConfig.restrictAccessToSecretItems`, the field is not
-  viewable when rendered in a POD template or other indirect access.
+- Added privacies `public_ending` and `secret_ending`.  When inserting items
+  `on_privacy`, an item using a privacy that is not selectable is inserted
+  at the end instead of raising an error.
   [gbastien]
-- Fix check `scan_id` in migration to 4210
-  [jchandelle]
+- Added parameter `days=60` to `ToolPloneMeeting.showHolidaysWarning`.
+  [gbastien]
+- Added parameters `the_objects=False` and `by_signature_number=False` to
+  `browser.meeting.get_default_signatories`, when `by_signature_number=True` and
+  several signatories use the same `signature_number`, the first in contacts order is kept.
+  [gbastien]
+- Added parameter `portal_type=None` to `MeetingItem.get_predecessor` and
+  `MeetingItem.get_predecessors` to only get predecessors of a given `portal_type`.
+  [gbastien]
+- Collections `searchitemsofmycommittees` and `searchitemsofmycommitteeseditable`
+  are only available when committees editors are used, `MeetingConfig.is_committees_using`
+  does not consider disabled committees (committees enabled `item_only` are considered)
+  and a `"0"` value is considered not used, existing collections are migrated.
+  [gbastien]
+- Moved the vocabulary of `MeetingConfig.selectableCopyGroups` and
+  `MeetingConfig.selectableRestrictedCopyGroups` to the cached vocabulary
+  `Products.PloneMeeting.vocabularies.suffixed_plone_groups_vocabulary`,
+  also used by the new `Products.PloneMeeting.vocabularies.groups_managing_item_vocabulary`.
+  [gbastien]
+- `Migrator.updateWFStatesAndTransitions` also updates the item states stored on
+  organizations (`item_advice_states`, `item_advice_edit_states` and
+  `item_advice_view_states`, organizations without value are ignored)
+  and only reindexes the `review_state` and review_state related indexes of updated elements.
+  Added parameter `cfg_ids=[]` to only update the attributes of given `MeetingConfigs`.
+  Replaced `MeetingItem.getReviewStateRelatedIndexes` by constant
+  `config.ITEM_REVIEW_STATE_RELATED_INDEXES` (no more adaptable but may be extended).
+  [gbastien]
+- `MeetingConfig` fields holding a TAL expression (`itemConditionsInterface`,
+  `itemActionsInterface`, `meetingConditionsInterface`, `meetingActionsInterface`
+  and `votesResultTALExpr`) are larger and accept up to 750 characters,
+  `MeetingConfig.voteCondition` is now a text area.
+  [gbastien]
+- Variable `item` is now available in every TAL expression evaluated with
+  `utils._base_extra_expr_ctx`, `meeting` is also defined when the context is a meeting.
+  [gbastien]
+- Use `imio.helpers.cache.obj_modified` in the item actions panel cache key
+  to check if the item was actually modified.
+  [gbastien]
+- The committees `convocation_date` date picker starts weeks on monday.
+  [gbastien]
 - Added workflow adaptation `no_meeting` that removes item states in which
   an item is linked to a meeting (every states of the base `meetingitem_workflow`
   except `validated`), the item workflow ends at `validated`.
@@ -103,6 +177,85 @@ Changelog
   validation state so it works when `proposed` is mapped to another state
   in subproducts (like `Products.MeetingCharleroi`).
   [gbastien]
+- Fixed test `test_pm_SendMailIfRelevantIsGroupIds` to pass `item_state` instead
+  of `level` to `_updateItemValidationLevel` so only the `proposed` validation level
+  titles are updated and not every validation level.
+  [gbastien]
+- Fixed `PMCategorizedObjectInfoAdapter._suffix_proposinggroup` that only took into account
+  the first `suffix_proposing_group_xxx` value when no item is given (like for labels access)
+  and that matched suffixes ending with the selected suffix (`reviewers` was matching
+  `prereviewers` and `level1reviewers`), suffix must now be exactly the selected suffix.
+  [gbastien]
+- Fixed `MeetingItemWorkflowConditions.mayValidate`, the `available_on` of the
+  `validated` level of `MeetingConfig.itemWFValidationLevels` is bypassed for `Manager`
+  also when using `adopt_roles` (when presenting recurring items or sending an item
+  to another `MeetingConfig`), and not only for real Managers.
+  [gbastien]
+- Fixed `MeetingItem.mayAskAdviceAgain` when item is in a waiting advices state
+  using a custom `new_state_id` defined in `WAITING_ADVICES_FROM_STATES`, the
+  `from_states` were never found (and a `KeyError` was raised if `new_state_id`
+  was not defined).
+  [gbastien]
+
+4.2.21rc5 (2026-10-16)
+----------------------
+
+- Made the `validated` state configurable in `MeetingConfig.itemWFValidationLevels`:
+  an optional `validated` row (always disabled, must be the last row) does not
+  create a new state but is used to change the `validated` state title,
+  the `validate`/`backToValidated` transitions title and to define an
+  `available_on` condition on the `validate` transition
+  (bypassed for real Managers, `shortcut` and `back_transition` available).
+  `MeetingConfig.validate_itemWFValidationLevels` checks that this row uses
+  `validate`, `backToValidated`, `proposing_group__observers` and no extra groups
+  managing item. Added parameter `include_disabled_validated` to
+  `MeetingConfig.getItemWFValidationLevels`, the `validated` row is not returned
+  by default. See #DLIBBDC-3383.
+  [gbastien]
+- Adapted `MeetingItem.validate_category` and `MeetingItem.validate_classifier`
+  to check that the selected `proposingGroup` is among the
+  `MeetingCategory.using_groups` when defined (not checked for real Managers).
+  [gbastien]
+- Fixed `MeetingItem.listMeetingsAcceptingItems` when meeting title contains
+  special characters (month name or meeting category id) and is no more
+  a meeting accepting items.
+  [gbastien]
+- Add 2027 holidays in profile.
+  [aduchene]
+- Added batch action `UpdateProposingGroupBatchActionForm` to update the
+  `proposingGroup` (or `proposingGroupWithGroupInCharge` when used) of
+  selected items, only available to real `Managers` on items dashboards.
+  Selected items must have the same `proposingGroup`.
+  [gbastien]
+- Adapted `Migrator.updateHolidays` to be able to pass arbitrary new holiday
+  values so it can be called directly from the `add_holidays.py` script.
+  [gbastien]
+- Hide fields `MeetingItem.copyGroups`, `MeetingItem.restrictedCopyGroups` and
+  `MeetingItem.selectableAdvisers` if it is empty, it can be the case when the
+  functionality is enabled but we are only using auto values.
+  [gbastien]
+- Hide batch action `UpdateCopyGroupsBatchActionForm` when
+  `MeetingConfig.selectableCopyGroups` is empty, it is the case when copy groups
+  are only set automatically (`organization.as_copy_group_on`).
+  [gbastien]
+- Added batch action `UpdateRestrictedCopyGroupsBatchActionForm` to update the
+  `restrictedCopyGroups` of selected items, only available to `MeetingManagers`.
+  Factorized it with `UpdateCopyGroupsBatchActionForm` in
+  `BaseUpdateCopyGroupsBatchActionForm`, the copy groups batch action now only
+  proposes `MeetingConfig.selectableCopyGroups` (no more selectable restricted
+  copy groups).
+  [gbastien]
+- Fixed bug where it was not possible to remove a not used `category` if a
+  `classifier` with same `id` was used.
+  [gbastien]
+- Disable `webspellchecker` in datagrid inputs (mainly used in `MeetingConfig`).
+  [gbastien]
+- Added parameter `check_is_privacy_viewable=True` to `MeetingItem.show_field`
+  so when using `MeetingConfig.restrictAccessToSecretItems`, the field is not
+  viewable when rendered in a POD template or other indirect access.
+  [gbastien]
+- Fix check `scan_id` in migration to 4210
+  [jchandelle]
 
 4.2.28.24 (2026-09-30)
 ----------------------
@@ -256,6 +409,15 @@ Changelog
 - Make `imio.actionspanel` viewlet always viewable at bottom of `DashboardCollection`.
   [gbastien]
 
+4.2.21rc3 (2026-04-20)
+----------------------
+
+- Now that `IContentDeletable` adapter is used in `@@delete-batch-action` of
+  `collective.eeafaceted.batchactions`, this fixed the delete annexes batch
+  action that was failing when using WFA `only_creator_may_delete` and item was
+  no more in state `itemcreated`.
+  [gbastien]
+
 4.2.28.16 (2026-05-20)
 ----------------------
 
@@ -303,6 +465,20 @@ Changelog
 
 - Fixed `MeetingItem._bypass_write_perm_check_for`.
   [gbastien]
+- Now that `IContentDeletable` adapter is used in `@@delete-batch-action` of
+  `collective.eeafaceted.batchactions`, this fixed the delete annexes batch
+  action that was failing when using WFA `only_creator_may_delete` and item was
+  no more in state `itemcreated`.
+  [gbastien]
+- Added new field `MeetingItem.groupsInChargeNotes` configurable in
+  `MeetingConfig.itemFieldsConfig`.
+  [gbastien]
+- Adapted `ToolPloneMeeting.user_is_in_org` to be able to pass a list of
+  `org_id` or `org_uid`.
+  [gbastien]
+- Fixed JS code passing `external_user_id` to `@@load-external-infos`
+  to avoid JS injection.
+  [gbastien]
 
 4.2.28.14 (2026-04-24)
 ----------------------
@@ -325,7 +501,7 @@ Changelog
   uses a `.` in the version.
   [gbastien]
 
-4.2.28.11 (2026-04-24)
+4.2.21rc2 (2026-04-13)
 ----------------------
 
 - Fixed `actions_panel` cache that was causing `reviewers` sometimes not seeing
@@ -344,20 +520,6 @@ Changelog
   by defining a `description` on the `vocabulary term`.
   [gbastien]
 - Added new batch action `Insert barcode` on annexes and decision annexes.
-  [gbastien]
-- Now that `IContentDeletable` adapter is used in `@@delete-batch-action` of
-  `collective.eeafaceted.batchactions`, this fixed the delete annexes batch
-  action that was failing when using WFA `only_creator_may_delete` and item was
-  no more in state `itemcreated`.
-  [gbastien]
-- Added new field `MeetingItem.groupsInChargeNotes` configurable in
-  `MeetingConfig.itemFieldsConfig`.
-  [gbastien]
-- Adapted `ToolPloneMeeting.user_is_in_org` to be able to pass a list of
-  `org_id` or `org_uid`.
-  [gbastien]
-- Fixed JS code passing `external_user_id` to `@@load-external-infos`
-  to avoid JS injection.
   [gbastien]
 
 4.2.28.10 (2026-03-13)
