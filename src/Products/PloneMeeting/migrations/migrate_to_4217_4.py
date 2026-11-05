@@ -124,14 +124,24 @@ class Migrate_To_4217_4(Migrator):
         logger.info('Done.')
 
     def _updateSearchDecidedItemsCondition(self):
-        """The "searchdecideditems" search is only relevant when using meetings,
-           so hide it when using the "no_meeting" WFA.
-           Only update the search if its "tal_condition" was not customized."""
-        logger.info('Updating "searchdecideditems" TAL condition in every MeetingConfigs...')
+        """The "searchdecideditems" and "searchunreaddecideditems" searches are only relevant
+           when the item WF has decided states, so hide them when using the "no_meeting" WFA
+           without any WFA deciding items out of meeting.
+           Only update the searches if their "tal_condition" was not customized."""
+        logger.info('Updating decided items searches TAL condition in every MeetingConfigs...')
+        searches_conditions = {
+            'searchdecideditems': (
+                '',
+                "python: cfg.has_item_decided_states()"),
+            'searchunreaddecideditems': (
+                "python: 'labels' in cfg.getUsedItemAttributes()",
+                "python: 'labels' in cfg.getUsedItemAttributes() and "
+                "cfg.has_item_decided_states()")}
         for cfg in self.tool.objectValues('MeetingConfig'):
-            searchdecideditems = cfg.searches.searches_items.get('searchdecideditems')
-            if searchdecideditems and not searchdecideditems.tal_condition:
-                searchdecideditems.tal_condition = "python: cfg.is_using_meetings()"
+            for search_id, (old_condition, new_condition) in searches_conditions.items():
+                search = cfg.searches.searches_items.get(search_id)
+                if search and (search.tal_condition or '').strip() == old_condition:
+                    search.tal_condition = new_condition
         logger.info('Done.')
 
     def run(self, extra_omitted=[], from_migration_to_4200=False):
@@ -153,7 +163,7 @@ def migrate(context):
        1) Add "groups_managing_item" and "available_on" to every MeetingConfig.itemWFValidationLevels;
        2) Move item waiting_advices states to "any_validation_state_waiting_advices";
        3) Adapt committees editors searches "tal_condition";
-       4) Hide "searchdecideditems" when using the "no_meeting" WFA;
+       4) Hide decided items searches when the item WF does not have any decided state;
        5) Reload MeetingConfigs so item workflows are regenerated.
     """
     migrator = Migrate_To_4217_4(context)

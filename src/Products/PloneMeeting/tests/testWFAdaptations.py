@@ -1448,17 +1448,30 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertTrue(self.portal.portal_types[cfg.getMeetingTypeName()].global_allow)
 
     def test_pm_WFA_no_meeting_searchdecideditems(self):
-        '''The "searchdecideditems" search is hidden when using 'no_meeting'.'''
-        if not self._check_wfa_available(['no_meeting']):
+        '''The "searchdecideditems" and "searchunreaddecideditems" searches are hidden
+           when using 'no_meeting', except if items may be decided out of meeting.'''
+        if not self._check_wfa_available(['no_meeting', 'accepted_out_of_meeting']):
             return
         cfg = self.meetingConfig
-        adapted = ITALCondition(cfg.searches.searches_items.searchdecideditems)
+        self._enableField('labels')
+        searches = cfg.searches.searches_items
+        decided = ITALCondition(searches.searchdecideditems)
+        unread_decided = ITALCondition(searches.searchunreaddecideditems)
         # a not Manager user so tal_condition is not bypassed
         self.changeUser('pmManager')
         self._activate_wfas([])
-        self.assertTrue(adapted.evaluate())
+        self.assertTrue(cfg.has_item_decided_states())
+        self.assertTrue(decided.evaluate())
+        self.assertTrue(unread_decided.evaluate())
         self._activate_wfas(('no_meeting', ))
-        self.assertFalse(adapted.evaluate())
+        self.assertFalse(cfg.has_item_decided_states())
+        self.assertFalse(decided.evaluate())
+        self.assertFalse(unread_decided.evaluate())
+        # items may be decided out of meeting
+        self._activate_wfas(('no_meeting', 'accepted_out_of_meeting'))
+        self.assertTrue(cfg.has_item_decided_states())
+        self.assertTrue(decided.evaluate())
+        self.assertTrue(unread_decided.evaluate())
 
     def test_pm_WFA_no_meeting_usable(self):
         '''When using 'no_meeting', the application is usable: configuration,

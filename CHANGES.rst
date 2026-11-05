@@ -5,9 +5,11 @@ Changelog
 4.2.21rc7 (unreleased)
 ----------------------
 
-- Hide the `searchdecideditems` search when using the `no_meeting` WFA
-  (`tal_condition` is now `python: cfg.is_using_meetings()`), existing searches
-  with an empty `tal_condition` are migrated.
+- Hide the `searchdecideditems` and `searchunreaddecideditems` searches when the
+  item WF does not have any decided state (when using the `no_meeting` WFA without
+  a WFA deciding items out of meeting), added `MeetingConfig.has_item_decided_states`
+  used in the `tal_condition`, existing searches with a not customized `tal_condition`
+  are migrated.
   [gbastien]
 
 

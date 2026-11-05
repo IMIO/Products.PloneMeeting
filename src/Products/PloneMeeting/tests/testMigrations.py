@@ -161,17 +161,27 @@ class testMigrations(PloneMeetingTestCase):
                          "python: cfg.is_committees_using('enable_editors')")
 
     def test_pm_UpdateSearchDecidedItemsCondition(self):
-        '''"searchdecideditems" is hidden when using the "no_meeting" WFA,
-           a customized "tal_condition" is kept.'''
+        '''Decided items searches are hidden when the item WF does not have
+           any decided state, a customized "tal_condition" is kept.'''
         cfg = self.meetingConfig
         self.changeUser('siteadmin')
-        search = cfg.searches.searches_items.searchdecideditems
-        search.tal_condition = ''
+        decided = cfg.searches.searches_items.searchdecideditems
+        unread_decided = cfg.searches.searches_items.searchunreaddecideditems
+        decided_condition = "python: cfg.has_item_decided_states()"
+        unread_decided_condition = "python: 'labels' in cfg.getUsedItemAttributes() and " \
+            "cfg.has_item_decided_states()"
+        # old default conditions are migrated
+        decided.tal_condition = ''
+        unread_decided.tal_condition = "python: 'labels' in cfg.getUsedItemAttributes()"
         Migrate_To_4217_4(self.portal)._updateSearchDecidedItemsCondition()
-        self.assertEqual(search.tal_condition, "python: cfg.is_using_meetings()")
-        search.tal_condition = 'python: False'
+        self.assertEqual(decided.tal_condition, decided_condition)
+        self.assertEqual(unread_decided.tal_condition, unread_decided_condition)
+        # customized conditions are kept
+        decided.tal_condition = 'python: False'
+        unread_decided.tal_condition = 'python: True'
         Migrate_To_4217_4(self.portal)._updateSearchDecidedItemsCondition()
-        self.assertEqual(search.tal_condition, 'python: False')
+        self.assertEqual(decided.tal_condition, 'python: False')
+        self.assertEqual(unread_decided.tal_condition, 'python: True')
 
     def test_pm_Migrate_To_4217_4(self):
         '''MeetingConfig.itemWFValidationLevels using old "suffix/extra_suffixes" columns

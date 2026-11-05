@@ -3573,7 +3573,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: cfg.is_using_meetings()",
+                    'tal_condition': "python: cfg.has_item_decided_states()",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Unread decided items
@@ -3595,7 +3595,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: 'labels' in cfg.getUsedItemAttributes()",
+                    'tal_condition': "python: 'labels' in cfg.getUsedItemAttributes() and "
+                                     "cfg.has_item_decided_states()",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items of my committees
@@ -7382,6 +7383,16 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Is this MeetingConfig using meetings? This is not the case when
            using the 'no_meeting' wfAdaptation.'''
         return 'no_meeting' not in self.getWorkflowAdaptations()
+
+    security.declarePublic('has_item_decided_states')
+
+    def has_item_decided_states(self):
+        '''Does the item workflow have at least one decided state?
+           This is not the case when using the 'no_meeting' wfAdaptation
+           without any wfAdaptation deciding items out of meeting
+           ('accepted_out_of_meeting', 'transfered', ...).'''
+        item_wf = self.getItemWorkflow(True)
+        return bool(set(self.getItemDecidedStates()).intersection(item_wf.states.keys()))
 
     security.declarePublic('getItemTypeName')
 
