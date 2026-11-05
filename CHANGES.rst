@@ -103,6 +103,11 @@ Changelog
   validation state so it works when `proposed` is mapped to another state
   in subproducts (like `Products.MeetingCharleroi`).
   [gbastien]
+- Fixed random failure of test `test_pm_PMConditionAwareCollectionVocabulary`,
+  get the `searchmyitems` term by token instead of relying on terms order that
+  is not reliable as collections of different folders have same
+  `getObjPositionInParent` and are then sorted on random catalog `rid`.
+  [gbastien]
 
 4.2.28.24 (2026-09-30)
 ----------------------
