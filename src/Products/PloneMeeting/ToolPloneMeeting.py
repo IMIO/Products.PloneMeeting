@@ -997,11 +997,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     def showAnnexesTab(self, context):
         '''Must we show the "Annexes" on given p_context ?'''
-        if context.meta_type == 'MeetingItem' and \
-           (context.isTemporary() or context.isDefinedInTool()):
-            return False
-        else:
-            return True
+        return context.meta_type != 'MeetingItem' or not context.isTemporary()
 
     security.declarePrivate('listBooleanVocabulary')
 
@@ -1147,7 +1143,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             raise PloneMeetingError('Could not copy.')
 
         isManager = self.isManager(destCfg)
-        originCfg = self.getMeetingConfig(copiedItem)
 
         # Let the logged user do everything on the newly created item
         with api.env.adopt_roles(['Manager']):
@@ -1236,25 +1231,27 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     # the annexType in the old MeetingConfig the item is copied from
                     if newPortalType:
                         # manage the otherMCCorrespondence
-                        new_annex_category = self._updateContentCategoryAfterSentToOtherMeetingConfig(
-                            newAnnex, originCfg, destCfgId)
-                        if new_annex_category is None:
-                            msg = translate('annex_not_kept_item_paste_info',
-                                            mapping={'annexTitle': safe_unicode(newAnnex.Title())},
-                                            domain='PloneMeeting',
-                                            context=self.REQUEST)
-                            plone_utils.addPortalMessage(msg, 'info')
-                            unrestrictedRemoveGivenObject(newAnnex)
-                            continue
-                        elif new_annex_category.only_pdf and \
-                                newAnnex.file.contentType != 'application/pdf':
-                            msg = translate('annex_not_kept_because_only_pdf_annex_type_warning',
-                                            mapping={'annexTitle': safe_unicode(newAnnex.Title())},
-                                            domain='PloneMeeting',
-                                            context=self.REQUEST)
-                            plone_utils.addPortalMessage(msg, 'warning')
-                            unrestrictedRemoveGivenObject(newAnnex)
-                            continue
+                        originCfg = self.getMeetingConfig(copiedItem)
+                        if originCfg != destCfg:
+                            new_annex_category = self._updateContentCategoryAfterSentToOtherMeetingConfig(
+                                newAnnex, originCfg, destCfgId)
+                            if new_annex_category is None:
+                                msg = translate('annex_not_kept_item_paste_info',
+                                                mapping={'annexTitle': safe_unicode(newAnnex.Title())},
+                                                domain='PloneMeeting',
+                                                context=self.REQUEST)
+                                plone_utils.addPortalMessage(msg, 'info')
+                                unrestrictedRemoveGivenObject(newAnnex)
+                                continue
+                            elif new_annex_category.only_pdf and \
+                                    newAnnex.file.contentType != 'application/pdf':
+                                msg = translate('annex_not_kept_because_only_pdf_annex_type_warning',
+                                                mapping={'annexTitle': safe_unicode(newAnnex.Title())},
+                                                domain='PloneMeeting',
+                                                context=self.REQUEST)
+                                plone_utils.addPortalMessage(msg, 'warning')
+                                unrestrictedRemoveGivenObject(newAnnex)
+                                continue
 
                     # if not newPortalType, annex with a scan_id is deleted
                     # if annex portal_type not defined in transfertAnnexWithScanIdTypes

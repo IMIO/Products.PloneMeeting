@@ -4574,6 +4574,68 @@ class testMeetingItem(PloneMeetingTestCase):
         recurringItem = cfg.recurringitems.objectValues()[0]
         self.assertEqual(recurringItem.validate_category(''), cat_required_msg)
 
+    def test_pm_Validate_category_using_groups(self):
+        '''MeetingItem.category must be usable by the selected proposingGroup
+           when MeetingCategory.using_groups is defined.'''
+        cfg = self.meetingConfig
+        self._enableField('category')
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        self.assertTrue(item.attribute_is_used('category'))
+        self.assertEqual(item.getProposingGroup(), self.developers_uid)
+        msg = translate('category_not_available_for_proposing_group',
+                        domain='PloneMeeting',
+                        context=self.portal.REQUEST)
+        category = cfg.categories.development
+        # no using_groups, validates
+        category.using_groups = ()
+        self.failIf(item.validate_category(category.getId()))
+        # proposingGroup in using_groups, validates
+        category.using_groups = (self.developers_uid, )
+        self.failIf(item.validate_category(category.getId()))
+        # proposingGroup not in using_groups, does not validate
+        category.using_groups = (self.vendors_uid, )
+        self.assertEqual(item.validate_category(category.getId()), msg)
+        # proposingGroup given in the REQUEST is used
+        self.request.set('proposingGroup', self.vendors_uid)
+        self.failIf(item.validate_category(category.getId()))
+        self.request.set('proposingGroup', self.developers_uid)
+        self.assertEqual(item.validate_category(category.getId()), msg)
+        # not checked for a real Manager
+        self.changeUser('admin')
+        self.failIf(item.validate_category(category.getId()))
+
+    def test_pm_Validate_classifier_using_groups(self):
+        '''MeetingItem.classifier must be usable by the selected proposingGroup
+           when MeetingCategory.using_groups is defined.'''
+        cfg = self.meetingConfig
+        self._enableField('classifier')
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        self.assertTrue(item.attribute_is_used('classifier'))
+        self.assertEqual(item.getProposingGroup(), self.developers_uid)
+        msg = translate('classifier_not_available_for_proposing_group',
+                        domain='PloneMeeting',
+                        context=self.portal.REQUEST)
+        classifier = cfg.classifiers.classifier1
+        # no using_groups, validates
+        classifier.using_groups = ()
+        self.failIf(item.validate_classifier(classifier.getId()))
+        # proposingGroup in using_groups, validates
+        classifier.using_groups = (self.developers_uid, )
+        self.failIf(item.validate_classifier(classifier.getId()))
+        # proposingGroup not in using_groups, does not validate
+        classifier.using_groups = (self.vendors_uid, )
+        self.assertEqual(item.validate_classifier(classifier.getId()), msg)
+        # proposingGroup given in the REQUEST is used
+        self.request.set('proposingGroup', self.vendors_uid)
+        self.failIf(item.validate_classifier(classifier.getId()))
+        self.request.set('proposingGroup', self.developers_uid)
+        self.assertEqual(item.validate_classifier(classifier.getId()), msg)
+        # not checked for a real Manager
+        self.changeUser('admin')
+        self.failIf(item.validate_classifier(classifier.getId()))
+
     def test_pm_Validate_proposingGroup(self):
         '''MeetingItem.proposingGroup is mandatory excepted for item templates.'''
         cfg = self.meetingConfig
@@ -6517,6 +6579,36 @@ class testMeetingItem(PloneMeetingTestCase):
         self.request['new_completeness_value'] = 'completeness_complete'
         self.assertRaises(Unauthorized, changeCompletenessView)
 
+    def test_pm_PreferredMeetingAndMeetingNotShownWhenNotUsingMeetings(self):
+        '''The preferredMeeting field, the meeting the item is presented in and
+           the assembly and signatures are not shown on item view and edit forms
+           when not using meetings.'''
+        if not self._check_wfa_available(['no_meeting']):
+            return
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        preferred_meeting_label = translate('PloneMeeting_label_preferredMeeting',
+                                            domain='PloneMeeting',
+                                            context=self.request)
+        presented_in_meeting_label = translate('presented_in_meeting',
+                                               domain='PloneMeeting',
+                                               context=self.request)
+        # using meetings
+        self.assertTrue(item.show_preferred_meeting())
+        view = item.restrictedTraverse('meetingitem_view')()
+        self.assertTrue(preferred_meeting_label in view)
+        self.assertTrue(presented_in_meeting_label in view)
+        self.assertTrue('id="assembly-and-signatures"' in view)
+        self.assertTrue('name="preferredMeeting"' in item.restrictedTraverse('base_edit')())
+        # not using meetings
+        self._activate_wfas(('no_meeting', ))
+        self.assertFalse(item.show_preferred_meeting())
+        view = item.restrictedTraverse('meetingitem_view')()
+        self.assertFalse(preferred_meeting_label in view)
+        self.assertFalse(presented_in_meeting_label in view)
+        self.assertFalse('id="assembly-and-signatures"' in view)
+        self.assertFalse('name="preferredMeeting"' in item.restrictedTraverse('base_edit')())
+
     def test_pm_Emergency(self):
         '''Test the item-emergency view and relevant methods in MeetingItem.'''
         self.request = TestRequest()
@@ -6863,6 +6955,34 @@ class testMeetingItem(PloneMeetingTestCase):
         newItem = view.createItemFromTemplate(default_template.UID())
         image_resolveuid = "resolveuid/%s" % newItem.objectValues()[0].UID()
         self.assertEqual(newItem.getRawDecision(), text_pattern % image_resolveuid)
+
+    def test_pm_ItemTemplateAnnex(self):
+        """We can use (decision) annex in an item template and when used,
+           the annexes are correctly duplicated into the new item."""
+        # add annex to the default item template
+        cfg = self.meetingConfig
+        self.changeUser('templatemanager1')
+        default_template = cfg.itemtemplates.get(ITEM_DEFAULT_TEMPLATE_ID)
+        self.addAnnex(default_template)
+        self.addAnnex(default_template, relatedTo='item_decision')
+        # add annex to the default recurring item
+        self.changeUser('siteadmin')
+        recurring_item = cfg.recurringitems.objectValues()[0]
+        self.addAnnex(recurring_item)
+        self.addAnnex(recurring_item, relatedTo='item_decision')
+        # create an item using the default_template
+        self.changeUser('pmCreator1')
+        pm_folder = self.getMeetingFolder()
+        view = pm_folder.restrictedTraverse('@@createitemfromtemplate')
+        new_item = view.createItemFromTemplate(default_template.UID())
+        self.assertEqual(len(get_annexes(new_item, portal_types=['annex'])), 1)
+        self.assertEqual(len(get_annexes(new_item, portal_types=['annexDecision'])), 1)
+        # create a meeting, recurring item has annex
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting')
+        rec_item = meeting.get_items(ordered=True)[0]
+        self.assertEqual(len(get_annexes(rec_item, portal_types=['annex'])), 1)
+        self.assertEqual(len(get_annexes(rec_item, portal_types=['annexDecision'])), 1)
 
     def test_pm_ItemTemplateDefaultProposingGroup(self):
         """If a primary_organization is defined for a userid, then it is used
@@ -9382,6 +9502,31 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('siteadmin')
         self.assertFalse(item.show_field('groupsInChargeNotes'))
         self.assertFalse(item.mayQuickEdit('groupsInChargeNotes'))
+
+    def test_pm_show_field_with_privacy_viewable(self):
+        """If an item is not privacy viewable, field is not viewable neither."""
+        # configure so power observers can access field "groupsInChargeNotes" but
+        # power observer can not access secret items but MeetingConfig.
+        cfg = self.meetingConfig
+        self._enableField('privacy')
+        self._enableField('groupsInChargeNotes')
+        self._setPowerObserverStates(states=(self._stateMappingFor('itemcreated'), ))
+        cfg.setRestrictAccessToSecretItems(True)
+        cfg.setRestrictAccessToSecretItemsTo(("powerobservers", ))
+        self._setupItemFieldsConfig(
+            'groupsInChargeNotes',
+            view='python: utils.isPowerObserverForCfg(cfg)')
+        # create one public and one secret item
+        self.changeUser('pmCreator1')
+        public_item = self.create('MeetingItem')
+        secret_item = self.create('MeetingItem', privacy="secret")
+        self.changeUser('powerobserver1')
+        self.assertTrue(self.hasPermission(View, public_item))
+        self.assertTrue(self.hasPermission(View, secret_item))
+        self.assertTrue(public_item.show_field('groupsInChargeNotes'))
+        self.assertFalse(secret_item.show_field('groupsInChargeNotes'))
+        self.assertTrue(public_item.show_field('groupsInChargeNotes', check_is_privacy_viewable=False))
+        self.assertTrue(secret_item.show_field('groupsInChargeNotes', check_is_privacy_viewable=False))
 
     def test_pm_anonymize_item_title(self):
         """Test the anonymize parameter of MeetingItem.Title that will use

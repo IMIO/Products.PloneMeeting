@@ -80,13 +80,15 @@ class ItemTemplateView(BrowserView):
         proposingGroup = templateItem.getProposingGroup()
         if get_plone_group_id(proposingGroup, 'creators') in get_plone_groups_for_user():
             keepProposingGroup = True
-        newItem = templateItem.clone(newOwnerId=member_id,
-                                     cloneEventAction='create_meeting_item_from_template',
-                                     cloneEventActionLabel=cloneEventActionLabel,
-                                     destFolder=self.context,
-                                     newPortalType=self.cfg.getItemTypeName(),
-                                     keepProposingGroup=keepProposingGroup,
-                                     keep_ftw_labels=True)
+        newItem = templateItem.clone(
+            copyDecisionAnnexes=True,
+            newOwnerId=member_id,
+            cloneEventAction='create_meeting_item_from_template',
+            cloneEventActionLabel=cloneEventActionLabel,
+            destFolder=self.context,
+            newPortalType=self.cfg.getItemTypeName(),
+            keepProposingGroup=keepProposingGroup,
+            keep_ftw_labels=True)
         # set _at_creation_flag to True so if user cancel first edit, it will be removed
         newItem._at_creation_flag = True
         return newItem

@@ -3,10 +3,118 @@ Changelog
 
 
 4.2.29rc17 (unreleased)
------------------------
+----------------------
 
-- Nothing changed yet.
+- Adapted `MeetingItem.validate_category` and `MeetingItem.validate_classifier`
+  to check that the selected `proposingGroup` is among the
+  `MeetingCategory.using_groups` when defined (not checked for real Managers).
+  [gbastien]
+- Fixed `MeetingItem.listMeetingsAcceptingItems` when meeting title contains
+  special characters (month name or meeting category id) and is no more
+  a meeting accepting items.
+  [gbastien]
+- Add 2027 holidays in profile.
+  [aduchene]
+- Added batch action `UpdateProposingGroupBatchActionForm` to update the
+  `proposingGroup` (or `proposingGroupWithGroupInCharge` when used) of
+  selected items, only available to real `Managers` on items dashboards.
+  Selected items must have the same `proposingGroup`.
+  [gbastien]
+- Adapted `Migrator.updateHolidays` to be able to pass arbitrary new holiday
+  values so it can be called directly from the `add_holidays.py` script.
+  [gbastien]
+- Hide fields `MeetingItem.copyGroups`, `MeetingItem.restrictedCopyGroups` and
+  `MeetingItem.selectableAdvisers` if it is empty, it can be the case when the
+  functionality is enabled but we are only using auto values.
+  [gbastien]
+- Hide batch action `UpdateCopyGroupsBatchActionForm` when
+  `MeetingConfig.selectableCopyGroups` is empty, it is the case when copy groups
+  are only set automatically (`organization.as_copy_group_on`).
+  [gbastien]
+- Added batch action `UpdateRestrictedCopyGroupsBatchActionForm` to update the
+  `restrictedCopyGroups` of selected items, only available to `MeetingManagers`.
+  Factorized it with `UpdateCopyGroupsBatchActionForm` in
+  `BaseUpdateCopyGroupsBatchActionForm`, the copy groups batch action now only
+  proposes `MeetingConfig.selectableCopyGroups` (no more selectable restricted
+  copy groups).
+  [gbastien]
+- Fixed bug where it was not possible to remove a not used `category` if a
+  `classifier` with same `id` was used.
+  [gbastien]
+- Disable `webspellchecker` in datagrid inputs (mainly used in `MeetingConfig`).
+  [gbastien]
+- Added parameter `check_is_privacy_viewable=True` to `MeetingItem.show_field`
+  so when using `MeetingConfig.restrictAccessToSecretItems`, the field is not
+  viewable when rendered in a POD template or other indirect access.
+  [gbastien]
+- Fix check `scan_id` in migration to 4210
+  [jchandelle]
+- Added workflow adaptation `no_meeting` that removes item states in which
+  an item is linked to a meeting (every states of the base `meetingitem_workflow`
+  except `validated`), the item workflow ends at `validated`.
+  The meeting workflow does not have any state nor transition.
+  It may only be selected together with wfAdaptations defined in
+  `MeetingConfig.noMeetingCompatibleWFAdaptations` and may not be selected
+  if a meeting exists or if removed item states/transitions or any meeting
+  state/transition is used in the config.
+  The `meeting_remove_global_access` wfAdaptation can not be used together with
+  `no_meeting`, it is now enabled only when `MeetingConfig.usingGroups` is defined
+  and `no_meeting` is not used (managed by `MeetingConfig._update_meeting_remove_mog_wfa`
+  called by `setUsingGroups` and `setWorkflowAdaptations`), so it is disabled when
+  enabling `no_meeting` and enabled again when disabling `no_meeting`.
+  Added helpers `model.adaptations.remove_states` and
+  `model.adaptations.get_no_meeting_removed_item_states`.
+  Added parameters `check_item_wf_attrs=True` and `check_meeting_wf_attrs=True`
+  to `MeetingConfig._check_wf_used_in_config`.
+  When using `no_meeting`, meeting related searches (`searches_meetings` and
+  `searches_decisions`) are not displayed in `portlet_plonemeeting`.
+  Added `MeetingConfig.is_using_meetings` and `config.MEETING_SEARCHES_FOLDER_IDS`.
+  When using `no_meeting`, the meeting portal_type is `global_allow=False`
+  so a `Meeting` can not be added.
+  When using `no_meeting`, field `MeetingItem.preferredMeeting` is hidden on item
+  edit and view forms and the meeting the item is presented in and the
+  assembly and signatures are not shown on the item view,
+  added `MeetingItem.show_preferred_meeting`.
+  When using `no_meeting`, `MeetingConfig.getTransitionsForPresentingAnItem`
+  does not return the `present` transition and
+  `MeetingConfig.get_transitions_to_close_a_meeting` returns an empty list.
+  [gbastien]
+- Fixed `tal_condition` of searches `searchitemstocorrect` (wrong syntax and use
+  of `set` that is not available in restricted python, use `utils.set`) and
+  `searchcorrecteditems` (wrong syntax) defined in `MeetingConfig._searchesInfo`.
+  Added test `test_pm_SearchesTALCondition` checking syntax of every searches
+  `tal_condition` and that it may be evaluated.
+  [gbastien]
+- Fixed `MeetingConfig._check_wf_used_in_config` that failed to compute the
+  error message when a removed transition was used in `mailItemEvents` or
+  `mailMeetingEvents` (values like `item_state_changed_accept`).
+  State fields now compare the complete state id (`accepted` no more matches
+  `accepted_out_of_meeting`) and do not match transition ids.
+  Added `itemRestrictedCopyGroupsStates`, `labelsConfig/edit_states` and
+  `labelsConfig/view_states` to `MeetingConfig.ITEM_WF_STATE_ATTRS`, added test
+  `test_pm_WFAttrsConstantsComplete` checking WF related attrs constants are complete.
+  Fixed `Migrator.update_cfg_wf_attrs` to manage datagridfield columns
+  (like `powerObservers/item_states`): multivalued columns are managed like other
+  attributes, for single valued columns `to_replace` is applied and rows using
+  a value in `to_remove` are removed.
+  [gbastien]
+- Fixed test `test_pm_Validate_workflowAdaptations_removed_return_to_proposing_group_with_before_last_validation`
+  to use `_stateMappingFor('proposed_first_level')` to get the before last
+  validation state so it works when `proposed` is mapped to another state
+  in subproducts (like `Products.MeetingCharleroi`).
+  [gbastien]
+- Fixed random failure of test `test_pm_PMConditionAwareCollectionVocabulary`,
+  get the `searchmyitems` term by token instead of relying on terms order that
+  is not reliable as collections of different folders have same
+  `getObjPositionInParent` and are then sorted on random catalog `rid`.
+  [gbastien]
 
+4.2.28.24 (2026-09-30)
+----------------------
+
+- Fixed `MeetingItem.listMeetingsAcceptingItems` when meeting title contains
+  special characters (month name or meeting category id).
+  [gbastien]
 
 4.2.29rc16 (2026-09-16)
 -----------------------
@@ -17,6 +125,22 @@ Changelog
   field `annexes` of the `store-items-template-as-annex-batch-action` form.
   [gbastien]
 - A label used in `MeetingConfig.labelsConfig` can not be removed from the jar.
+  [gbastien]
+- Added possibility to define annexes and decision annexes on an item template
+  and on a recurring item.
+  [gbastien]
+- Human sort the `MeetingConfig.listAllTransitions`.
+  [gbastien]
+- Fixed bug in `MeetingConfig._check_wf_used_in_config` when using the
+  `return_to_proposing_group` WFA as the transition contains the state value
+  (`backTo_itemfrozen_from_returned_to_proposing_group` contains
+  `returned_to_proposing_group`).
+  [gbastien]
+- Display `meeting.category` in `MeetingItem.preferredMeeting` edit list.
+  [gbastien]
+- Added WFA `return_to_proposing_group_with_before_last_validation`.
+  [aduchene]
+- Added possibility to use `set` in restricted python thru `utils`.
   [gbastien]
 
 4.2.29rc15 (2026-09-14)

@@ -834,21 +834,25 @@ class testFaceted(PloneMeetingTestCase):
         pmFolder = self.getMeetingFolder()
         searches = self.meetingConfig.searches
         searchAllItems = searches.searches_items.searchallitems
+        searchMyItems = searches.searches_items.searchmyitems
+        searchMyItemsUID = searchMyItems.UID()
         vocab_name = "Products.PloneMeeting.vocabularies.conditionawarecollectionvocabulary"
         vocab = get_vocab(pmFolder, vocab_name, only_factory=True)
-        self.assertTrue("/pmCreator1/" in vocab(searchAllItems, pmFolder)._terms[0].title[1])
+        # get term by token (collection UID) as terms order is not reliable,
+        # collections of different folders (searches_items, searches_meetings, ...)
+        # have same getObjPositionInParent and are then sorted on catalog rid that is random
+        self.assertTrue("/pmCreator1/" in vocab(searchAllItems, pmFolder).getTermByToken(searchMyItemsUID).title[1])
         # as pmCreator1b
         self.changeUser('pmCreator1b')
         creator1_groups = self.member.getGroups()
         creator1b_groups = self.member.getGroups()
         self.assertEqual(creator1_groups, creator1b_groups)
-        self.assertTrue("/pmCreator1b/" in vocab(searchAllItems, pmFolder)._terms[0].title[1])
+        self.assertTrue("/pmCreator1b/" in vocab(searchAllItems, pmFolder).getTermByToken(searchMyItemsUID).title[1])
         # invalidated if a collection is edited
-        self.assertEqual(vocab(searchAllItems, pmFolder)._terms[0].title[0], u'My items')
-        searchMyItems = searches.searches_items.searchmyitems
+        self.assertEqual(vocab(searchAllItems, pmFolder).getTermByToken(searchMyItemsUID).title[0], u'My items')
         searchMyItems.setTitle(u'My items edited')
         notify(ObjectModifiedEvent(searchMyItems))
-        self.assertEqual(vocab(searchAllItems, pmFolder)._terms[0].title[0], u'My items edited')
+        self.assertEqual(vocab(searchAllItems, pmFolder).getTermByToken(searchMyItemsUID).title[0], u'My items edited')
         # invalidated when user groups changed
         # make pmCreator1b no more a creator
         vocab_values = get_vocab_values(searchAllItems, vocab_name, **{'real_context': pmFolder})
@@ -922,6 +926,34 @@ class testFaceted(PloneMeetingTestCase):
         self._disableObj(searchAllItems, notify_event=True)
         self.changeUser('pmCreator1')
         self.assertFalse(searchAllItems_path in vocab(searches, real_context=pmFolder))
+
+    def test_pm_MeetingSearchesIgnoredWhenNotUsingMeetings(self):
+        """When using the 'no_meeting' WFA, the meeting related searches
+           ('searches_meetings' and 'searches_decisions') are not displayed."""
+        if not self._check_wfa_available(['no_meeting']):
+            return
+        cfg = self.meetingConfig
+        searches = cfg.searches
+        searchAllItems_path = searches.searches_items.searchallitems.absolute_url_path()
+        searchMeetings = searches.searches_meetings.objectValues()[0]
+        searchMeetings_path = searchMeetings.absolute_url_path()
+        searchDecisions = searches.searches_decisions.objectValues()[0]
+        searchDecisions_path = searchDecisions.absolute_url_path()
+        self.changeUser('pmManager')
+        pmFolder = self.getMeetingFolder()
+        vocab = get_vocab(pmFolder,
+                          "Products.PloneMeeting.vocabularies.conditionawarecollectionvocabulary",
+                          only_factory=True)
+        self.assertTrue(cfg.is_using_meetings())
+        self.assertTrue(searchAllItems_path in vocab(searches, real_context=pmFolder))
+        self.assertTrue(searchMeetings_path in vocab(searches, real_context=pmFolder))
+        self.assertTrue(searchDecisions_path in vocab(searches, real_context=pmFolder))
+        # enable 'no_meeting'
+        self._activate_wfas(('no_meeting', ))
+        self.assertFalse(cfg.is_using_meetings())
+        self.assertTrue(searchAllItems_path in vocab(searches, real_context=pmFolder))
+        self.assertFalse(searchMeetings_path in vocab(searches, real_context=pmFolder))
+        self.assertFalse(searchDecisions_path in vocab(searches, real_context=pmFolder))
 
     def test_pm_SearchableTextQueryOnSpecialCharacters(self):
         """Make sure it is possible to query on "décision" and "decision"."""

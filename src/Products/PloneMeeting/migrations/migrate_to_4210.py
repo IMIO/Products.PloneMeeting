@@ -21,7 +21,7 @@ class Migrate_To_4210(Migrator):
         for brain in brains:
             i += 1
             pghandler.report(i)
-            if brain.scan_id:
+            if getattr(brain, "scan_id", None):
                 safe_delattr(brain.getObject(), BARCODE_INSERTED_ATTR_ID)
         pghandler.finish()
         logger.info('Done.')
