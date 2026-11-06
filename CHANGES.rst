@@ -17,6 +17,9 @@ Changelog
   Added upgrade step to `4217.4` that updates faceted filters and reindexes
   `annexes_index` for items having annexes.
   [gbastien]
+- Fixed annexes displayed in dashboards when filtering on annexes `to sign`,
+  signed annexes were also displayed.
+  [gbastien]
 - Adapted `MeetingItem.validate_category` and `MeetingItem.validate_classifier`
   to check that the selected `proposingGroup` is among the
   `MeetingCategory.using_groups` when defined (not checked for real Managers).

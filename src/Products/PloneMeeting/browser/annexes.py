@@ -131,6 +131,31 @@ class CategorizedAnnexesView(CategorizedTabView):
         return False
 
 
+def _annex_attr_filters(values):
+    """Turn selected "annexes" filter p_values (to_print, not_to_sign, ...)
+       into collective.iconifiedcategory filters.
+       A signed annex has to_sign=True and signed=True so "to_sign" must
+       also check that annex is not signed, this is consistent with annexes_index.
+       When several values of same attribute are selected (to_print and not_to_print),
+       annexes having any of these values are kept."""
+    allowed = {}
+    for value in values:
+        if value == 'to_sign':
+            attr_values = (('to_sign', True), ('signed', False))
+        elif value == 'signed':
+            attr_values = (('to_sign', True), ('signed', True))
+        elif value.startswith('not_'):
+            attr_values = ((value.replace('not_', '', 1), False), )
+        else:
+            attr_values = ((value, True), )
+        for attr, attr_value in attr_values:
+            allowed.setdefault(attr, [])
+            if attr_value not in allowed[attr]:
+                allowed[attr].append(attr_value)
+    return {attr: attr_values[0] if len(attr_values) == 1 else attr_values
+            for attr, attr_values in allowed.items()}
+
+
 def _get_filters(request):
     """When using filters "annexes" and "annex types", displayed result
        is adapted accordingly."""
@@ -144,11 +169,7 @@ def _get_filters(request):
         if annex_attr_filter is not None:
             if not hasattr(annex_attr_filter, '__iter__'):
                 annex_attr_filter = [annex_attr_filter]
-            for value in annex_attr_filter:
-                if value.startswith('not_'):
-                    res[value.replace('not_', '')] = False
-                else:
-                    res[value] = True
+            res.update(_annex_attr_filters(annex_attr_filter))
         # annex types filter will contains selected category/subcategory uids
         # it can not be managed by collective.iconifiedcategory filters as we need
         # to filter on "category_uid" OR "subcategory_uid", see _filter_annex_types

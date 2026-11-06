@@ -2128,6 +2128,44 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertEqual(sorted([elt['UID'] for elt in infos.categorized_elements]),
                          sorted([annex2.UID(), annex3.UID()]))
 
+    def test_pm_annexes_filter_to_sign_does_not_include_signed(self):
+        """A signed annex has to_sign=True and signed=True, when filtering on
+           "to_sign", it must not be found/displayed, only when filtering on "signed"."""
+        self.meetingConfig.annexes_types.item_annexes.signed_activated = True
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        annex_not_to_sign = self.addAnnex(item)
+        annex_to_sign = self.addAnnex(item, to_sign=True)
+        annex_signed = self.addAnnex(item, to_sign=True, signed=True)
+        self.assertTrue(annex_signed.to_sign)
+        self.assertTrue(annex_signed.signed)
+        # an item with only a signed annex is not found when searching "to_sign"
+        item_signed = self.create('MeetingItem')
+        self.addAnnex(item_signed, to_sign=True, signed=True)
+        indexed = annexes_index(item_signed)()
+        self.assertTrue('signed' in indexed)
+        self.assertFalse('to_sign' in indexed)
+        self.assertFalse(self.catalog(UID=item_signed.UID(), annexes_index='to_sign'))
+        self.assertTrue(self.catalog(UID=item_signed.UID(), annexes_index='signed'))
+        self.assertTrue(self.catalog(UID=item.UID(), annexes_index='to_sign'))
+
+        # displayed annexes
+        view = item.restrictedTraverse('@@categorized-childs')
+
+        def _displayed(values):
+            self.request.set('cached_annexes_filters', None)
+            self.request.form[FACETED_ANNEXES_CRITERION_ID + '[]'] = values
+            view(portal_type='annex')
+            return sorted([elt['UID'] for elt in view.categorized_elements])
+
+        self.assertEqual(_displayed('to_sign'), [annex_to_sign.UID()])
+        self.assertEqual(_displayed(['signed']), [annex_signed.UID()])
+        self.assertEqual(_displayed(['not_to_sign']), [annex_not_to_sign.UID()])
+        self.assertEqual(_displayed(['to_sign', 'signed']),
+                         sorted([annex_to_sign.UID(), annex_signed.UID()]))
+        self.assertEqual(_displayed(['to_sign', 'not_to_sign']),
+                         sorted([annex_to_sign.UID(), annex_not_to_sign.UID()]))
+
     def test_pm_on_annex_added_only_called_when_annex_added(self):
         """The on_annex_added event is triggered on ICategorizedElementUpdatedEvent
            but must only do something when the annex is added."""
