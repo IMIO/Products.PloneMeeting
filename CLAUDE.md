@@ -125,9 +125,10 @@ Tests use `unittest` + `plone.app.testing`. The base test class is `PloneMeeting
 - **Security**: `AccessControl.ClassSecurityInfo` declarations on class methods
 - **i18n**: `from Products.PloneMeeting.config import PMMessageFactory as _` — wrap translatable strings with `_()`
 
-## Branch name and update
+## Branches and buildout.cfg
 
-When creating a branch, also update the buildout.cfg branch of relevant Products.PloneMeeting and when merging a PR, fix branch name in buildout.cfg before merging the PR.
+CI tests the checked out code (`develop = .` in `buildout.cfg`), so there is no need to set the branch name of Products.PloneMeeting in `buildout.cfg`.
+When a branch depends on a branch of another package (e.g. `imio.annex`), add that package to `[sources]` in `buildout.cfg` with `branch=<its branch>` (and to `auto-checkout +=` if it is not already auto-checked out by buildout.pm) and set it back to `master` (or remove it) before merging the PR.
 
 ## Commit message style
 
