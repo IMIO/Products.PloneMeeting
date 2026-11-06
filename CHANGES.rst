@@ -5,6 +5,9 @@ Changelog
 4.2.29rc17 (unreleased)
 ----------------------
 
+- Display the item reference in the `@@esign-session-files` view the same way
+  it is displayed on the item view.
+  [gbastien]
 - Make `PMSignersAdapter` inherit from `imio.esign.adapters.SignableAdapter`
   so every default method (like `get_filename`) is available.
   [gbastien]

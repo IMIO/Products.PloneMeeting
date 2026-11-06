@@ -4486,6 +4486,12 @@ class testViews(PloneMeetingTestCase):
         self.assertTrue(
             result.index(stored_annex.absolute_url()) <
             result.index(annex2.absolute_url()))
+        # item reference is displayed like on the item view
+        self.assertTrue(item.adapted().show_item_reference())
+        self.assertTrue(item.getItemReference())
+        self.assertIn(
+            "<span class='discreet itemReference'>{0}</span>".format(
+                item.getItemReference()), result)
         # delete annex, session size is correct
         # depending on version of soffice, initial size of generated pod template can be different
         initial_size = get_session_annotation()['sessions'][0]['size']
