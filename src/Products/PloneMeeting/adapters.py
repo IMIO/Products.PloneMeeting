@@ -87,6 +87,10 @@ import logging
 
 logger = logging.getLogger('PloneMeeting')
 CAN_NOT_DELETE_MEETING_ERROR = "This meeting can not be deleted because it contains items!"
+CAN_NOT_DELETE_ANNEX_IN_ESIGN_SESSION_ERROR = "This annex can not be deleted because it is in an e-sign session that is to sign!"
+# esign session states in which an annex may not be deleted
+# to avoid de-synchronization between local and distant session files
+ESIGN_SESSION_STATES_PREVENTING_ANNEX_DELETION = ("to_sign", )
 
 
 # this catalog query will find nothing, used in CompoundCriterion adapters when necessary
@@ -116,8 +120,25 @@ class AnnexContentDeletableAdapter(APContentDeletableAdapter):
             if 'Owner' in member.getRolesInContext(self.context):
                 return True
 
+    def _is_in_esign_session_preventing_deletion(self):
+        """Is the annex in an esign session whose state prevents deletion?"""
+        # do not use imio.esign.utils.get_session_annotation as it would
+        # create the annotation if it does not exist (write on read)
+        annot = IAnnotations(api.portal.get()).get("imio.esign")
+        if not annot:
+            return False
+        session_id = annot["uids"].get(self.context.UID())
+        if session_id is None or session_id not in annot["sessions"]:
+            return False
+        return annot["sessions"][session_id].get("state") in \
+            ESIGN_SESSION_STATES_PREVENTING_ANNEX_DELETION
+
     def mayDelete(self, initiator=None, **kwargs):
         '''See docstring in interfaces.py.'''
+        # an annex in an esign session that is "to_sign" may not be deleted
+        # this would de-synchronize local and distant session files
+        if self._is_in_esign_session_preventing_deletion():
+            return No(CAN_NOT_DELETE_ANNEX_IN_ESIGN_SESSION_ERROR)
         # check 'Delete objects' permission
         mayDelete = super(AnnexContentDeletableAdapter, self).mayDelete(initiator=initiator)
         if not mayDelete:

@@ -5,6 +5,12 @@ Changelog
 4.2.29rc17 (unreleased)
 ----------------------
 
+- Prevent deleting an annex that is in an esign session that is `to_sign`,
+  this avoids de-synchronization between local and distant session files.
+  This is managed in `AnnexContentDeletableAdapter.mayDelete`.
+  When an annex can not be overwritten when storing a POD template as annex,
+  the real reason is displayed between parenthesis in the portal message.
+  [gbastien]
 - Display the item reference in the `@@esign-session-files` view the same way
   it is displayed on the item view.
   [gbastien]

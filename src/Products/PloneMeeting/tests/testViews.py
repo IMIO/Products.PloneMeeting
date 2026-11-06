@@ -37,6 +37,7 @@ from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.CMFPlone.utils import safe_unicode
 from Products.Five import zcml
+from Products.PloneMeeting.adapters import CAN_NOT_DELETE_ANNEX_IN_ESIGN_SESSION_ERROR
 from Products.PloneMeeting.browser.views import SEVERAL_SAME_BARCODE_ERROR
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
@@ -4497,6 +4498,36 @@ class testViews(PloneMeetingTestCase):
         initial_size = get_session_annotation()['sessions'][0]['size']
         self.deleteAsManager(annex2.UID())
         self.assertEqual(get_session_annotation()['sessions'][0]['size'], initial_size - 6851)
+        # an annex in a "to_sign" session may not be deleted, even by a Manager
+        # this would de-synchronize local and distant session files
+        session = get_session_annotation()['sessions'][0]
+        self.assertTrue(stored_annex.UID() in [f['uid'] for f in session['files']])
+        self.assertTrue(IContentDeletable(stored_annex).mayDelete())
+        session['state'] = 'to_sign'
+        self.assertFalse(IContentDeletable(stored_annex).mayDelete())
+        self.changeUser('admin')
+        self.assertFalse(IContentDeletable(stored_annex).mayDelete())
+        # trying to overwrite it will display the real reason in the portal message
+        IStatusMessage(self.request).show()
+        data['store_generated_document'] = '2'
+        data['annex_ids'] = []
+        form_instance._do_store_as_annex(data)
+        self.assertEqual(get_annexes(item)[-1].UID(), stored_annex.UID())
+        messages = IStatusMessage(self.request).show()
+        self.assertEqual(
+            messages[-1].message,
+            u"{0} ({1})".format(
+                translate('store_podtemplate_as_annex_can_not_delete_annex_overwrite',
+                          domain='PloneMeeting',
+                          context=self.request),
+                CAN_NOT_DELETE_ANNEX_IN_ESIGN_SESSION_ERROR))
+        # do deletion tests last as element is unindexed before Unauthorized is raised
+        self.assertRaises(Unauthorized, item.manage_delObjects, [stored_annex.getId()])
+        # the item containing the annex may not be deleted either
+        self.assertRaises(Unauthorized, item.aq_inner.aq_parent.manage_delObjects, [item.getId()])
+        # back to "draft", annex is deletable
+        session['state'] = 'draft'
+        self.assertTrue(IContentDeletable(stored_annex).mayDelete())
 
     def test_pm_MeetingStoreItemsPodTemplateAsAnnexBatchActionEsign(self):
         """This will store a POD template selected in

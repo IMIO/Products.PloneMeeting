@@ -2,6 +2,7 @@
 
 from AccessControl import Unauthorized
 from Acquisition import aq_base
+from appy.gen import No
 from archetypes.referencebrowserwidget.browser.view import ReferenceBrowserPopup
 from archetypes.referencebrowserwidget.utils import named_template_adapter
 from collective.behavior.talcondition.utils import _evaluateExpression
@@ -22,6 +23,7 @@ from datetime import datetime
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.actionspanel.browser.viewlets import ActionsPanelViewlet
 from imio.actionspanel.browser.views import ActionsPanelView
+from imio.actionspanel.interfaces import IContentDeletable
 from imio.dashboard.browser.overrides import IDRenderCategoryView
 from imio.dashboard.interfaces import IContactsDashboard
 from imio.esign.adapters import ISignable
@@ -1314,17 +1316,26 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
                         else:
                             # overwrite a stored generated document that is not marked signed
                             # in this case we remove the existing annex
+                            # get the real reason why annex may not be deleted if any
+                            may_delete = IContentDeletable(annex).mayDelete()
+                            reason = translate(
+                                may_delete.msg,
+                                domain='PloneMeeting',
+                                context=self.request) \
+                                if isinstance(may_delete, No) and may_delete.msg else u''
                             try:
                                 self.context.restrictedTraverse('@@delete_givenuid')(annex.UID())
                             except Unauthorized:
                                 msg_code = 'store_podtemplate_as_annex_can_not_delete_annex_overwrite'
                                 if return_portal_msg_code:
-                                    return msg_code, {}
+                                    return msg_code, {'reason': reason}
                                 else:
                                     msg = translate(
                                         msg_code,
                                         domain='PloneMeeting',
                                         context=self.request)
+                                    if reason:
+                                        msg = u"{0} ({1})".format(msg, reason)
                                     plone_utils.addPortalMessage(msg, type='warning')
                                     return self.request.RESPONSE.redirect(self.request['HTTP_REFERER'])
 
