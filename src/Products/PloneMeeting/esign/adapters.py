@@ -6,6 +6,7 @@
 from collective.behavior.talcondition.utils import _evaluateExpression
 from imio.esign.adapters import DefaultItemOrderProvider
 from imio.esign.adapters import FilesBelongingToAGivenSession
+from imio.esign.adapters import SignableAdapter
 from imio.helpers.content import uuidToObject
 from plone import api
 from Products.CMFPlone.utils import safe_unicode
@@ -18,11 +19,11 @@ from Products.PloneMeeting.utils import get_annexes
 from zope.i18n import translate
 
 
-class PMSignersAdapter(object):
+class PMSignersAdapter(SignableAdapter):
     """Adapter to get signers of a given element (item, meeting or advice)."""
 
     def __init__(self, context):
-        self.context = context
+        super(PMSignersAdapter, self).__init__(context)
         self.request = context.REQUEST
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)

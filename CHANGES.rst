@@ -5,6 +5,9 @@ Changelog
 4.2.29rc17 (unreleased)
 ----------------------
 
+- Make `PMSignersAdapter` inherit from `imio.esign.adapters.SignableAdapter`
+  so every default method (like `get_filename`) is available.
+  [gbastien]
 - Adapted `MeetingItem.validate_category` and `MeetingItem.validate_classifier`
   to check that the selected `proposingGroup` is among the
   `MeetingCategory.using_groups` when defined (not checked for real Managers).
