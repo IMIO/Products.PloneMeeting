@@ -17,6 +17,7 @@ from collective.iconifiedcategory.utils import get_category_object
 from collective.iconifiedcategory.utils import get_config_root
 from collective.iconifiedcategory.utils import get_group
 from collective.iconifiedcategory.utils import update_all_categorized_elements
+from collective.iconifiedcategory.utils import update_categorized_elements
 from imio.actionspanel.interfaces import IContentDeletable
 from imio.annex.columns import ActionsColumn
 from imio.annex.columns import PrettyLinkColumn
@@ -35,8 +36,11 @@ from Products.CMFCore.permissions import View
 from Products.PloneMeeting.config import AddAnnex
 from Products.PloneMeeting.config import AddAnnexDecision
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
+from Products.PloneMeeting.config import FACETED_ANNEX_TYPES_CRITERION_ID
+from Products.PloneMeeting.config import FACETED_ANNEXES_CRITERION_ID
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.content.content_category import other_mc_correspondences_constraint
+from Products.PloneMeeting.indexes import annexes_index
 from Products.PloneMeeting.MeetingConfig import PROPOSINGGROUPPREFIX
 from Products.PloneMeeting.MeetingConfig import SUFFIXPROFILEPREFIX
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
@@ -49,6 +53,7 @@ from zope.event import notify
 from zope.interface import Invalid
 from zope.lifecycleevent import ObjectModifiedEvent
 
+import json
 import magic
 
 
@@ -1991,6 +1996,158 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertEqual(self.catalog(scan_id='001')[0].UID, annex.UID())
         self.assertEqual(len(self.catalog(scan_id='002')), 1)
         self.assertEqual(self.catalog(scan_id='002')[0].UID, decision_annex.UID())
+
+    def _setup_annexes_of_various_types(self):
+        """Create an item with annexes of various types:
+           - annex1 of type "financial-analysis";
+           - annex2 of type "budget-analysis";
+           - annex3 of subtype "budget-analysis-sub-annex";
+           - decision_annex of type "decision-annex"."""
+        cfg = self.meetingConfig
+        budget_analysis = cfg.annexes_types.item_annexes.get('budget-analysis')
+        sub_annex = budget_analysis.get('budget-analysis-sub-annex')
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        annex1 = self.addAnnex(item)
+        annex2 = self.addAnnex(item, annexType='budget-analysis')
+        annex3 = self.addAnnex(item, annexType='budget-analysis')
+        annex3.content_category = calculate_category_id(sub_annex)
+        notify(ObjectModifiedEvent(annex3))
+        decision_annex = self.addAnnex(item, relatedTo='item_decision')
+        return item, annex1, annex2, annex3, decision_annex, budget_analysis, sub_annex
+
+    def test_pm_annexes_index(self):
+        """The annexes_index contains annex attributes values, annex type uids
+           (category and subcategory) and combined "uid__attr_value" values."""
+        item, annex1, annex2, annex3, decision_annex, budget_analysis, sub_annex = \
+            self._setup_annexes_of_various_types()
+        financial_analysis_uid = get_category_object(annex1, annex1.content_category).UID()
+        decision_annex_uid = get_category_object(
+            decision_annex, decision_annex.content_category).UID()
+        budget_analysis_uid = budget_analysis.UID()
+        sub_annex_uid = sub_annex.UID()
+        indexed = annexes_index(item)()
+        # attribute values
+        self.assertTrue('not_to_sign' in indexed)
+        self.assertTrue('not_confidential' in indexed)
+        # annex type uids, including decision annex type
+        # and both category and subcategory uids for a subcategory
+        for type_uid in (financial_analysis_uid,
+                         budget_analysis_uid,
+                         sub_annex_uid,
+                         decision_annex_uid):
+            self.assertTrue(type_uid in indexed)
+            self.assertTrue(type_uid + '__not_to_sign' in indexed)
+            self.assertTrue(type_uid + '__not_confidential' in indexed)
+        self.assertTrue(financial_analysis_uid + '__' +
+                        (annex1.to_print and 'to_print' or 'not_to_print') in indexed)
+        # catalog was updated
+        self.assertEqual(
+            self.catalog(UID=item.UID(), annexes_index=sub_annex_uid)[0].UID, item.UID())
+        # combined values are only computed for existing annex type/attr
+        self.assertFalse(financial_analysis_uid + '__to_sign' in indexed)
+        self.assertFalse(budget_analysis_uid + '__to_sign' in indexed)
+        annex1.to_sign = True
+        notify(ObjectModifiedEvent(annex1))
+        indexed = annexes_index(item)()
+        self.assertTrue(financial_analysis_uid + '__to_sign' in indexed)
+        self.assertFalse(budget_analysis_uid + '__to_sign' in indexed)
+        # an annex using an annex type that does not exist anymore does not break indexing
+        annex2.content_category = 'unknown'
+        indexed = annexes_index(item)()
+        self.assertTrue(financial_analysis_uid in indexed)
+        self.assertTrue('not_to_sign' in indexed)
+
+    def test_pm_annex_types_faceted_filter_query(self):
+        """The "Annex types" faceted filter (c33) may be combined with
+           the "Annexes" filter (c20) and the and/or operator is selectable."""
+        item, annex1, annex2, annex3, decision_annex, budget_analysis, sub_annex = \
+            self._setup_annexes_of_various_types()
+        cfg = self.meetingConfig
+        financial_analysis_uid = get_category_object(annex1, annex1.content_category).UID()
+        budget_analysis_uid = budget_analysis.UID()
+        handler = cfg.searches.searches_items.restrictedTraverse('@@faceted_query')
+        # only c33, operator is "or" by default
+        self.request.form = {
+            FACETED_ANNEX_TYPES_CRITERION_ID + '[]': [financial_analysis_uid, budget_analysis_uid]}
+        criteria = handler.criteria()
+        self.assertEqual(
+            criteria['annexes_index'],
+            {'query': [financial_analysis_uid, budget_analysis_uid], 'operator': 'or'})
+        # combined with c20
+        self.request.form[FACETED_ANNEXES_CRITERION_ID + '[]'] = ['not_to_sign']
+        self.request.form[FACETED_ANNEX_TYPES_CRITERION_ID + '-operator'] = 'and'
+        criteria = handler.criteria()
+        self.assertFalse('combined__annexes_index' in criteria)
+        self.assertEqual(
+            criteria['annexes_index'],
+            {'query': [financial_analysis_uid + '__not_to_sign',
+                       budget_analysis_uid + '__not_to_sign'],
+             'operator': 'and'})
+        self.assertEqual(
+            [brain.UID for brain in self.catalog(
+                UID=item.UID(), annexes_index=criteria['annexes_index'])],
+            [item.UID()])
+        # only c20
+        self.request.form = {FACETED_ANNEXES_CRITERION_ID + '[]': ['not_to_sign']}
+        criteria = handler.criteria()
+        self.assertEqual(criteria['annexes_index']['query'], ['not_to_sign'])
+
+    def test_pm_annex_types_filter_displayed_annexes(self):
+        """When filtering on annex types, only annexes of selected types are
+           displayed, selecting a category includes annexes of it's subcategories."""
+        item, annex1, annex2, annex3, decision_annex, budget_analysis, sub_annex = \
+            self._setup_annexes_of_various_types()
+        financial_analysis_uid = get_category_object(annex1, annex1.content_category).UID()
+        budget_analysis_uid = budget_analysis.UID()
+        sub_annex_uid = sub_annex.UID()
+        view = item.restrictedTraverse('@@categorized-childs')
+
+        def _displayed(type_uids):
+            self.request.set('cached_annexes_filters', None)
+            self.request.form[FACETED_ANNEX_TYPES_CRITERION_ID + '[]'] = type_uids
+            view(portal_type='annex')
+            return sorted([elt['UID'] for elt in view.categorized_elements])
+
+        self.assertEqual(_displayed(financial_analysis_uid), [annex1.UID()])
+        self.assertEqual(_displayed([budget_analysis_uid]),
+                         sorted([annex2.UID(), annex3.UID()]))
+        self.assertEqual(_displayed([sub_annex_uid]), [annex3.UID()])
+        self.assertEqual(_displayed([financial_analysis_uid, sub_annex_uid]),
+                         sorted([annex1.UID(), annex3.UID()]))
+        # filters are passed to the @@categorized-childs-infos view
+        self.assertEqual(json.loads(view._filters_json()),
+                         {'annex_type_uids': [financial_analysis_uid, sub_annex_uid]})
+        infos = item.restrictedTraverse('@@categorized-childs-infos')
+        infos(category_uid=budget_analysis_uid, filters={'annex_type_uids': [sub_annex_uid]})
+        self.assertEqual([elt['UID'] for elt in infos.categorized_elements], [annex3.UID()])
+        infos(category_uid=budget_analysis_uid, filters={'annex_type_uids': [budget_analysis_uid]})
+        self.assertEqual(sorted([elt['UID'] for elt in infos.categorized_elements]),
+                         sorted([annex2.UID(), annex3.UID()]))
+        infos(category_uid=budget_analysis_uid, filters={})
+        self.assertEqual(sorted([elt['UID'] for elt in infos.categorized_elements]),
+                         sorted([annex2.UID(), annex3.UID()]))
+
+    def test_pm_on_annex_added_only_called_when_annex_added(self):
+        """The on_annex_added event is triggered on ICategorizedElementUpdatedEvent
+           but must only do something when the annex is added."""
+        cfg = self.meetingConfig
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        cfg.setRecordItemHistoryStates((item.query_state(), ))
+
+        def _added_events():
+            return [event for event in item.itemHistory if event['action'] == 'add']
+
+        annex = self.addAnnex(item)
+        self.assertEqual(len(_added_events()), 1)
+        # updating the annex will trigger ICategorizedElementUpdatedEvent again
+        notify(ObjectModifiedEvent(annex))
+        update_categorized_elements(
+            item, annex, get_category_object(annex, annex.content_category))
+        self.assertEqual(len(_added_events()), 1)
+        self.addAnnex(item, relatedTo='item_decision')
+        self.assertEqual(len(_added_events()), 2)
 
 
 def test_suite():

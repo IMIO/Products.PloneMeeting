@@ -6,6 +6,7 @@
 #
 
 from collective.contact.core.content.organization import IOrganization
+from collective.iconifiedcategory.content.subcategory import ISubcategory
 from collective.iconifiedcategory.indexes import content_category_uid
 from collective.iconifiedcategory.utils import get_category_object
 from datetime import datetime
@@ -315,48 +316,47 @@ def annexes_index(obj):
         - 'not_to_sign' if contains not to sign annex;
         - 'to_sign' if contains to_sign but not signed annexes;
         - 'signed' if contains signed annexes.
-      - finally the combined value ann type uid and attr value.
+      - finally the combined values "annex_type_uid__attr_value".
+      When annex uses a subcategory, both the category uid and the
+      subcategory uid are considered as annex type uids.
     """
     res = []
     # use objectValues because with events order, an annex
     # could be added but still not registered in the categorized_elements dict
     for annex in get_annexes(obj):
-        category_uid = get_category_object(obj, annex.content_category).UID()
-        res.append(category_uid)
-        # to_print
-        if annex.to_print:
-            res.append('to_print')
-            res.append(category_uid + '__to_print')
-        else:
-            res.append('not_to_print')
-            res.append(category_uid + '__not_to_print')
-        # confidential
-        if annex.confidential:
-            res.append('confidential')
-            res.append(category_uid + '__confidential')
-        else:
-            res.append('not_confidential')
-            res.append(category_uid + '__not_confidential')
-        # publishable
-        if annex.publishable:
-            res.append('publishable')
-            res.append(category_uid + '__publishable')
-        else:
-            res.append('not_publishable')
-            res.append(category_uid + '__not_publishable')
+        annex_type_uids = _annex_type_uids(annex)
+        attr_values = [
+            'to_print' if annex.to_print else 'not_to_print',
+            'confidential' if annex.confidential else 'not_confidential',
+            'publishable' if annex.publishable else 'not_publishable',
+        ]
         # to_sign/signed
         if annex.to_sign:
-            if annex.signed:
-                res.append('signed')
-                res.append(category_uid + '__signed')
-            else:
-                res.append('to_sign')
-                res.append(category_uid + '__to_sign')
+            attr_values.append('signed' if annex.signed else 'to_sign')
         else:
-            res.append('not_to_sign')
-            res.append(category_uid + '__not_to_sign')
+            attr_values.append('not_to_sign')
+        res += annex_type_uids
+        res += attr_values
+        res += [annex_type_uid + '__' + attr_value
+                for annex_type_uid in annex_type_uids
+                for attr_value in attr_values]
     # remove duplicates
     return list(set(res))
+
+
+def _annex_type_uids(annex):
+    """Return the annex type uids of given p_annex, so the category uid and,
+       if annex uses a subcategory, the subcategory uid."""
+    try:
+        # use annex as context so annex type is looked up in the
+        # relevant annexes group (item_annexes, item_decision_annexes, ...)
+        category = get_category_object(annex, annex.content_category)
+    except KeyError:
+        return []
+    res = [category.category_uid]
+    if ISubcategory.providedBy(category):
+        res.append(category.UID())
+    return res
 
 
 @indexer(IItem)
