@@ -125,6 +125,10 @@ Tests use `unittest` + `plone.app.testing`. The base test class is `PloneMeeting
 - **Security**: `AccessControl.ClassSecurityInfo` declarations on class methods
 - **i18n**: `from Products.PloneMeeting.config import PMMessageFactory as _` — wrap translatable strings with `_()`
 
+## Branch name and update
+
+When creating a branch, also update the buildout.cfg branch of relevant Products.PloneMeeting and when merging a PR, fix branch name in buildout.cfg before merging the PR.
+
 ## Commit message style
 
 Short imperative sentence. Reference issues with `#NNN` (GitHub PR) or `#PROJECT-NNN` (external tracker like `#SUP-50375`, `#VIS-2654`). Examples:

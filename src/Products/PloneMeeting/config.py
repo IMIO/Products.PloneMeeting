@@ -79,6 +79,8 @@ setDefaultRoles(ManageOwnOrganizationFields, ())
 # this is done to hide some category fields for meeting categories
 setDefaultRoles(ManageItemCategoryFields, ())
 MEETING_REMOVE_MOG_WFA = 'meeting_remove_global_access'
+# searches subfolders containing meeting related searches
+MEETING_SEARCHES_FOLDER_IDS = ('searches_meetings', 'searches_decisions')
 
 # Permissions
 DEFAULT_ADD_CONTENT_PERMISSION = "Add portal content"

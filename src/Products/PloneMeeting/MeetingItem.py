@@ -1013,7 +1013,10 @@ class MeetingItemWorkflowActions(object):
                 wfTool.doActionFor(clonedItem, "validate")
             else:
                 for tr in self.cfg.getTransitionsForPresentingAnItem(
-                        org_uid=clonedItem.getProposingGroup())[0:-1]:
+                        org_uid=clonedItem.getProposingGroup()):
+                    # stop before 'present'
+                    if tr == 'present':
+                        break
                     if tr in get_transitions(clonedItem):
                         wfTool.doActionFor(clonedItem, tr, comment=wf_comment)
             self.context.REQUEST.set('duplicating_and_validating_item', False)
@@ -1376,7 +1379,7 @@ schema = Schema((
         name='preferredMeeting',
         default=ITEM_NO_PREFERRED_MEETING_VALUE,
         widget=SelectionWidget(
-            condition="python: not here.isDefinedInTool()",
+            condition="python: here.show_preferred_meeting()",
             description="PreferredMeeting",
             description_msgid="preferred_meeting_descr",
             label='Preferredmeeting',
@@ -2438,9 +2441,25 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         # check if value is among categories defined in the MeetingConfig
-        if self.attribute_is_used('category') and \
-           value not in cfg.categories.objectIds():
-            return translate('category_required', domain='PloneMeeting', context=self.REQUEST)
+        if self.attribute_is_used('category'):
+            if value not in cfg.categories.objectIds():
+                return translate('category_required', domain='PloneMeeting', context=self.REQUEST)
+            return self._validate_using_groups(cfg.categories[value], 'category_not_available_for_proposing_group')
+
+    def _validate_using_groups(self, category, msgid):
+        '''Check that currently used proposingGroup may use p_category
+           (category or classifier), not for real Managers.'''
+        using_groups = category.get_using_groups()
+        if using_groups and not api.portal.get_tool('portal_plonemeeting').isManager(realManagers=True):
+            proposing_group_uid = self.REQUEST.get('proposingGroup')
+            if not proposing_group_uid:
+                with_group_in_charge = self.REQUEST.get('proposingGroupWithGroupInCharge')
+                if with_group_in_charge:
+                    proposing_group_uid = with_group_in_charge.split('__groupincharge__')[0]
+            if not proposing_group_uid:
+                proposing_group_uid = self.getProposingGroup()
+            if proposing_group_uid and proposing_group_uid not in using_groups:
+                return translate(msgid, domain='PloneMeeting', context=self.REQUEST)
 
     security.declarePrivate('validate_committees')
 
@@ -2466,8 +2485,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         # check if value is among classifiers defined in the MeetingConfig
-        if (self.attribute_is_used('classifier')) and value not in cfg.classifiers.objectIds():
-            return translate('classifier_required', domain='PloneMeeting', context=self.REQUEST)
+        if self.attribute_is_used('classifier'):
+            if value not in cfg.classifiers.objectIds():
+                return translate('classifier_required', domain='PloneMeeting', context=self.REQUEST)
+            return self._validate_using_groups(cfg.classifiers[value], 'classifier_not_available_for_proposing_group')
 
     security.declarePrivate('validate_groupsInCharge')
 
@@ -2677,10 +2698,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('showField')
 
-    def show_field(self, field_name, mode='view'):
+    def show_field(self, field_name, check_is_privacy_viewable=True, mode='view'):
         '''See doc in interfaces.py.'''
         item = self.getSelf()
-        if item.attribute_is_used(field_name):
+        if item.attribute_is_used(field_name) and \
+                (not check_is_privacy_viewable or item.adapted().isPrivacyViewable()):
             # evaluate TAL expression
             tool = api.portal.get_tool('portal_plonemeeting')
             # bypass for Manager
@@ -2779,6 +2801,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         wfAdaptations = cfg.getWorkflowAdaptations()
         return 'accepted_out_of_meeting' in wfAdaptations or \
             'accepted_out_of_meeting_and_duplicated' in wfAdaptations
+
+    security.declarePublic('show_preferred_meeting')
+
+    def show_preferred_meeting(self):
+        '''Show the MeetingItem.preferredMeeting field if not isDefinedInTool
+           and if the MeetingConfig is using meetings.'''
+        if self.isDefinedInTool():
+            return False
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        return cfg.is_using_meetings()
 
     security.declarePublic('showEmergency')
 
@@ -3762,16 +3795,26 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 res.append(k.replace(SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY, ''))
         return res
 
+    def _isPrivacyViewablePreCheck(self):
+        """Common pre check between method and cachekey."""
+        # Checking the 'privacy condition' is only done if privacy is 'secret'.
+        if self.getPrivacy().startswith('public'):
+            return True
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        # check if privacy needs to be checked...
+        if not cfg.getRestrictAccessToSecretItems() or tool.isManager(cfg):
+            return True
+        # Bypass privacy check for (Meeting)Manager
+        if tool.isManager(cfg):
+            return True
+        return None
+
     def isPrivacyViewable_cachekey(method, self):
         '''cachekey method for self.isPrivacyViewable.'''
         item = self.getSelf()
-        if item.getPrivacy().startswith('public'):
+        if item._isPrivacyViewablePreCheck() is True:
             return True
-        else:
-            tool = api.portal.get_tool('portal_plonemeeting')
-            cfg = tool.getMeetingConfig(item)
-            if not cfg.getRestrictAccessToSecretItems() or tool.isManager(cfg):
-                return True
         date = get_cachekey_volatile('_users_groups_value')
         return repr(item), item.modified(), get_plone_groups_for_user(), date
 
@@ -3780,21 +3823,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     @ram.cache(isPrivacyViewable_cachekey)
     def isPrivacyViewable(self):
         '''Check doc in interfaces.py.'''
-        # Checking the 'privacy condition' is only done if privacy is 'secret'.
         item = self.getSelf()
-        privacy = item.getPrivacy()
-        # 'public' or 'public_heading' items
-        if privacy.startswith('public'):
-            return True
-        # check if privacy needs to be checked...
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(item)
-        if not cfg.getRestrictAccessToSecretItems():
-            return True
-        # Bypass privacy check for (Meeting)Manager
-        if tool.isManager(cfg):
+        if item._isPrivacyViewablePreCheck() is True:
             return True
 
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(item)
         # now check if among local_roles, a role is giving view access to the item
         # for a group that current user is member of except powerobservers groups
         userGroups = get_plone_groups_for_user()
@@ -3913,7 +3947,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 res.append(
                     (preferred_meeting_uid,
                      u"{0} ({1})".format(
-                         preferred_meeting.Title(), state_title)))
+                         safe_unicode(preferred_meeting.Title()), state_title)))
         res.reverse()
         res.insert(0, (ITEM_NO_PREFERRED_MEETING_VALUE, 'Any meeting'))
         return DisplayList(tuple(res))

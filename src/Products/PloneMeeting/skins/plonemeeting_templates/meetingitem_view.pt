@@ -20,6 +20,7 @@
                       tal:define="tool python: context.portal_plonemeeting;
                                   member context/@@plone_portal_state/member;
                                   cfg python:tool.getMeetingConfig(context);
+                                  isUsingMeetings python: cfg.is_using_meetings();
                                   meeting python: context.getMeeting();
                                   usedAttrs python: cfg.getUsedItemAttributes();
                                   usedMeetingAttrs python: cfg.getUsedMeetingAttributes();
@@ -215,6 +216,7 @@
             </div>
         </td>
         <td style="padding-right: 0.5em;" width="50%" align="right">
+            <tal:using_meetings condition="isUsingMeetings">
             <tal:comment replace="nothing">Preferred meeting</tal:comment>
             <div class="discreet">
                 <span class="item_attribute_label" i18n:translate="PloneMeeting_label_preferredMeeting"></span>:&nbsp;&nbsp;
@@ -237,6 +239,7 @@
               </tal:hasMeeting>
               <span tal:condition="not:nocall:meeting">-</span>
             </div>
+            </tal:using_meetings>
 
             <tal:comment replace="nothing">Meeting deadline date</tal:comment>
             <div class="discreet" tal:condition="python: 'meetingDeadlineDate' in usedAttrs">
@@ -362,6 +365,7 @@
     </table>
 
     <tal:comment replace="nothing">Assembly and signatures</tal:comment>
+    <tal:using_meetings condition="isUsingMeetings">
     <tal:assembly_and_signatures condition="nocall:meeting">
       <tal:defines define="mayQuickEditItemAssembly python: context.mayQuickEditItemAssembly();
                            mayQuickEditItemSignatures python: context.mayQuickEditItemSignatures();
@@ -437,6 +441,7 @@
         </div>
       </div>
     </tal:assembly_and_signatures_no_meeting  >
+    </tal:using_meetings>
 
     <tal:comment replace="nothing">Linked items</tal:comment>
     <tal:defines define="predecessors python: context.adapted().get_predecessors(only_viewable=True);

@@ -287,6 +287,11 @@
         permission="zope2.View" />
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingItemDashboardBatchActionsMarker"
+        name="update-restricted-copy-groups-batch-action"
+        class=".batchactions.UpdateRestrictedCopyGroupsBatchActionForm"
+        permission="zope2.View" />
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingItemDashboardBatchActionsMarker"
         name="add-advice-batch-action"
         class=".batchactions.AddAdviceBatchActionForm"
         permission="zope2.View" />
@@ -295,6 +300,11 @@
         name="update-committees-batch-action"
         class=".batchactions.UpdateCommitteesBatchActionForm"
         permission="zope2.View" />
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingItemDashboardBatchActionsMarker"
+        name="update-proposing-group-batch-action"
+        class=".batchactions.UpdateProposingGroupBatchActionForm"
+        permission="cmf.ManagePortal" />
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingItemDashboardBatchActionsMarker"
         name="labels-batch-action"
@@ -325,6 +335,11 @@
         for="Products.PloneMeeting.interfaces.IMeetingBatchActionsMarker"
         name="update-copy-groups-batch-action"
         class=".batchactions.UpdateCopyGroupsBatchActionForm"
+        permission="zope2.View" />
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingBatchActionsMarker"
+        name="update-restricted-copy-groups-batch-action"
+        class=".batchactions.UpdateRestrictedCopyGroupsBatchActionForm"
         permission="zope2.View" />
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingBatchActionsMarker"
