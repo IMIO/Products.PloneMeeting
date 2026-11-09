@@ -5,6 +5,19 @@ Changelog
 4.2.28.25 (unreleased)
 ----------------------
 
+- Replaced `PMCheckBoxFieldWidget` by `OrderableCheckBoxFieldWidget` from `imio.annex`
+  (moved there so it is reusable), removed `Products.PloneMeeting.widgets.pm_checkbox`.
+  CSS classes `pm_checkbox_widget` and `pm-checkbox-description` are renamed to
+  `orderable_checkbox_widget` and `orderable-checkbox-description`.
+  Requires `imio.annex` with `OrderableCheckBoxFieldWidget` (2.28.0+).
+  [gbastien]
+- `ItemExportPDFForm` now inherits from `imio.annex.browser.views.ExportPDFForm`
+  (moved there so it is reusable), it is now possible to export `Two-sided`.
+  `ItemDuplicationContainedAnnexesVocabulary` and `ItemExportPDFElementsVocabulary`
+  now inherit from `imio.annex.vocabularies.ContainedAnnexesVocabulary` and
+  `imio.annex.vocabularies.ExportPDFElementsVocabulary`, removed
+  `BaseContainedAnnexesVocabulary` and `IItemExportPDF` schema.
+  [gbastien]
 - Added faceted filter `Annex types` (`c33`) on items dashboards, with
   selectable `and/or` operator (`or` by default). It may be combined with the `Annexes` filter
   (`c20`) that now uses the `combined__annexes_index`, so it is possible to

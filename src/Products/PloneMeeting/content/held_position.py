@@ -10,6 +10,7 @@ from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.widget.schema import ContactChoice
 from collective.contact.widget.source import ContactSourceBinder
+from imio.annex.widgets.checkbox import OrderableCheckBoxFieldWidget
 from plone.autoform import directives as form
 from plone.dexterity.schema import DexteritySchemaPolicy
 from plone.directives import form as directives_form
@@ -20,7 +21,6 @@ from Products.PloneMeeting.utils import _prefixed_gn_position_name
 from Products.PloneMeeting.utils import plain_render
 from Products.PloneMeeting.utils import split_gender_and_number
 from Products.PloneMeeting.utils import uncapitalize
-from Products.PloneMeeting.widgets.pm_checkbox import PMCheckBoxFieldWidget
 from z3c.relationfield.schema import RelationChoice
 from z3c.relationfield.schema import RelationList
 from zope.globalrequest import getRequest
@@ -52,7 +52,7 @@ class IPMHeldPosition(IHeldPosition):
         required=False,
     )
 
-    form.widget('usages', PMCheckBoxFieldWidget, multiple='multiple')
+    form.widget('usages', OrderableCheckBoxFieldWidget, multiple='multiple')
     usages = zope.schema.List(
         title=_("Usages"),
         value_type=zope.schema.Choice(
@@ -61,7 +61,7 @@ class IPMHeldPosition(IHeldPosition):
         default=[],
     )
 
-    form.widget('defaults', PMCheckBoxFieldWidget, multiple='multiple')
+    form.widget('defaults', OrderableCheckBoxFieldWidget, multiple='multiple')
     defaults = zope.schema.List(
         title=_("Defaults"),
         value_type=zope.schema.Choice(
@@ -84,7 +84,7 @@ class IPMHeldPosition(IHeldPosition):
         required=False,
     )
 
-    form.widget('represented_organizations', PMCheckBoxFieldWidget)
+    form.widget('represented_organizations', OrderableCheckBoxFieldWidget)
     represented_organizations = RelationList(
         title=_("Represented organizations"),
         default=[],

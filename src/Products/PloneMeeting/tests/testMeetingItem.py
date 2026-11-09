@@ -3140,6 +3140,13 @@ class testMeetingItem(PloneMeetingTestCase):
         res.seek(0)
         self.assertTrue("Pages\n/Count 3" in res.read())
         self.assertEqual(self.request.RESPONSE.getHeader('content-type'), 'application/pdf')
+        # when using two_sided, a blank page is inserted after every
+        # element having an odd number of pages, except the last one
+        self.request['form.widgets.two_sided'] = 'true'
+        form.update()
+        res = form.handleApply(form, None)
+        res.seek(0)
+        self.assertTrue("Pages\n/Count 5" in res.read())
 
     def test_pm_ItemDuplicateFormOnlyKeepRelevantAnnexes(self):
         """Test the @@item_duplicate_form that will only let keep annexes that :
