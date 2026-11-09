@@ -509,6 +509,9 @@ table td div.additional-infos {
 #portal-footer {margin: 1em 0 0.5em 0; padding: 0; }
 #portal-advanced-search {display: none; }
 
+.titleVisualPadding {
+    padding-left: 22px;
+}
 /* the number displayed in the table of annexes */
 .td_cell_number-column {
     font-size: 90%;

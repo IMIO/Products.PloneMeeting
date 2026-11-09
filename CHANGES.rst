@@ -5,6 +5,23 @@ Changelog
 4.2.28.25 (unreleased)
 ----------------------
 
+- Registered `download-elements-annexes-batch-action` (`PMDownloadElementsAnnexesBatchActionForm`
+  based on `imio.annex` `DownloadElementsAnnexesBatchActionForm`) on items dashboards,
+  meeting view and meetings dashboards to download annexes of selected elements as a Zip file.
+  Annexes to download are selected in a list of the annexes of selected elements
+  (annexes and decision annexes for items), for items, this list is coherent with
+  the faceted `Annexes` and `Annex types` filters (received in the batch action referer),
+  see vocabulary `Products.PloneMeeting.vocabularies.download_annexes_vocabulary`,
+  displayed item title is prepended with the item number when item is in a meeting.
+  Added `browser.annexes._filters_from_criteria` and `browser.annexes._filters_from_referer`.
+  Annex filenames are prefixed by the element name or, with `annexes_by_folder`,
+  stored in a folder named after the element.  Element name is the item title, prepended
+  with the item number when item is in a meeting, or for a meeting, only the meeting date
+  in an orderable way (`2026-03-12 20h00`).
+  It is available when `download-annexes` is selected in
+  `MeetingConfig.enabledAnnexesBatchActions`.
+  Requires `imio.annex` with `DownloadElementsAnnexesBatchActionForm` (2.28.0+).
+  [gbastien]
 - Replaced `PMCheckBoxFieldWidget` by `OrderableCheckBoxFieldWidget` from `imio.annex`
   (moved there so it is reusable), removed `Products.PloneMeeting.widgets.pm_checkbox`.
   CSS classes `pm_checkbox_widget` and `pm-checkbox-description` are renamed to

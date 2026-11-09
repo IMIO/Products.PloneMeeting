@@ -53,6 +53,7 @@ from plone.memoize import ram
 from plone.memoize.ram import store_in_cache
 from Products.CMFPlone.utils import base_hasattr
 from Products.CMFPlone.utils import safe_unicode
+from Products.PloneMeeting.browser.annexes import _filter_annex_types
 from Products.PloneMeeting.browser.itemvotes import next_vote_is_linked
 from Products.PloneMeeting.config import ADVICE_TYPES
 from Products.PloneMeeting.config import ALL_VOTE_VALUES
@@ -3103,6 +3104,18 @@ class ItemExportPDFElementsVocabulary(ExportPDFElementsVocabulary):
 
 
 ItemExportPDFElementsVocabularyFactory = ItemExportPDFElementsVocabulary()
+
+
+class DownloadAnnexesVocabulary(ContainedAnnexesVocabulary):
+    """Annexes that may be downloaded by the download-elements-annexes-batch-action,
+       annexes may be filtered on annex types (category or subcategory uids)."""
+
+    def _prepare_annex_infos(self, context, annex_infos, annex_type_uids=None, **kwargs):
+        """Keep annexes using one of p_annex_type_uids."""
+        return _filter_annex_types(annex_infos, annex_type_uids)
+
+
+DownloadAnnexesVocabularyFactory = DownloadAnnexesVocabulary()
 
 
 class GenerablePODTemplatesVocabulary(object):
