@@ -182,8 +182,8 @@
 
   <!-- imio.annex events -->
   <subscriber for="imio.annex.content.annex.IAnnex
-                   zope.lifecycleevent.IObjectAddedEvent"
-              handler=".events.onAnnexAdded" />
+                   collective.iconifiedcategory.interfaces.ICategorizedElementUpdatedEvent"
+              handler=".events.on_annex_added" />
 
   <subscriber for="imio.annex.content.annex.IAnnex
                    plone.dexterity.events.EditFinishedEvent"
