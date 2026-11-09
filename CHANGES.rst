@@ -17,6 +17,8 @@ Changelog
   now inherit from `imio.annex.vocabularies.ContainedAnnexesVocabulary` and
   `imio.annex.vocabularies.ExportPDFElementsVocabulary`, removed
   `BaseContainedAnnexesVocabulary` and `IItemExportPDF` schema.
+  The ` [PDF required]` suffix of `ItemDuplicationContainedAnnexesVocabulary`
+  terms is now translated in the `imio.annex` domain.
   [gbastien]
 - Added faceted filter `Annex types` (`c33`) on items dashboards, with
   selectable `and/or` operator (`or` by default). It may be combined with the `Annexes` filter

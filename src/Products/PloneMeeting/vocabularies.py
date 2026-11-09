@@ -3058,7 +3058,7 @@ class ItemDuplicationContainedAnnexesVocabulary(ContainedAnnexesVocabulary):
                     annex_obj.file.contentType != 'application/pdf':
                 term.disabled = True
                 term.title += translate(' [PDF required]',
-                                        domain='PloneMeeting',
+                                        domain='imio.annex',
                                         context=context.REQUEST)
 
 
