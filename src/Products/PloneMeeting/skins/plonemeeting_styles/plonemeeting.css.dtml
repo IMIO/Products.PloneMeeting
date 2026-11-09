@@ -1870,13 +1870,12 @@ div.faceted-form div.select2-container {
     margin-right: 0em;
     padding-right: 0.2em;
 }
+/* move operator to top of the widget */
 div.faceted-multiselect-widget div.faceted-operator {
     margin-top: -102px;
-    right: 7px
 }
 div.faceted-checkboxes-widget div.faceted-operator {
     margin-top: -27px;
-    margin-right: 7px
 }
 .faceted-multiselect-widget .select2-container-multi .select2-choices .select2-search-choice {
     background-color: #e4e4e4;
