@@ -129,7 +129,7 @@ Tests use `unittest` + `plone.app.testing`. The base test class is `PloneMeeting
 
 The `Test package` workflow (`tests.yml`) tests the checked-out code (`develop = .` in `buildout.cfg`), so there is no need to set the branch name of Products.PloneMeeting in `buildout.cfg`.
 The `Products.Meeting*` tests dispatched by `tests-dispatch.yml` still use Products.PloneMeeting `master`, not this branch, so they do not validate the PR.
-When a branch depends on a branch of another package (e.g. `imio.annex`), add that package to `[sources]` in `buildout.cfg` with `branch=<its branch>` (and to `auto-checkout +=` if it is not already auto-checked out by buildout.pm) and set it back to `master` (or remove it) before merging the PR.
+When a branch depends on a branch of another package (e.g. `imio.annex`), add that package to `[sources]` in `buildout.cfg` with `branch=<its branch>` (and to `auto-checkout +=` if it is not already auto-checked out by buildout.pm). Before merging the PR, remove these temporary lines so the source defined in buildout.pm is used again.
 
 ## Commit message style
 
