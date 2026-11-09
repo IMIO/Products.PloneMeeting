@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
 from AccessControl import Unauthorized
+from imio.annex.widgets.checkbox import OrderableCheckBoxFieldWidget
 from plone import api
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.external.utils import send_vision_json_request
 from Products.PloneMeeting.interfaces import IRedirect
-from Products.PloneMeeting.widgets.pm_checkbox import PMCheckBoxFieldWidget
 from z3c.form import button
 from z3c.form import field
 from z3c.form import form
@@ -63,8 +63,8 @@ class ILinkWithVision(Interface):
 class LinkWithVisionForm(form.Form):
 
     fields = field.Fields(ILinkWithVision)
-    fields['projects'].widgetFactory = PMCheckBoxFieldWidget
-    fields['tasks'].widgetFactory = PMCheckBoxFieldWidget
+    fields['projects'].widgetFactory = OrderableCheckBoxFieldWidget
+    fields['tasks'].widgetFactory = OrderableCheckBoxFieldWidget
 
     ignoreContext = True  # don't use context to get widget data
 

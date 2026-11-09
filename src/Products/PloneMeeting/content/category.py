@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from AccessControl import ClassSecurityInfo
+from imio.annex.widgets.checkbox import OrderableCheckBoxFieldWidget
 from imio.helpers.cache import invalidate_cachekey_volatile_for
 from imio.helpers.content import uuidsToObjects
 from plone import api
@@ -10,7 +11,6 @@ from plone.dexterity.schema import DexteritySchemaPolicy
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IConfigElement
-from Products.PloneMeeting.widgets.pm_checkbox import PMCheckBoxFieldWidget
 from z3c.form.browser.radio import RadioFieldWidget
 from zope import schema
 from zope.globalrequest import getRequest
@@ -53,7 +53,7 @@ class IMeetingCategory(IConfigElement):
 
     form.read_permission(using_groups='PloneMeeting.manage_item_category_fields')
     form.write_permission(using_groups='PloneMeeting.manage_item_category_fields')
-    form.widget('using_groups', PMCheckBoxFieldWidget, multiple='multiple')
+    form.widget('using_groups', OrderableCheckBoxFieldWidget, multiple='multiple')
     using_groups = schema.List(
         title=_("PloneMeeting_label_usingGroups"),
         description=_("category_using_groups_descr"),
@@ -69,7 +69,7 @@ class IMeetingCategory(IConfigElement):
     form.write_permission(
         category_mapping_when_cloning_to_other_mc='PloneMeeting.manage_item_category_fields')
     form.widget('category_mapping_when_cloning_to_other_mc',
-                PMCheckBoxFieldWidget,
+                OrderableCheckBoxFieldWidget,
                 multiple='multiple')
     category_mapping_when_cloning_to_other_mc = schema.List(
         title=_("PloneMeeting_label_category_mapping_when_cloning_to_other_mc"),
@@ -84,7 +84,7 @@ class IMeetingCategory(IConfigElement):
 
     form.read_permission(groups_in_charge='PloneMeeting.manage_item_category_fields')
     form.write_permission(groups_in_charge='PloneMeeting.manage_item_category_fields')
-    form.widget('groups_in_charge', PMCheckBoxFieldWidget, multiple='multiple')
+    form.widget('groups_in_charge', OrderableCheckBoxFieldWidget, multiple='multiple')
     groups_in_charge = schema.List(
         title=_("PloneMeeting_label_groupsInCharge"),
         description=_("groups_in_charge_descr"),
