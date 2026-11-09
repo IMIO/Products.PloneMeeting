@@ -17,6 +17,21 @@ Changelog
 - Make `PMSignersAdapter` inherit from `imio.esign.adapters.SignableAdapter`
   so every default method (like `get_filename`) is available.
   [gbastien]
+- Added faceted filter `Annex types` (`c33`) on items dashboards, with
+  selectable `and/or` operator (`or` by default). It may be combined with the `Annexes` filter
+  (`c20`) that now uses the `combined__annexes_index`, so it is possible to
+  search for example items having annexes of a given type to sign.
+  When filtering, only annexes of selected types are displayed in the dashboard.
+  The `annexes_index` now also contains annex type uids (category and
+  subcategory) and combined `annex_type_uid__attr_value` values.
+  Event `on_annex_added` (formerly `onAnnexAdded`) is now triggered on
+  `ICategorizedElementUpdatedEvent` so `categorized_elements` is up to date.
+  Added upgrade step to `4217.4` that updates faceted filters and reindexes
+  `annexes_index` for items having annexes.
+  [gbastien]
+- Fixed annexes displayed in dashboards when filtering on annexes `to sign`,
+  signed annexes were also displayed.
+  [gbastien]
 - Adapted `MeetingItem.validate_category` and `MeetingItem.validate_classifier`
   to check that the selected `proposingGroup` is among the
   `MeetingCategory.using_groups` when defined (not checked for real Managers).

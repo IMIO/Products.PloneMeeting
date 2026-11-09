@@ -1038,10 +1038,17 @@ def onAdviceRemoved(advice, event):
     _advice_update_item(item)
 
 
-def onAnnexAdded(annex, event):
-    ''' '''
+def on_annex_added(annex, event):
+    '''
+    Event registered to the ICategorizedElementUpdatedEvent but we check if we are adding
+    a new annex, in this case event.old_values (the annex infos previously stored
+    in parent.categorized_elements) is empty.
+    '''
+    is_just_added = not event.old_values
     # can be the case if migrating annexes or adding several annexes at once
-    if not annex.REQUEST.get('defer_categorized_content_created_event'):
+    if is_just_added and not annex.REQUEST.get('defer_categorized_content_created_event'):
+        # we use event ICategorizedElementUpdatedEvent so we are sure that
+        # categorized_elements is updated, necessary for correct reindex of annexes_index
         parent = annex.aq_inner.aq_parent
 
         if '/++add++annex' in annex.REQUEST.getURL():
