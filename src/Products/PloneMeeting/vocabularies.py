@@ -15,6 +15,7 @@ from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_group
 from collective.contact.plonegroup.vocabularies import PositionTypesVocabulary
+from collective.documentgenerator.config import POD_FORMATS
 from collective.documentgenerator.content.vocabulary import ExistingPODTemplateFactory
 from collective.documentgenerator.content.vocabulary import MergeTemplatesVocabularyFactory
 from collective.documentgenerator.content.vocabulary import PortalTypesVocabularyFactory
@@ -65,6 +66,7 @@ from Products.PloneMeeting.config import MEETING_SEARCHES_FOLDER_IDS
 from Products.PloneMeeting.config import NO_COMMITTEE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import PMMessageFactory as _
+from Products.PloneMeeting.config import POD_TEMPLATE_TOKEN_SEPARATOR
 from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
 from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
 from Products.PloneMeeting.interfaces import IMeetingConfig
@@ -3131,16 +3133,34 @@ class GenerablePODTemplatesVocabulary(object):
                 res.append(pod_template)
         return res
 
+    def _format_icon(self, output_format, portal_url):
+        """Icon of the p_output_format."""
+        return u'<img src="{0}/++resource++collective.documentgenerator/{1}.svg" ' \
+            u'title="{2}" width="16px" height="16px"> '.format(
+                portal_url,
+                output_format,
+                html.escape(safe_unicode(dict(POD_FORMATS).get(output_format, output_format))))
+
     def __call__(self, context, output_formats=['pdf']):
-        """ """
+        """A term by POD template and available output format (among p_output_formats,
+           every available formats if p_output_formats is empty), term token is
+           "pod_template_uid__output_format", term title is the format icon and
+           the POD template title."""
         terms = []
+        portal_url = api.portal.get().absolute_url()
         for pod_template in self._get_generable_templates(context, output_formats):
-            term_token = pod_template.UID()
-            terms.append(
-                SimpleTerm(term_token,
-                           term_token,
-                           safe_unicode(pod_template.Title()))
-            )
+            available_formats = pod_template.get_available_formats()
+            for output_format in output_formats or available_formats:
+                if output_format not in available_formats:
+                    continue
+                term_token = u'{0}{1}{2}'.format(
+                    pod_template.UID(), POD_TEMPLATE_TOKEN_SEPARATOR, output_format)
+                terms.append(
+                    SimpleTerm(term_token,
+                               term_token,
+                               self._format_icon(output_format, portal_url) +
+                               html.escape(safe_unicode(pod_template.Title())))
+                )
         return SimpleVocabulary(terms)
 
 

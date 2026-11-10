@@ -26,6 +26,14 @@ Changelog
   CSS to `plonetheme.imioapps`.
   Requires `plonetheme.imioapps` with orderable checkbox widget CSS (2.67+).
   [gbastien]
+- `GenerablePODTemplatesVocabulary` (POD templates in the item export PDF form)
+  now returns a term by POD template and available output format (among `output_formats`,
+  every available formats if empty), term token is `pod_template_uid__output_format`
+  (separator `config.POD_TEMPLATE_TOKEN_SEPARATOR`) and term title is the format icon
+  followed by the POD template title, that is now HTML escaped.
+  `ItemExportPDFForm._elements_content` generates the POD template in the output
+  format of the selected token.
+  [gbastien]
 - Replaced `PMCheckBoxFieldWidget` by `OrderableCheckBoxFieldWidget` from `imio.annex`
   (moved there so it is reusable), removed `Products.PloneMeeting.widgets.pm_checkbox`.
   CSS classes `pm_checkbox_widget` and `pm-checkbox-description` are renamed to

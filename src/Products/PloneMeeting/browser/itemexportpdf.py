@@ -5,6 +5,7 @@
 
 from imio.annex.browser.views import ExportPDFForm
 from imio.helpers.content import get_vocab
+from Products.PloneMeeting.config import POD_TEMPLATE_TOKEN_SEPARATOR
 from Products.PloneMeeting.interfaces import IRedirect
 
 
@@ -23,8 +24,9 @@ class ItemExportPDFForm(ExportPDFForm):
         IRedirect(self.request).redirect(url)
 
     def _elements_content(self, data):
-        """Selected elements are POD templates to generate as PDF or annexes."""
-        pod_template_uids = [
+        """Selected elements are POD templates to generate as PDF or annexes,
+           POD template token is "pod_template_uid__output_format"."""
+        pod_template_tokens = [
             term.token for term in get_vocab(
                 self.context,
                 'Products.PloneMeeting.vocabularies.'
@@ -33,10 +35,10 @@ class ItemExportPDFForm(ExportPDFForm):
         # annexes
         content = super(ItemExportPDFForm, self)._elements_content(
             dict(data, elements=[element_id for element_id in data['elements']
-                                 if element_id not in pod_template_uids]))
+                                 if element_id not in pod_template_tokens]))
         # pod templates
         view = self.context.restrictedTraverse('@@document-generation')
-        content.update(
-            {template_uid: view(template_uid=template_uid, output_format='pdf')
-             for template_uid in pod_template_uids})
+        for token in pod_template_tokens:
+            template_uid, output_format = token.split(POD_TEMPLATE_TOKEN_SEPARATOR)
+            content[token] = view(template_uid=template_uid, output_format=output_format)
         return content

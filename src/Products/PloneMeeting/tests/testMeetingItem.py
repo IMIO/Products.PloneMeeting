@@ -86,6 +86,7 @@ from zExceptions import Redirect
 from zope.annotation.interfaces import IAnnotations
 from zope.component import getAdapter
 from zope.component import getMultiAdapter
+from zope.component import getUtility
 from zope.component import queryUtility
 from zope.event import notify
 from zope.i18n import translate
@@ -94,6 +95,7 @@ from zope.interface import Invalid
 from zope.lifecycleevent import Attributes
 from zope.lifecycleevent import ObjectModifiedEvent
 from zope.ramcache.interfaces.ram import IRAMCache
+from zope.schema.interfaces import IVocabularyFactory
 
 import transaction
 
@@ -3132,8 +3134,34 @@ class testMeetingItem(PloneMeetingTestCase):
         # enable and test
         self._enable_action('export_pdf')
         template = cfg.podtemplates.itemTemplate
+        # a term by POD template and available output format, token is "uid__format"
+        template.pod_formats = ['odt', 'pdf']
+        factory = getUtility(
+            IVocabularyFactory, 'Products.PloneMeeting.vocabularies.generable_pdf_documents_vocabulary')
+        template_tokens = [term.token for term in factory(item, output_formats=['pdf', 'odt', 'docx'])
+                           if term.token.startswith(template.UID())]
+        self.assertEqual(template_tokens,
+                         [template.UID() + '__pdf', template.UID() + '__odt'])
+        # no output_formats, every available formats
+        template_tokens = [term.token for term in factory(item, output_formats=[])
+                           if term.token.startswith(template.UID())]
+        self.assertEqual(template_tokens,
+                         [template.UID() + '__odt', template.UID() + '__pdf'])
+        # export PDF form only lists PDF, term title is the format icon and the escaped title
         template.pod_formats = ['pdf']
-        self.request['form.widgets.elements'] = [template.UID(), annex.getId(), annex_dec.getId()]
+        template.title = u'Template "<b>'
+        template_token = template.UID() + '__pdf'
+        pod_template_terms = [term for term in get_vocab(
+            item, 'Products.PloneMeeting.vocabularies.item_export_pdf_elements_vocabulary')
+            if term.token.startswith(template.UID())]
+        self.assertEqual(len(pod_template_terms), 1)
+        self.assertEqual(pod_template_terms[0].token, template_token)
+        self.assertEqual(
+            pod_template_terms[0].title,
+            u'<img src="{0}/++resource++collective.documentgenerator/pdf.svg" '
+            u'title="Adobe PDF (.pdf)" width="16px" height="16px"> '
+            u'Template &quot;&lt;b&gt;'.format(self.portal.absolute_url()))
+        self.request['form.widgets.elements'] = [template_token, annex.getId(), annex_dec.getId()]
         form.update()
         res = form.handleApply(form, None)
         # this generated a 3 pages PDF, 1 page per element
