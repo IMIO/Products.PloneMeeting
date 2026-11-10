@@ -22,6 +22,10 @@ Changelog
   `MeetingConfig.enabledAnnexesBatchActions`.
   Requires `imio.annex` with `DownloadElementsAnnexesBatchActionForm` (2.28.0+).
   [gbastien]
+- Moved the `imio.annex` orderable checkbox widget (`orderable_checkbox_widget`)
+  CSS to `plonetheme.imioapps`.
+  Requires `plonetheme.imioapps` with orderable checkbox widget CSS (2.67+).
+  [gbastien]
 - Replaced `PMCheckBoxFieldWidget` by `OrderableCheckBoxFieldWidget` from `imio.annex`
   (moved there so it is reusable), removed `Products.PloneMeeting.widgets.pm_checkbox`.
   CSS classes `pm_checkbox_widget` and `pm-checkbox-description` are renamed to
