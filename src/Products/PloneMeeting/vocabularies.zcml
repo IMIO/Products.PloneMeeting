@@ -190,4 +190,8 @@
   <utility component=".vocabularies.ItemExportPDFElementsVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.item_export_pdf_elements_vocabulary" />
 
+  <!-- Vocabulary used in download-elements-annexes-batch-action -->
+  <utility component=".vocabularies.DownloadAnnexesVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.download_annexes_vocabulary" />
+
 </configure>

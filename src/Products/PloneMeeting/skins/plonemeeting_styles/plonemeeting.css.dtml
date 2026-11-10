@@ -509,6 +509,9 @@ table td div.additional-infos {
 #portal-footer {margin: 1em 0 0.5em 0; padding: 0; }
 #portal-advanced-search {display: none; }
 
+.titleVisualPadding {
+    padding-left: 22px;
+}
 /* the number displayed in the table of annexes */
 .td_cell_number-column {
     font-size: 90%;
@@ -2374,37 +2377,6 @@ body:not(.userrole-manager):not(.userrole-meetingmanager) a#fieldsetlegend-scan 
     display: none;
 }
 
-/* skin orderable_checkbox_widget */
-div.orderable_checkbox_widget div.checkbox_widget_select_all {
-   background-color: #EEEEEE;
-   margin-left: 0;
-   padding: 0.25em;
-   color: #444444;
-   margin-top: 0.25em;
-}
-div.orderable_checkbox_widget div.orderable-checkbox-description {
-    margin-left: 3em;
-}
-/* checkboxes in item duplicate/item export pdf forms popup */
-div.orderable_checkbox_widget input.checkbox-widget {
-    margin-left: 0.25em;
-    margin-top: 0.5em;
-}
-/* with draggable activate */
-div.orderable_checkbox_widget span.draggable+input.checkbox-widget {
-    margin-left: 2em;
-}
-/* make contained draggable span take 100% height, necessary when having a descr */
-div.orderable_checkbox_widget span.option {
-    position: relative;
-}
-div.orderable_checkbox_widget span.option label {
-    display: inline;
-}
-div.orderable_checkbox_widget span.draggable {
-    position: absolute;
-    height: 100%;
-}
 /* hide the edit yellow pencil on person and held_position in the viewlet-above-content-title next to workflow_state */
 body.portaltype-person a.edit-person,
 body.portaltype-held_position a.edit-held_position {

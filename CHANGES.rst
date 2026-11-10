@@ -5,6 +5,35 @@ Changelog
 4.2.28.25 (unreleased)
 ----------------------
 
+- Registered `download-elements-annexes-batch-action` (`PMDownloadElementsAnnexesBatchActionForm`
+  based on `imio.annex` `DownloadElementsAnnexesBatchActionForm`) on items dashboards,
+  meeting view and meetings dashboards to download annexes of selected elements as a Zip file.
+  Annexes to download are selected in a list of the annexes of selected elements
+  (annexes and decision annexes for items), for items, this list is coherent with
+  the faceted `Annexes` and `Annex types` filters (received in the batch action referer),
+  see vocabulary `Products.PloneMeeting.vocabularies.download_annexes_vocabulary`,
+  displayed item title is prepended with the item number when item is in a meeting.
+  Added `browser.annexes._filters_from_criteria` and `browser.annexes._filters_from_referer`.
+  Annex filenames are prefixed by the element name or, with `annexes_by_folder`,
+  stored in a folder named after the element.  Element name is the item title, prepended
+  with the item number when item is in a meeting, or for a meeting, only the meeting date
+  in an orderable way (`2026-03-12 20h00`).
+  It is available when `download-annexes` is selected in
+  `MeetingConfig.enabledAnnexesBatchActions`.
+  Requires `imio.annex` with `DownloadElementsAnnexesBatchActionForm` (2.28.0+).
+  [gbastien]
+- Moved the `imio.annex` orderable checkbox widget (`orderable_checkbox_widget`)
+  CSS to `plonetheme.imioapps`.
+  Requires `plonetheme.imioapps` with orderable checkbox widget CSS (2.67+).
+  [gbastien]
+- `GenerablePODTemplatesVocabulary` (POD templates in the item export PDF form)
+  now returns a term by POD template and available output format (among `output_formats`,
+  every available formats if empty), term token is `pod_template_uid__output_format`
+  (separator `config.POD_TEMPLATE_TOKEN_SEPARATOR`) and term title is the format icon
+  followed by the POD template title, that is now HTML escaped.
+  `ItemExportPDFForm._elements_content` generates the POD template in the output
+  format of the selected token.
+  [gbastien]
 - Replaced `PMCheckBoxFieldWidget` by `OrderableCheckBoxFieldWidget` from `imio.annex`
   (moved there so it is reusable), removed `Products.PloneMeeting.widgets.pm_checkbox`.
   CSS classes `pm_checkbox_widget` and `pm-checkbox-description` are renamed to

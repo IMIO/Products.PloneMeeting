@@ -62,8 +62,10 @@ from zope.component import queryMultiAdapter
 from zope.event import notify
 from zope.i18n import translate
 
+import io
 import magic
 import transaction
+import zipfile
 
 
 SAMPLE_ERROR_MESSAGE = u'This is the error message!'
@@ -2433,6 +2435,154 @@ class testViews(PloneMeetingTestCase):
         annex2.file.filename = None
         data = form.handleApply(form, None)
         self.assertEqual(m.from_buffer(data), 'Zip archive data (empty)')
+
+    def test_pm_DownloadElementsAnnexesActionForm(self):
+        """This batch action will download annexes of selected items or meetings
+           as a zip file, annexes are prefixed by element name or stored in a folder
+           by element.  Element name is the item title, prepended with item number
+           when item is in a meeting, or the meeting date in an orderable way."""
+        cfg = self.meetingConfig
+        cfg.setEnabledAnnexesBatchActions([])
+        self.changeUser('pmManager')
+        item1 = self.create('MeetingItem', title='Item 1')
+        self.addAnnex(item1, annexFile=self.annexFilePDF)
+        # same filename is made unique
+        self.addAnnex(item1, annexFile=self.annexFilePDF)
+        # a "/" in the title does not create a sub folder
+        item2 = self.create('MeetingItem', title='Item 2/3')
+        self.addAnnex(item2)
+        # item without annexes
+        item3 = self.create('MeetingItem', title='Item 3')
+        self.request.form['form.widgets.uids'] = u','.join([item1.UID(), item2.UID()])
+        self.request.form['ajax_load'] = 'dummy'
+        searches_items = self.getMeetingFolder().searches_items
+
+        def _zip_names(context, annexes_by_folder=False, annex_uids=None):
+            self.request['form.widgets.annexes_by_folder'] = \
+                self.request.form['form.widgets.annexes_by_folder'] = \
+                [annexes_by_folder and 'true' or 'false']
+            form = context.restrictedTraverse('@@download-elements-annexes-batch-action')
+            form.update()
+            self.assertTrue(form.do_apply)
+            # by default every selectable annexes are selected
+            selectable_uids = [term.token for term in form.widgets['annexes'].terms
+                               if not getattr(term, 'disabled', False)]
+            self.assertEqual(form.fields['annexes'].field.default, selectable_uids)
+            self.request['form.widgets.annexes'] = \
+                self.request.form['form.widgets.annexes'] = \
+                annex_uids if annex_uids is not None else selectable_uids
+            data = form.handleApply(form, None)
+            self.assertEqual(self.request.response.getHeader('content-type'), 'application/zip')
+            return sorted(zipfile.ZipFile(io.BytesIO(data)).namelist())
+
+        # available when "download-annexes" is enabled
+        form = searches_items.restrictedTraverse('@@download-elements-annexes-batch-action')
+        self.assertRaises(Unauthorized, form)
+        self.assertFalse(form.available())
+        cfg.setEnabledAnnexesBatchActions(['download-annexes'])
+        form.update()
+        self.assertTrue(form.available())
+        self.assertEqual(
+            _zip_names(searches_items),
+            [u'Item 1 - file_correct-1.pdf', u'Item 1 - file_correct.pdf', u'Item 2-3 - FILE.txt'])
+        self.assertEqual(self.request.response.getHeader('content-disposition'),
+                         'attachment;filename=searches_items.zip')
+        self.assertEqual(
+            _zip_names(searches_items, annexes_by_folder=True),
+            [u'Item 1/file_correct-1.pdf', u'Item 1/file_correct.pdf', u'Item 2-3/FILE.txt'])
+
+        # item in a meeting, item number is prepended
+        meeting = self.create('Meeting', date=datetime(2026, 3, 12, 20, 0))
+        self.presentItem(item1)
+        item1_name = u'{0}. Item 1'.format(item1.getItemNumber(for_display=True))
+        self.assertEqual(
+            _zip_names(searches_items),
+            [u'{0} - file_correct-1.pdf'.format(item1_name),
+             u'{0} - file_correct.pdf'.format(item1_name),
+             u'Item 2-3 - FILE.txt'])
+        # also available on the meeting view
+        self.assertEqual(
+            _zip_names(meeting, annexes_by_folder=True),
+            [u'{0}/file_correct-1.pdf'.format(item1_name),
+             u'{0}/file_correct.pdf'.format(item1_name),
+             u'Item 2-3/FILE.txt'])
+
+        # decision annexes are also listed, only selected annexes are downloaded
+        decision_annex = self.addAnnex(
+            item2, relatedTo='item_decision', annexFile=self.annexFilePDF)
+        form = searches_items.restrictedTraverse('@@download-elements-annexes-batch-action')
+        form.update()
+        self.assertEqual(len(form.widgets['annexes'].terms), 4)
+        # displayed item title is prepended with item number when item in a meeting
+        term_titles = [term.title for term in form.widgets['annexes'].terms]
+        self.assertTrue(term_titles[0].startswith(
+            u'<span class="contained_annex_parent_title">{0}</span>'.format(item1_name)))
+        self.assertTrue(term_titles[-1].startswith(
+            u'<span class="contained_annex_parent_title">Item 2/3</span>'))
+        self.assertEqual(
+            _zip_names(searches_items),
+            [u'{0} - file_correct-1.pdf'.format(item1_name),
+             u'{0} - file_correct.pdf'.format(item1_name),
+             u'Item 2-3 - FILE.txt',
+             u'Item 2-3 - file_correct.pdf'])
+        self.assertEqual(
+            _zip_names(searches_items, annex_uids=[decision_annex.UID()]),
+            [u'Item 2-3 - file_correct.pdf'])
+        # listed annexes are coherent with the faceted "annexes" and "annex types"
+        # filters, received in the referer hash
+        cfg.annexes_types.item_annexes.signed_activated = True
+        to_sign_annex = self.addAnnex(
+            item2, annexType='overhead-analysis', to_sign=True, annexFile=self.annexFilePDF)
+        overhead_uid = item2.categorized_elements[to_sign_annex.UID()]['category_uid']
+        financial_uid = item1.categorized_elements[
+            get_annexes(item1)[0].UID()]['category_uid']
+
+        def _filtered_zip_names(faceted_hash):
+            self.request.form['form.widgets.referer'] = '{0}#{1}'.format(
+                searches_items.absolute_url(), faceted_hash)
+            form = searches_items.restrictedTraverse('@@download-elements-annexes-batch-action')
+            form.update()
+            self.assertEqual(len(form.widgets['annexes'].terms), len(form.annexes))
+            return _zip_names(searches_items)
+
+        self.assertEqual(_filtered_zip_names('c20=to_sign'),
+                         [u'Item 2-3 - file_correct.pdf'])
+        self.assertEqual(_filtered_zip_names('c33={0}'.format(overhead_uid)),
+                         [u'Item 2-3 - file_correct.pdf'])
+        # several values, decision annex does not use the financial annex type
+        self.assertEqual(
+            _filtered_zip_names('c20=not_to_sign&c33={0}&c33={1}'.format(
+                financial_uid, overhead_uid)),
+            [u'{0} - file_correct-1.pdf'.format(item1_name),
+             u'{0} - file_correct.pdf'.format(item1_name),
+             u'Item 2-3 - FILE.txt'])
+        # no filter
+        self.assertEqual(len(_filtered_zip_names('c4=some_value')), 5)
+        self.request.form['form.widgets.referer'] = searches_items.absolute_url()
+
+        # a not selectable annex may not be downloaded
+        self.request['form.widgets.annexes'] = \
+            self.request.form['form.widgets.annexes'] = [item3.UID()]
+        form = searches_items.restrictedTraverse('@@download-elements-annexes-batch-action')
+        form.update()
+        self.assertIsNone(form.handleApply(form, None))
+        self.assertTrue(form.widgets.errors)
+
+        # meetings dashboard, only the meeting date in an orderable way
+        self.addAnnex(meeting)
+        self.request.form['form.widgets.uids'] = meeting.UID()
+        searches_meetings = self.getMeetingFolder().searches_meetings
+        meeting_name = u'2026-03-12 20h00'
+        self.assertEqual(_zip_names(searches_meetings),
+                         [u'{0} - FILE.txt'.format(meeting_name)])
+        self.assertEqual(_zip_names(searches_meetings, annexes_by_folder=True),
+                         [u'{0}/FILE.txt'.format(meeting_name)])
+
+        # nothing to download, action can not be applied
+        self.request.form['form.widgets.uids'] = item3.UID()
+        form = searches_items.restrictedTraverse('@@download-elements-annexes-batch-action')
+        form.update()
+        self.assertFalse(form.do_apply)
 
     def test_pm_DeleteAnnexesActionForm(self):
         """This batch action will delete annexes."""

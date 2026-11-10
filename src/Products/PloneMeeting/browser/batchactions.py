@@ -13,6 +13,7 @@ from collective.eeafaceted.batchactions.utils import listify_uids
 from collective.z3cform.select2.widget.widget import SingleSelect2FieldWidget
 from imio.annex.browser.views import ConcatenateAnnexesBatchActionForm
 from imio.annex.browser.views import DownloadAnnexesBatchActionForm
+from imio.annex.browser.views import DownloadElementsAnnexesBatchActionForm
 from imio.helpers.content import get_vocab
 from natsort import humansorted
 from operator import attrgetter
@@ -20,11 +21,16 @@ from plone import api
 from plone.app.textfield import RichText
 from Products.CMFCore.permissions import ManagePortal
 from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting import logger
+from Products.PloneMeeting.browser.annexes import _filters_from_referer
+from Products.PloneMeeting.browser.annexes import _split_annex_types_filter
 from Products.PloneMeeting.config import NO_COMMITTEE
 from Products.PloneMeeting.config import PMMessageFactory as _
+from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.content.advice import _advice_type_default
 from Products.PloneMeeting.ftw_labels.utils import filter_access_global_labels
+from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.utils import _add_advice
 from Products.PloneMeeting.utils import addDataChange
 from Products.PloneMeeting.utils import displaying_available_items
@@ -508,6 +514,76 @@ class PMDownloadAnnexesBatchActionForm(DownloadAnnexesBatchActionForm):
     def available(self):
         """ """
         return "download-annexes" in self.cfg.getEnabledAnnexesBatchActions()
+
+
+class PMDownloadElementsAnnexesBatchActionForm(DownloadElementsAnnexesBatchActionForm):
+    """Download annexes of selected items or meetings, available on dashboards
+       when "download-annexes" is enabled in MeetingConfig.enabledAnnexesBatchActions.
+       Annexes are stored in a folder or prefixed by the element name, see _element_name."""
+
+    annexes_vocabulary = u"Products.PloneMeeting.vocabularies.download_annexes_vocabulary"
+    _cached_faceted_filters = None
+
+    def __init__(self, context, request):
+        super(PMDownloadElementsAnnexesBatchActionForm, self).__init__(context, request)
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(context)
+
+    def available(self):
+        """ """
+        return "download-annexes" in self.cfg.getEnabledAnnexesBatchActions()
+
+    def _faceted_filters(self):
+        """Annexes filters selected in the faceted "annexes" (to_sign, to_print, ...)
+           and "annex types" criteria, so listed annexes are the annexes displayed
+           in the dashboard.  As the batch action form is not called by the faceted,
+           the faceted query is get from the referer hash.
+           Returns a tuple (filters, annex_type_uids)."""
+        if self._cached_faceted_filters is None:
+            self._cached_faceted_filters = _split_annex_types_filter(
+                _filters_from_referer(self.request.form.get('form.widgets.referer')))
+        return self._cached_faceted_filters
+
+    def _element_terms(self, element, **kwargs):
+        """For items, list annexes and decision annexes, filtered using
+           the faceted "annexes" and "annex types" criteria, item title
+           is displayed with the item number."""
+        if not IMeetingItem.providedBy(element):
+            return super(PMDownloadElementsAnnexesBatchActionForm, self)._element_terms(
+                element, **kwargs)
+        filters, annex_type_uids = self._faceted_filters()
+        kwargs.update({'include_portal_type': True,
+                       'filters': filters,
+                       'annex_type_uids': annex_type_uids,
+                       # displayed item title is prepended with item number
+                       'title_kwargs': {'withItemNumber': True}})
+        terms = super(PMDownloadElementsAnnexesBatchActionForm, self)._element_terms(
+            element, **kwargs)
+        self.request['force_use_item_decision_annexes_group'] = True
+        terms += super(PMDownloadElementsAnnexesBatchActionForm, self)._element_terms(
+            element, portal_type='annexDecision', **kwargs)
+        self.request['force_use_item_decision_annexes_group'] = False
+        return terms
+
+    def _element_name(self, element):
+        """Name used as folder name or filename prefix in the Zip file:
+           - for a meeting, the meeting date in an orderable way,
+             like "2026-03-12 20h00";
+           - for an item, the title prepended with the item number
+             when the item is in a meeting, like "12. Item title"."""
+        if IMeeting.providedBy(element):
+            return safe_unicode(element.date.strftime('%Y-%m-%d %Hh%M'))
+        if IMeetingItem.providedBy(element):
+            return safe_unicode(element.Title(withItemNumber=True))
+        return safe_unicode(element.Title())
+
+    def _zip_folder_name(self, element):
+        """ """
+        return self._element_name(element)
+
+    def _zip_filename_prefix(self, element):
+        """ """
+        return self._element_name(element)
 
 
 class PMLabelsBatchActionForm(LabelsBatchActionForm):

@@ -396,6 +396,10 @@ ITEM_MOVAL_PREVENTED = "Prevented to rename item no more in initial_state!"
 FACETED_ANNEXES_CRITERION_ID = 'c20'
 FACETED_ANNEX_TYPES_CRITERION_ID = 'c33'
 
+# separator between the POD template UID and the output format in
+# GenerablePODTemplatesVocabulary term tokens
+POD_TEMPLATE_TOKEN_SEPARATOR = '__'
+
 # name of marker specifyng that a reindex is required
 REINDEX_NEEDED_MARKER = "_catalog_reindex_needed"
 # prefix used in pm_technical_index to store item initiators
