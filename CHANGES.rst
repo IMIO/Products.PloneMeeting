@@ -75,6 +75,14 @@ Changelog
   used in the `tal_condition`, existing searches with a not customized `tal_condition`
   are migrated.
   [gbastien]
+- The `available_on` of the `validated` level of `MeetingConfig.itemWFValidationLevels`
+  now decides if the `validate` transition is available: the default result of
+  `MeetingItemWorkflowConditions.mayValidate` is available as `may_validate` in the
+  expression context so the expression may restrict (`python: may_validate and ...`)
+  or bypass (`python: may_validate or ...`) it, the expression is evaluated even
+  when the user does not have the `Review portal content` permission.
+  It is still not checked for Managers.  See #DLIBBDC-3383.
+  [gbastien]
 - Fixed `MeetingConfig.getItemWFValidationLevels` where the
   `translated_itemWFValidationLevels` REQUEST key set to `False` was disabling
   translation even when explicitly asked, this was leading to an `UnicodeDecodeError`

@@ -6,6 +6,7 @@
 #
 
 from AccessControl import Unauthorized
+from appy.gen import No
 from collective.behavior.internalnumber.browser.settings import get_settings
 from collective.behavior.internalnumber.browser.settings import set_settings
 from collective.contact.plonegroup.utils import get_plone_group_id
@@ -42,6 +43,7 @@ from Products import PloneMeeting as products_plonemeeting
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import AddPortalContent
 from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFCore.permissions import ReviewPortalContent
 from Products.CMFCore.permissions import View
 from Products.CMFPlone.utils import safe_unicode
 from Products.Five import zcml
@@ -9093,6 +9095,75 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse('validate' in item_wf.transitions)
         self.assertEqual(item_wf.states['validated'].title, 'My other validated')
         self.assertEqual(item_wf.transitions['backToValidated'].title, 'My other backToValidated')
+
+    def test_pm_ItemWFValidationLevels_validated_available_on_mayValidate(self):
+        """The default result of MeetingItemWorkflowConditions.mayValidate is
+           available as "may_validate" in the 'available_on' of the 'validated' level
+           and the expression decides, it may restrict or bypass the default behavior,
+           even when the user does not have the ReviewPortalContent permission."""
+        cfg = self.meetingConfig
+        self._setUpDefaultItemWFValidationLevels(cfg)
+        self._enablePrevalidation(cfg)
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.do(item, 'propose')
+        self.assertEqual(item.query_state(), 'proposed')
+        # pmReviewerLevel1 is prereviewer, may not validate by default
+        self.changeUser('pmReviewerLevel1')
+        self.assertFalse('validate' in self.transitions(item))
+        self.assertFalse(item.wfConditions().mayValidate())
+
+        # add a 'validated' level using "may_validate"
+        self.changeUser('admin')
+        levels = list(cfg.getItemWFValidationLevels(include_disabled_validated=True))
+        levels.append(
+            {'state': 'validated',
+             'state_title': 'validated',
+             'leading_transition': 'validate',
+             'leading_transition_title': 'validate',
+             'back_transition': 'backToValidated',
+             'back_transition_title': 'backToValidated',
+             'group_managing_item': '{0}observers'.format(GROUP_MANAGING_ITEM_PG_PREFIX),
+             'extra_groups_managing_item': [],
+             'available_on': 'python: may_validate',
+             'enabled': '0'})
+        cfg.setItemWFValidationLevels(levels)
+        notify(ObjectEditedEvent(cfg))
+        # same as default
+        self.changeUser('pmReviewerLevel1')
+        self.assertFalse('validate' in self.transitions(item))
+        # restrict, when default result is False, it is returned as is
+        # (no No instance so the transition is not displayed)
+        available_on = 'python: may_validate and item.Description()'
+        self._updateItemValidationLevel(cfg, item_state='validated', available_on=available_on)
+        self.assertFalse('validate' in self.transitions(item))
+        self.assertFalse(item.wfConditions().mayValidate(available_on=available_on))
+        self.assertFalse(isinstance(item.wfConditions().mayValidate(available_on=available_on), No))
+        self.do(item, 'prevalidate')
+        self.changeUser('pmReviewerLevel2')
+        self.assertFalse('validate' in self.transitions(item))
+        # when default result is True, a No instance with a message is returned
+        self.assertEqual(
+            item.wfConditions().mayValidate(available_on=available_on).msg,
+            u'validation_level_available_on_not_satisfied')
+        item.setDescription(self.descriptionText)
+        self.assertTrue('validate' in self.transitions(item))
+        # bypass, pmReviewerLevel1 may validate when item is "proposed"
+        self.do(item, 'backToProposed')
+        self.changeUser('pmReviewerLevel1')
+        self.assertFalse('validate' in self.transitions(item))
+        self._updateItemValidationLevel(
+            cfg, item_state='validated',
+            available_on="python: may_validate or item.query_state() == 'proposed'")
+        self.assertTrue('validate' in self.transitions(item))
+        # evaluated even when not having the ReviewPortalContent permission
+        self.changeUser('pmCreator1')
+        self.assertFalse(self.hasPermission(ReviewPortalContent, item))
+        self.assertFalse(item.wfConditions().mayValidate(available_on='python: may_validate'))
+        self.assertTrue(item.wfConditions().mayValidate(available_on='python: True'))
+        self.changeUser('pmReviewerLevel1')
+        self.do(item, 'validate')
+        self.assertEqual(item.query_state(), 'validated')
 
     def test_pm_ItemWFValidationLevels_validated_available_on_guard(self):
         """The 'validate' transition guard is updated when the 'available_on'

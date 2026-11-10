@@ -417,18 +417,26 @@ class MeetingItemWorkflowConditions(object):
            p_available_on is the 'available_on' TAL expression defined on the 'validated'
            level of MeetingConfig.itemWFValidationLevels, if any, it is not checked for Managers
            (also when using adopt_roles).
+           When given, the result computed by default is available in the expression as
+           "may_validate" and the result of the expression is returned, so the expression
+           may restrict (python: may_validate and ...) or bypass (python: may_validate or ...)
+           the default behavior, the expression is evaluated even if the user does not have
+           the ReviewPortalContent permission.
            Like for other levels, "shortcut" and "back_transition" are available in the expression.'''
         res = False
         shortcut = False
+        # bypass for Manager, works with adopt_roles
+        # (used when presenting recurring items or sending items to another MC)
+        is_manager = _checkPermission(ManagePortal, self.context)
+        if not is_manager:
+            last_validation_state = get_last_validation_state(self.context, self.cfg)
+            # validating from another state than last validation state is a shortcut
+            shortcut = self.review_state != last_validation_state
         if _checkPermission(ReviewPortalContent, self.context):
-            # bypass for Manager, works with adopt_roles
-            if _checkPermission(ManagePortal, self.context):
+            if is_manager:
                 res = True
             else:
                 # user may validate if he is member of the last validation level suffixed group
-                last_validation_state = get_last_validation_state(self.context, self.cfg)
-                # validating from another state than last validation state is a shortcut
-                shortcut = self.review_state != last_validation_state
                 if self.review_state == last_validation_state or \
                    ('item_validation_shortcuts' in self.cfg.getWorkflowAdaptations() and
                     'item_validation_no_validate_shortcuts' not in self.cfg.getWorkflowAdaptations() and
@@ -438,21 +446,24 @@ class MeetingItemWorkflowConditions(object):
                     res = True
                     if self._has_waiting_advices_transitions():
                         res = No(_('has_required_waiting_advices'))
-        # available_on is bypassed for Manager, works with adopt_roles
-        # (used when presenting recurring items or sending items to another MC)
-        if res and available_on and not _checkPermission(ManagePortal, self.context):
+        if available_on and not is_manager:
             # same extra context as for other levels, see is_valid_validation_level
+            # + the default result so the expression decides what to do with it
             extra_expr_ctx = _base_extra_expr_ctx(self.context)
             extra_expr_ctx['shortcut'] = shortcut
             extra_expr_ctx['back_transition'] = False
-            res = _evaluateExpression(
+            extra_expr_ctx['may_validate'] = res
+            expr_res = _evaluateExpression(
                 self.context,
                 expression=available_on,
                 roles_bypassing_expression=[],
                 extra_expr_ctx=extra_expr_ctx,
                 raise_on_error=True)
-            if not res:
-                res = No(_('validation_level_available_on_not_satisfied'))
+            # when the default result was True, explain why validation is not possible,
+            # a No returned by the expression (like may_validate) is kept
+            if not expr_res and res and not isinstance(expr_res, No):
+                expr_res = No(_('validation_level_available_on_not_satisfied'))
+            res = expr_res
         if res:
             msg = self._check_required_data('validated')
             if msg is not None:
