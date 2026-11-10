@@ -7,8 +7,10 @@
 
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_plone_group
+from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.iconifiedcategory.browser.tabview import CategorizedContent
 from collective.iconifiedcategory.event import IconifiedAttrChangedEvent
+from collective.iconifiedcategory.interfaces import IIconifiedInfos
 from collective.iconifiedcategory.interfaces import IIconifiedPreview
 from collective.iconifiedcategory.utils import _categorized_elements
 from collective.iconifiedcategory.utils import calculate_category_id
@@ -49,6 +51,7 @@ from Products.PloneMeeting.utils import get_annexes
 from tempfile import mkdtemp
 from time import sleep
 from zope.annotation import IAnnotations
+from zope.component import getAdapter
 from zope.event import notify
 from zope.interface import Invalid
 from zope.lifecycleevent import ObjectModifiedEvent
@@ -1166,6 +1169,43 @@ class testAnnexes(PloneMeetingTestCase):
         item.setCopyGroups(())
         clonedItem = item.clone()
         self.assertEqual(len(get_categorized_elements(clonedItem)), 2)
+
+    def test_pm_SuffixProposingGroupVisibleForGroups(self):
+        """PMCategorizedObjectInfoAdapter._suffix_proposinggroup returns Plone groups
+           using exactly the selected suffixes ("reviewers" does not match "prereviewers"),
+           with or without an item, and every selected suffixes are taken into account."""
+        cfg = self.meetingConfig
+        self._enablePrevalidation(cfg)
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        self.validateItem(item)
+        adapter = getAdapter(item, IIconifiedInfos)
+        adapter.parent = item
+        dev_prereviewers = get_plone_group_id(self.developers_uid, 'prereviewers')
+        dev_reviewers = get_plone_group_id(self.developers_uid, 'reviewers')
+        dev_creators = get_plone_group_id(self.developers_uid, 'creators')
+        accessing_groups = item.get_all_plone_groups_accessing_item(cfg, item.query_state())[1]
+        self.assertTrue(dev_prereviewers in accessing_groups)
+        self.assertTrue(dev_reviewers in accessing_groups)
+        # with an item
+        self.assertEqual(
+            adapter._suffix_proposinggroup([PROPOSINGGROUPPREFIX + 'reviewers'], item=item),
+            [dev_reviewers])
+        self.assertEqual(
+            sorted(adapter._suffix_proposinggroup(
+                [PROPOSINGGROUPPREFIX + 'creators', PROPOSINGGROUPPREFIX + 'reviewers'], item=item)),
+            sorted([dev_creators, dev_reviewers]))
+        # without an item, every organizations groups for every selected suffixes
+        res = adapter._suffix_proposinggroup(
+            [PROPOSINGGROUPPREFIX + 'creators', PROPOSINGGROUPPREFIX + 'reviewers'])
+        for group_id in (dev_creators,
+                         dev_reviewers,
+                         get_plone_group_id(self.vendors_uid, 'creators'),
+                         get_plone_group_id(self.vendors_uid, 'reviewers')):
+            self.assertTrue(group_id in res)
+        self.assertEqual(
+            set([group_id.split('_', 1)[-1] for group_id in res]),
+            set(['creators', 'reviewers']))
 
     def test_pm_AnnexesDeletableByItemEditor(self):
         """annex/annexDecision may be deleted if user may edit the item."""
