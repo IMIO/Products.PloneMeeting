@@ -85,6 +85,7 @@ setup(name='Products.PloneMeeting',
           'Products.CPUtils',
           'Products.DataGridField',
           'Products.PasswordStrength',
+          'Products.PloneHotfix20261110',
           'Products.cron4plone', ],
       entry_points={},
       )

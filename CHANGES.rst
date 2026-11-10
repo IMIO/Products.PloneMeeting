@@ -5,6 +5,8 @@ Changelog
 4.2.28.25 (unreleased)
 ----------------------
 
+- Added `Products.PloneHotfix20261110` as a dependency.
+  [gbastien]
 - Registered `download-elements-annexes-batch-action` (`PMDownloadElementsAnnexesBatchActionForm`
   based on `imio.annex` `DownloadElementsAnnexesBatchActionForm`) on items dashboards,
   meeting view and meetings dashboards to download annexes of selected elements as a Zip file.
