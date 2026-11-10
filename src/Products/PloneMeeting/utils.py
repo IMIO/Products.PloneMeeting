@@ -508,8 +508,8 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
     else:
         translation_mapping = {}
 
-    # get last WF action but specifically manage when an transition was
-    # triggered automatilcally, the comments is in the previous transition
+    # get last WF action but specifically manage when a transition was
+    # triggered automatically, the comments is in the previous transition
     wf_action = getLastWFAction(obj)
     comments = wf_action['comments']
     while comments == 'wf_transition_triggered_by_application':
