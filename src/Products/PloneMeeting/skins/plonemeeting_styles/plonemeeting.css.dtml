@@ -513,6 +513,9 @@ table td div.additional-infos {
 #portal-footer {margin: 1em 0 0.5em 0; padding: 0; }
 #portal-advanced-search {display: none; }
 
+.titleVisualPadding {
+    padding-left: 22px;
+}
 /* the number displayed in the table of annexes */
 .td_cell_number-column {
     font-size: 90%;
@@ -1882,10 +1885,12 @@ div.faceted-form div.select2-container {
     margin-right: 0em;
     padding-right: 0.2em;
 }
-div.faceted-widget div.faceted-operator {
-    position: absolute;
+/* move operator to top of the widget */
+div.faceted-multiselect-widget div.faceted-operator {
     margin-top: -102px;
-    margin-left: 132px
+}
+div.faceted-checkboxes-widget div.faceted-operator {
+    margin-top: -27px;
 }
 .faceted-multiselect-widget .select2-container-multi .select2-choices .select2-search-choice {
     background-color: #e4e4e4;
@@ -2382,30 +2387,6 @@ body#content.cke_editable div p {
 /* hide the 'scan' tab on annex to every roles but Manager and MeetingManager */
 body:not(.userrole-manager):not(.userrole-meetingmanager) a#fieldsetlegend-scan {
     display: none;
-}
-
-/* skin pm_checkbox_widget */
-div.pm_checkbox_widget div.checkbox_widget_select_all {
-   background-color: #EEEEEE;
-   margin-left: 0;
-   padding: 0.25em;
-   color: #444444;
-   margin-top: 0.25em;
-   margin-bottom: 0.25em;
-}
-div.pm_checkbox_widget div.pm-checkbox-description {
-    margin-left: 40px;
-}
-/* checkboxes in item duplicate/item export pdf forms popup */
-div.pm_checkbox_widget input.checkbox-widget {
-   margin-left: 0.25em;
-}
-div.pm_checkbox_widget span.option {
-   margin-top: 0.25em;
-   margin-bottom: 0.25em;
-}
-div.pm_checkbox_widget span.option label {
-    display: inline;
 }
 
 /* hide the edit yellow pencil on person and held_position in the viewlet-above-content-title next to workflow_state */

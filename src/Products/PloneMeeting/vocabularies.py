@@ -17,6 +17,7 @@ from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_group
 from collective.contact.plonegroup.utils import get_plone_groups
 from collective.contact.plonegroup.vocabularies import PositionTypesVocabulary
+from collective.documentgenerator.config import POD_FORMATS
 from collective.documentgenerator.content.vocabulary import ExistingPODTemplateFactory
 from collective.documentgenerator.content.vocabulary import MergeTemplatesVocabularyFactory
 from collective.documentgenerator.content.vocabulary import PortalTypesVocabularyFactory
@@ -25,20 +26,19 @@ from collective.documentgenerator.interfaces import IGenerablePODTemplates
 from collective.eeafaceted.collectionwidget.content.dashboardcollection import IDashboardCollection
 from collective.eeafaceted.collectionwidget.vocabulary import CachedCollectionVocabulary
 from collective.eeafaceted.dashboard.vocabulary import DashboardCollectionsVocabulary
-from collective.iconifiedcategory.config import get_sort_categorized_tab
 from collective.iconifiedcategory.content.category import Category
 from collective.iconifiedcategory.content.subcategory import Subcategory
-from collective.iconifiedcategory.utils import get_categorized_elements
 from collective.iconifiedcategory.utils import get_category_icon_url
 from collective.iconifiedcategory.utils import get_category_object
 from collective.iconifiedcategory.utils import get_config_root
 from collective.iconifiedcategory.utils import get_group
-from collective.iconifiedcategory.utils import render_filesize
 from collective.iconifiedcategory.vocabularies import CategoryTitleVocabulary
 from collective.iconifiedcategory.vocabularies import CategoryVocabulary
 from DateTime import DateTime
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.annex.content.annex import IAnnex
+from imio.annex.vocabularies import ContainedAnnexesVocabulary
+from imio.annex.vocabularies import ExportPDFElementsVocabulary
 from imio.helpers import EMPTY_STRING
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_plone_groups_for_user
@@ -56,6 +56,7 @@ from plone.memoize import ram
 from plone.memoize.ram import store_in_cache
 from Products.CMFPlone.utils import base_hasattr
 from Products.CMFPlone.utils import safe_unicode
+from Products.PloneMeeting.browser.annexes import _filter_annex_types
 from Products.PloneMeeting.browser.itemvotes import next_vote_is_linked
 from Products.PloneMeeting.config import ADVICE_TYPES
 from Products.PloneMeeting.config import ALL_VOTE_VALUES
@@ -68,6 +69,7 @@ from Products.PloneMeeting.config import MEETING_SEARCHES_FOLDER_IDS
 from Products.PloneMeeting.config import NO_COMMITTEE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import PMMessageFactory as _
+from Products.PloneMeeting.config import POD_TEMPLATE_TOKEN_SEPARATOR
 from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
 from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
 from Products.PloneMeeting.interfaces import IMeetingConfig
@@ -3036,64 +3038,7 @@ class OtherMCsClonableToPrivacyVocabulary(OtherMCsClonableToVocabulary):
 OtherMCsClonableToPrivacyVocabularyFactory = OtherMCsClonableToPrivacyVocabulary()
 
 
-class BaseContainedAnnexesVocabulary(object):
-    """Base vocabulary that manages displaying contained annexes with
-       a functionnality that will let disable some annexes."""
-
-    implements(IVocabularyFactory)
-
-    def __call__(self, context, portal_type='annex', prefixed=False):
-        """ """
-        portal = api.portal.get()
-        portal_url = portal.absolute_url()
-        terms = []
-        i = 1
-        sort_on = 'getObjPositionInParent' if \
-            get_sort_categorized_tab() is False else None
-        annex_infos = get_categorized_elements(
-            context, portal_type=portal_type, sort_on=sort_on)
-        if annex_infos:
-            categories_vocab = get_vocab(
-                context,
-                'collective.iconifiedcategory.categories',
-                use_category_uid_as_token=True)
-            portal_type_title = u'%s - ' % translate(
-                portal.portal_types[portal_type].title,
-                domain="imio.annex",
-                context=context.REQUEST) if prefixed else ''
-
-            for annex_info in annex_infos:
-                # term title is annex icon, number and title
-                term_title = u'<img src="{0}/{1}" title="{2}" ' \
-                    u'width="16px" height="16px"> {3}{4}. {5}'.format(
-                        portal_url,
-                        annex_info['icon_url'],
-                        html.escape(safe_unicode(annex_info['category_title'])),
-                        portal_type_title,
-                        str(i),
-                        html.escape(safe_unicode(annex_info['title'])))
-                i += 1
-                if annex_info['warn_filesize']:
-                    term_title += u' ({0})'.format(render_filesize(annex_info['filesize']))
-                term = SimpleTerm(annex_info['id'], annex_info['id'], term_title)
-                term.description = annex_info['description'].replace('\n', '<br>')
-                # check if need to disable term
-                self._check_disable_term(context, annex_info, categories_vocab, term)
-                terms.append(term)
-        return SimpleVocabulary(terms)
-
-    def _check_disable_term(self, context, annex_info, categories_vocab, term):
-        """By default, disable if not downloadable (only previewable)."""
-        term.disabled = False
-        if annex_info['show_preview'] == 2 and \
-           not context.get(annex_info['id']).show_download():
-            term.disabled = True
-            term.title += translate(' [only previewable]',
-                                    domain='PloneMeeting',
-                                    context=context.REQUEST)
-
-
-class ItemDuplicationContainedAnnexesVocabulary(BaseContainedAnnexesVocabulary):
+class ItemDuplicationContainedAnnexesVocabulary(ContainedAnnexesVocabulary):
     """ """
 
     def _check_disable_term(self, context, annex_info, categories_vocab, term):
@@ -3121,7 +3066,7 @@ class ItemDuplicationContainedAnnexesVocabulary(BaseContainedAnnexesVocabulary):
                     annex_obj.file.contentType != 'application/pdf':
                 term.disabled = True
                 term.title += translate(' [PDF required]',
-                                        domain='PloneMeeting',
+                                        domain='imio.annex',
                                         context=context.REQUEST)
 
 
@@ -3143,40 +3088,41 @@ class ItemDuplicationContainedDecisionAnnexesVocabulary(ItemDuplicationContained
 ItemDuplicationContainedDecisionAnnexesVocabularyFactory = ItemDuplicationContainedDecisionAnnexesVocabulary()
 
 
-class ItemExportPDFElementsVocabulary(BaseContainedAnnexesVocabulary):
-    """ """
-
-    def _check_disable_term(self, context, annex_info, categories_vocab, term):
-        super(ItemExportPDFElementsVocabulary, self)._check_disable_term(
-            context, annex_info, categories_vocab, term)
-        if term.disabled is False:
-            # check if user able to export this annex :
-            # - annex must be PDF
-            if annex_info['contentType'] != 'application/pdf':
-                term.disabled = True
-                term.title += translate(' [PDF required]',
-                                        domain='PloneMeeting',
-                                        context=context.REQUEST)
+class ItemExportPDFElementsVocabulary(ExportPDFElementsVocabulary):
+    """POD templates generable as PDF, annexes and decision annexes,
+       every non PDF annex is disabled."""
 
     def __call__(self, context):
         """ """
-        # pod templates
-        terms = get_vocab(
+        # pod templates, copy the list as it is extended here under
+        terms = list(get_vocab(
             context,
             'Products.PloneMeeting.vocabularies.'
-            'generable_pdf_documents_vocabulary')._terms
+            'generable_pdf_documents_vocabulary')._terms)
         # annexes
         terms += super(ItemExportPDFElementsVocabulary, self).__call__(
-            context, prefixed=True)
+            context, include_portal_type=True)
         # decision annexes
         context.REQUEST['force_use_item_decision_annexes_group'] = True
         terms += super(ItemExportPDFElementsVocabulary, self).__call__(
-            context, portal_type='annexDecision', prefixed=True)
+            context, portal_type='annexDecision', include_portal_type=True)
         context.REQUEST['force_use_item_decision_annexes_group'] = False
         return SimpleVocabulary(terms)
 
 
 ItemExportPDFElementsVocabularyFactory = ItemExportPDFElementsVocabulary()
+
+
+class DownloadAnnexesVocabulary(ContainedAnnexesVocabulary):
+    """Annexes that may be downloaded by the download-elements-annexes-batch-action,
+       annexes may be filtered on annex types (category or subcategory uids)."""
+
+    def _prepare_annex_infos(self, context, annex_infos, annex_type_uids=None, **kwargs):
+        """Keep annexes using one of p_annex_type_uids."""
+        return _filter_annex_types(annex_infos, annex_type_uids)
+
+
+DownloadAnnexesVocabularyFactory = DownloadAnnexesVocabulary()
 
 
 class GenerablePODTemplatesVocabulary(object):
@@ -3192,16 +3138,34 @@ class GenerablePODTemplatesVocabulary(object):
                 res.append(pod_template)
         return res
 
+    def _format_icon(self, output_format, portal_url):
+        """Icon of the p_output_format."""
+        return u'<img src="{0}/++resource++collective.documentgenerator/{1}.svg" ' \
+            u'title="{2}" width="16px" height="16px"> '.format(
+                portal_url,
+                output_format,
+                html.escape(safe_unicode(dict(POD_FORMATS).get(output_format, output_format))))
+
     def __call__(self, context, output_formats=['pdf']):
-        """ """
+        """A term by POD template and available output format (among p_output_formats,
+           every available formats if p_output_formats is empty), term token is
+           "pod_template_uid__output_format", term title is the format icon and
+           the POD template title."""
         terms = []
+        portal_url = api.portal.get().absolute_url()
         for pod_template in self._get_generable_templates(context, output_formats):
-            term_token = pod_template.UID()
-            terms.append(
-                SimpleTerm(term_token,
-                           term_token,
-                           safe_unicode(pod_template.Title()))
-            )
+            available_formats = pod_template.get_available_formats()
+            for output_format in output_formats or available_formats:
+                if output_format not in available_formats:
+                    continue
+                term_token = u'{0}{1}{2}'.format(
+                    pod_template.UID(), POD_TEMPLATE_TOKEN_SEPARATOR, output_format)
+                terms.append(
+                    SimpleTerm(term_token,
+                               term_token,
+                               self._format_icon(output_format, portal_url) +
+                               html.escape(safe_unicode(pod_template.Title())))
+                )
         return SimpleVocabulary(terms)
 
 

@@ -834,21 +834,25 @@ class testFaceted(PloneMeetingTestCase):
         pmFolder = self.getMeetingFolder()
         searches = self.meetingConfig.searches
         searchAllItems = searches.searches_items.searchallitems
+        searchMyItems = searches.searches_items.searchmyitems
+        searchMyItemsUID = searchMyItems.UID()
         vocab_name = "Products.PloneMeeting.vocabularies.conditionawarecollectionvocabulary"
         vocab = get_vocab(pmFolder, vocab_name, only_factory=True)
-        self.assertTrue("/pmCreator1/" in vocab(searchAllItems, pmFolder)._terms[0].title[1])
+        # get term by token (collection UID) as terms order is not reliable,
+        # collections of different folders (searches_items, searches_meetings, ...)
+        # have same getObjPositionInParent and are then sorted on catalog rid that is random
+        self.assertTrue("/pmCreator1/" in vocab(searchAllItems, pmFolder).getTermByToken(searchMyItemsUID).title[1])
         # as pmCreator1b
         self.changeUser('pmCreator1b')
         creator1_groups = self.member.getGroups()
         creator1b_groups = self.member.getGroups()
         self.assertEqual(creator1_groups, creator1b_groups)
-        self.assertTrue("/pmCreator1b/" in vocab(searchAllItems, pmFolder)._terms[0].title[1])
+        self.assertTrue("/pmCreator1b/" in vocab(searchAllItems, pmFolder).getTermByToken(searchMyItemsUID).title[1])
         # invalidated if a collection is edited
-        self.assertEqual(vocab(searchAllItems, pmFolder)._terms[0].title[0], u'My items')
-        searchMyItems = searches.searches_items.searchmyitems
+        self.assertEqual(vocab(searchAllItems, pmFolder).getTermByToken(searchMyItemsUID).title[0], u'My items')
         searchMyItems.setTitle(u'My items edited')
         notify(ObjectModifiedEvent(searchMyItems))
-        self.assertEqual(vocab(searchAllItems, pmFolder)._terms[0].title[0], u'My items edited')
+        self.assertEqual(vocab(searchAllItems, pmFolder).getTermByToken(searchMyItemsUID).title[0], u'My items edited')
         # invalidated when user groups changed
         # make pmCreator1b no more a creator
         vocab_values = get_vocab_values(searchAllItems, vocab_name, **{'real_context': pmFolder})

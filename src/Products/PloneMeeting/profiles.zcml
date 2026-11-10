@@ -297,4 +297,5 @@
       destination="4217.4"
       handler="Products.PloneMeeting.migrations.migrate_to_4217_4.migrate"
       profile="Products.PloneMeeting:default" />
+
 </configure>

@@ -11,15 +11,23 @@ from collective.iconifiedcategory.browser.tabview import CategorizedTabView
 from collective.iconifiedcategory.browser.views import CategorizedChildInfosView
 from collective.iconifiedcategory.browser.views import CategorizedChildView
 from collective.iconifiedcategory.utils import _categorized_elements
+from collective.iconifiedcategory.utils import get_categorized_elements
 from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.content import get_vocab
 from plone import api
 from plone.memoize import ram
 from Products.PloneMeeting.browser.overrides import BaseActionsPanelView
+from Products.PloneMeeting.config import FACETED_ANNEX_TYPES_CRITERION_ID
 from Products.PloneMeeting.config import FACETED_ANNEXES_CRITERION_ID
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import get_annexes_config
+
+import urlparse
+
+
+# key used in annexes filters to store selected annex type uids
+ANNEX_TYPE_UIDS_FILTER = 'annex_type_uids'
 
 
 class AnnexActionsPanelView(BaseActionsPanelView):
@@ -125,24 +133,101 @@ class CategorizedAnnexesView(CategorizedTabView):
         return False
 
 
-def _get_filters(request):
+def _annex_attr_filters(values):
+    """Turn selected "annexes" filter p_values (to_print, not_to_sign, ...)
+       into collective.iconifiedcategory filters.
+       A signed annex has to_sign=True and signed=True so "to_sign" must
+       also check that annex is not signed, this is consistent with annexes_index.
+       When several values of same attribute are selected (to_print and not_to_print),
+       annexes having any of these values are kept."""
+    allowed = {}
+    for value in values:
+        if value == 'to_sign':
+            attr_values = (('to_sign', True), ('signed', False))
+        elif value == 'signed':
+            attr_values = (('to_sign', True), ('signed', True))
+        elif value.startswith('not_'):
+            attr_values = ((value.replace('not_', '', 1), False), )
+        else:
+            attr_values = ((value, True), )
+        for attr, attr_value in attr_values:
+            allowed.setdefault(attr, [])
+            if attr_value not in allowed[attr]:
+                allowed[attr].append(attr_value)
+    return {attr: attr_values[0] if len(attr_values) == 1 else attr_values
+            for attr, attr_values in allowed.items()}
+
+
+def _listify(value):
     """ """
+    if value is not None and not hasattr(value, '__iter__'):
+        value = [value]
+    return value
+
+
+def _filters_from_criteria(annex_attr_values=None, annex_type_uids=None):
+    """Turn values of the faceted "annexes" (to_sign, to_print, ...) and
+       "annex types" criteria into annexes filters."""
+    res = {}
+    annex_attr_values = _listify(annex_attr_values)
+    if annex_attr_values is not None:
+        res.update(_annex_attr_filters(annex_attr_values))
+    # annex types filter will contains selected category/subcategory uids
+    # it can not be managed by collective.iconifiedcategory filters as we need
+    # to filter on "category_uid" OR "subcategory_uid", see _filter_annex_types
+    annex_type_uids = _listify(annex_type_uids)
+    if annex_type_uids is not None:
+        res[ANNEX_TYPE_UIDS_FILTER] = list(annex_type_uids)
+    return res
+
+
+def _get_filters(request):
+    """When using filters "annexes" and "annex types", displayed result
+       is adapted accordingly."""
     # caching
     res = request.get("cached_annexes_filters", None)
     if res is None:
-        res = {}
         # in request.form, faceted criterion is like 'c20[]'
-        faceted_filter = request.form.get(FACETED_ANNEXES_CRITERION_ID + '[]', None)
-        if faceted_filter is not None:
-            if not hasattr(faceted_filter, '__iter__'):
-                faceted_filter = [faceted_filter]
-            for value in faceted_filter:
-                if value.startswith('not_'):
-                    res[value.replace('not_', '')] = False
-                else:
-                    res[value] = True
+        res = _filters_from_criteria(
+            request.form.get(FACETED_ANNEXES_CRITERION_ID + '[]', None),
+            request.form.get(FACETED_ANNEX_TYPES_CRITERION_ID + '[]', None))
         request["cached_annexes_filters"] = res
     return res
+
+
+def _filters_from_referer(referer):
+    """Get filters "annexes" and "annex types" from the faceted query stored
+       in the hash of the p_referer URL, like it is the case for batch actions,
+       in the hash, faceted criterion is like 'c20=to_sign&c20=to_print'."""
+    if not referer or '#' not in referer:
+        return {}
+    query = urlparse.parse_qs(referer.split('#', 1)[1])
+
+    def _values(criterion_id):
+        return query.get(criterion_id, query.get(criterion_id + '[]', None))
+
+    return _filters_from_criteria(
+        _values(FACETED_ANNEXES_CRITERION_ID),
+        _values(FACETED_ANNEX_TYPES_CRITERION_ID))
+
+
+def _split_annex_types_filter(filters):
+    """Return a copy of p_filters without the annex types filter
+       and the selected annex type uids."""
+    filters = dict(filters)
+    annex_type_uids = filters.pop(ANNEX_TYPE_UIDS_FILTER, None)
+    return filters, annex_type_uids
+
+
+def _filter_annex_types(categorized_elements, annex_type_uids):
+    """Keep elements using one of given p_annex_type_uids, an element
+       is kept if it's category or it's subcategory is selected."""
+    if not annex_type_uids:
+        return categorized_elements
+    annex_type_uids = set(annex_type_uids)
+    return [elt for elt in categorized_elements
+            if elt['category_uid'] in annex_type_uids or
+            elt['subcategory_uid'] in annex_type_uids]
 
 
 class PMCategorizedChildView(CategorizedChildView):
@@ -194,6 +279,17 @@ class PMCategorizedChildView(CategorizedChildView):
         """ """
         return _get_filters(self.request)
 
+    def update(self):
+        """Manage annex types filter."""
+        filters, annex_type_uids = _split_annex_types_filter(self._filters)
+        self.categorized_elements = _filter_annex_types(
+            get_categorized_elements(
+                self.context,
+                portal_type=self.portal_type,
+                filters=filters,
+                check_can_view=self.check_can_view),
+            annex_type_uids)
+
     @ram.cache(__call___cachekey)
     def __call__(self, portal_type=None, show_nothing=False, check_can_view=False):
         """Override to change show_nothing=False instead
@@ -215,6 +311,16 @@ class BaseCategorizedChildInfosView(CategorizedChildInfosView):
     def _filters(self):
         """ """
         return _get_filters(self.request)
+
+    def update(self):
+        """Manage annex types filter, self.filters are received
+           from the @@categorized-childs view (filters_json)."""
+        self.filters, annex_type_uids = _split_annex_types_filter(self.filters)
+        self.filters['category_uid'] = self.category_uid
+        self.categorized_elements = _filter_annex_types(
+            get_categorized_elements(self.context, filters=self.filters),
+            annex_type_uids)
+        self._infos = self.infos()
 
     def show_preview(self, element):
         """Show preview if the auto_convert in collective.documentviewer is enabled."""

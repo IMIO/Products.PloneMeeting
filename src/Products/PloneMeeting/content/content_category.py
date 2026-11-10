@@ -2,6 +2,7 @@
 
 from collective.iconifiedcategory.content.category import CategorySchemaPolicy
 from collective.iconifiedcategory.content.subcategory import SubcategorySchemaPolicy
+from imio.annex.widgets.checkbox import OrderableCheckBoxFieldWidget
 from imio.helpers.content import uuidToObject
 from natsort import humansorted
 from operator import attrgetter
@@ -9,7 +10,6 @@ from plone import api
 from plone.autoform import directives as form
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import PMMessageFactory as _
-from Products.PloneMeeting.widgets.pm_checkbox import PMCheckBoxFieldWidget
 from z3c.form.browser.radio import RadioFieldWidget
 from zope import schema
 from zope.globalrequest import getRequest
@@ -60,7 +60,7 @@ class IItemAnnexContentCategory(IPMContentCategory):
     """
 
     form.widget('other_mc_correspondences',
-                PMCheckBoxFieldWidget,
+                OrderableCheckBoxFieldWidget,
                 multiple='multiple')
     other_mc_correspondences = schema.Set(
         title=_("PloneMeeting_label_otherMCCorrespondences"),

@@ -5,6 +5,70 @@ Changelog
 4.2.21rc7 (unreleased)
 ----------------------
 
+- Registered `download-elements-annexes-batch-action` (`PMDownloadElementsAnnexesBatchActionForm`
+  based on `imio.annex` `DownloadElementsAnnexesBatchActionForm`) on items dashboards,
+  meeting view and meetings dashboards to download annexes of selected elements as a Zip file.
+  Annexes to download are selected in a list of the annexes of selected elements
+  (annexes and decision annexes for items), for items, this list is coherent with
+  the faceted `Annexes` and `Annex types` filters (received in the batch action referer),
+  see vocabulary `Products.PloneMeeting.vocabularies.download_annexes_vocabulary`,
+  displayed item title is prepended with the item number when item is in a meeting.
+  Added `browser.annexes._filters_from_criteria` and `browser.annexes._filters_from_referer`.
+  Annex filenames are prefixed by the element name or, with `annexes_by_folder`,
+  stored in a folder named after the element.  Element name is the item title, prepended
+  with the item number when item is in a meeting, or for a meeting, only the meeting date
+  in an orderable way (`2026-03-12 20h00`).
+  It is available when `download-annexes` is selected in
+  `MeetingConfig.enabledAnnexesBatchActions`.
+  Requires `imio.annex` with `DownloadElementsAnnexesBatchActionForm` (2.28.0+).
+  [gbastien]
+- Moved the `imio.annex` orderable checkbox widget (`orderable_checkbox_widget`)
+  CSS to `plonetheme.imioapps`.
+  Requires `plonetheme.imioapps` with orderable checkbox widget CSS (2.67+).
+  [gbastien]
+- `GenerablePODTemplatesVocabulary` (POD templates in the item export PDF form)
+  now returns a term by POD template and available output format (among `output_formats`,
+  every available formats if empty), term token is `pod_template_uid__output_format`
+  (separator `config.POD_TEMPLATE_TOKEN_SEPARATOR`) and term title is the format icon
+  followed by the POD template title, that is now HTML escaped.
+  `ItemExportPDFForm._elements_content` generates the POD template in the output
+  format of the selected token.
+  [gbastien]
+- Replaced `PMCheckBoxFieldWidget` by `OrderableCheckBoxFieldWidget` from `imio.annex`
+  (moved there so it is reusable), removed `Products.PloneMeeting.widgets.pm_checkbox`.
+  CSS classes `pm_checkbox_widget` and `pm-checkbox-description` are renamed to
+  `orderable_checkbox_widget` and `orderable-checkbox-description`.
+  Requires `imio.annex` with `OrderableCheckBoxFieldWidget` (2.28.0+).
+  [gbastien]
+- `ItemExportPDFForm` now inherits from `imio.annex.browser.views.ExportPDFForm`
+  (moved there so it is reusable), it is now possible to export `Two-sided`.
+  `ItemDuplicationContainedAnnexesVocabulary` and `ItemExportPDFElementsVocabulary`
+  now inherit from `imio.annex.vocabularies.ContainedAnnexesVocabulary` and
+  `imio.annex.vocabularies.ExportPDFElementsVocabulary`, removed
+  `BaseContainedAnnexesVocabulary` and `IItemExportPDF` schema.
+  The ` [PDF required]` suffix of `ItemDuplicationContainedAnnexesVocabulary`
+  terms is now translated in the `imio.annex` domain.
+  [gbastien]
+- Added faceted filter `Annex types` (`c33`) on items dashboards, with
+  selectable `and/or` operator (`or` by default). It may be combined with the `Annexes` filter
+  (`c20`) that now uses the `combined__annexes_index`, so it is possible to
+  search for example items having annexes of a given type to sign.
+  When filtering, only annexes of selected types are displayed in the dashboard.
+  The `annexes_index` now also contains annex type uids (category and
+  subcategory) and combined `annex_type_uid__attr_value` values.
+  Event `on_annex_added` (formerly `onAnnexAdded`) is now triggered on
+  `ICategorizedElementUpdatedEvent` so `categorized_elements` is up to date.
+  Added upgrade step to `4217.4` that updates faceted filters and reindexes
+  `annexes_index` for items having annexes.
+  [gbastien]
+- Fixed annexes displayed in dashboards when filtering on annexes `to sign`,
+  signed annexes were also displayed.
+  [gbastien]
+- Fixed random failure of test `test_pm_PMConditionAwareCollectionVocabulary`,
+  get the `searchmyitems` term by token instead of relying on terms order that
+  is not reliable as collections of different folders have same
+  `getObjPositionInParent` and are then sorted on random catalog `rid`.
+  [gbastien]
 - Hide the `searchdecideditems` and `searchunreaddecideditems` searches when the
   item WF does not have any decided state (when using the `no_meeting` WFA without
   a WFA deciding items out of meeting), added `MeetingConfig.has_item_decided_states`

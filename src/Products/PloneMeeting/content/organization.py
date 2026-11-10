@@ -10,6 +10,7 @@ from collective.z3cform.datagridfield import DictRow
 from datetime import date
 from datetime import datetime
 from DateTime import DateTime
+from imio.annex.widgets.checkbox import OrderableCheckBoxFieldWidget
 from imio.helpers.content import get_back_relations
 from imio.helpers.content import uuidsToObjects
 from plone.autoform import directives as form
@@ -20,7 +21,6 @@ from Products.PloneMeeting.events import _invalidateOrgRelatedCachedVocabularies
 from Products.PloneMeeting.utils import computeCertifiedSignatures
 from Products.PloneMeeting.utils import listifySignatures
 from Products.PloneMeeting.validators import DXCertifiedSignaturesValidator
-from Products.PloneMeeting.widgets.pm_checkbox import PMCheckBoxFieldWidget
 from z3c.form import validator
 from zope import schema
 from zope.interface import Interface
@@ -92,7 +92,7 @@ class IPMOrganization(IOrganization):
 
     form.read_permission(item_advice_states='PloneMeeting.manage_internal_organization_fields')
     form.write_permission(item_advice_states='PloneMeeting.manage_internal_organization_fields')
-    form.widget('item_advice_states', PMCheckBoxFieldWidget, multiple='multiple')
+    form.widget('item_advice_states', OrderableCheckBoxFieldWidget, multiple='multiple')
     item_advice_states = schema.List(
         title=_("PloneMeeting_label_itemAdviceStates"),
         description=_("group_item_advice_states_descr"),
@@ -104,7 +104,7 @@ class IPMOrganization(IOrganization):
 
     form.read_permission(item_advice_edit_states='PloneMeeting.manage_internal_organization_fields')
     form.write_permission(item_advice_edit_states='PloneMeeting.manage_internal_organization_fields')
-    form.widget('item_advice_edit_states', PMCheckBoxFieldWidget, multiple='multiple')
+    form.widget('item_advice_edit_states', OrderableCheckBoxFieldWidget, multiple='multiple')
     item_advice_edit_states = schema.List(
         title=_("PloneMeeting_label_itemAdviceEditStates"),
         description=_("group_item_advice_edit_states_descr"),
@@ -116,7 +116,7 @@ class IPMOrganization(IOrganization):
 
     form.read_permission(item_advice_view_states='PloneMeeting.manage_internal_organization_fields')
     form.write_permission(item_advice_view_states='PloneMeeting.manage_internal_organization_fields')
-    form.widget('item_advice_view_states', PMCheckBoxFieldWidget, multiple='multiple')
+    form.widget('item_advice_view_states', OrderableCheckBoxFieldWidget, multiple='multiple')
     item_advice_view_states = schema.List(
         title=_("PloneMeeting_label_itemAdviceViewStates"),
         description=_("group_item_advice_view_states_descr"),
@@ -168,7 +168,7 @@ class IPMOrganization(IOrganization):
 
     form.read_permission(groups_in_charge='PloneMeeting.manage_internal_organization_fields')
     form.write_permission(groups_in_charge='PloneMeeting.manage_internal_organization_fields')
-    form.widget('groups_in_charge', PMCheckBoxFieldWidget, multiple='multiple')
+    form.widget('groups_in_charge', OrderableCheckBoxFieldWidget, multiple='multiple')
     groups_in_charge = schema.List(
         title=_("PloneMeeting_label_groupsInCharge"),
         description=_("groups_in_charge_descr"),

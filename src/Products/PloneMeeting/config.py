@@ -397,8 +397,13 @@ GROUP_MANAGING_ITEM_PG_PREFIX = 'proposing_group__'
 
 ITEM_MOVAL_PREVENTED = "Prevented to rename item no more in initial_state!"
 
-# for performance reason we do not dynamically get the annexes criterion id
+# for performance reason we do not dynamically get the annexes criterion ids
 FACETED_ANNEXES_CRITERION_ID = 'c20'
+FACETED_ANNEX_TYPES_CRITERION_ID = 'c33'
+
+# separator between the POD template UID and the output format in
+# GenerablePODTemplatesVocabulary term tokens
+POD_TEMPLATE_TOKEN_SEPARATOR = '__'
 
 # name of marker specifyng that a reindex is required
 REINDEX_NEEDED_MARKER = "_catalog_reindex_needed"
