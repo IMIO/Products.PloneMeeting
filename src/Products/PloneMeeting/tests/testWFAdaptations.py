@@ -3262,6 +3262,80 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.do(item, 'backTo_validated_from_waiting_advices')
         self.assertEqual(item.query_state(), 'validated')
 
+    def test_pm_WFA_waiting_advices_adviser_may_validate_available_on(self):
+        '''When using the 'waiting_advices_adviser_may_validate' WFAdaptation, the
+           'available_on' of the 'validated' level of MeetingConfig.itemWFValidationLevels
+           is taken into account by the 'backTo_validated_from_waiting_advices' transition,
+           the result computed by default is available as "may_validate" in the expression.'''
+        cfg = self.meetingConfig
+        # ease override by subproducts
+        if not self._check_wfa_available([
+                'waiting_advices',
+                'waiting_advices_adviser_send_back',
+                'waiting_advices_proposing_group_send_back',
+                'waiting_advices_from_every_val_levels',
+                'waiting_advices_adviser_may_validate']):
+            return
+
+        self._activate_wfas(('waiting_advices',
+                             'waiting_advices_adviser_send_back',
+                             'waiting_advices_proposing_group_send_back',
+                             'waiting_advices_from_every_val_levels',
+                             'waiting_advices_adviser_may_validate'))
+        cfg.setItemAdviceStates((self._default_waiting_advices_state(), ))
+        # make sure a 'validated' level exists
+        if not cfg.getItemWFValidationLevels(states=['validated'], include_disabled_validated=True):
+            levels = list(cfg.getItemWFValidationLevels(include_disabled_validated=True))
+            levels.append(
+                {'state': 'validated',
+                 'state_title': 'validated',
+                 'leading_transition': 'validate',
+                 'leading_transition_title': 'validate',
+                 'back_transition': 'backToValidated',
+                 'back_transition_title': 'backToValidated',
+                 'group_managing_item': '{0}observers'.format(GROUP_MANAGING_ITEM_PG_PREFIX),
+                 'extra_groups_managing_item': [],
+                 'available_on': '',
+                 'enabled': '0'})
+            cfg.setItemWFValidationLevels(levels)
+            notify(ObjectEditedEvent(cfg))
+        # no 'available_on' defined, in case the profile defines one
+        self._updateItemValidationLevel(cfg, item_state='validated', available_on='')
+
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem', optionalAdvisers=(self.vendors_uid, ))
+        self.do(item, 'wait_advices_from_itemcreated')
+        # without 'available_on', adviser may validate, proposingGroup may not
+        self.assertFalse('backTo_validated_from_waiting_advices' in self.transitions(item))
+        self.changeUser('pmReviewer2')
+        self.assertTrue('backTo_validated_from_waiting_advices' in self.transitions(item))
+
+        # restrict
+        self._updateItemValidationLevel(
+            cfg, item_state='validated', available_on='python: may_validate and item.Description()')
+        self.assertFalse('backTo_validated_from_waiting_advices' in self.transitions(item))
+        self.assertEqual(
+            item.wfConditions().mayCorrect('validated').msg,
+            u'validation_level_available_on_not_satisfied')
+        # other back transitions are not impacted
+        self.assertTrue('backTo_itemcreated_from_waiting_advices' in self.transitions(item))
+        item.setDescription(self.descriptionText)
+        self.assertTrue('backTo_validated_from_waiting_advices' in self.transitions(item))
+        # not checked for Managers
+        self._updateItemValidationLevel(cfg, item_state='validated', available_on='python: False')
+        self.assertFalse('backTo_validated_from_waiting_advices' in self.transitions(item))
+        self.changeUser('siteadmin')
+        self.assertTrue('backTo_validated_from_waiting_advices' in self.transitions(item))
+
+        # bypass, proposingGroup may validate
+        self._updateItemValidationLevel(
+            cfg, item_state='validated',
+            available_on="python: may_validate or item.query_state().endswith('_waiting_advices')")
+        self.changeUser('pmCreator1')
+        self.assertTrue('backTo_validated_from_waiting_advices' in self.transitions(item))
+        self.do(item, 'backTo_validated_from_waiting_advices')
+        self.assertEqual(item.query_state(), 'validated')
+
     def test_pm_WFA_waiting_advices_given_advices_required_to_validate(self):
         '''Test the 'waiting_advices_given_advices_required_to_validate' WFAdaptation.'''
         cfg = self.meetingConfig

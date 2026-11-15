@@ -447,27 +447,32 @@ class MeetingItemWorkflowConditions(object):
                     if self._has_waiting_advices_transitions():
                         res = No(_('has_required_waiting_advices'))
         if available_on and not is_manager:
-            # same extra context as for other levels, see is_valid_validation_level
-            # + the default result so the expression decides what to do with it
-            extra_expr_ctx = _base_extra_expr_ctx(self.context)
-            extra_expr_ctx['shortcut'] = shortcut
-            extra_expr_ctx['back_transition'] = False
-            extra_expr_ctx['may_validate'] = res
-            expr_res = _evaluateExpression(
-                self.context,
-                expression=available_on,
-                roles_bypassing_expression=[],
-                extra_expr_ctx=extra_expr_ctx,
-                raise_on_error=True)
-            # when the default result was True, explain why validation is not possible,
-            # a No returned by the expression (like may_validate) is kept
-            if not expr_res and res and not isinstance(expr_res, No):
-                expr_res = No(_('validation_level_available_on_not_satisfied'))
-            res = expr_res
+            res = self._evaluate_validated_level_available_on(available_on, res, shortcut)
         if res:
             msg = self._check_required_data('validated')
             if msg is not None:
                 res = msg
+        return res
+
+    def _evaluate_validated_level_available_on(self, available_on, may_validate, shortcut):
+        '''Evaluate p_available_on, the 'available_on' TAL expression of the 'validated'
+           level of MeetingConfig.itemWFValidationLevels.  Same extra context as for other
+           levels (see is_valid_validation_level) + p_may_validate, the result computed by
+           default, so the expression decides what to do with it.'''
+        extra_expr_ctx = _base_extra_expr_ctx(self.context)
+        extra_expr_ctx['shortcut'] = shortcut
+        extra_expr_ctx['back_transition'] = False
+        extra_expr_ctx['may_validate'] = may_validate
+        res = _evaluateExpression(
+            self.context,
+            expression=available_on,
+            roles_bypassing_expression=[],
+            extra_expr_ctx=extra_expr_ctx,
+            raise_on_error=True)
+        # when the default result was True, explain why validation is not possible,
+        # a No returned by the expression (like may_validate) is kept
+        if not res and may_validate and not isinstance(res, No):
+            res = No(_('validation_level_available_on_not_satisfied'))
         return res
 
     security.declarePublic('mayPresent')
@@ -586,10 +591,35 @@ class MeetingItemWorkflowConditions(object):
         ''' '''
         return True
 
+    def _check_waiting_advices_validated_available_on(self, destinationState, res):
+        '''When validating from a waiting_advices state ('waiting_advices_adviser_may_validate'),
+           the 'available_on' of the 'validated' level of MeetingConfig.itemWFValidationLevels
+           is taken into account like in mayValidate, p_res is the result computed by default
+           and is available as "may_validate" in the expression.
+           It is not checked for Managers (also when using adopt_roles).'''
+        if destinationState != 'validated' or _checkPermission(ManagePortal, self.context):
+            return res
+        validated_level = self.cfg.getItemWFValidationLevels(
+            states=['validated'], include_disabled_validated=True)
+        available_on = validated_level and validated_level['available_on'].strip()
+        if available_on:
+            # validating from a waiting_advices state is a shortcut
+            res = self._evaluate_validated_level_available_on(available_on, res, shortcut=True)
+        return res
+
     security.declarePublic('mayCorrect')
 
     def mayCorrect(self, destinationState=None):
-        '''See doc in interfaces.py.'''
+        '''See doc in interfaces.py.
+           When the item is in a "*_waiting_advices" state, p_destinationState "validated"
+           is always accepted here: the "backTo_validated_from_waiting_advices" transition
+           only exists in the item workflow when using the 'waiting_advices_adviser_may_validate'
+           WFAdaptation (or 'adviser_may_validate' in WAITING_ADVICES_FROM_STATES), it is
+           available for (Meeting)Managers and for advisers when using the
+           'waiting_advices_adviser_send_back' WFAdaptation (see
+           _currentUserIsAdviserAbleToSendItemBack), the 'available_on' of the 'validated'
+           level of MeetingConfig.itemWFValidationLevels is taken into account
+           (see _check_waiting_advices_validated_available_on).'''
         res = False
         meeting = self.context.getMeeting()
         if not meeting or (meeting and meeting.query_state() != 'closed'):
@@ -628,6 +658,7 @@ class MeetingItemWorkflowConditions(object):
 
                 # remove duplicates
                 sendable_back_states = list(set(sendable_back_states))
+                # "validated" is only reachable when using 'waiting_advices_adviser_may_validate'
                 if destinationState in sendable_back_states or \
                    destinationState == "validated":
                     # bypass for Manager, do not check on ReviewPortalContent
@@ -640,12 +671,9 @@ class MeetingItemWorkflowConditions(object):
                             res = self._userIsPGMemberAbleToSendItemBack(destinationState)
                         # if not, maybe it is an adviser able to give an advice?
                         if not res and 'waiting_advices_adviser_send_back' in wfas:
-                            # adviser may send back to validated when using
-                            # 'waiting_advices_adviser_may_validate'
-                            if 'waiting_advices_adviser_may_validate' in wfas:
-                                sendable_back_states.append('validated')
                             # is current user adviser able to trigger transition?
                             res = self._currentUserIsAdviserAbleToSendItemBack(destinationState)
+                    res = self._check_waiting_advices_validated_available_on(destinationState, res)
             else:
                 res = _checkPermission(ReviewPortalContent, self.context)
                 if res:

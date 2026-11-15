@@ -83,6 +83,12 @@ Changelog
   when the user does not have the `Review portal content` permission.
   It is still not checked for Managers.  See #DLIBBDC-3383.
   [gbastien]
+- When using the `waiting_advices_adviser_may_validate` WFAdaptation, the
+  `available_on` of the `validated` level of `MeetingConfig.itemWFValidationLevels`
+  is also taken into account by the `backTo_validated_from_waiting_advices` transition
+  (`MeetingItemWorkflowConditions.mayCorrect`), `may_validate` is the result computed
+  by default and `shortcut` is `True`.  See #DLIBBDC-3383.
+  [gbastien]
 - Fixed `MeetingConfig.getItemWFValidationLevels` where the
   `translated_itemWFValidationLevels` REQUEST key set to `False` was disabling
   translation even when explicitly asked, this was leading to an `UnicodeDecodeError`
