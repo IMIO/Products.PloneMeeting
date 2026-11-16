@@ -9062,9 +9062,9 @@ class testMeetingItem(PloneMeetingTestCase):
         # the expression may return a No instance with a message using pm_utils.no
         res = item.wfConditions().mayValidate(
             available_on="python: item.Description() or "
-            "pm_utils.no('validation_level_available_on_not_satisfied')")
+            "pm_utils.no('Description is required')")
         self.assertTrue(isinstance(res, No))
-        self.assertEqual(res.msg, u'validation_level_available_on_not_satisfied')
+        self.assertEqual(res.msg, u'Description is required')
         # available_on is bypassed for real Managers
         self.changeUser('admin')
         self.assertTrue('validate' in self.transitions(item))
