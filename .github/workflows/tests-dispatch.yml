@@ -31,7 +31,9 @@ jobs:
           - Products.MeetingNamur
           - Products.MeetingPROVHainaut
           - Products.MeetingSeraing
-    if: ${{ !github.event_name == 'pull_request' || !github.event.pull_request.draft }}
+    # only dispatch for master, the Products.Meeting* tests use Products.PloneMeeting master anyway
+    # (also skips tags, other branches and pull requests whose ref is refs/pull/N/merge)
+    if: ${{ github.ref == 'refs/heads/master' }}
     steps:
       - name: Needed for local development
         if: ${{ env.ACT }}
