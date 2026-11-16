@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.21rc7 (unreleased)
+4.2.21rc7 (2026-11-16)
 ----------------------
 
 - Registered `download-elements-annexes-batch-action` (`PMDownloadElementsAnnexesBatchActionForm`
