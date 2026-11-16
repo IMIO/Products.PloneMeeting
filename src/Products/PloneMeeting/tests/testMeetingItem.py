@@ -9055,10 +9055,16 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmReviewer1')
         self.assertFalse(item.Description())
         self.assertFalse('validate' in self.transitions(item))
-        # a No instance with a message is returned
-        self.assertEqual(
-            item.wfConditions().mayValidate(available_on='python: item.Description()').msg,
-            u'validation_level_available_on_not_satisfied')
+        # the expression result is returned as is, False hides the transition
+        res = item.wfConditions().mayValidate(available_on='python: item.Description()')
+        self.assertFalse(res)
+        self.assertFalse(isinstance(res, No))
+        # the expression may return a No instance with a message using pm_utils.no
+        res = item.wfConditions().mayValidate(
+            available_on="python: item.Description() or "
+            "pm_utils.no('validation_level_available_on_not_satisfied')")
+        self.assertTrue(isinstance(res, No))
+        self.assertEqual(res.msg, u'validation_level_available_on_not_satisfied')
         # available_on is bypassed for real Managers
         self.changeUser('admin')
         self.assertTrue('validate' in self.transitions(item))
@@ -9142,10 +9148,15 @@ class testMeetingItem(PloneMeetingTestCase):
         self.do(item, 'prevalidate')
         self.changeUser('pmReviewerLevel2')
         self.assertFalse('validate' in self.transitions(item))
-        # when default result is True, a No instance with a message is returned
-        self.assertEqual(
-            item.wfConditions().mayValidate(available_on=available_on).msg,
-            u'validation_level_available_on_not_satisfied')
+        # when default result is True, the expression result is returned as is
+        self.assertFalse(isinstance(item.wfConditions().mayValidate(available_on=available_on), No))
+        # a No instance with a message may be returned by the expression,
+        # the transition is then displayed but not triggerable
+        no_available_on = "python: may_validate and (item.Description() or pm_utils.no('My message'))"
+        self._updateItemValidationLevel(cfg, item_state='validated', available_on=no_available_on)
+        self.assertEqual(item.wfConditions().mayValidate(available_on=no_available_on).msg, u'My message')
+        self.assertFalse('validate' in self.transitions(item))
+        self._updateItemValidationLevel(cfg, item_state='validated', available_on=available_on)
         item.setDescription(self.descriptionText)
         self.assertTrue('validate' in self.transitions(item))
         # bypass, pmReviewerLevel1 may validate when item is "proposed"

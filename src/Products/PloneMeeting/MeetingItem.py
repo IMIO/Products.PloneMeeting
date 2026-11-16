@@ -421,7 +421,9 @@ class MeetingItemWorkflowConditions(object):
            "may_validate" and the result of the expression is returned, so the expression
            may restrict (python: may_validate and ...) or bypass (python: may_validate or ...)
            the default behavior, the expression is evaluated even if the user does not have
-           the ReviewPortalContent permission.
+           the ReviewPortalContent permission.  The expression may return False (transition
+           not displayed) or a No instance using pm_utils.no(msg) (transition displayed
+           disabled with an explanation message).
            Like for other levels, "shortcut" and "back_transition" are available in the expression.'''
         res = False
         shortcut = False
@@ -458,22 +460,19 @@ class MeetingItemWorkflowConditions(object):
         '''Evaluate p_available_on, the 'available_on' TAL expression of the 'validated'
            level of MeetingConfig.itemWFValidationLevels.  Same extra context as for other
            levels (see is_valid_validation_level) + p_may_validate, the result computed by
-           default, so the expression decides what to do with it.'''
+           default, so the expression decides what to do with it.
+           The result of the expression is returned as is, it may be False or a No instance
+           (like p_may_validate or using pm_utils.no(msg)) to explain why it is not possible.'''
         extra_expr_ctx = _base_extra_expr_ctx(self.context)
         extra_expr_ctx['shortcut'] = shortcut
         extra_expr_ctx['back_transition'] = False
         extra_expr_ctx['may_validate'] = may_validate
-        res = _evaluateExpression(
+        return _evaluateExpression(
             self.context,
             expression=available_on,
             roles_bypassing_expression=[],
             extra_expr_ctx=extra_expr_ctx,
             raise_on_error=True)
-        # when the default result was True, explain why validation is not possible,
-        # a No returned by the expression (like may_validate) is kept
-        if not res and may_validate and not isinstance(res, No):
-            res = No(_('validation_level_available_on_not_satisfied'))
-        return res
 
     security.declarePublic('mayPresent')
 

@@ -6,6 +6,7 @@
 #
 
 from AccessControl import Unauthorized
+from appy.gen import No
 from collective.behavior.internalnumber.browser.settings import get_settings
 from collective.behavior.internalnumber.browser.settings import set_settings
 from collective.behavior.talcondition.behavior import ITALCondition
@@ -3314,9 +3315,13 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._updateItemValidationLevel(
             cfg, item_state='validated', available_on='python: may_validate and item.Description()')
         self.assertFalse('backTo_validated_from_waiting_advices' in self.transitions(item))
-        self.assertEqual(
-            item.wfConditions().mayCorrect('validated').msg,
-            u'validation_level_available_on_not_satisfied')
+        self.assertFalse(isinstance(item.wfConditions().mayCorrect('validated'), No))
+        # a No instance with a message may be returned by the expression
+        self._updateItemValidationLevel(
+            cfg, item_state='validated',
+            available_on="python: may_validate and (item.Description() or pm_utils.no('My message'))")
+        self.assertFalse('backTo_validated_from_waiting_advices' in self.transitions(item))
+        self.assertEqual(item.wfConditions().mayCorrect('validated').msg, u'My message')
         # other back transitions are not impacted
         self.assertTrue('backTo_itemcreated_from_waiting_advices' in self.transitions(item))
         item.setDescription(self.descriptionText)

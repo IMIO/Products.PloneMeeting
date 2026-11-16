@@ -51,6 +51,7 @@ from Products.PloneMeeting.utils import is_proposing_group_editor
 from Products.PloneMeeting.utils import is_transition_before_date
 from Products.PloneMeeting.utils import isPowerObserverForCfg
 from Products.PloneMeeting.utils import listifySignatures
+from Products.PloneMeeting.utils import no
 from Products.PloneMeeting.utils import normalize
 from Products.PloneMeeting.utils import normalize_id
 from Products.PloneMeeting.utils import number_word

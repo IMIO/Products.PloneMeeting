@@ -83,6 +83,14 @@ Changelog
   when the user does not have the `Review portal content` permission.
   It is still not checked for Managers.  See #DLIBBDC-3383.
   [gbastien]
+- The result of the `available_on` of the `validated` level of
+  `MeetingConfig.itemWFValidationLevels` is returned as is, a `False` result is no
+  more turned into a `No('validation_level_available_on_not_satisfied')` instance,
+  so the transition is hidden.  Added `utils.no(msg, mapping=None)` available in
+  TAL expressions as `pm_utils.no` so the expression may return a `No` instance with
+  a message (msgid of the `PloneMeeting` domain or text), the transition is then
+  displayed but not triggerable with the explanation message.  See #DLIBBDC-3383.
+  [gbastien]
 - When using the `waiting_advices_adviser_may_validate` WFAdaptation, the
   `available_on` of the `validated` level of `MeetingConfig.itemWFValidationLevels`
   is also taken into account by the `backTo_validated_from_waiting_advices` transition

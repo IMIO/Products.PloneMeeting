@@ -3,6 +3,7 @@
 from AccessControl import Unauthorized
 from AccessControl.Permission import Permission
 from Acquisition import aq_base
+from appy.gen import No
 from appy.pod.xhtml2odt import XhtmlPreprocessor
 from appy.shared.diff import HtmlDiff
 from bs4 import BeautifulSoup
@@ -2552,6 +2553,16 @@ def redirect(request, url):
         return ""
     else:
         return request.RESPONSE.redirect(url)
+
+
+def no(msg, mapping=None):
+    """Return an appy.gen.No instance with given p_msg, a msgid of the PloneMeeting
+       i18n domain (with optional p_mapping) or a text, it is translated by the
+       actions panel.  Useful in a TAL expression used as workflow condition, like the
+       'available_on' of the 'validated' level of MeetingConfig.itemWFValidationLevels,
+       returning False hides the transition, returning a No instance displays it
+       disabled with the message explaining why it can not be triggered."""
+    return No(_(msg, mapping=mapping))
 
 
 def number_word(number):
