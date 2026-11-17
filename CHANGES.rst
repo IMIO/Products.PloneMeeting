@@ -5,7 +5,13 @@ Changelog
 4.2.21rc8 (unreleased)
 ----------------------
 
-- Nothing changed yet.
+- When using the `waiting_advices_adviser_may_validate` WFAdaptation, the
+  `backTo_validated_from_waiting_advices` transition, that validates the item,
+  uses the `leading_transition_title` of the `validated` level of
+  `MeetingConfig.itemWFValidationLevels` as title (like the `validate` transition) if defined
+  and the `validate.png` icon, removed the `backTo_validated_from_waiting_advices.png` icon
+  (it was a copy of `validate.png`).
+  [gbastien]
 
 
 4.2.21rc7 (2026-11-16)

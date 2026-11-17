@@ -1070,7 +1070,14 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
                             transition = wf.transitions[back_transition_id]
                             back_transition_title = back_transition_id
                             icon_name = 'backTo_from_waiting_advices'
-                            if back_state_id not in infos.get('use_custom_back_transition_title_for', ()):
+                            # going back to "validated" is actually validating the item,
+                            # use the 'validate' title of the 'validated' level if defined
+                            validated_level = back_state_id == 'validated' and \
+                                meetingConfig.getItemWFValidationLevels(
+                                    states=['validated'], include_disabled_validated=True)
+                            if validated_level and validated_level['leading_transition_title']:
+                                back_transition_title = validated_level['leading_transition_title']
+                            elif back_state_id not in infos.get('use_custom_back_transition_title_for', ()):
                                 # reuse the existing back transition for title and iconname
                                 existing_back_transition_id = meetingConfig.getItemWFValidationLevels(
                                     states=[back_state_id], data='back_transition')
@@ -1081,7 +1088,8 @@ def _performWorkflowAdaptations(meetingConfig, logger=logger):
                                 infos.get('only_use_custom_back_transition_icon_for', ())
                             if not only_use_custom_back_transition_icon_for or \
                                back_state_id in only_use_custom_back_transition_icon_for:
-                                icon_name = back_transition_id
+                                # going back to "validated" is actually validating the item
+                                icon_name = 'validate' if back_state_id == 'validated' else back_transition_id
                             transition.setProperties(
                                 title=back_transition_title,
                                 new_state_id=back_state_id, trigger_type=1, script_name='',

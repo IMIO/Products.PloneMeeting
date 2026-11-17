@@ -3302,6 +3302,14 @@ class testWFAdaptations(PloneMeetingTestCase):
             notify(ObjectEditedEvent(cfg))
         # no 'available_on' defined, in case the profile defines one
         self._updateItemValidationLevel(cfg, item_state='validated', available_on='')
+        # the 'leading_transition_title' of the 'validated' level is used as title
+        self._updateItemValidationLevel(cfg, item_state='validated', leading_transition_title='my_validate')
+        item_wf = cfg.getItemWorkflow(True)
+        self.assertEqual(item_wf.transitions['validate'].title, 'my_validate')
+        self.assertEqual(item_wf.transitions['backTo_validated_from_waiting_advices'].title, 'my_validate')
+        # it also uses the 'validate' icon
+        self.assertEqual(item_wf.transitions['backTo_validated_from_waiting_advices'].actbox_icon,
+                         '%(portal_url)s/validate.png')
 
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem', optionalAdvisers=(self.vendors_uid, ))
