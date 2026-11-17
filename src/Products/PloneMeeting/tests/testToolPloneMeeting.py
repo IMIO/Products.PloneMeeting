@@ -1432,6 +1432,24 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.proposeItem(item)
         self.assertFalse(vendors_advice.advice_hide_during_redaction)
         self.assertFalse(item.adviceIndex[self.vendors_uid]['hidden_during_redaction'])
+        # going back from the final WF state, advice is hidden again
+        # if hidden by default in MeetingConfig.defaultAdviceHiddenDuringRedaction
+        self.backToState(item, self._stateMappingFor('itemcreated'))
+        self.assertEqual(vendors_advice.query_state(), 'advice_under_edit')
+        self.assertFalse(vendors_advice.advice_hide_during_redaction)
+        self.assertFalse(item.adviceIndex[self.vendors_uid]['hidden_during_redaction'])
+        cfg.setDefaultAdviceHiddenDuringRedaction(('meetingadvice', ))
+        self.proposeItem(item)
+        self.assertEqual(vendors_advice.query_state(), 'advice_given')
+        self.assertFalse(vendors_advice.advice_hide_during_redaction)
+        self.backToState(item, self._stateMappingFor('itemcreated'))
+        self.assertEqual(vendors_advice.query_state(), 'advice_under_edit')
+        self.assertTrue(vendors_advice.advice_hide_during_redaction)
+        self.assertTrue(item.adviceIndex[self.vendors_uid]['hidden_during_redaction'])
+        # when given again, it is shown again
+        self.proposeItem(item)
+        self.assertFalse(vendors_advice.advice_hide_during_redaction)
+        self.assertFalse(item.adviceIndex[self.vendors_uid]['hidden_during_redaction'])
 
     def test_pm_ValidateAdvisersConfig(self):
         """Test the ToolPloneMeeting.validate_advisersConfig."""

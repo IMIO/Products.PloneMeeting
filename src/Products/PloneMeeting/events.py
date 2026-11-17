@@ -215,6 +215,41 @@ def onMeetingTransition(meeting, event):
     notifyModifiedAndReindex(meeting)
 
 
+def _update_advice_hidden_during_redaction(advice, item, event):
+    '''When using ToolPloneMeeting.advisersConfig 'show_advice_on_final_wf_transition':
+       - show the advice when it reaches a final WF state;
+       - hide it again when going back from a final WF state, if
+         MeetingConfig.defaultAdviceHiddenDuringRedaction hides it by default.'''
+    tool = api.portal.get_tool('portal_plonemeeting')
+    adviser_infos = tool.get_extra_adviser_infos().get(advice.advice_group, {})
+    # use get in case overrided get_extra_adviser_infos and
+    # 'show_advice_on_final_wf_transition' not managed, will be removable
+    # when every profiles use new behavior
+    if not adviser_infos or adviser_infos.get('show_advice_on_final_wf_transition', '0') != '1':
+        return
+    wf_tool = api.portal.get_tool('portal_workflow')
+    wf = wf_tool.getWorkflowsFor(advice.portal_type)[0]
+    # manage custom workflows where final state is not 'advice_given'
+    ignored_transition_ids = len(wf.states) > 2 and ['giveAdvice'] or []
+    final_states = get_final_states(wf, ignored_transition_ids=ignored_transition_ids)
+    if ignored_transition_ids and 'advice_given' in final_states:
+        final_states.remove('advice_given')
+    hidden = None
+    if advice.advice_hide_during_redaction is True and \
+       event.new_state.id in final_states:
+        hidden = False
+    elif advice.advice_hide_during_redaction is False and \
+            event.old_state.id in final_states and \
+            event.new_state.id not in final_states:
+        cfg = tool.getMeetingConfig(item)
+        if advice.portal_type in cfg.getDefaultAdviceHiddenDuringRedaction():
+            hidden = True
+    if hidden is not None:
+        advice.advice_hide_during_redaction = hidden
+        # update adviceIndex in case we are already updating advices it has already been set
+        item.adviceIndex[advice.advice_group]['hidden_during_redaction'] = hidden
+
+
 def onAdviceTransition(advice, event):
     '''Called whenever a transition has been fired on an advice.'''
     # pass if we are pasting items as advices are not kept
@@ -230,24 +265,9 @@ def onAdviceTransition(advice, event):
             action = 'do%s%s' % (transitionId[0].upper(), transitionId[1:])
         do(action, event)
 
-    # check if need to show the advice
+    # check if need to show/hide the advice
     item = advice.getParentNode()
-    if advice.advice_hide_during_redaction is True:
-        tool = api.portal.get_tool('portal_plonemeeting')
-        adviser_infos = tool.get_extra_adviser_infos().get(advice.advice_group, {})
-        # use get in case overrided get_extra_adviser_infos and
-        # 'show_advice_on_final_wf_transition' not managed, will be removable
-        # when every profiles use new behavior
-        if adviser_infos and adviser_infos.get('show_advice_on_final_wf_transition', '0') == '1':
-            wf_tool = api.portal.get_tool('portal_workflow')
-            wf = wf_tool.getWorkflowsFor(advice.portal_type)[0]
-            # manage custom workflows where final state is not 'advice_given'
-            ignored_transition_ids = len(wf.states) > 2 and ['giveAdvice'] or []
-            if event.new_state.id in get_final_states(wf, ignored_transition_ids=ignored_transition_ids) and \
-               (not ignored_transition_ids or event.new_state.id != 'advice_given'):
-                advice.advice_hide_during_redaction = False
-                # update adviceIndex in case we are already updating advices it has already been set
-                item.adviceIndex[advice.advice_group]['hidden_during_redaction'] = False
+    _update_advice_hidden_during_redaction(advice, item, event)
 
     # notify an AdviceAfterTransitionEvent for subplugins so we are sure
     # that it is called after PloneMeeting advice transition

@@ -5,7 +5,11 @@ Changelog
 4.2.21rc9 (unreleased)
 ----------------------
 
-- Nothing changed yet.
+- When using `ToolPloneMeeting.advisersConfig.show_advice_on_final_wf_transition`,
+  the advice is hidden again when going back from a final WF state if
+  `MeetingConfig.defaultAdviceHiddenDuringRedaction` hides it by default.
+  Added `events._update_advice_hidden_during_redaction`.
+  [gbastien]
 
 
 4.2.21rc8 (2026-11-17)
