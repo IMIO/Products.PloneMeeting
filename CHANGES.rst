@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.21rc8 (unreleased)
+4.2.21rc8 (2026-11-17)
 ----------------------
 
 - When using the `waiting_advices_adviser_may_validate` WFAdaptation, the
