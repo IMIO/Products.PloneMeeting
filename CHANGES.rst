@@ -167,6 +167,11 @@ Changelog
   is not reliable as collections of different folders have same
   `getObjPositionInParent` and are then sorted on random catalog `rid`.
   [gbastien]
+- When using `ToolPloneMeeting.advisersConfig.show_advice_on_final_wf_transition`,
+  the advice is hidden again when going back from a final WF state if
+  `MeetingConfig.defaultAdviceHiddenDuringRedaction` hides it by default.
+  Added `events._update_advice_hidden_during_redaction`.
+  [gbastien]
 
 4.2.28.24 (2026-09-30)
 ----------------------
