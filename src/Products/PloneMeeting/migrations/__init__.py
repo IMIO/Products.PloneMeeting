@@ -8,6 +8,7 @@
 
 from collections import OrderedDict
 from collective.behavior.talcondition.behavior import ITALCondition
+from collective.contact.plonegroup.utils import get_organizations
 from collective.documentgenerator.search_replace.pod_template import SearchAndReplacePODTemplates
 from collective.iconifiedcategory.utils import _categorized_elements
 from copy import deepcopy
@@ -25,7 +26,9 @@ from operator import attrgetter
 from plone import api
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFPlone.utils import base_hasattr
+from Products.PloneMeeting.config import ITEM_REVIEW_STATE_RELATED_INDEXES
 from Products.PloneMeeting.content.meeting import IMeeting
+from Products.PloneMeeting.content.organization import WF_STATE_ATTRS
 from Products.PloneMeeting.MeetingConfig import ITEM_WF_STATE_ATTRS
 from Products.PloneMeeting.MeetingConfig import ITEM_WF_TRANSITION_ATTRS
 from Products.PloneMeeting.MeetingConfig import MEETING_WF_STATE_ATTRS
@@ -134,11 +137,14 @@ class Migrator(BaseMigrator):
                                      query={},
                                      review_state_mappings={},
                                      transition_mappings={},
-                                     update_local_roles=False):
+                                     update_local_roles=False,
+                                     cfg_ids=[]):
         """Update for given p_brains the workflow_history keys 'review_state' and 'action'
            depending on given p_review_state_mappings and p_action_mappings.
            Update also various parameters of the MeetingConfig
-           that are using states and transitions."""
+           that are using states and transitions, if p_cfg_ids are given,
+           only these MeetingConfigs (and related organizations values) are updated,
+           every MeetingConfigs otherwise."""
         logger.info(
             'Updating workflow states/transitions changes for elements of type "%s"...'
             % query or related_to)
@@ -151,15 +157,21 @@ class Migrator(BaseMigrator):
                 original = '%s.%s' % (related_to, original)
                 replacement = '%s.%s' % (related_to, replacement)
                 values = replace_in_list(values, original, replacement)
-            return values
+            # several values may be replaced by the same value, avoid duplicates
+            return list(OrderedDict.fromkeys(values))
 
-        def _update_attrs(attrs, mappings):
+        def _update_attrs(obj, attrs, mappings):
             for attr in attrs:
                 # state_attr may be a datagridfield field_name/column_name
                 # like powerObservers/item_states
+                field_name = attr.split('/')[0]
+                original_values = getattr(obj, field_name, None)
+                # nothing to update, an organization may have no value
+                if not original_values:
+                    continue
+                values = original_values
                 if "/" in attr:
-                    field_name, col_name = attr.split('/')
-                    values = cfg.getField(field_name).get(cfg)
+                    col_name = attr.split('/')[1]
                     for row in values:
                         if hasattr(row[col_name], '__iter__'):
                             col_values = _replace_values_in_list(
@@ -168,20 +180,31 @@ class Migrator(BaseMigrator):
                             col_values = mappings.get(row[col_name], row[col_name])
                         row[col_name] = col_values
                 else:
-                    field_name = attr
-                    values = cfg.getField(field_name).get(cfg)
                     values = _replace_values_in_list(values, mappings)
-                setattr(cfg, field_name, tuple(values))
+                # organization fields store a list, MeetingConfig fields a tuple
+                setattr(obj, field_name,
+                        list(values) if isinstance(original_values, list) else tuple(values))
 
         # MeetingConfigs
         state_attrs = ITEM_WF_STATE_ATTRS if related_to == 'MeetingItem' else MEETING_WF_STATE_ATTRS
         tr_attrs = ITEM_WF_TRANSITION_ATTRS if related_to == 'MeetingItem' else MEETING_WF_TRANSITION_ATTRS
         for cfg in self.tool.objectValues('MeetingConfig'):
-            # state_attrs
-            _update_attrs(state_attrs, review_state_mappings)
-
-            # transition_attrs
-            _update_attrs(tr_attrs, transition_mappings)
+            if cfg_ids and cfg.getId() not in cfg_ids:
+                continue
+            # cfg state_attrs
+            _update_attrs(cfg, state_attrs, review_state_mappings)
+            # cfg transition_attrs
+            _update_attrs(cfg, tr_attrs, transition_mappings)
+            if related_to == 'MeetingItem':
+                cfg_id = cfg.getId()
+                # on org, stored value is like "meeting-config-id__state__item_state_id"
+                org_review_state_mappings = {
+                    u"{0}__state__{1}".format(cfg_id, key):
+                        u"{0}__state__{1}".format(cfg_id, value)
+                    for key, value in review_state_mappings.items()}
+                for org in get_organizations(only_selected=False):
+                    # org state_attrs
+                    _update_attrs(org, WF_STATE_ATTRS, org_review_state_mappings)
 
         # workflow_history
         # manage query if not given
@@ -194,7 +217,8 @@ class Migrator(BaseMigrator):
         pghandler = ZLogHandler(steps=1000)
         pghandler.init('Updating workflow_history', len(brains))
         i = 0
-        objsToUpdate = []
+        # objects for which a review_state changed, by UID to avoid duplicates
+        objsToUpdate = OrderedDict()
         for brain in brains:
             i += 1
             pghandler.report(i)
@@ -204,19 +228,26 @@ class Migrator(BaseMigrator):
                     if event['review_state'] in review_state_mappings:
                         event['review_state'] = review_state_mappings[event['review_state']]
                         itemOrMeeting.workflow_history._p_changed = True
-                        objsToUpdate.append(itemOrMeeting)
+                        objsToUpdate[brain.UID] = itemOrMeeting
                     if event['action'] in transition_mappings:
                         event['action'] = transition_mappings[event['action']]
                         itemOrMeeting.workflow_history._p_changed = True
                         # not necessary if just an action changed?
-                        # objsToUpdate.append(itemOrMeeting)
+                        # objsToUpdate[brain.UID] = itemOrMeeting
+        pghandler.finish()
         # update fixed objects
-        if update_local_roles:
-            for obj in objsToUpdate:
+        for obj in objsToUpdate.values():
+            if update_local_roles:
                 obj.update_local_roles()
                 # use reindex_object and pass some no_idxs because
                 # calling reindexObject will update modified
                 reindex_object(obj, no_idxs=['SearchableText', 'Title', 'Description'])
+            else:
+                # review_state and workflow_history related indexes
+                idxs = ['review_state']
+                if related_to == 'MeetingItem':
+                    idxs += ITEM_REVIEW_STATE_RELATED_INDEXES
+                obj.reindexObject(idxs=idxs)
 
 
     def addCatalogIndexesAndColumns(self, indexes=True, columns=True, update_metadata=True):

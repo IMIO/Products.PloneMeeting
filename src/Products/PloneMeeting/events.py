@@ -43,6 +43,7 @@ from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import ITEM_INITIATOR_INDEX_PATTERN
 from Products.PloneMeeting.config import ITEM_MOVAL_PREVENTED
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
+from Products.PloneMeeting.config import ITEM_REVIEW_STATE_RELATED_INDEXES
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import ITEMTEMPLATESMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETING_ATTENDEES_ATTRS
@@ -173,9 +174,8 @@ def onItemTransition(item, event):
         event.object, event.workflow, event.old_state, event.new_state,
         event.transition, event.status, event.kwargs))
     # update review_state and local_roles related indexes
-    review_state_related_indexes = item.adapted().getReviewStateRelatedIndexes()
     notifyModifiedAndReindex(
-        item, extra_idxs=indexes + review_state_related_indexes)
+        item, extra_idxs=indexes + ITEM_REVIEW_STATE_RELATED_INDEXES)
     # An item has ben modified, use get_again for portlet_todo
     invalidate_cachekey_volatile_for(
         'Products.PloneMeeting.MeetingItem.modified', get_again=True)

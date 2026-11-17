@@ -228,7 +228,8 @@ ITEM_NO_PREFERRED_MEETING_VALUE = "whatever"
 ITEM_DEFAULT_TEMPLATE_ID = "default-empty-item-template"
 
 # default fields kept when an item is cloned
-DEFAULT_COPIED_FIELDS = ['title', 'description', 'detailedDescription', 'motivation',
+DEFAULT_COPIED_FIELDS = ['title', 'description', 'detailedDescription',
+                         'motivation', 'motivationSuite',
                          'decision', 'decisionSuite', 'decisionEnd',
                          'budgetInfos', 'budgetRelated', 'sendToAuthority',
                          'groupsInCharge', 'proposingGroupWithGroupInCharge',
@@ -240,9 +241,11 @@ EXTRA_COPIED_FIELDS_SAME_MC = ['associatedGroups', 'category', 'classifier', 'co
                                'otherMeetingConfigsClonableToPrivacy', 'oralQuestion',
                                'toDiscuss', 'privacy', 'pollType', 'textCheckList',
                                'otherMeetingConfigsClonableToFieldTitle',
+                               'otherMeetingConfigsClonableToFieldItemReference',
                                'otherMeetingConfigsClonableToFieldDescription',
                                'otherMeetingConfigsClonableToFieldDetailedDescription',
                                'otherMeetingConfigsClonableToFieldMotivation',
+                               'otherMeetingConfigsClonableToFieldMotivationSuite',
                                'otherMeetingConfigsClonableToFieldDecision',
                                'otherMeetingConfigsClonableToFieldDecisionSuite',
                                'otherMeetingConfigsClonableToFieldDecisionEnd',
@@ -390,6 +393,8 @@ EXECUTE_EXPR_VALUE = 'execute_tal_expression'
 
 NO_COMMITTEE = u"no_committee"
 
+GROUP_MANAGING_ITEM_PG_PREFIX = 'proposing_group__'
+
 ITEM_MOVAL_PREVENTED = "Prevented to rename item no more in initial_state!"
 
 # for performance reason we do not dynamically get the annexes criterion ids
@@ -404,6 +409,14 @@ POD_TEMPLATE_TOKEN_SEPARATOR = '__'
 REINDEX_NEEDED_MARKER = "_catalog_reindex_needed"
 # prefix used in pm_technical_index to store item initiators
 ITEM_INITIATOR_INDEX_PATTERN = "item_initiator_{0}"
+
+# item catalog indexes depending on the review_state or the workflow_history,
+# reindexed after an item transition, a subproduct may extend it in place
+ITEM_REVIEW_STATE_RELATED_INDEXES = [
+    'downOrUpWorkflowAgain',
+    'getTakenOverBy',
+    'reviewProcessInfo',
+    'previous_review_state']
 
 # various place where attendees infos are stored on meeting
 MEETING_ATTENDEES_ATTRS = (

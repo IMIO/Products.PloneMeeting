@@ -26,6 +26,12 @@ from zope import schema
 from zope.interface import Interface
 
 
+WF_STATE_ATTRS = [
+    'item_advice_states',
+    'item_advice_edit_states',
+    'item_advice_view_states']
+
+
 class ICertifiedSignaturesRowSchema(Interface):
     """Schema for DataGridField widget's row of field 'certified_signatures'."""
 

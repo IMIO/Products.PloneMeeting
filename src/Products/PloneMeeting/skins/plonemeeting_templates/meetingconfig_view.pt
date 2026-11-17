@@ -755,6 +755,7 @@
           <td colspan="3" tal:define="field python:here.getField('itemWFValidationLevels');
                                       dummy python:here.REQUEST.set('translated_itemWFValidationLevels', True);">
             <span metal:use-macro="here/widgets/field/macros/view" />
+            <tal:reset define="dummy python:here.REQUEST.set('translated_itemWFValidationLevels', False);" />
           </td>
         </tr>
         <tr valign="top">
@@ -1265,9 +1266,15 @@
           <td tal:define="field python:here.getField('itemInternalNotesEditableBy')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
+          <td tal:define="field python:here.getField('meetingConfigsToCloneToEditFieldsTALExpr')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+        </tr>
+        <tr>
           <td tal:define="field python:here.getField('usingGroups')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
+          <td></td>
           <td></td>
         </tr>
       </table>

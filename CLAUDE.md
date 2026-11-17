@@ -105,6 +105,12 @@ bin/instance fg           # Run Plone in foreground
 
 ## Running tests
 
+Tests require LibreOffice running headless on port 2002 (used by appy to update POD templates styles when the test profile is applied), otherwise the test layer setup fails with "Couldn't not connect to LibreOffice on port 2002":
+
+```bash
+soffice --headless --invisible --nologo --norestore --accept="socket,host=localhost,port=2002;urp;" &
+```
+
 ```bash
 # From the buildout root (pm42_dev/)
 bin/test -s Products.PloneMeeting                    # All tests
@@ -113,6 +119,7 @@ bin/test -s Products.PloneMeeting -t test_method_name # Single test method
 ```
 
 Tests use `unittest` + `plone.app.testing`. The base test class is `PloneMeetingTestCase` (`tests/PloneMeetingTestCase.py`). The test profile (`PM_TESTING_PROFILE_FUNCTIONAL`) sets up a full Plone site with sample meeting configurations.
+Take into account PloneMeetingTestCase.subproductIgnoredTestFiles also when executing tests for PloneMeeting except if it really relevant.
 
 ## Code style & conventions
 
