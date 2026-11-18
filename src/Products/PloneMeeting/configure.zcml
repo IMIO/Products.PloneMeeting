@@ -65,6 +65,7 @@
   <include file="profiling.zcml" />
   <include file="vocabularies.zcml" />
   <includeOverrides file="overrides.zcml" />
+  <includeOverrides file="esign/overrides.zcml" />
   <includeOverrides file="ftw_labels/overrides.zcml" />
 
   <adapter for=".interfaces.IMeetingItem"

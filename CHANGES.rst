@@ -5,6 +5,10 @@ Changelog
 4.2.29rc17 (unreleased)
 ----------------------
 
+- Override `imio.esign.signers` vocabulary (`esign.vocabularies.PMSignersVocabulary`)
+  used to define the signers order in the `imio.esign` settings,
+  it lists every active `held_position` having the `signer` usage.
+  [gbastien]
 - Prevent deleting an annex that is in an esign session that is `to_sign`,
   this avoids de-synchronization between local and distant session files.
   This is managed in `AnnexContentDeletableAdapter.mayDelete`.

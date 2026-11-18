@@ -16,6 +16,8 @@ from ftw.labels.interfaces import ILabelJar
 from imio.actionspanel.interfaces import IContentDeletable
 from imio.esign.adapters import ISignable
 from imio.esign.config import set_esign_registry_enabled
+from imio.esign.config import set_esign_registry_enforce_signers_order
+from imio.esign.config import set_esign_registry_signers_order
 from imio.esign.utils import get_session_annotation
 from imio.helpers.cache import cleanRamCacheFor
 from imio.helpers.content import get_vocab
@@ -4769,6 +4771,42 @@ class testViews(PloneMeetingTestCase):
         # the @@parapheo view is rendered correctly
         self.assertTrue(self.portal.restrictedTraverse('@@parapheo')())
 
+        # signers order, by default signers are ordered on the signature number
+        self.assertEqual([s['userid'] for s in session0['signers']], ['pmReviewer1', 'pmReviewer2'])
+        self.assertEqual([s['userid'] for s in session1['signers']], ['pmReviewer1', 'pmReviewer2'])
+        # enforce a signers order where held_pos2 signs first, the order is defined
+        # with the held_position UIDs of the imio.esign.signers vocabulary
+        held_pos1_uid = held_pos1.UID()
+        held_pos2_uid = held_pos2.UID()
+        self.assertEqual(sorted(get_vocab_values(self.portal, "imio.esign.signers")),
+                         sorted([held_pos1_uid, held_pos2_uid]))
+        set_esign_registry_signers_order([held_pos2_uid, held_pos1_uid])
+        set_esign_registry_enforce_signers_order(True)
+        # recreating a session sorts the signers following the signers order
+        session1['state'] = "refused"
+        self.request.form['esign_session_id'] = '1'
+        del self.request.form['file_uids']
+        session_ids = get_session_annotation()['sessions'].keys()
+        view()
+        new_session_id = [session_id for session_id in get_session_annotation()['sessions'].keys()
+                          if session_id not in session_ids][0]
+        session2 = get_session_annotation()['sessions'][new_session_id]
+        self.assertEqual(len(session2['files']), 6)
+        self.assertEqual([s['userid'] for s in session2['signers']], ['pmReviewer2', 'pmReviewer1'])
+        # an annex added to a session goes to the draft session having the signers
+        # in the signers order, not to the draft session0 ordered on the signature number
+        session0['state'] = 'draft'
+        signers = ISignable(item).get_signers()
+        self.assertEqual([signer['userid'] for signer in signers], ['pmReviewer1', 'pmReviewer2'])
+        annex = self.addAnnex(item, to_sign=True, annexFile=self.annexFilePDF)
+        sessions = _add_annexes_to_sign_session(item, [annex], cfg, pod_template, signers)
+        self.assertEqual([session_id for session_id, session in sessions], [new_session_id])
+        self.assertEqual(len(session0['files']), 1)
+        self.assertEqual(len(session2['files']), 7)
+        self.assertEqual([s['userid'] for s in session2['signers']], ['pmReviewer2', 'pmReviewer1'])
+        # @@parapheo specifies that signers are displayed in the signing order
+        self.assertIn("Signers (signing order)", self.portal.restrictedTraverse('@@parapheo')())
+
     def test_pm_Parapheo_available(self):
         """@@parapheo is available to MeetingManagers, esign watchers and signers."""
         # create 2 sessions with different signers
@@ -4815,6 +4853,29 @@ class testViews(PloneMeetingTestCase):
         self.assertTrue(parapheo.available())
         self.assertEqual(len(parapheo.get_sessions()), 1)
         self.assertEqual(parapheo.get_sessions()[0]["id"], 1)
+
+    def test_pm_EsignSignersVocabulary(self):
+        """The imio.esign.signers vocabulary is overrided and lists every
+           held_position having the "signer" usage, term value is the held_position UID."""
+        vocab_name = "imio.esign.signers"
+        self.changeUser('siteadmin')
+        # no signers by default
+        self.assertEqual(get_vocab_values(self.portal, vocab_name), [])
+        hp1 = self.portal.contacts.person1.held_pos1
+        hp2 = self.portal.contacts.person2.held_pos2
+        hp1.usages = ['assemblyMember', 'signer']
+        hp1._invalidateCachedMethods()
+        vocab = get_vocab(self.portal, vocab_name)
+        self.assertEqual([term.value for term in vocab], [hp1.UID()])
+        self.assertEqual(vocab.getTerm(hp1.UID()).title, hp1.get_short_title())
+        hp2.usages = ['signer']
+        hp2._invalidateCachedMethods()
+        self.assertEqual(sorted(get_vocab_values(self.portal, vocab_name)),
+                         sorted([hp1.UID(), hp2.UID()]))
+        # inactive held_positions are not listed
+        self.do(hp2, 'deactivate')
+        hp2._invalidateCachedMethods()
+        self.assertEqual(get_vocab_values(self.portal, vocab_name), [hp1.UID()])
 
 
 def test_suite():
