@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
+from imio.webspellchecker.config import set_disable_autosearch_in
 from Products.PloneMeeting.migrations import logger
 from Products.PloneMeeting.migrations import Migrator
+from Products.PloneMeeting.setuphandlers import wsc_disable_autosearch_in
 
 import os
 
@@ -37,12 +39,22 @@ class Migrate_To_4217_4(Migrator):
                'annexes_index': ['to_print', 'not_to_print']})
         logger.info('Done.')
 
+    def _updateWSCDisableAutosearchIn(self):
+        """Disable WSC in datagrid inputs (class "datagridwidget-cell-input"),
+           apply the complete "disable_autosearch_in" defined in setuphandlers."""
+        logger.info('Updating WSC "disable_autosearch_in"...')
+        if self.portal.portal_quickinstaller.isProductInstalled('imio.webspellchecker'):
+            set_disable_autosearch_in(wsc_disable_autosearch_in)
+        logger.info('Done.')
+
     def run(self, extra_omitted=[], from_migration_to_4200=False):
 
         logger.info('Migrating to PloneMeeting 4217.4...')
         if not from_migration_to_4200:
             self._updateFacetedFilters()
             self._reindexAnnexesIndex()
+        # always applied as migration to 4215 sets an incomplete value
+        self._updateWSCDisableAutosearchIn()
         logger.info('Migrating to PloneMeeting 4217.4... Done.')
 
 
@@ -51,7 +63,8 @@ def migrate(context):
 
        1) Add new faceted filter "Annex types" and make "Annexes" filter
           use the "combined__annexes_index";
-       2) Reindex "annexes_index" for items having annexes.
+       2) Reindex "annexes_index" for items having annexes;
+       3) Disable WSC in datagrid inputs.
     """
     migrator = Migrate_To_4217_4(context)
     migrator.run()

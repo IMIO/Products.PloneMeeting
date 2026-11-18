@@ -101,6 +101,7 @@ Changelog
   `classifier` with same `id` was used.
   [gbastien]
 - Disable `webspellchecker` in datagrid inputs (mainly used in `MeetingConfig`).
+  Migration step `Migrate_To_4217_4._updateWSCDisableAutosearchIn` applies it to existing sites.
   [gbastien]
 - Added parameter `check_is_privacy_viewable=True` to `MeetingItem.show_field`
   so when using `MeetingConfig.restrictAccessToSecretItems`, the field is not
