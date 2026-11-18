@@ -3241,7 +3241,7 @@ class ContainedAnnexesToSignVocabulary(ContainedAnnexesVocabulary):
             if annex_obj.file.contentType != 'application/pdf':
                 term.disabled = True
                 term.title += translate(' [PDF required]',
-                                        domain='PloneMeeting',
+                                        domain='imio.annex',
                                         context=context.REQUEST)
             # check not already in a "draft" esign session
             else:
