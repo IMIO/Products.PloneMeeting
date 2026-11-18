@@ -200,4 +200,8 @@
   <utility component=".vocabularies.ContainedAnnexesToSignVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.contained_annexes_to_sign_vocabulary" />
 
+  <!-- Vocabulary used in download-elements-annexes-batch-action -->
+  <utility component=".vocabularies.DownloadAnnexesVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.download_annexes_vocabulary" />
+
 </configure>

@@ -4,6 +4,7 @@
 #
 
 from collective.eeafaceted.batchactions import _ as _CEBA
+from imio.annex.widgets.checkbox import OrderableCheckBoxFieldWidget
 from imio.helpers.content import get_vocab_values
 from imio.helpers.content import uuidToObject
 from plone import api
@@ -14,7 +15,6 @@ from Products.PloneMeeting.browser.batchactions import compute_signers
 from Products.PloneMeeting.browser.batchactions import DisplaySignersProvider
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IRedirect
-from Products.PloneMeeting.widgets.pm_checkbox import PMCheckBoxFieldWidget
 from z3c.form import button
 from z3c.form import field
 from z3c.form import form
@@ -106,7 +106,7 @@ class PodTemplateStoreAsAnnexForm(form.Form):
     implements(IFieldsAndContentProvidersForm)
     schema = IPodTemplateStoreAsAnnex
     fields = field.Fields(IPodTemplateStoreAsAnnex)
-    fields["annex_ids"].widgetFactory = PMCheckBoxFieldWidget
+    fields["annex_ids"].widgetFactory = OrderableCheckBoxFieldWidget
     ignoreContext = True  # don't use context to get widget data
 
     contentProviders = ContentProviders()

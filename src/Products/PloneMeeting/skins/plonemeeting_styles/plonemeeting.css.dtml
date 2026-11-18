@@ -509,6 +509,9 @@ table td div.additional-infos {
 #portal-footer {margin: 1em 0 0.5em 0; padding: 0; }
 #portal-advanced-search {display: none; }
 
+.titleVisualPadding {
+    padding-left: 22px;
+}
 /* the number displayed in the table of annexes */
 .td_cell_number-column {
     font-size: 90%;
@@ -1161,7 +1164,7 @@ body.portaltype-meetingconfig div.field.ArchetypesMultiSelectionWidget[id^='arch
     max-width: 500px !important;
 }
 div.field.ArchetypesMultiSelectionWidget[id^='archetypes-fieldname-'],
-div#formfield-form-widgets-annexes div.pm_checkbox_widget {
+div#formfield-form-widgets-annexes div.orderable_checkbox_widget {
     /* use 600px so most of fields in config are fully displayed */
     max-height: 600px;
     overflow-x: auto;
@@ -2338,30 +2341,6 @@ body#content.cke_editable div p {
 /* hide the 'scan' tab on annex to every roles but Manager and MeetingManager */
 body:not(.userrole-manager):not(.userrole-meetingmanager) a#fieldsetlegend-scan {
     display: none;
-}
-
-/* skin pm_checkbox_widget */
-div.pm_checkbox_widget div.checkbox_widget_select_all {
-   background-color: #EEEEEE;
-   margin-left: 0;
-   padding: 0.25em;
-   color: #444444;
-   margin-top: 0.25em;
-   margin-bottom: 0.25em;
-}
-div.pm_checkbox_widget div.pm-checkbox-description {
-    margin-left: 40px;
-}
-/* checkboxes in item duplicate/item export pdf forms popup */
-div.pm_checkbox_widget input.checkbox-widget {
-   margin-left: 0.25em;
-}
-div.pm_checkbox_widget span.option {
-   margin-top: 0.25em;
-   margin-bottom: 0.25em;
-}
-div.pm_checkbox_widget span.option label {
-    display: inline;
 }
 
 /* hide the edit yellow pencil on person and held_position in the viewlet-above-content-title next to workflow_state */

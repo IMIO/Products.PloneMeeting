@@ -320,6 +320,11 @@
         name="concatenate-annexes-batch-action"
         class=".batchactions.PMConcatenateAnnexesBatchActionForm"
         permission="zope2.View" />
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingItemDashboardBatchActionsMarker"
+        name="download-elements-annexes-batch-action"
+        class=".batchactions.PMDownloadElementsAnnexesBatchActionForm"
+        permission="zope2.View" />
     <!-- Batch actions Meeting -->
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingBatchActionsMarker"
@@ -357,9 +362,19 @@
         class=".batchactions.UpdateLocalRolesBatchActionForm"
         permission="cmf.ManagePortal" />
     <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingDashboardBatchActionsMarker"
+        name="download-elements-annexes-batch-action"
+        class=".batchactions.PMDownloadElementsAnnexesBatchActionForm"
+        permission="zope2.View" />
+    <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingBatchActionsMarker"
         name="concatenate-annexes-batch-action"
         class=".batchactions.PMConcatenateAnnexesBatchActionForm"
+        permission="zope2.View" />
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingBatchActionsMarker"
+        name="download-elements-annexes-batch-action"
+        class=".batchactions.PMDownloadElementsAnnexesBatchActionForm"
         permission="zope2.View" />
     <!-- Batch actions MeetingItem -->
     <browser:page

@@ -23,6 +23,8 @@ from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import get_annexes_config
 
+import urlparse
+
 
 # key used in annexes filters to store selected annex type uids
 ANNEX_TYPE_UIDS_FILTER = 'annex_type_uids'
@@ -156,30 +158,57 @@ def _annex_attr_filters(values):
             for attr, attr_values in allowed.items()}
 
 
+def _listify(value):
+    """ """
+    if value is not None and not hasattr(value, '__iter__'):
+        value = [value]
+    return value
+
+
+def _filters_from_criteria(annex_attr_values=None, annex_type_uids=None):
+    """Turn values of the faceted "annexes" (to_sign, to_print, ...) and
+       "annex types" criteria into annexes filters."""
+    res = {}
+    annex_attr_values = _listify(annex_attr_values)
+    if annex_attr_values is not None:
+        res.update(_annex_attr_filters(annex_attr_values))
+    # annex types filter will contains selected category/subcategory uids
+    # it can not be managed by collective.iconifiedcategory filters as we need
+    # to filter on "category_uid" OR "subcategory_uid", see _filter_annex_types
+    annex_type_uids = _listify(annex_type_uids)
+    if annex_type_uids is not None:
+        res[ANNEX_TYPE_UIDS_FILTER] = list(annex_type_uids)
+    return res
+
+
 def _get_filters(request):
     """When using filters "annexes" and "annex types", displayed result
        is adapted accordingly."""
     # caching
     res = request.get("cached_annexes_filters", None)
     if res is None:
-        res = {}
         # in request.form, faceted criterion is like 'c20[]'
-        # annexes filter, manage to_sign, signed, confidential, ...
-        annex_attr_filter = request.form.get(FACETED_ANNEXES_CRITERION_ID + '[]', None)
-        if annex_attr_filter is not None:
-            if not hasattr(annex_attr_filter, '__iter__'):
-                annex_attr_filter = [annex_attr_filter]
-            res.update(_annex_attr_filters(annex_attr_filter))
-        # annex types filter will contains selected category/subcategory uids
-        # it can not be managed by collective.iconifiedcategory filters as we need
-        # to filter on "category_uid" OR "subcategory_uid", see _filter_annex_types
-        annex_types_filter = request.form.get(FACETED_ANNEX_TYPES_CRITERION_ID + '[]', None)
-        if annex_types_filter is not None:
-            if not hasattr(annex_types_filter, '__iter__'):
-                annex_types_filter = [annex_types_filter]
-            res[ANNEX_TYPE_UIDS_FILTER] = list(annex_types_filter)
+        res = _filters_from_criteria(
+            request.form.get(FACETED_ANNEXES_CRITERION_ID + '[]', None),
+            request.form.get(FACETED_ANNEX_TYPES_CRITERION_ID + '[]', None))
         request["cached_annexes_filters"] = res
     return res
+
+
+def _filters_from_referer(referer):
+    """Get filters "annexes" and "annex types" from the faceted query stored
+       in the hash of the p_referer URL, like it is the case for batch actions,
+       in the hash, faceted criterion is like 'c20=to_sign&c20=to_print'."""
+    if not referer or '#' not in referer:
+        return {}
+    query = urlparse.parse_qs(referer.split('#', 1)[1])
+
+    def _values(criterion_id):
+        return query.get(criterion_id, query.get(criterion_id + '[]', None))
+
+    return _filters_from_criteria(
+        _values(FACETED_ANNEXES_CRITERION_ID),
+        _values(FACETED_ANNEX_TYPES_CRITERION_ID))
 
 
 def _split_annex_types_filter(filters):

@@ -5,6 +5,7 @@
 
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_plone_group_id
+from imio.annex.widgets.checkbox import OrderableCheckBoxFieldWidget
 from imio.helpers.cache import get_current_user_id
 from imio.helpers.cache import get_plone_groups_for_user
 from imio.helpers.content import get_vocab
@@ -16,7 +17,6 @@ from Products.PloneMeeting.config import DUPLICATE_AND_KEEP_LINK_EVENT_ACTION
 from Products.PloneMeeting.config import DUPLICATE_EVENT_ACTION
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IRedirect
-from Products.PloneMeeting.widgets.pm_checkbox import PMCheckBoxFieldWidget
 from z3c.form import button
 from z3c.form import field
 from z3c.form import form as z3c_form
@@ -70,8 +70,8 @@ class DuplicateItemForm(z3c_form.Form):
     """ """
     fields = field.Fields(IDuplicateItem)
     fields["keep_link"].widgetFactory = RadioFieldWidget
-    fields["annex_ids"].widgetFactory = PMCheckBoxFieldWidget
-    fields["annex_decision_ids"].widgetFactory = PMCheckBoxFieldWidget
+    fields["annex_ids"].widgetFactory = OrderableCheckBoxFieldWidget
+    fields["annex_decision_ids"].widgetFactory = OrderableCheckBoxFieldWidget
 
     ignoreContext = True  # don't use context to get widget data
 
