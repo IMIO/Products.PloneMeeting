@@ -85,6 +85,7 @@ from Products.PloneMeeting.config import AddAnnex
 from Products.PloneMeeting.config import AddAnnexDecision
 from Products.PloneMeeting.config import ADVICE_STATES_ENDED
 from Products.PloneMeeting.config import ADVICE_STATES_MAPPING
+from Products.PloneMeeting.config import GROUP_MANAGING_ITEM_AG_PREFIX
 from Products.PloneMeeting.config import GROUP_MANAGING_ITEM_PG_PREFIX
 from Products.PloneMeeting.config import PloneMeetingError
 from Products.PloneMeeting.config import PMMessageFactory as _
@@ -2275,11 +2276,34 @@ def duplicate_portal_type(portalTypeName, duplicatedPortalTypeId):
 
 def get_group_managing_item_suffix(group_managing_item):
     '''Return the suffix of a MeetingConfig.itemWFValidationLevels group managing item,
-       that is either "proposing_group__suffix" or a Plone group id "org_uid_suffix".
+       that is either "proposing_group__suffix", "associated_groups__suffix"
+       or a Plone group id "org_uid_suffix".
        A suffix may contain a "_" so we only split on the first "_".'''
-    if group_managing_item.startswith(GROUP_MANAGING_ITEM_PG_PREFIX):
-        return group_managing_item[len(GROUP_MANAGING_ITEM_PG_PREFIX):]
+    for prefix in (GROUP_MANAGING_ITEM_PG_PREFIX, GROUP_MANAGING_ITEM_AG_PREFIX):
+        if group_managing_item.startswith(prefix):
+            return group_managing_item[len(prefix):]
     return group_managing_item.split('_', 1)[-1]
+
+
+def render_groups_managing_item(groups_managing_item, item):
+    '''Turn MeetingConfig.itemWFValidationLevels p_groups_managing_item special values
+       into Plone group ids for given p_item:
+       - "proposing_group__suffix" is the p_item proposingGroup "org_uid_suffix";
+       - "associated_groups__suffix" are the p_item associatedGroups "org_uid_suffix"
+         (nothing when no associatedGroups).
+       Other values are Plone group ids and are returned as is.'''
+    res = []
+    for gmi in groups_managing_item:
+        if gmi.startswith(GROUP_MANAGING_ITEM_PG_PREFIX):
+            res.append(get_plone_group_id(
+                item.getProposingGroup(), gmi[len(GROUP_MANAGING_ITEM_PG_PREFIX):]))
+        elif gmi.startswith(GROUP_MANAGING_ITEM_AG_PREFIX):
+            suffix = gmi[len(GROUP_MANAGING_ITEM_AG_PREFIX):]
+            res += [get_plone_group_id(org_uid, suffix)
+                    for org_uid in item.getAssociatedGroups()]
+        else:
+            res.append(gmi)
+    return res
 
 
 def get_item_validation_wf_suffixes(cfg, org_uid=None, only_enabled=True):
@@ -2334,9 +2358,10 @@ def get_last_validation_state(item, cfg, before_last=False, return_level=False):
 def _get_last_validation_state_cachekey(method, item, cfg, before_last=False, return_level=False):
     '''cachekey method for _get_last_validation_state_cached.'''
     # without "available_on", result only depends on the groups managing item,
-    # so on the proposingGroup, the Plone groups content and the MeetingConfig
+    # so on the proposingGroup, the associatedGroups, the Plone groups content and the MeetingConfig
     return get_cachekey_volatile('_users_groups_value'), \
-        item.getProposingGroup(), cfg.getId(), cfg._p_mtime, before_last, return_level
+        item.getProposingGroup(), tuple(item.getAssociatedGroups()), \
+        cfg.getId(), cfg._p_mtime, before_last, return_level
 
 
 @ram.cache(_get_last_validation_state_cachekey)

@@ -58,6 +58,7 @@ from Products.PloneMeeting.config import DUPLICATE_AND_KEEP_LINK_EVENT_ACTION
 from Products.PloneMeeting.config import EXECUTE_EXPR_VALUE
 from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_FROM_ITEM_TEMPLATE
 from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_SAME_MC
+from Products.PloneMeeting.config import GROUP_MANAGING_ITEM_AG_PREFIX
 from Products.PloneMeeting.config import GROUP_MANAGING_ITEM_PG_PREFIX
 from Products.PloneMeeting.config import HISTORY_COMMENT_NOT_VIEWABLE
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
@@ -8861,6 +8862,81 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmCreator2')
         self.assertTrue(self.hasPermission(View, item))
         self.assertTrue(self.hasPermission(ModifyPortalContent, item))
+
+    def test_pm_ItemWFValidationLevels_with_associated_groups_managing_item(self):
+        """When using "associated_groups__suffix" in extra_groups_managing_item,
+           the item associatedGroups manage the item together with the group managing item."""
+        cfg = self.meetingConfig
+        self._enableField('associatedGroups')
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem', associatedGroups=(self.vendors_uid, ))
+        # by default, associated groups do not have access
+        self.changeUser('pmCreator2')
+        self.assertFalse(self.hasPermission(View, item))
+        self.assertFalse(self.hasPermission(ModifyPortalContent, item))
+
+        # make associated groups creators manage item when itemcreated
+        self._updateItemValidationLevel(
+            cfg, 'itemcreated',
+            extra_groups_managing_item=['{0}creators'.format(GROUP_MANAGING_ITEM_AG_PREFIX)])
+        item.update_local_roles()
+        self.assertEqual(
+            cfg.getItemWFValidationLevels(
+                item=item, states=['itemcreated'], data='extra_groups_managing_item',
+                return_state_singleton=False),
+            [self.vendors_creators])
+        self.assertEqual(
+            cfg.getItemWFValidationLevels(
+                item=item, states=['itemcreated'],
+                render_proposing_group=True)['extra_groups_managing_item'],
+            [self.vendors_creators])
+        self.assertEqual(
+            cfg.getItemWFValidationLevels(
+                states=['itemcreated'], data='extra_suffixes', return_state_singleton=False),
+            ['creators'])
+        self.assertEqual(
+            sorted(item.get_plone_groups_managing_item(cfg, ['itemcreated'])),
+            sorted([self.developers_creators, self.vendors_creators]))
+        self.assertEqual(
+            sorted(item.get_orgs_managing_item(cfg, 'itemcreated')),
+            sorted([self.developers_uid, self.vendors_uid]))
+        # the proposingGroup is still the group managing item
+        self.assertEqual(
+            item.get_orgs_managing_item(cfg, 'itemcreated', only_group_managing_item=True),
+            self.developers_uid)
+        # proposingGroup and associated groups manage item
+        self.changeUser('pmCreator1')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertTrue(self.hasPermission(ModifyPortalContent, item))
+        self.changeUser('pmCreator2')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertTrue(self.hasPermission(ModifyPortalContent, item))
+
+        # next validation level, associated groups reviewers manage item
+        self.proposeItem(item)
+        proposed_state = item.query_state()
+        self.changeUser('pmReviewer2')
+        self.assertFalse(self.hasPermission(View, item))
+        self._updateItemValidationLevel(
+            cfg, proposed_state,
+            extra_groups_managing_item=['{0}reviewers'.format(GROUP_MANAGING_ITEM_AG_PREFIX)])
+        item.update_local_roles()
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertTrue(self.hasPermission(ModifyPortalContent, item))
+        # associated groups creators still have access but do not manage the item anymore
+        self.changeUser('pmCreator2')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertFalse(self.hasPermission(ModifyPortalContent, item))
+
+        # when no more associated groups, they do not have access anymore
+        item.setAssociatedGroups(())
+        item.update_local_roles()
+        self.assertEqual(item.get_plone_groups_managing_item(cfg, [proposed_state]),
+                         [self.developers_reviewers])
+        self.assertFalse(self.hasPermission(View, item))
+        self.changeUser('pmReviewer2')
+        self.assertFalse(self.hasPermission(View, item))
+        self.assertFalse(self.hasPermission(ModifyPortalContent, item))
 
     def test_pm_GetOrgsManagingItem(self):
         """MeetingItem.get_orgs_managing_item returns the organizations managing the item

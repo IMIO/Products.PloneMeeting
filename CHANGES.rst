@@ -10,6 +10,13 @@ Changelog
   `MeetingConfig.defaultAdviceHiddenDuringRedaction` hides it by default.
   Added `events._update_advice_hidden_during_redaction`.
   [gbastien]
+- `MeetingConfig.itemWFValidationLevels` `extra_groups_managing_item` may use the
+  item associated groups (`associated_groups__suffix`), every associated group
+  suffixed Plone group then manages the item together with the `group_managing_item`.
+  Associated groups are not selectable in `group_managing_item`.
+  Added vocabulary `Products.PloneMeeting.vocabularies.extra_groups_managing_item_vocabulary`,
+  `config.GROUP_MANAGING_ITEM_AG_PREFIX` and `utils.render_groups_managing_item`.
+  [gbastien]
 
 
 4.2.21rc8 (2026-11-17)

@@ -24,6 +24,7 @@ from plone.namedfile.file import NamedImage
 from Products.CMFPlone.interfaces.constrains import IConstrainTypes
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting import logger
+from Products.PloneMeeting.config import GROUP_MANAGING_ITEM_AG_PREFIX
 from Products.PloneMeeting.config import GROUP_MANAGING_ITEM_PG_PREFIX
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
@@ -73,7 +74,8 @@ def adapt_item_wf_validation_level(level):
     level = dict(level)
 
     def _org_id_to_uid(group_managing_item):
-        if not group_managing_item or group_managing_item.startswith(GROUP_MANAGING_ITEM_PG_PREFIX):
+        if not group_managing_item or group_managing_item.startswith(
+                (GROUP_MANAGING_ITEM_PG_PREFIX, GROUP_MANAGING_ITEM_AG_PREFIX)):
             return group_managing_item
         return org_id_to_uid(group_managing_item, raise_on_error=False) or group_managing_item
 

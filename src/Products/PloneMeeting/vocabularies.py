@@ -62,6 +62,7 @@ from Products.PloneMeeting.config import ADVICE_TYPES
 from Products.PloneMeeting.config import ALL_VOTE_VALUES
 from Products.PloneMeeting.config import CONFIGURABLE_FIELD_NAMES
 from Products.PloneMeeting.config import CONSIDERED_NOT_GIVEN_ADVICE_VALUE
+from Products.PloneMeeting.config import GROUP_MANAGING_ITEM_AG_PREFIX
 from Products.PloneMeeting.config import GROUP_MANAGING_ITEM_PG_PREFIX
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
@@ -3460,23 +3461,30 @@ SuffixedPloneGroupsVocabularyFactory = SuffixedPloneGroupsVocabulary()
 
 
 class GroupsManagingItemVocabulary(SuffixedPloneGroupsVocabulary):
-    """ """
+    """Every suffixed Plone groups and, for every enabled suffix, the special
+       values defined in self.special_prefixes, like "proposing_group__suffix"."""
+
+    # (prefix, msgid, default) of the special values, displayed first
+    special_prefixes = (
+        (GROUP_MANAGING_ITEM_PG_PREFIX, 'proposing_group_managing_item', "Proposing group ({0})"), )
 
     def GroupsManagingItemVocabulary__call__(self, context):
         terms = super(GroupsManagingItemVocabulary, self).__call__(context)
         # do not modify original terms
         terms = list(terms._terms)
-        for fct_dic in get_registry_functions():
-            if fct_dic['enabled'] is False:
-                continue
-            term_id = GROUP_MANAGING_ITEM_PG_PREFIX + fct_dic['fct_id']
-            term_title = translate(
-                'proposing_group_managing_item',
-                mapping={'suffix_title': safe_unicode(fct_dic['fct_title'])},
-                domain="PloneMeeting",
-                context=context.REQUEST,
-                default="Proposing group ({0})".format(fct_dic['fct_id']))
-            terms.insert(0, SimpleTerm(term_id, term_id, term_title))
+        # terms are inserted at first position, so the first prefix is handled last
+        for prefix, msgid, default in reversed(self.special_prefixes):
+            for fct_dic in get_registry_functions():
+                if fct_dic['enabled'] is False:
+                    continue
+                term_id = prefix + fct_dic['fct_id']
+                term_title = translate(
+                    msgid,
+                    mapping={'suffix_title': safe_unicode(fct_dic['fct_title'])},
+                    domain="PloneMeeting",
+                    context=context.REQUEST,
+                    default=default.format(fct_dic['fct_id']))
+                terms.insert(0, SimpleTerm(term_id, term_id, term_title))
         return SimpleVocabulary(terms)
 
     # do ram.cache have a different key name
@@ -3484,6 +3492,18 @@ class GroupsManagingItemVocabulary(SuffixedPloneGroupsVocabulary):
 
 
 GroupsManagingItemVocabularyFactory = GroupsManagingItemVocabulary()
+
+
+class ExtraGroupsManagingItemVocabulary(GroupsManagingItemVocabulary):
+    """Vocabulary of MeetingConfig.itemWFValidationLevels extra_groups_managing_item,
+       same as GroupsManagingItemVocabulary but the item associated groups may also be
+       selected ("associated_groups__suffix")."""
+
+    special_prefixes = GroupsManagingItemVocabulary.special_prefixes + (
+        (GROUP_MANAGING_ITEM_AG_PREFIX, 'associated_groups_managing_item', "Associated groups ({0})"), )
+
+
+ExtraGroupsManagingItemVocabularyFactory = ExtraGroupsManagingItemVocabulary()
 
 
 class ItemFieldsConfigVocabulary(object):

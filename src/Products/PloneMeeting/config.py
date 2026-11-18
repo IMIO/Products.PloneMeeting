@@ -394,6 +394,9 @@ EXECUTE_EXPR_VALUE = 'execute_tal_expression'
 NO_COMMITTEE = u"no_committee"
 
 GROUP_MANAGING_ITEM_PG_PREFIX = 'proposing_group__'
+# only available for MeetingConfig.itemWFValidationLevels extra_groups_managing_item,
+# gives access to the item associated groups
+GROUP_MANAGING_ITEM_AG_PREFIX = 'associated_groups__'
 
 ITEM_MOVAL_PREVENTED = "Prevented to rename item no more in initial_state!"
 

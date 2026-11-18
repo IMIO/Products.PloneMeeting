@@ -153,6 +153,8 @@
            name="Products.PloneMeeting.vocabularies.suffixed_plone_groups_vocabulary" />
   <utility component=".vocabularies.GroupsManagingItemVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.groups_managing_item_vocabulary" />
+  <utility component=".vocabularies.ExtraGroupsManagingItemVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.extra_groups_managing_item_vocabulary" />
   <utility component=".vocabularies.EveryConfigsVocabularyFactory"
            name="PMEveryConfigs" />
   <utility component=".vocabularies.ConfigCssTransformsActionsVocabularyFactory"

@@ -40,6 +40,7 @@ from Products.PloneMeeting.config import DEFAULT_ITEM_COLUMNS
 from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
 from Products.PloneMeeting.config import DEFAULT_MEETING_COLUMNS
 from Products.PloneMeeting.config import EXECUTE_EXPR_VALUE
+from Products.PloneMeeting.config import GROUP_MANAGING_ITEM_AG_PREFIX
 from Products.PloneMeeting.config import GROUP_MANAGING_ITEM_PG_PREFIX
 from Products.PloneMeeting.config import ITEM_ICON_COLORS
 from Products.PloneMeeting.config import ITEMTEMPLATESMANAGERS_GROUP_SUFFIX
@@ -2443,6 +2444,29 @@ class testMeetingConfig(PloneMeetingTestCase):
         values = deepcopy(orig_item_wf_val_levels) + \
             [deepcopy(validated_level), deepcopy(validated_level)]
         self.assertEqual(cfg.validate_itemWFValidationLevels(values), validated_error)
+
+    def test_pm_GroupsManagingItemVocabularies(self):
+        """The "proposing_group__suffix" special values are available in both
+           group_managing_item and extra_groups_managing_item vocabularies but the
+           "associated_groups__suffix" special values are only available in the
+           extra_groups_managing_item vocabulary."""
+        cfg = self.meetingConfig
+        gmi_values = get_vocab_values(
+            cfg, 'Products.PloneMeeting.vocabularies.groups_managing_item_vocabulary')
+        egmi_values = get_vocab_values(
+            cfg, 'Products.PloneMeeting.vocabularies.extra_groups_managing_item_vocabulary')
+        for values in (gmi_values, egmi_values):
+            self.assertTrue('{0}creators'.format(GROUP_MANAGING_ITEM_PG_PREFIX) in values)
+            self.assertTrue(self.vendors_reviewers in values)
+        self.assertFalse('{0}creators'.format(GROUP_MANAGING_ITEM_AG_PREFIX) in gmi_values)
+        self.assertTrue('{0}creators'.format(GROUP_MANAGING_ITEM_AG_PREFIX) in egmi_values)
+        # special values are displayed first, proposing group then associated groups
+        self.assertTrue(egmi_values[0].startswith(GROUP_MANAGING_ITEM_PG_PREFIX))
+        self.assertEqual(
+            egmi_values,
+            [v for v in egmi_values if v.startswith(GROUP_MANAGING_ITEM_PG_PREFIX)] +
+            [v for v in egmi_values if v.startswith(GROUP_MANAGING_ITEM_AG_PREFIX)] +
+            gmi_values[len([v for v in gmi_values if v.startswith(GROUP_MANAGING_ITEM_PG_PREFIX)]):])
 
     def test_pm_RemoveAnnexesPreviewsOnMeetingClosure(self):
         """When MeetingConfig.removeAnnexesPreviewsOnMeetingClosure is True,
