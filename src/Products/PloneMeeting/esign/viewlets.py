@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from imio.esign.browser.views import AcroformErrorsViewlet
 from imio.esign.browser.views import FacetedSessionInfoViewlet
 from imio.esign.browser.views import ItemSessionInfoViewlet
 from plone import api
@@ -57,3 +58,9 @@ class PMItemSessionInfoViewlet(ItemSessionInfoViewlet, PMFacetedSessionInfoViewl
                 self.context.advice_group in self.tool.get_orgs_for_user(suffixes=['advisers'])
         else:
             return False
+
+
+class PMAcroformErrorsViewlet(AcroformErrorsViewlet):
+    """Acroform tags errors only shown to users able to see the esign session info viewlet."""
+
+    session_info_viewlet_class = PMItemSessionInfoViewlet

@@ -71,6 +71,7 @@ from Products.PloneMeeting.utils import get_next_meeting
 from Products.PloneMeeting.utils import getAdvicePortalTypeIds
 from Products.PloneMeeting.utils import getAvailableMailingLists
 from Products.PloneMeeting.utils import is_editing
+from Products.PloneMeeting.utils import is_generated_annex
 from Products.PloneMeeting.utils import isPowerObserverForCfg
 from Products.PloneMeeting.utils import normalize_id
 from Products.PloneMeeting.utils import sendMail
@@ -1289,7 +1290,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
             # manage when store_generated_document=='1', can not store if already stored
             # or when store_generated_document=='2', overwrite if exist
             for annex in get_annexes(self.context):
-                if getattr(annex, 'used_pod_template_id', None) == pod_template.getId():
+                if is_generated_annex(annex, pod_template):
                     if store_generated_document == '1':
                         msg_code = 'store_podtemplate_as_annex_can_not_store_several_times'
                         if return_portal_msg_code:
@@ -1448,7 +1449,8 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
             content_category=annex_type_category_id,
             to_print=to_print_default,
             confidential=confidential_default,
-            used_pod_template_id=pod_template.getId(),
+            # the stored annex is generated from pod_template, see utils.is_generated_annex
+            conv_from_uid=pod_template.UID(),
             scan_id=scan_id)
 
     def _get_stored_annex_title(self, pod_template):

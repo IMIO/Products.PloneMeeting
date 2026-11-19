@@ -16,6 +16,7 @@ from Products.PloneMeeting.browser.batchactions import pod_template_default
 from Products.PloneMeeting.config import ESIGNWATCHERS_GROUP_SUFFIX
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import get_annexes
+from Products.PloneMeeting.utils import is_generated_annex
 from zope.i18n import translate
 
 
@@ -220,7 +221,7 @@ class PMItemOrderProvider(DefaultItemOrderProvider):
     def get_item_order(self):
         """First stored generated POD template then annexes."""
         annexes = get_annexes(self.context)
-        generated_annexes = [annex for annex in annexes if getattr(annex, 'used_pod_template_id', None)]
+        generated_annexes = [annex for annex in annexes if is_generated_annex(annex)]
         annexes = [annex for annex in annexes if annex not in generated_annexes]
         return {a.UID(): idx for idx, a in enumerate(annexes)}
 

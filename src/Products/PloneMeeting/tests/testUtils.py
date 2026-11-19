@@ -20,6 +20,7 @@ from Products.PloneMeeting.ftw_labels.utils import get_labels
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.utils import duplicate_portal_type
 from Products.PloneMeeting.utils import escape
+from Products.PloneMeeting.utils import is_generated_annex
 from Products.PloneMeeting.utils import is_proposing_group_editor
 from Products.PloneMeeting.utils import isPowerObserverForCfg
 from Products.PloneMeeting.utils import org_id_to_uid
@@ -39,6 +40,33 @@ ASSEMBLY_WRONG_VALUE = u'[[Text Text'
 
 class testUtils(PloneMeetingTestCase):
     '''Tests the utils methods.'''
+
+    def test_pm_Is_generated_annex(self):
+        """An annex generated from a POD template stores the POD template UID in conv_from_uid,
+           annexes stored before hold the POD template id in used_pod_template_id."""
+        cfg = self.meetingConfig
+        pod_template = cfg.podtemplates.itemTemplate
+        other_pod_template = cfg.podtemplates.allItemTemplate
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        annex = self.addAnnex(item)
+        # not generated
+        self.assertFalse(is_generated_annex(annex))
+        self.assertFalse(is_generated_annex(annex, pod_template))
+        # conv_from_uid
+        annex.conv_from_uid = pod_template.UID()
+        self.assertTrue(is_generated_annex(annex))
+        self.assertTrue(is_generated_annex(annex, pod_template))
+        self.assertFalse(is_generated_annex(annex, other_pod_template))
+        # conv_from_uid set to None
+        annex.conv_from_uid = None
+        self.assertFalse(is_generated_annex(annex))
+        self.assertFalse(is_generated_annex(annex, pod_template))
+        # BBB used_pod_template_id
+        annex.used_pod_template_id = pod_template.getId()
+        self.assertTrue(is_generated_annex(annex))
+        self.assertTrue(is_generated_annex(annex, pod_template))
+        self.assertFalse(is_generated_annex(annex, other_pod_template))
 
     def test_pm_Validate_item_assembly_value(self):
         """This will check the itemAssembly validity regarding [[ and ]]."""
