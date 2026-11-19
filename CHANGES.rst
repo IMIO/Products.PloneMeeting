@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.29rc17 (unreleased)
+4.2.29rc17 (2026-11-19)
 -----------------------
 
 - Override `imio.esign.signers` vocabulary (`esign.vocabularies.PMSignersVocabulary`)
