@@ -163,6 +163,20 @@ class PMExternalSessionCreateView(ExternalSessionCreateView):
            Must be MeetingManager on tool."""
         return api.user.has_permission(manage_session_perm, obj=self.tool)
 
+    def get_container_title(self, container):
+        """Title of the item or meeting holding a file in error, displayed when the session
+           can not be sent because of wrong signature or seal tags, so the file can be located.
+           For an item: reference (when displayed on the item) and meeting date,
+           for a meeting: its date."""
+        tag_name = container.getTagName()
+        if tag_name == 'MeetingItem':
+            return safe_unicode(container.Title(
+                withItemReference=container.adapted().show_item_reference(),
+                withMeetingDate=True))
+        elif tag_name == 'Meeting':
+            return self.tool.format_date(container.date, with_hour=True, prefixed=True, short=False)
+        return super(PMExternalSessionCreateView, self).get_container_title(container)
+
 
 class PMRecreateSessionView(RecreateSessionView):
     """ """

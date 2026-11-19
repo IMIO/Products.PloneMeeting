@@ -14,10 +14,12 @@ from datetime import datetime
 from ftw.labels.interfaces import ILabeling
 from ftw.labels.interfaces import ILabelJar
 from imio.actionspanel.interfaces import IContentDeletable
+from imio.esign import events as esign_events
 from imio.esign.adapters import ISignable
 from imio.esign.config import set_esign_registry_enabled
 from imio.esign.config import set_esign_registry_enforce_signers_order
 from imio.esign.config import set_esign_registry_signers_order
+from imio.esign.utils import add_files_to_session
 from imio.esign.utils import get_session_annotation
 from imio.helpers.cache import cleanRamCacheFor
 from imio.helpers.content import get_vocab
@@ -28,9 +30,12 @@ from imio.zamqp.pm.tests.base import DEFAULT_SCAN_ID
 from os import path
 from persistent.mapping import PersistentMapping
 from plone import api
+from plone.app.layout.globals.interfaces import IViewView
+from plone.app.layout.viewlets.interfaces import IAboveContentTitle
 from plone.app.testing import logout
 from plone.dexterity.utils import createContentInContainer
 from plone.locking.interfaces import ILockable
+from plone.namedfile.file import NamedBlobFile
 from plone.testing.z2 import Browser
 from Products import PloneMeeting as products_plonemeeting
 from Products.Archetypes.event import ObjectEditedEvent
@@ -38,6 +43,7 @@ from Products.CMFCore.ActionInformation import Action
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.CMFPlone.utils import safe_unicode
+from Products.Five import BrowserView
 from Products.Five import zcml
 from Products.PloneMeeting.adapters import CAN_NOT_DELETE_ANNEX_IN_ESIGN_SESSION_ERROR
 from Products.PloneMeeting.browser.views import SEVERAL_SAME_BARCODE_ERROR
@@ -46,11 +52,14 @@ from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import NO_COMMITTEE
 from Products.PloneMeeting.content.meeting import PLACE_OTHER
 from Products.PloneMeeting.esign.utils import _add_annexes_to_sign_session
+from Products.PloneMeeting.esign.viewlets import PMAcroformErrorsViewlet
+from Products.PloneMeeting.esign.views import PMExternalSessionCreateView
 from Products.PloneMeeting.etags import ConfigModified
 from Products.PloneMeeting.etags import ContextModified
 from Products.PloneMeeting.etags import LinkedMeetingModified
 from Products.PloneMeeting.etags import ToolModified
 from Products.PloneMeeting.ftw_labels.utils import get_labels
+from Products.PloneMeeting.interfaces import IPloneMeetingLayer
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.tests.PloneMeetingTestCase import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.tests.PloneMeetingTestCase import IMG_BASE64_DATA
@@ -61,6 +70,7 @@ from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import get_dx_widget
 from Products.PloneMeeting.utils import getAvailableMailingLists
 from Products.PloneMeeting.utils import hasHistory
+from Products.PloneMeeting.utils import is_generated_annex
 from Products.PloneMeeting.utils import set_field_from_ajax
 from Products.statusmessages.interfaces import IStatusMessage
 from z3c.form.interfaces import DISPLAY_MODE
@@ -70,6 +80,8 @@ from zope.component import getMultiAdapter
 from zope.component import queryMultiAdapter
 from zope.event import notify
 from zope.i18n import translate
+from zope.interface import alsoProvides
+from zope.viewlet.interfaces import IViewlet
 
 import io
 import json
@@ -895,7 +907,8 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(url, item.absolute_url())
         # now we have an annex
         annex = get_annexes(item)[0]
-        self.assertEqual(annex.used_pod_template_id, pod_template.getId())
+        self.assertEqual(annex.conv_from_uid, pod_template.UID())
+        self.assertTrue(is_generated_annex(annex, pod_template))
         # we can not store an annex using a POD template several times, we get a status message
         messages = IStatusMessage(self.request).show()
         self.assertEqual(len(messages), 3)
@@ -910,6 +923,14 @@ class testViews(PloneMeetingTestCase):
             domain='PloneMeeting',
             context=self.request)
         self.assertEqual(last_msg, can_not_store_several_times_msg)
+        # BBB an annex stored before conv_from_uid was used holds used_pod_template_id
+        del annex.conv_from_uid
+        self.assertFalse(is_generated_annex(annex, pod_template))
+        annex.used_pod_template_id = pod_template.getId()
+        self.assertTrue(is_generated_annex(annex, pod_template))
+        view()
+        self.assertEqual(get_annexes(item), [annex])
+        self.assertEqual(IStatusMessage(self.request).show()[-1].message, can_not_store_several_times_msg)
 
         # scan_id : if found in the REQUEST during storage, it is set
         self.assertIsNone(annex.scan_id)
@@ -1741,7 +1762,6 @@ class testViews(PloneMeetingTestCase):
         # define correct config
         annex_type_uid = cfg.annexes_types.item_decision_annexes.get('decision-annex').UID()
         pod_template = cfg.podtemplates.itemTemplate
-        pod_template_id = pod_template.getId()
         pod_template.store_as_annex = annex_type_uid
         cfg.setMeetingItemTemplatesToStoreAsAnnex('itemTemplate__output_format__odt')
 
@@ -1762,7 +1782,7 @@ class testViews(PloneMeetingTestCase):
         for i in range(0, 3):
             annexes = get_annexes(items[i])
             self.assertEqual(len(annexes), 1)
-            self.assertTrue(annexes[0].used_pod_template_id, pod_template_id)
+            self.assertTrue(is_generated_annex(annexes[0], pod_template))
         # but not the others
         for i in range(3, 6):
             annexes = get_annexes(items[i])
@@ -1778,7 +1798,7 @@ class testViews(PloneMeetingTestCase):
         for i in range(0, 5):
             annexes = get_annexes(items[i])
             self.assertEqual(len(annexes), 1)
-            self.assertTrue(annexes[0].used_pod_template_id, pod_template_id)
+            self.assertTrue(is_generated_annex(annexes[0], pod_template))
         # last element does not have annex
         annexes = get_annexes(items[6])
         self.assertFalse(annexes)
@@ -1793,7 +1813,7 @@ class testViews(PloneMeetingTestCase):
         for i in range(0, 6):
             annexes = get_annexes(items[i])
             self.assertEqual(len(annexes), 1)
-            self.assertTrue(annexes[0].used_pod_template_id, pod_template_id)
+            self.assertTrue(is_generated_annex(annexes[0], pod_template))
 
         # call a last time, when nothing to do, nothing is done
         form = meeting.restrictedTraverse('@@store-items-template-as-annex-batch-action')
@@ -1804,7 +1824,7 @@ class testViews(PloneMeetingTestCase):
         for i in range(0, 6):
             annexes = get_annexes(items[i])
             self.assertEqual(len(annexes), 1)
-            self.assertTrue(annexes[0].used_pod_template_id, pod_template_id)
+            self.assertTrue(is_generated_annex(annexes[0], pod_template))
 
         # test "2" overwrite
         created_dates = []
@@ -4607,7 +4627,7 @@ class testViews(PloneMeetingTestCase):
         data['store_generated_document'] = '2'
         data['annex_ids'] = []
         stored_annex = get_annexes(item)[-1]
-        self.assertEqual(stored_annex.used_pod_template_id, pod_template.getId())
+        self.assertTrue(is_generated_annex(stored_annex, pod_template))
         stored_annex_uid = stored_annex.UID()
         stored_annex_created = stored_annex.created()
         form_instance._do_store_as_annex(data)
@@ -4876,6 +4896,138 @@ class testViews(PloneMeetingTestCase):
         self.do(hp2, 'deactivate')
         hp2._invalidateCachedMethods()
         self.assertEqual(get_vocab_values(self.portal, vocab_name), [hp1.UID()])
+
+    def _acroform_errors_viewlet(self, context):
+        """Return the esign-acroform-errors viewlet registered for p_context."""
+        view = BrowserView(context, self.request)
+        alsoProvides(view, IViewView)
+        manager = getMultiAdapter(
+            (context, self.request, view), IAboveContentTitle, name="plone.abovecontenttitle")
+        return queryMultiAdapter(
+            (context, self.request, view, manager), IViewlet, name="esign-acroform-errors")
+
+    def test_pm_AcroformErrorsViewlet(self):
+        """The acroform tags errors of the annexes of an item/meeting in a draft
+           esign session are only shown to users able to see the esign session info."""
+        alsoProvides(self.request, IPloneMeetingLayer)
+        self.changeUser('pmManager')
+        meeting = self._createMeetingWithItems()
+        item = [obj for obj in meeting.get_items(ordered=True)
+                if obj.getProposingGroup() == self.developers_uid][0]
+        # odt with a tag for Signer1 but 2 signers
+        content = io.BytesIO()
+        odt = zipfile.ZipFile(content, "w")
+        odt.writestr(
+            "content.xml",
+            '<office:document-content><office:body><office:text><text:p>'
+            '{{#"ID":"Signer1","Size":{"Height":"70","Width":"200"}#}}'
+            '</text:p></office:text></office:body></office:document-content>')
+        odt.close()
+        annexes = []
+        for context in (item, meeting):
+            annex = self.addAnnex(context)
+            annex.file = NamedBlobFile(
+                data=content.getvalue(),
+                filename=u"file.odt",
+                contentType="application/vnd.oasis.opendocument.text")
+            annex.scan_id = DEFAULT_SCAN_ID
+            annexes.append(annex)
+        item_annex, meeting_annex = annexes
+        add_files_to_session(
+            [("pmReviewer1", "r1@sign.com", "R 1", "P 1"),
+             ("pmReviewer2", "r2@sign.com", "R 2", "P 2")],
+            [item_annex.UID(), meeting_annex.UID()])
+        # every registration (item, meeting and annex) uses the PM viewlet
+        for context in (item, meeting, item_annex, meeting_annex):
+            self.assertTrue(isinstance(self._acroform_errors_viewlet(context), PMAcroformErrorsViewlet))
+
+        def available(context):
+            return PMAcroformErrorsViewlet(context, self.request, None, None).available()
+
+        # MeetingManagers see every errors
+        self.assertTrue(available(item))
+        self.assertTrue(available(item_annex))
+        self.assertTrue(available(meeting))
+        self.assertTrue(available(meeting_annex))
+        self.assertEqual(
+            PMAcroformErrorsViewlet(item, self.request, None, None).errors.keys(), [item_annex.UID()])
+        # proposingGroup members see the errors of the item, not of the meeting
+        self.changeUser('pmCreator1')
+        self.assertTrue(available(item))
+        self.assertTrue(available(item_annex))
+        self.assertFalse(available(meeting))
+        self.assertFalse(available(meeting_annex))
+        # other users see nothing
+        self.changeUser('pmCreator2')
+        self.assertFalse(available(item))
+        self.assertFalse(available(item_annex))
+        self.assertFalse(available(meeting))
+        self.assertFalse(available(meeting_annex))
+        self.assertEqual(PMAcroformErrorsViewlet(item, self.request, None, None).render(), "")
+
+    def test_pm_ExternalSessionCreateViewContainerTitle(self):
+        """When a session can not be sent because of wrong signature or seal tags,
+           the files in error are located by their position in the session and by the
+           reference and meeting date of their item, or by the date of their meeting."""
+        self.changeUser('pmManager')
+        meeting = self._createMeetingWithItems()
+        item = meeting.get_items(ordered=True)[0]
+        item_annex = self.addAnnex(item)
+        meeting_annex = self.addAnnex(meeting)
+        view = PMExternalSessionCreateView(self.portal, self.request)
+        item_title = safe_unicode(item.getField('title').get(item))
+        meeting_date = self.tool.format_date(meeting.date, with_hour=True)
+        # meeting date, no item number, no reference as not shown on the item
+        self.assertFalse(item.adapted().show_item_reference())
+        self.assertEqual(view.get_container_title(item), u"{0} ({1})".format(item_title, meeting_date))
+        # the reference once shown on the item
+        self.freezeMeeting(meeting)
+        self.assertTrue(item.adapted().show_item_reference())
+        self.assertTrue(item.getItemReference())
+        self.assertEqual(
+            view.get_container_title(item),
+            u"[{0}] {1} ({2})".format(safe_unicode(item.getItemReference()), item_title, meeting_date))
+        # meeting: its prefixed date
+        self.assertEqual(
+            view.get_container_title(meeting),
+            self.tool.format_date(meeting.date, with_hour=True, prefixed=True, short=False))
+        # the label of a file in error is its position in the session,
+        # the container title and the annex title
+        self.assertEqual(
+            view.get_file_label(item_annex, item.UID(), 1),
+            u"1. {0} - {1}".format(view.get_container_title(item), safe_unicode(item_annex.Title())))
+        self.assertEqual(
+            view.get_file_label(meeting_annex, meeting.UID(), 2),
+            u"2. {0} - {1}".format(view.get_container_title(meeting), safe_unicode(meeting_annex.Title())))
+
+    def test_pm_StorePodTemplateAsAnnexAcroformTagsNotChecked(self):
+        """An annex to sign generated from a POD template (stored as annex, conv_from_uid)
+           is not checked by imio.esign when created: its acroform tags come from the template,
+           its file is not read. The view is called directly, so the request PUBLISHED
+           is not the document-generation view, like when using the store as annex batch action."""
+        self.changeUser('pmManager')
+        pod_template, annex_type, item = self._setupStorePodAsAnnex()
+        # the stored annex is to sign by default
+        annex_type.get_category_group().signed_activated = True
+        annex_type.to_sign = True
+        self.request.set('HTTP_REFERER', item.absolute_url())
+        view = item.restrictedTraverse('@@document-generation')
+        # count the files read by imio.esign
+        calls = []
+        original_get_tag_ids = esign_events.get_tag_ids
+
+        def get_tag_ids(nbf):
+            calls.append(nbf)
+            return original_get_tag_ids(nbf)
+        esign_events.get_tag_ids = get_tag_ids
+        try:
+            view()
+        finally:
+            esign_events.get_tag_ids = original_get_tag_ids
+        annex = get_annexes(item)[0]
+        self.assertEqual(annex.conv_from_uid, pod_template.UID())
+        self.assertTrue(annex.to_sign)
+        self.assertEqual(calls, [])
 
 
 def test_suite():

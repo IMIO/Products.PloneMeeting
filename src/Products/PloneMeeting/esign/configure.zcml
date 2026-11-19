@@ -118,6 +118,33 @@
             template="browser/templates/session_info.pt"
             class="Products.PloneMeeting.esign.viewlets.PMItemSessionInfoViewlet"
             permission="zope2.View" />
+
+        <!-- acroform tags errors of the annexes of an item/meeting in a draft session,
+             only shown to users able to see the esign-item-session-info viewlet -->
+        <browser:viewlet
+            for="Products.PloneMeeting.interfaces.IMeetingItem"
+            manager="plone.app.layout.viewlets.interfaces.IAboveContentTitle"
+            view="plone.app.layout.globals.interfaces.IViewView"
+            name="esign-acroform-errors"
+            class="Products.PloneMeeting.esign.viewlets.PMAcroformErrorsViewlet"
+            permission="zope2.View" />
+
+        <browser:viewlet
+            for="Products.PloneMeeting.content.meeting.IMeeting"
+            manager="plone.app.layout.viewlets.interfaces.IAboveContentTitle"
+            view="plone.app.layout.globals.interfaces.IViewView"
+            name="esign-acroform-errors"
+            class="Products.PloneMeeting.esign.viewlets.PMAcroformErrorsViewlet"
+            permission="zope2.View" />
+
+        <!-- override the imio.esign viewlet registered on annexes -->
+        <browser:viewlet
+            for="imio.annex.content.annex.IAnnex"
+            manager="plone.app.layout.viewlets.interfaces.IAboveContentTitle"
+            name="esign-acroform-errors"
+            class="Products.PloneMeeting.esign.viewlets.PMAcroformErrorsViewlet"
+            permission="zope2.View"
+            layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer" />
     </configure>
 
     <subscriber for="plone.registry.interfaces.IRecordModifiedEvent"

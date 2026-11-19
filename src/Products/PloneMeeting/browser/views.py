@@ -51,6 +51,7 @@ from Products.PloneMeeting.utils import get_dx_field
 from Products.PloneMeeting.utils import get_dx_widget
 from Products.PloneMeeting.utils import get_item_validation_wf_suffixes
 from Products.PloneMeeting.utils import getAvailableMailingLists
+from Products.PloneMeeting.utils import is_generated_annex
 from Products.PloneMeeting.utils import may_view_field
 from Products.PloneMeeting.utils import reindex_object
 from z3c.form.interfaces import DISPLAY_MODE
@@ -798,17 +799,17 @@ class BaseDGHV(object):
 
     def get_scan_id(self):
         """We get scan_id to use on the template.
-           - either we have a stored annex having a used_pod_template_id that corresponds
-           to self.pod_template.id;
+           - either we have a stored annex generated from self.pod_template;
            - or we get the next_scan_id."""
         for annex in get_annexes(self.context):
-            if getattr(annex, 'used_pod_template_id', None) == self.pod_template.getId():
+            if is_generated_annex(annex, self.pod_template):
                 # annex must have a scan_id in this case or something went wrong
                 if not annex.scan_id:
                     raise Exception(
-                        "Found annex at {0} with correct 'used_pod_template_id' "
+                        "Found annex at {0} generated from POD template {1} "
                         "but without a 'scan_id'!".format(
-                            '/'.join(annex.getPhysicalPath())))
+                            '/'.join(annex.getPhysicalPath()),
+                            '/'.join(self.pod_template.getPhysicalPath())))
                 # make the 'item_scan_id' value available in the REQUEST
                 self.request.set(ITEM_SCAN_ID_NAME, annex.scan_id)
                 return annex.scan_id
