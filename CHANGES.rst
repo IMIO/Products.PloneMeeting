@@ -3,7 +3,7 @@ Changelog
 
 
 4.2.29rc17 (unreleased)
-----------------------
+-----------------------
 
 - Override `imio.esign.signers` vocabulary (`esign.vocabularies.PMSignersVocabulary`)
   used to define the signers order in the `imio.esign` settings,
