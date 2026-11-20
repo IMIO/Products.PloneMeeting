@@ -18,6 +18,7 @@ from collective.iconifiedcategory.utils import get_config_root
 from collective.iconifiedcategory.utils import get_group
 from collective.iconifiedcategory.utils import update_all_categorized_elements
 from collective.iconifiedcategory.utils import update_categorized_elements
+from eea.facetednavigation.interfaces import ICriteria
 from imio.actionspanel.interfaces import IContentDeletable
 from imio.annex.columns import ActionsColumn
 from imio.annex.columns import PrettyLinkColumn
@@ -2066,6 +2067,10 @@ class testAnnexes(PloneMeetingTestCase):
         cfg = self.meetingConfig
         financial_analysis_uid = get_category_object(annex1, annex1.content_category).UID()
         budget_analysis_uid = budget_analysis.UID()
+        # c33 uses a multiselect widget
+        self.assertEqual(
+            ICriteria(cfg.searches.searches_items).get(
+                FACETED_ANNEX_TYPES_CRITERION_ID).widget, 'multiselect')
         handler = cfg.searches.searches_items.restrictedTraverse('@@faceted_query')
         # only c33, operator is "or" by default
         self.request.form = {

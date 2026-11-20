@@ -5,7 +5,10 @@ Changelog
 4.2.29rc18 (unreleased)
 -----------------------
 
-- Nothing changed yet.
+- Faceted filter `Annex types` (`c33`) on items dashboards now uses a
+  `multiselect` widget instead of a `checkbox` widget.
+  Adapted upgrade step to `4217.4` accordingly.
+  [gbastien]
 
 
 4.2.29rc17 (2026-11-19)
