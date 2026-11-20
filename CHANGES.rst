@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.29rc18 (unreleased)
+4.2.29rc18 (2026-11-20)
 -----------------------
 
 - Faceted filter `Annex types` (`c33`) on items dashboards now uses a
