@@ -193,5 +193,7 @@
   <!-- Vocabulary used in download-elements-annexes-batch-action -->
   <utility component=".vocabularies.DownloadAnnexesVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.download_annexes_vocabulary" />
+  <utility component=".vocabularies.ExportPDFAnnexesVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.export_pdf_annexes_vocabulary" />
 
 </configure>
