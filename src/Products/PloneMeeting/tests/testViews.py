@@ -2325,9 +2325,16 @@ class testViews(PloneMeetingTestCase):
         self.assertTrue('proposing_group' in form.fields)
         self.assertFalse('must have the same proposing group' in form.description)
         self.request['form.widgets.proposing_group'] = [self.vendors_uid]
+        item1_modified = item1.modified()
+        item2_modified = item2.modified()
         form.handleApply(form, None)
         self.assertEqual(item1.getProposingGroup(), self.vendors_uid)
         self.assertEqual(item2.getProposingGroup(), self.vendors_uid)
+        # items are not considered modified
+        self.assertEqual(item1.modified(), item1_modified)
+        self.assertEqual(item2.modified(), item2_modified)
+        self.assertTrue(self.catalog.unrestrictedSearchResults(
+            UID=item1.UID(), modified=item1_modified))
         # local roles updated
         self.assertTrue(self.vendors_creators in item1.__ac_local_roles__)
         self.assertFalse(self.developers_creators in item1.__ac_local_roles__)
@@ -2396,7 +2403,9 @@ class testViews(PloneMeetingTestCase):
             sorted([term.value for term in form.widgets['proposing_group'].terms.terms._terms]),
             sorted([dev_ven, ven_dev]))
         self.request['form.widgets.proposing_group'] = [ven_dev]
+        item4_modified = item4.modified()
         form.handleApply(form, None)
+        self.assertEqual(item4.modified(), item4_modified)
         self.assertEqual(item4.getProposingGroupWithGroupInCharge(), ven_dev)
         self.assertEqual(item4.getProposingGroup(), self.vendors_uid)
         self.assertEqual(item4.getGroupsInCharge(), [self.developers_uid])

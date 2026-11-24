@@ -78,6 +78,8 @@ Changelog
   `proposingGroup` (or `proposingGroupWithGroupInCharge` when used) of
   selected items, only available to real `Managers` on items dashboards.
   Selected items must have the same `proposingGroup`.
+  Updated items are not considered modified (modification date is kept),
+  added parameter `notify_modified=True` to `MeetingItem._update_after_edit`.
   [gbastien]
 - Adapted `Migrator.updateHolidays` to be able to pass arbitrary new holiday
   values so it can be called directly from the `add_holidays.py` script.

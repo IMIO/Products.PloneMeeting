@@ -329,7 +329,8 @@ class UpdateProposingGroupBatchActionForm(BaseBatchActionForm):
             indexes = ['getProposingGroup', 'getGroupsInCharge']
             indexes += item.update_committees()
             # will update groupsInCharge, local roles and call onEdit
-            item._update_after_edit(idxs=indexes)
+            # item is not considered modified, keep the modification date
+            item._update_after_edit(idxs=indexes, notify_modified=False)
             addDataChange(item)
 
 

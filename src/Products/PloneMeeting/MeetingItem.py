@@ -7218,14 +7218,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # Call sub-product-specific behaviour
         self.adapted().onEdit(isCreated=True)
 
-    def _update_after_edit(self, idxs=['*'], reindex_local_roles=True):
+    def _update_after_edit(self, idxs=['*'], reindex_local_roles=True, notify_modified=True):
         """Convenience method that make sure ObjectModifiedEvent and
            at_post_edit_script are called, like it is the case in
            Archetypes.BaseObject.processForm.
            We also call reindexObject here so we avoid multiple reindexation
            as it is already done in processForm.
            This is called when we change something on an item and we do not
-           use processForm."""
+           use processForm.
+           If p_notify_modified=False, the modification date is not updated."""
         # WARNING, we do things the same order processForm do it
         # reindexObject is done in _processForm, then notify and
         # call to at_post_edit_script are done
@@ -7233,7 +7234,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if idxs == ['*']:
             logger.warn("MeetingItem._update_after_edit was called with "
                         "idxs=['*'], make sure this is correct!")
-        notifyModifiedAndReindex(self, extra_idxs=idxs, notify_event=True)
+        notifyModifiedAndReindex(
+            self, notify_modified=notify_modified, extra_idxs=idxs, notify_event=True)
         self.at_post_edit_script(
             full_edit_form=False, reindex_local_roles=reindex_local_roles)
 
