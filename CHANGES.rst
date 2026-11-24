@@ -24,6 +24,21 @@ Changelog
   used to define the signers order in the `imio.esign` settings,
   it lists every active `held_position` having the `signer` usage.
   [gbastien]
+- Registered the `imio.esign` `esign-acroform-errors` viewlet on items and meetings
+  to display the signature and seal tags errors of their annexes in a draft esign session
+  (`esign.viewlets.PMAcroformErrorsViewlet`, only displayed to users able to see the
+  `esign-item-session-info` viewlet).
+  When a session can not be sent because of these errors, files are located by the
+  reference and meeting date of their item or by the date of their meeting
+  (`PMExternalSessionCreateView.get_container_title`).
+  [gbastien]
+- Removed the `used_pod_template_id` field from the `annex` and `annexDecision` types
+  (upgrade step to 4218.1),
+  an annex generated from a POD template (stored as annex) stores the POD template UID
+  in the `conv_from_uid` attribute (like `collective.documentgenerator` `convert_and_save_file` does)
+  so `imio.esign` does not check the acroform tags of generated annexes.
+  Use `utils.is_generated_annex` that still manages `used_pod_template_id` of existing annexes.
+  [gbastien]
 - Prevent deleting an annex that is in an esign session that is `to_sign`,
   this avoids de-synchronization between local and distant session files.
   This is managed in `AnnexContentDeletableAdapter.mayDelete`.
@@ -203,6 +218,17 @@ Changelog
   the advice is hidden again when going back from a final WF state if
   `MeetingConfig.defaultAdviceHiddenDuringRedaction` hides it by default.
   Added `events._update_advice_hidden_during_redaction`.
+  [gbastien]
+- Renamed `PMConcatenateAnnexesBatchActionForm` to `PMExportPDFBatchActionForm`
+  (`concatenate-annexes-batch-action`), based on `imio.annex` `ExportPDFBatchActionForm`.
+  Annex types to export are no more selected, annexes to export are selected
+  (and ordered) in a list of the annexes of selected items (annexes and decision
+  annexes), coherent with the faceted `Annexes` and `Annex types` filters like it
+  is the case for `PMDownloadElementsAnnexesBatchActionForm`, see vocabulary
+  `Products.PloneMeeting.vocabularies.export_pdf_annexes_vocabulary`, non PDF
+  annexes are disabled.  Logic shared with `PMDownloadElementsAnnexesBatchActionForm`
+  is in `PMElementsAnnexesMixin`.
+  Requires `imio.annex` with `ExportPDFBatchActionForm` (2.28.1+).
   [gbastien]
 
 4.2.28.24 (2026-09-30)

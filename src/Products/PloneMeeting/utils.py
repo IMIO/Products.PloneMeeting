@@ -2085,6 +2085,22 @@ def get_annexes(obj, portal_types=['annex', 'annexDecision']):
             if annex.portal_type in portal_types]
 
 
+def is_generated_annex(annex, pod_template=None):
+    """Is p_annex generated from a POD template (stored as annex)?
+       If a p_pod_template is given, is p_annex generated from this p_pod_template?
+       The UID of the POD template is stored in the "conv_from_uid" attribute
+       (as done by collective.documentgenerator convert_and_save_file), annexes
+       stored before hold the id of the POD template in the "used_pod_template_id" attribute."""
+    annex = aq_base(annex)
+    conv_from_uid = getattr(annex, 'conv_from_uid', None)
+    # BBB annexes stored before conv_from_uid was used
+    used_pod_template_id = getattr(annex, 'used_pod_template_id', None)
+    if pod_template is None:
+        return bool(conv_from_uid or used_pod_template_id)
+    return (conv_from_uid is not None and conv_from_uid == pod_template.UID()) or \
+        (used_pod_template_id is not None and used_pod_template_id == pod_template.getId())
+
+
 def updateAnnexesAccess(container):
     """ """
     portal = api.portal.get()
