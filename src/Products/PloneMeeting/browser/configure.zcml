@@ -318,7 +318,7 @@
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingItemDashboardBatchActionsMarker"
         name="concatenate-annexes-batch-action"
-        class=".batchactions.PMConcatenateAnnexesBatchActionForm"
+        class=".batchactions.PMExportPDFBatchActionForm"
         permission="zope2.View" />
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingItemDashboardBatchActionsMarker"
@@ -369,7 +369,7 @@
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingBatchActionsMarker"
         name="concatenate-annexes-batch-action"
-        class=".batchactions.PMConcatenateAnnexesBatchActionForm"
+        class=".batchactions.PMExportPDFBatchActionForm"
         permission="zope2.View" />
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingBatchActionsMarker"

@@ -86,6 +86,7 @@ from zope.viewlet.interfaces import IViewlet
 import io
 import json
 import magic
+import re
 import transaction
 import zipfile
 
@@ -2760,16 +2761,18 @@ class testViews(PloneMeetingTestCase):
         form.handleApply(form, None)
         self.assertEqual(get_annexes(item), [])
 
-    def test_pm_DownloadAnnexesBatchActionForm(self):
-        """Batch action to download annexes of a given annex_type for selected elements."""
+    def test_pm_ExportPDFBatchActionForm(self):
+        """Batch action to concatenate selected PDF annexes of selected items
+           into a single PDF, annexes are selected in the list of annexes
+           of selected items (annexes and decision annexes)."""
         self.changeUser('pmCreator1')
-        item1 = self.create('MeetingItem')
-        # only PDF annexes will be considered, we have 2 PDF of 1 page each
-        annex = self.addAnnex(item1, annexFile=self.annexFilePDF)
-        self.addAnnex(item1)
+        item1 = self.create('MeetingItem', title='Item 1')
+        # only PDF annexes may be selected, we have 2 PDF of 1 page each
+        annex1 = self.addAnnex(item1, annexFile=self.annexFilePDF)
+        txt_annex = self.addAnnex(item1)
         self.addAnnex(item1, annexType='overhead-analysis')
-        item2 = self.create('MeetingItem')
-        self.addAnnex(item2, annexFile=self.annexFilePDF)
+        item2 = self.create('MeetingItem', title='Item 2')
+        annex2 = self.addAnnex(item2, annexFile=self.annexFilePDF)
         self.addAnnex(item2, annexType='overhead-analysis')
         self.request.form['form.widgets.uids'] = ','.join([item1.UID(), item2.UID()])
         searches_items = self.getMeetingFolder().searches_items
@@ -2779,17 +2782,67 @@ class testViews(PloneMeetingTestCase):
         # as MeetingManager
         self.changeUser('pmManager')
         searches_items = self.getMeetingFolder().searches_items
+
+        def _num_pages(annex_uids=None, two_sided=False):
+            self.request['form.widgets.two_sided'] = two_sided and 'true' or 'false'
+            form = searches_items.unrestrictedTraverse('@@concatenate-annexes-batch-action')
+            form.update()
+            self.assertTrue(form.do_apply)
+            # by default every selectable annexes are selected
+            selectable_uids = [term.token for term in form.widgets['annexes'].terms
+                               if not getattr(term, 'disabled', False)]
+            self.assertEqual(form.fields['annexes'].field.default, selectable_uids)
+            self.request['form.widgets.annexes'] = \
+                annex_uids if annex_uids is not None else selectable_uids
+            form.handleApply(form, None)
+            pdf = self.request.get('pdf_file_content').getvalue()
+            self.request.set('pdf_file_content', None)
+            return int(re.search(r'Pages\n/Count (\d+)', pdf).group(1))
+
         form = searches_items.unrestrictedTraverse('@@concatenate-annexes-batch-action')
-        self.request['form.widgets.annex_types'] = [
-            item1.categorized_elements[annex.UID()]['category_uid']]
-        self.assertFalse(self.request.get('pdf_file_content'))
         self.assertTrue(form())
-        form.handleApply(form, None)
-        self.assertTrue('Pages\n/Count 2' in self.request.get('pdf_file_content').getvalue())
+        # every annexes are listed, non PDF annexes are disabled
+        self.assertEqual(len(form.widgets['annexes'].terms), 5)
+        self.assertEqual(form.annexes, [annex1, annex2])
+        self.assertTrue(form.widgets['annexes'].sortable)
+        self.assertEqual(_num_pages(), 2)
+        self.assertEqual(_num_pages(annex_uids=[annex2.UID()]), 1)
         # when using two_sided, a blank page is inserted
-        self.request['form.widgets.two_sided'] = 'true'
-        form.handleApply(form, None)
-        self.assertTrue('Pages\n/Count 3' in self.request.get('pdf_file_content').getvalue())
+        self.assertEqual(_num_pages(two_sided=True), 3)
+        # annexes are concatenated in the selected order
+        form = searches_items.unrestrictedTraverse('@@concatenate-annexes-batch-action')
+        form.update()
+        self.assertEqual(form._selected_annexes([annex2.UID(), annex1.UID()]),
+                         [annex2, annex1])
+        # a disabled annex may not be exported, even by forging the form
+        self.request['form.widgets.annexes'] = [txt_annex.UID()]
+        self.assertRaises(Unauthorized, form.handleApply, form, None)
+        self.assertIsNone(self.request.get('pdf_file_content'))
+
+        # decision annexes are also listed
+        decision_annex = self.addAnnex(
+            item2, relatedTo='item_decision', annexFile=self.annexFilePDF)
+        form = searches_items.unrestrictedTraverse('@@concatenate-annexes-batch-action')
+        form.update()
+        self.assertEqual(form.annexes, [annex1, annex2, decision_annex])
+        self.assertEqual(_num_pages(), 3)
+        # listed annexes are coherent with the faceted "annex types" filter
+        overhead_uid = item1.categorized_elements[
+            get_annexes(item1)[-1].UID()]['category_uid']
+        financial_uid = item1.categorized_elements[annex1.UID()]['category_uid']
+        self.request.form['form.widgets.referer'] = '{0}#c33={1}'.format(
+            searches_items.absolute_url(), financial_uid)
+        form = searches_items.unrestrictedTraverse('@@concatenate-annexes-batch-action')
+        form.update()
+        self.assertEqual(form.annexes, [annex1, annex2])
+        self.request.form['form.widgets.referer'] = '{0}#c33={1}'.format(
+            searches_items.absolute_url(), overhead_uid)
+        form = searches_items.unrestrictedTraverse('@@concatenate-annexes-batch-action')
+        form.update()
+        # only non PDF annexes, nothing to export
+        self.assertEqual(len(form.widgets['annexes'].terms), 2)
+        self.assertEqual(form.annexes, [])
+        self.assertFalse(form.do_apply)
 
     def test_pm_ftw_labels_viewlet_available(self):
         """Only available on items if enabled in MeetingConfig."""
