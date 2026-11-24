@@ -14,7 +14,7 @@ from datetime import datetime
 from ftw.labels.interfaces import ILabeling
 from ftw.labels.interfaces import ILabelJar
 from imio.actionspanel.interfaces import IContentDeletable
-from imio.esign import events as esign_events
+from imio.esign import acroform as esign_acroform
 from imio.esign.adapters import ISignable
 from imio.esign.config import set_esign_registry_enabled
 from imio.esign.config import set_esign_registry_enforce_signers_order
@@ -5067,16 +5067,16 @@ class testViews(PloneMeetingTestCase):
         view = item.restrictedTraverse('@@document-generation')
         # count the files read by imio.esign
         calls = []
-        original_get_tag_ids = esign_events.get_tag_ids
+        original_get_tag_ids = esign_acroform.get_tag_ids
 
         def get_tag_ids(nbf):
             calls.append(nbf)
             return original_get_tag_ids(nbf)
-        esign_events.get_tag_ids = get_tag_ids
+        esign_acroform.get_tag_ids = get_tag_ids
         try:
             view()
         finally:
-            esign_events.get_tag_ids = original_get_tag_ids
+            esign_acroform.get_tag_ids = original_get_tag_ids
         annex = get_annexes(item)[0]
         self.assertEqual(annex.conv_from_uid, pod_template.UID())
         self.assertTrue(annex.to_sign)
