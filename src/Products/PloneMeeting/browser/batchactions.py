@@ -525,7 +525,7 @@ class PMElementsAnnexesMixin(object):
 
 
 class PMExportPDFBatchActionForm(PMElementsAnnexesMixin, ExportPDFBatchActionForm):
-    """Concatenate PDF annexes of selected items into a single PDF,
+    """Export PDF annexes of selected items as a single PDF,
        available to MeetingManagers on items dashboards and meeting view.
        Annexes to export are selected in a list of the annexes of selected items
        (annexes and decision annexes), coherent with the faceted

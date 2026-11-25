@@ -176,7 +176,8 @@ Changelog
   Added `events._update_advice_hidden_during_redaction`.
   [gbastien]
 - Renamed `PMConcatenateAnnexesBatchActionForm` to `PMExportPDFBatchActionForm`
-  (`concatenate-annexes-batch-action`), based on `imio.annex` `ExportPDFBatchActionForm`.
+  and batch action `concatenate-annexes-batch-action` to `export-pdf-batch-action`,
+  based on `imio.annex` `ExportPDFBatchActionForm`.
   Annex types to export are no more selected, annexes to export are selected
   (and ordered) in a list of the annexes of selected items (annexes and decision
   annexes), coherent with the faceted `Annexes` and `Annex types` filters like it
@@ -184,7 +185,7 @@ Changelog
   `Products.PloneMeeting.vocabularies.export_pdf_annexes_vocabulary`, non PDF
   annexes are disabled.  Logic shared with `PMDownloadElementsAnnexesBatchActionForm`
   is in `PMElementsAnnexesMixin`.
-  Requires `imio.annex` with `ExportPDFBatchActionForm` (2.28.1+).
+  Requires `imio.annex` with `ExportPDFBatchActionForm` (2.29.0+).
   [gbastien]
 
 4.2.28.24 (2026-09-30)

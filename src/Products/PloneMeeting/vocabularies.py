@@ -3121,7 +3121,7 @@ DownloadAnnexesVocabularyFactory = DownloadAnnexesVocabulary()
 
 
 class ExportPDFAnnexesVocabulary(ExportPDFElementsVocabulary):
-    """Annexes that may be exported by the concatenate-annexes-batch-action,
+    """Annexes that may be exported by the export-pdf-batch-action,
        every non PDF annex is disabled, annexes may be filtered on annex types
        (category or subcategory uids)."""
 

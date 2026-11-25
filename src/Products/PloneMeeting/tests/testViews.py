@@ -2643,8 +2643,8 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(get_annexes(item), [])
 
     def test_pm_ExportPDFBatchActionForm(self):
-        """Batch action to concatenate selected PDF annexes of selected items
-           into a single PDF, annexes are selected in the list of annexes
+        """Batch action to export selected PDF annexes of selected items
+           as a single PDF, annexes are selected in the list of annexes
            of selected items (annexes and decision annexes)."""
         self.changeUser('pmCreator1')
         item1 = self.create('MeetingItem', title='Item 1')
@@ -2658,7 +2658,7 @@ class testViews(PloneMeetingTestCase):
         self.request.form['form.widgets.uids'] = ','.join([item1.UID(), item2.UID()])
         searches_items = self.getMeetingFolder().searches_items
         # not available as not MeetingManager
-        form = searches_items.unrestrictedTraverse('@@concatenate-annexes-batch-action')
+        form = searches_items.unrestrictedTraverse('@@export-pdf-batch-action')
         self.assertRaises(Unauthorized, form)
         # as MeetingManager
         self.changeUser('pmManager')
@@ -2666,7 +2666,7 @@ class testViews(PloneMeetingTestCase):
 
         def _num_pages(annex_uids=None, two_sided=False):
             self.request['form.widgets.two_sided'] = two_sided and 'true' or 'false'
-            form = searches_items.unrestrictedTraverse('@@concatenate-annexes-batch-action')
+            form = searches_items.unrestrictedTraverse('@@export-pdf-batch-action')
             form.update()
             self.assertTrue(form.do_apply)
             # by default every selectable annexes are selected
@@ -2680,7 +2680,7 @@ class testViews(PloneMeetingTestCase):
             self.request.set('pdf_file_content', None)
             return int(re.search(r'Pages\n/Count (\d+)', pdf).group(1))
 
-        form = searches_items.unrestrictedTraverse('@@concatenate-annexes-batch-action')
+        form = searches_items.unrestrictedTraverse('@@export-pdf-batch-action')
         self.assertTrue(form())
         # every annexes are listed, non PDF annexes are disabled
         self.assertEqual(len(form.widgets['annexes'].terms), 5)
@@ -2690,8 +2690,8 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(_num_pages(annex_uids=[annex2.UID()]), 1)
         # when using two_sided, a blank page is inserted
         self.assertEqual(_num_pages(two_sided=True), 3)
-        # annexes are concatenated in the selected order
-        form = searches_items.unrestrictedTraverse('@@concatenate-annexes-batch-action')
+        # annexes are exported in the selected order
+        form = searches_items.unrestrictedTraverse('@@export-pdf-batch-action')
         form.update()
         self.assertEqual(form._selected_annexes([annex2.UID(), annex1.UID()]),
                          [annex2, annex1])
@@ -2703,7 +2703,7 @@ class testViews(PloneMeetingTestCase):
         # decision annexes are also listed
         decision_annex = self.addAnnex(
             item2, relatedTo='item_decision', annexFile=self.annexFilePDF)
-        form = searches_items.unrestrictedTraverse('@@concatenate-annexes-batch-action')
+        form = searches_items.unrestrictedTraverse('@@export-pdf-batch-action')
         form.update()
         self.assertEqual(form.annexes, [annex1, annex2, decision_annex])
         self.assertEqual(_num_pages(), 3)
@@ -2713,12 +2713,12 @@ class testViews(PloneMeetingTestCase):
         financial_uid = item1.categorized_elements[annex1.UID()]['category_uid']
         self.request.form['form.widgets.referer'] = '{0}#c33={1}'.format(
             searches_items.absolute_url(), financial_uid)
-        form = searches_items.unrestrictedTraverse('@@concatenate-annexes-batch-action')
+        form = searches_items.unrestrictedTraverse('@@export-pdf-batch-action')
         form.update()
         self.assertEqual(form.annexes, [annex1, annex2])
         self.request.form['form.widgets.referer'] = '{0}#c33={1}'.format(
             searches_items.absolute_url(), overhead_uid)
-        form = searches_items.unrestrictedTraverse('@@concatenate-annexes-batch-action')
+        form = searches_items.unrestrictedTraverse('@@export-pdf-batch-action')
         form.update()
         # only non PDF annexes, nothing to export
         self.assertEqual(len(form.widgets['annexes'].terms), 2)
