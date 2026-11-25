@@ -187,6 +187,11 @@ Changelog
   is in `PMElementsAnnexesMixin`.
   Requires `imio.annex` with `ExportPDFBatchActionForm` (2.29.0+).
   [gbastien]
+- Adapted JS `itemExportPDF` as the `imio.annex` `ExportPDFForm` button
+  `apply_export_pdf` (`Apply`) is renamed to `download_export_pdf` (`Download`),
+  the item export PDF popup is closed when clicking on it.
+  Requires `imio.annex` with `download_export_pdf` button (2.29.0+).
+  [gbastien]
 
 4.2.28.24 (2026-09-30)
 ----------------------
