@@ -2751,8 +2751,8 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(get_annexes(item), [])
 
     def test_pm_ExportPDFBatchActionForm(self):
-        """Batch action to concatenate selected PDF annexes of selected items
-           into a single PDF, annexes are selected in the list of annexes
+        """Batch action to export selected PDF annexes of selected items
+           as a single PDF, annexes are selected in the list of annexes
            of selected items (annexes and decision annexes)."""
         self.changeUser('pmCreator1')
         item1 = self.create('MeetingItem', title='Item 1')
@@ -2798,7 +2798,7 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(_num_pages(annex_uids=[annex2.UID()]), 1)
         # when using two_sided, a blank page is inserted
         self.assertEqual(_num_pages(two_sided=True), 3)
-        # annexes are concatenated in the selected order
+        # annexes are exported in the selected order
         form = searches_items.unrestrictedTraverse('@@export-pdf-batch-action')
         form.update()
         self.assertEqual(form._selected_annexes([annex2.UID(), annex1.UID()]),

@@ -19,7 +19,7 @@ Changelog
   `Products.PloneMeeting.vocabularies.export_pdf_annexes_vocabulary`, non PDF
   annexes are disabled.  Logic shared with `PMDownloadElementsAnnexesBatchActionForm`
   is in `PMElementsAnnexesMixin`.
-  Requires `imio.annex` with `ExportPDFBatchActionForm` (2.28.1+).
+  Requires `imio.annex` with `ExportPDFBatchActionForm` (2.29.0+).
   [gbastien]
 
 
