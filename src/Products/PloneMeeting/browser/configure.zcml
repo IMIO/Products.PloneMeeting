@@ -317,8 +317,8 @@
         permission="cmf.ManagePortal" />
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingItemDashboardBatchActionsMarker"
-        name="concatenate-annexes-batch-action"
-        class=".batchactions.PMConcatenateAnnexesBatchActionForm"
+        name="export-pdf-batch-action"
+        class=".batchactions.PMExportPDFBatchActionForm"
         permission="zope2.View" />
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingItemDashboardBatchActionsMarker"
@@ -368,8 +368,8 @@
         permission="zope2.View" />
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingBatchActionsMarker"
-        name="concatenate-annexes-batch-action"
-        class=".batchactions.PMConcatenateAnnexesBatchActionForm"
+        name="export-pdf-batch-action"
+        class=".batchactions.PMExportPDFBatchActionForm"
         permission="zope2.View" />
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingBatchActionsMarker"

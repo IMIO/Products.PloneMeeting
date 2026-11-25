@@ -5,7 +5,22 @@ Changelog
 4.2.29rc19 (unreleased)
 -----------------------
 
-- Nothing changed yet.
+- Items updated by batch action `UpdateProposingGroupBatchActionForm`
+  are not considered modified (modification date is kept),
+  added parameter `notify_modified=True` to `MeetingItem._update_after_edit`.
+  [gbastien]
+- Renamed `PMConcatenateAnnexesBatchActionForm` to `PMExportPDFBatchActionForm`
+  and batch action `concatenate-annexes-batch-action` to `export-pdf-batch-action`,
+  based on `imio.annex` `ExportPDFBatchActionForm`.
+  Annex types to export are no more selected, annexes to export are selected
+  (and ordered) in a list of the annexes of selected items (annexes and decision
+  annexes), coherent with the faceted `Annexes` and `Annex types` filters like it
+  is the case for `PMDownloadElementsAnnexesBatchActionForm`, see vocabulary
+  `Products.PloneMeeting.vocabularies.export_pdf_annexes_vocabulary`, non PDF
+  annexes are disabled.  Logic shared with `PMDownloadElementsAnnexesBatchActionForm`
+  is in `PMElementsAnnexesMixin`.
+  Requires `imio.annex` with `ExportPDFBatchActionForm` (2.28.1+).
+  [gbastien]
 
 
 4.2.29rc18 (2026-11-20)

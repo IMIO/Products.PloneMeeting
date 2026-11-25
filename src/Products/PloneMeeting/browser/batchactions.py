@@ -12,9 +12,9 @@ from collective.eeafaceted.batchactions.utils import is_permitted
 from collective.eeafaceted.batchactions.utils import listify_uids
 from collective.iconifiedcategory.utils import get_categorized_elements
 from collective.z3cform.select2.widget.widget import SingleSelect2FieldWidget
-from imio.annex.browser.views import ConcatenateAnnexesBatchActionForm
 from imio.annex.browser.views import DownloadAnnexesBatchActionForm
 from imio.annex.browser.views import DownloadElementsAnnexesBatchActionForm
+from imio.annex.browser.views import ExportPDFBatchActionForm
 from imio.annex.widgets.checkbox import OrderableCheckBoxFieldWidget
 from imio.esign.adapters import ISignable
 from imio.esign.config import get_esign_registry_enabled
@@ -548,7 +548,8 @@ class UpdateProposingGroupBatchActionForm(BaseBatchActionForm):
             indexes = ['getProposingGroup', 'getGroupsInCharge']
             indexes += item.update_committees()
             # will update groupsInCharge, local roles and call onEdit
-            item._update_after_edit(idxs=indexes)
+            # item is not considered modified, keep the modification date
+            item._update_after_edit(idxs=indexes, notify_modified=False)
             addDataChange(item)
 
 
@@ -699,11 +700,60 @@ class PMDeleteBatchActionForm(DeleteBatchActionForm):
             super(PMDeleteBatchActionForm, self).available()
 
 
-class PMConcatenateAnnexesBatchActionForm(ConcatenateAnnexesBatchActionForm):
-    """ """
+class PMElementsAnnexesMixin(object):
+    """Manage the "annexes" field of batch actions listing the annexes
+       of selected elements (see imio.annex ElementsAnnexesMixin):
+       for items, annexes and decision annexes are listed, filtered using
+       the faceted "annexes" and "annex types" criteria, item title is
+       displayed with the item number.
+       The used annexes_vocabulary must manage the annex_type_uids parameter."""
+
+    _cached_faceted_filters = None
+
+    def _faceted_filters(self):
+        """Annexes filters selected in the faceted "annexes" (to_sign, to_print, ...)
+           and "annex types" criteria, so listed annexes are the annexes displayed
+           in the dashboard.  As the batch action form is not called by the faceted,
+           the faceted query is get from the referer hash.
+           Returns a tuple (filters, annex_type_uids)."""
+        if self._cached_faceted_filters is None:
+            self._cached_faceted_filters = _split_annex_types_filter(
+                _filters_from_referer(self.request.form.get('form.widgets.referer')))
+        return self._cached_faceted_filters
+
+    def _element_terms(self, element, **kwargs):
+        """For items, list annexes and decision annexes, filtered using
+           the faceted "annexes" and "annex types" criteria, item title
+           is displayed with the item number."""
+        if not IMeetingItem.providedBy(element):
+            return super(PMElementsAnnexesMixin, self)._element_terms(
+                element, **kwargs)
+        filters, annex_type_uids = self._faceted_filters()
+        kwargs.update({'include_portal_type': True,
+                       'filters': filters,
+                       'annex_type_uids': annex_type_uids,
+                       # displayed item title is prepended with item number
+                       'title_kwargs': {'withItemNumber': True}})
+        terms = super(PMElementsAnnexesMixin, self)._element_terms(
+            element, **kwargs)
+        self.request['force_use_item_decision_annexes_group'] = True
+        terms += super(PMElementsAnnexesMixin, self)._element_terms(
+            element, portal_type='annexDecision', **kwargs)
+        self.request['force_use_item_decision_annexes_group'] = False
+        return terms
+
+
+class PMExportPDFBatchActionForm(PMElementsAnnexesMixin, ExportPDFBatchActionForm):
+    """Concatenate PDF annexes of selected items into a single PDF,
+       available to MeetingManagers on items dashboards and meeting view.
+       Annexes to export are selected in a list of the annexes of selected items
+       (annexes and decision annexes), coherent with the faceted
+       "annexes" and "annex types" criteria."""
+
+    annexes_vocabulary = u"Products.PloneMeeting.vocabularies.export_pdf_annexes_vocabulary"
 
     def __init__(self, context, request):
-        super(PMConcatenateAnnexesBatchActionForm, self).__init__(context, request)
+        super(PMExportPDFBatchActionForm, self).__init__(context, request)
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(context)
 
@@ -711,11 +761,8 @@ class PMConcatenateAnnexesBatchActionForm(ConcatenateAnnexesBatchActionForm):
         """ """
         # super() will check for self.available_permission
         if self.cfg.isManager(self.cfg) and \
-           super(ConcatenateAnnexesBatchActionForm, self).available():
+           super(PMExportPDFBatchActionForm, self).available():
             return True
-
-    def _annex_types_vocabulary(self):
-        return "Products.PloneMeeting.vocabularies.icon_item_annex_types_vocabulary"
 
     def _error_obj_title(self, obj):
         """ """
@@ -735,13 +782,13 @@ class PMDownloadAnnexesBatchActionForm(DownloadAnnexesBatchActionForm):
         return "download-annexes" in self.cfg.getEnabledAnnexesBatchActions()
 
 
-class PMDownloadElementsAnnexesBatchActionForm(DownloadElementsAnnexesBatchActionForm):
+class PMDownloadElementsAnnexesBatchActionForm(PMElementsAnnexesMixin,
+                                               DownloadElementsAnnexesBatchActionForm):
     """Download annexes of selected items or meetings, available on dashboards
        when "download-annexes" is enabled in MeetingConfig.enabledAnnexesBatchActions.
        Annexes are stored in a folder or prefixed by the element name, see _element_name."""
 
     annexes_vocabulary = u"Products.PloneMeeting.vocabularies.download_annexes_vocabulary"
-    _cached_faceted_filters = None
 
     def __init__(self, context, request):
         super(PMDownloadElementsAnnexesBatchActionForm, self).__init__(context, request)
@@ -751,38 +798,6 @@ class PMDownloadElementsAnnexesBatchActionForm(DownloadElementsAnnexesBatchActio
     def available(self):
         """ """
         return "download-annexes" in self.cfg.getEnabledAnnexesBatchActions()
-
-    def _faceted_filters(self):
-        """Annexes filters selected in the faceted "annexes" (to_sign, to_print, ...)
-           and "annex types" criteria, so listed annexes are the annexes displayed
-           in the dashboard.  As the batch action form is not called by the faceted,
-           the faceted query is get from the referer hash.
-           Returns a tuple (filters, annex_type_uids)."""
-        if self._cached_faceted_filters is None:
-            self._cached_faceted_filters = _split_annex_types_filter(
-                _filters_from_referer(self.request.form.get('form.widgets.referer')))
-        return self._cached_faceted_filters
-
-    def _element_terms(self, element, **kwargs):
-        """For items, list annexes and decision annexes, filtered using
-           the faceted "annexes" and "annex types" criteria, item title
-           is displayed with the item number."""
-        if not IMeetingItem.providedBy(element):
-            return super(PMDownloadElementsAnnexesBatchActionForm, self)._element_terms(
-                element, **kwargs)
-        filters, annex_type_uids = self._faceted_filters()
-        kwargs.update({'include_portal_type': True,
-                       'filters': filters,
-                       'annex_type_uids': annex_type_uids,
-                       # displayed item title is prepended with item number
-                       'title_kwargs': {'withItemNumber': True}})
-        terms = super(PMDownloadElementsAnnexesBatchActionForm, self)._element_terms(
-            element, **kwargs)
-        self.request['force_use_item_decision_annexes_group'] = True
-        terms += super(PMDownloadElementsAnnexesBatchActionForm, self)._element_terms(
-            element, portal_type='annexDecision', **kwargs)
-        self.request['force_use_item_decision_annexes_group'] = False
-        return terms
 
     def _element_name(self, element):
         """Name used as folder name or filename prefix in the Zip file:

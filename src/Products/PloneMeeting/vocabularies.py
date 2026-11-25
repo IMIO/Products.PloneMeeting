@@ -3291,6 +3291,19 @@ class DownloadAnnexesVocabulary(ContainedAnnexesVocabulary):
 DownloadAnnexesVocabularyFactory = DownloadAnnexesVocabulary()
 
 
+class ExportPDFAnnexesVocabulary(ExportPDFElementsVocabulary):
+    """Annexes that may be exported by the export-pdf-batch-action,
+       every non PDF annex is disabled, annexes may be filtered on annex types
+       (category or subcategory uids)."""
+
+    def _prepare_annex_infos(self, context, annex_infos, annex_type_uids=None, **kwargs):
+        """Keep annexes using one of p_annex_type_uids."""
+        return _filter_annex_types(annex_infos, annex_type_uids)
+
+
+ExportPDFAnnexesVocabularyFactory = ExportPDFAnnexesVocabulary()
+
+
 class GenerablePODTemplatesVocabulary(object):
     implements(IVocabularyFactory)
 
