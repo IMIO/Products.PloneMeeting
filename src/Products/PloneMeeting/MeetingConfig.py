@@ -70,6 +70,7 @@ from Products.CMFPlone.utils import safe_unicode
 from Products.DataGridField import DataGridField
 from Products.DataGridField.CheckboxColumn import CheckboxColumn
 from Products.DataGridField.Column import Column
+from Products.PloneMeeting.config import ANONYMIZED_TEXT_INDEXES
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
 from Products.PloneMeeting.config import CLONE_TO_OTHER_MC_ACTION_SUFFIX
 from Products.PloneMeeting.config import CLONE_TO_OTHER_MC_EMERGENCY_ACTION_SUFFIX
@@ -122,6 +123,7 @@ from Products.PloneMeeting.utils import computeCertifiedSignatures
 from Products.PloneMeeting.utils import createOrUpdatePloneGroup
 from Products.PloneMeeting.utils import duplicate_workflow
 from Products.PloneMeeting.utils import get_annexes
+from Products.PloneMeeting.utils import get_anonymized_css_classes
 from Products.PloneMeeting.utils import get_datagridfield_column_value
 from Products.PloneMeeting.utils import get_dx_attrs
 from Products.PloneMeeting.utils import get_dx_schema
@@ -3822,6 +3824,32 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             api.group.delete(plone_group_id)
 
         self.getField('powerObservers').set(self, value, **kwargs)
+
+    security.declareProtected(WriteRiskyConfig, 'setCssTransforms')
+
+    def setCssTransforms(self, value, **kwargs):
+        '''Overrides the field 'cssTransforms' mutator, when CSS classes of
+           content anonymized for some power observers changed, items text
+           indexes are updated.'''
+        stored = get_anonymized_css_classes(self)
+        self.getField('cssTransforms').set(self, value, **kwargs)
+        if sorted(get_anonymized_css_classes(self)) != sorted(stored):
+            self._reindexAnonymizedText()
+
+    def _reindexAnonymizedText(self):
+        '''Reindex text indexes of every items (items, item templates and
+           recurring items) and meetings of this MeetingConfig as words of content
+           anonymized for some power observers are prefixed in these indexes.'''
+        catalog = api.portal.get_tool('portal_catalog')
+        brains = catalog.unrestrictedSearchResults(
+            portal_type=self.getItemTypeName(configType='all') + [self.getMeetingTypeName()])
+        logger.info(
+            'Anonymized content changed, reindexing text indexes of %s element(s)...' % len(brains))
+        # unrestricted as current user may not access every elements
+        for brain in brains:
+            reindex_object(
+                brain._unrestrictedGetObject(), idxs=list(ANONYMIZED_TEXT_INDEXES), update_metadata=0)
+        logger.info('Done.')
 
     security.declareProtected(WriteRiskyConfig, 'setCommittees')
 

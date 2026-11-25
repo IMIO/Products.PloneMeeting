@@ -4464,6 +4464,65 @@ class testAdvices(PloneMeetingTestCase):
         self.assertFalse(item.adviceIndex[self.vendors_uid]['advice_addable'])
         self.assertTrue(item.adviceIndex[self.vendors_uid]['advice_editable'])
 
+    def test_pm_CssTransformsAdvice(self):
+        """Content of advice rich text fields anonymized for some power observers
+           (MeetingConfig.cssTransforms) is replaced when displayed to these power observers."""
+        cfg = self.meetingConfig
+        cfg.setItemAdviceStates((self._stateMappingFor('itemcreated'), ))
+        cfg.setItemAdviceEditStates((self._stateMappingFor('itemcreated'), ))
+        cfg.setItemAdviceViewStates((self._stateMappingFor('itemcreated'), ))
+        self._setPowerObserverStates(states=('itemcreated', ))
+        self._setPowerObserverStates(observer_type='restrictedpowerobservers',
+                                     states=('itemcreated', ))
+        # elements are reindexed unrestricted, current user may not access every elements
+        cfg.setCssTransforms(
+            ({'action': 'replace',
+              'css_class': 'pm-anonymize',
+              'replace_new_content': 'Data were hidden',
+              'replace_new_css_class': 'pm-anonymized',
+              'powerobservers': ['restrictedpowerobservers']}, ))
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item.setOptionalAdvisers((self.vendors_uid, ))
+        item._update_after_edit()
+        self.changeUser('pmReviewer2')
+        advice = createContentInContainer(
+            item,
+            'meetingadvice',
+            **{'advice_group': self.vendors_uid,
+               'advice_type': u'positive',
+               'advice_comment': richtextval(
+                   u'<p>Visible comment <span class="pm-anonymize">Commentsecret</span></p>'),
+               'advice_observations': richtextval(
+                   u'<p>Visible observations <span class="pm-anonymize">Observationssecret</span></p>')})
+        # rich text is displayed relative to the advice (output_relative_to),
+        # the adviser that may edit the advice gets the original content
+        self.assertTrue(self.hasPermission(ModifyPortalContent, advice))
+        self.assertTrue('Commentsecret' in advice.advice_comment.output_relative_to(advice))
+        self.assertTrue('Observationssecret' in advice.advice_observations.output_relative_to(advice))
+        # a power observer not concerned by the transform gets the original content
+        self.changeUser('powerobserver1')
+        self.assertTrue(self.hasPermission(View, advice))
+        self.assertTrue('Commentsecret' in advice.advice_comment.output_relative_to(advice))
+        self.assertTrue('Observationssecret' in advice.advice_observations.output_relative_to(advice))
+        self.assertTrue('Commentsecret' in advice.restrictedTraverse('@@view')())
+        # a restricted power observer gets the anonymized content
+        self.changeUser('restrictedpowerobserver1')
+        self.assertTrue(self.hasPermission(View, advice))
+        self.assertEqual(
+            advice.advice_comment.output_relative_to(advice),
+            u'<p>Visible comment <span class="pm-anonymized">Data were hidden</span></p>')
+        self.assertEqual(
+            advice.advice_observations.output_relative_to(advice),
+            u'<p>Visible observations <span class="pm-anonymized">Data were hidden</span></p>')
+        advice_view = advice.restrictedTraverse('@@view')()
+        self.assertTrue('Visible comment' in advice_view)
+        self.assertFalse('Commentsecret' in advice_view)
+        self.assertFalse('Observationssecret' in advice_view)
+        # advice text is not indexed, anonymized content can not be found when searching
+        self.assertFalse(self.catalog(SearchableText='Commentsecret'))
+        self.assertFalse(self.catalog(SearchableText='Observationssecret'))
+
 
 def test_suite():
     from unittest import makeSuite

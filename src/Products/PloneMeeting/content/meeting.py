@@ -6,6 +6,7 @@ from collections import OrderedDict
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.plonegroup.config import get_registry_organizations
 from collective.contact.plonegroup.utils import get_plone_groups
+from collective.dexteritytextindexer.converters import DexterityRichTextIndexFieldConverter
 from collective.dexteritytextindexer.directives import searchable
 from collective.dexteritytextindexer.interfaces import IDynamicTextIndexExtender
 from collective.z3cform.datagridfield import BlockDataGridFieldFactory
@@ -27,6 +28,7 @@ from plone.app.contenttypes.behaviors.collection import Collection
 from plone.app.contenttypes.behaviors.collection import ICollection
 from plone.app.querystring.querybuilder import queryparser
 from plone.app.textfield import RichText
+from plone.app.textfield.interfaces import IRichText
 from plone.dexterity.content import Container
 from plone.dexterity.schema import DexteritySchemaPolicy
 from plone.directives import form
@@ -53,8 +55,10 @@ from Products.PloneMeeting.interfaces import IDXMeetingContent
 from Products.PloneMeeting.utils import _addManagedPermissions
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import _get_category
+from Products.PloneMeeting.utils import anonymized_text_indexing
 from Products.PloneMeeting.utils import displaying_available_items
 from Products.PloneMeeting.utils import get_annexes
+from Products.PloneMeeting.utils import get_anonymized_css_classes
 from Products.PloneMeeting.utils import get_attendee_short_title
 from Products.PloneMeeting.utils import get_next_meeting
 from Products.PloneMeeting.utils import get_states_before
@@ -72,6 +76,7 @@ from Products.PloneMeeting.widgets.pm_textarea import get_textarea_value
 from Products.PloneMeeting.widgets.pm_textarea import PMTextAreaFieldWidget
 from z3c.form.browser.checkbox import CheckBoxFieldWidget
 from z3c.form.browser.radio import RadioFieldWidget
+from z3c.form.interfaces import IWidget
 from zope import schema
 from zope.component import adapts
 from zope.component import getMultiAdapter
@@ -2521,6 +2526,21 @@ class MeetingSearchableTextExtender(object):
             res.append(annex.Title())
         res = ' '.join(res)
         return res
+
+
+class MeetingRichTextIndexFieldConverter(DexterityRichTextIndexFieldConverter):
+    """collective.dexteritytextindexer rich text field converter, words of
+       content anonymized for some power observers (MeetingConfig.cssTransforms)
+       are prefixed when indexed, see utils.anonymized_text_indexing."""
+    adapts(IMeeting, IRichText, IWidget)
+
+    def convert(self):
+        """ """
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        css_classes = get_anonymized_css_classes(cfg) if cfg else []
+        with anonymized_text_indexing(css_classes):
+            return super(MeetingRichTextIndexFieldConverter, self).convert()
 
 
 @implementer(ITokenizedTerm)

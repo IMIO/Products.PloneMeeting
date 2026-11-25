@@ -68,16 +68,20 @@ from Products.PloneMeeting.ftw_labels.utils import get_labels
 from Products.PloneMeeting.indexes import previous_review_state
 from Products.PloneMeeting.indexes import sentToInfos
 from Products.PloneMeeting.MeetingItem import MeetingItem
+from Products.PloneMeeting.monkey import _queried_cfg_ids
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.tests.PloneMeetingTestCase import TestRequest
 from Products.PloneMeeting.tests.testUtils import ASSEMBLY_CORRECT_VALUE
 from Products.PloneMeeting.tests.testUtils import ASSEMBLY_WRONG_VALUE
+from Products.PloneMeeting.utils import anonymized_text_query
 from Products.PloneMeeting.utils import fieldIsEmpty
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import get_dx_field
 from Products.PloneMeeting.utils import getFieldVersion
 from Products.PloneMeeting.utils import getTransitionToReachState
+from Products.PloneMeeting.utils import has_underscore_term
+from Products.PloneMeeting.utils import may_see_anonymized_text
 from Products.PloneMeeting.utils import ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR
 from Products.PloneMeeting.utils import set_field_from_ajax
 from Products.PluginIndexes.common.UnIndex import _marker
@@ -7651,6 +7655,186 @@ class testMeetingItem(PloneMeetingTestCase):
         self.portal.portal_setup.runAllImportStepsFromProfile('profile-Products.CMFPlone:plone-content')
         frontpage = self.portal.get('front-page')
         self.assertTrue(frontpage.getText())
+
+    def test_pm_CssTransformsSearchableText(self):
+        """Content anonymized for some power observers (MeetingConfig.cssTransforms)
+           is indexed with prefixed words so it is only found by users that may see it."""
+        self.changeUser('siteadmin')
+        cfg = self.meetingConfig
+        self._setPowerObserverStates(states=('itemcreated', ))
+        self._setPowerObserverStates(observer_type='restrictedpowerobservers',
+                                     states=('itemcreated', ))
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item.setDescription('<p>Description <em class="pm-anonymize">Anonymizeddescr</em></p>')
+        item.setDecision(
+            '<p>Visible<span class="pm-anonymize">Johnsecret Jean-Pierre</span>after</p>')
+        item.reindexObject()
+        # nothing anonymized, content is found by everybody
+        self.assertFalse(may_see_anonymized_text())
+        self.changeUser('restrictedpowerobserver1')
+        self.assertTrue(self.catalog(SearchableText='Johnsecret'))
+
+        # anonymize content for restricted power observers,
+        # items text indexes are reindexed immediately
+        self.changeUser('siteadmin')
+        # the text/plain version of rich fields is cached by portal_transforms for
+        # current user and groups, it must not be used by the reindex done by this user
+        decision_plain = item.getDecision(mimetype='text/plain')
+        self.assertTrue('Johnsecret' in decision_plain)
+        cfg.setCssTransforms(
+            ({'action': 'replace',
+              'css_class': 'pm-anonymize',
+              'replace_new_content': 'Data were hidden',
+              'replace_new_css_class': 'pm-anonymized',
+              'powerobservers': ['restrictedpowerobservers']}, ))
+        # words of anonymized content are prefixed in the text indexes
+        rid = self.catalog(UID=item.UID())[0].getRID()
+        words = self.catalog._catalog.getIndex('SearchableText').getEntryForObject(rid)
+        self.assertTrue('__anonymized_text_prefix_johnsecret' in words)
+        self.assertTrue('__anonymized_text_prefix_jean' in words)
+        self.assertTrue('__anonymized_text_prefix_pierre' in words)
+        self.assertTrue('__anonymized_text_prefix_anonymizeddescr' in words)
+        self.assertFalse('johnsecret' in words)
+        # anonymized words are not glued to surrounding words
+        self.assertTrue('visible' in words)
+        self.assertTrue('after' in words)
+        self.assertEqual(
+            self.catalog._catalog.getIndex('Description').getEntryForObject(rid),
+            ['description', '__anonymized_text_prefix_anonymizeddescr'])
+        # the plain version cached before was not used to index and the prefixed
+        # version is not cached, the text/plain version of rich fields is unchanged
+        self.assertEqual(item.getDecision(mimetype='text/plain'), decision_plain)
+        self.assertFalse('__anonymized_text_prefix_' in item.Description(mimetype='text/plain'))
+
+        # users that may see anonymized content find it, query is completed
+        lexicon = self.catalog._catalog.getIndex('SearchableText').getLexicon()
+        self.assertEqual(
+            anonymized_text_query('john doe*', lexicon),
+            '((john OR __anonymized_text_prefix_john) AND '
+            '(doe* OR __anonymized_text_prefix_doe*))')
+        self.assertEqual(
+            anonymized_text_query('john -doe OR (jean AND NOT pierre)', lexicon),
+            '((john OR __anonymized_text_prefix_john) AND NOT '
+            '(doe OR __anonymized_text_prefix_doe)) OR ( '
+            '((jean OR __anonymized_text_prefix_jean)) AND NOT '
+            '((pierre OR __anonymized_text_prefix_pierre)) )')
+        for user_id in ('pmCreator1', 'powerobserver1'):
+            self.changeUser(user_id)
+            self.assertTrue(may_see_anonymized_text())
+            self.assertTrue(self.catalog(SearchableText='Johnsecret'))
+            self.assertTrue(self.catalog(SearchableText='johnsec*'))
+            self.assertTrue(self.catalog(SearchableText='Pierre'))
+            self.assertTrue(self.catalog(SearchableText='"Jean-Pierre"'))
+            self.assertTrue(self.catalog(SearchableText='Visible Johnsecret'))
+            self.assertFalse(self.catalog(SearchableText='Visible -Johnsecret'))
+            self.assertTrue(self.catalog(SearchableText='Visible after'))
+            self.assertTrue(self.catalog(Description='Anonymizeddescr'))
+            # a query containing a term beginning with "_" returns nothing for anybody
+            self.assertFalse(self.catalog(SearchableText='__anonymized_text_prefix_johnsecret'))
+
+        # restricted power observers do not find anonymized content
+        self.changeUser('restrictedpowerobserver1')
+        self.assertFalse(may_see_anonymized_text())
+        self.assertTrue(self.catalog(SearchableText='Visible'))
+        self.assertTrue(self.catalog(SearchableText='after'))
+        self.assertTrue(self.catalog(SearchableText='Visible -Johnsecret'))
+        self.assertTrue(self.catalog(Description='Description'))
+        self.assertFalse(self.catalog(SearchableText='Johnsecret'))
+        self.assertFalse(self.catalog(SearchableText='johnsec*'))
+        self.assertFalse(self.catalog(SearchableText='Pierre'))
+        self.assertFalse(self.catalog(SearchableText='Visible Johnsecret'))
+        self.assertFalse(self.catalog(Description='Anonymizeddescr'))
+        # searching prefixed words is not possible, a query containing
+        # a term beginning with "_" (even a glob) returns nothing
+        self.assertTrue(has_underscore_term('john __anonymized_text_prefix_johnsecret', lexicon))
+        self.assertTrue(has_underscore_term('_*', lexicon))
+        self.assertTrue(has_underscore_term('Visible -"_x y"', lexicon))
+        # fullwidth underscores are normalized by the lexicon
+        self.assertTrue(has_underscore_term(u'\uff3f\uff3fanonymized_text_prefix_johnsecret', lexicon))
+        self.assertFalse(has_underscore_term('john_doe doe* "jean pierre"', lexicon))
+        for query in ('__anonymized_text_prefix_johnsecret',
+                      '__ANONYMIZED_TEXT_PREFIX_JOHNSECRET',
+                      '__anonymized_text_prefix_john*',
+                      '__anonymized_text_prefix_?ohnsecret',
+                      '_*',
+                      '_?anonymized*',
+                      u'\uff3f\uff3fanonymized_text_prefix_johnsecret',
+                      'Visible -__anonymized_text_prefix_johnsecret'):
+            self.assertFalse(self.catalog(SearchableText=query))
+        self.assertFalse(self.catalog(Description='__anonymized_text_prefix_anonymizeddescr'))
+        # globs never match anonymized words as these begin with "__"
+        self.assertFalse(self.catalog(SearchableText='anon*'))
+        self.assertFalse(self.catalog(SearchableText='anon*secret'))
+        self.assertFalse(self.catalog(SearchableText='j*'))
+        self.assertTrue(self.catalog(SearchableText='vis*'))
+
+        # a query restricted to some MeetingConfigs (getConfigId or portal_type)
+        # only takes these MeetingConfigs into account
+        cfg_id = cfg.getId()
+        cfg2 = self.meetingConfig2
+        cfg2_id = cfg2.getId()
+        self.assertIsNone(_queried_cfg_ids({'SearchableText': 'john'}))
+        self.assertEqual(_queried_cfg_ids({'portal_type': cfg.getItemTypeName()}), set([cfg_id]))
+        self.assertEqual(
+            _queried_cfg_ids({'portal_type': {'query': [cfg.getItemTypeName(),
+                                                        cfg2.getMeetingTypeName(),
+                                                        'Folder']}}),
+            set([cfg_id, cfg2_id]))
+        self.assertEqual(_queried_cfg_ids({'getConfigId': cfg2_id}), set([cfg2_id]))
+        self.assertEqual(
+            _queried_cfg_ids({'getConfigId': cfg_id, 'portal_type': cfg2.getItemTypeName()}), set())
+        self.assertIsNone(_queried_cfg_ids({'portal_type': {'not': cfg.getItemTypeName()}}))
+        # cfg2 does not anonymize content
+        self.assertFalse(may_see_anonymized_text(cfg_ids=[cfg_id]))
+        self.assertFalse(may_see_anonymized_text(cfg_ids=[cfg2_id]))
+        self.assertFalse(self.catalog(SearchableText='Johnsecret', portal_type=cfg.getItemTypeName()))
+        self.assertFalse(self.catalog(SearchableText='Johnsecret', getConfigId=cfg_id))
+        self.changeUser('pmCreator1')
+        self.assertTrue(may_see_anonymized_text(cfg_ids=[cfg_id]))
+        self.assertFalse(may_see_anonymized_text(cfg_ids=[cfg2_id]))
+        self.assertTrue(self.catalog(SearchableText='Johnsecret', portal_type=cfg.getItemTypeName()))
+        self.assertTrue(self.catalog(SearchableText='Johnsecret', getConfigId=cfg_id))
+
+        # when cfg2 anonymizes content for other power observers, a restricted
+        # power observer may see anonymized content of cfg2 but not of cfg
+        self.changeUser('siteadmin')
+        cfg2.setCssTransforms(
+            ({'action': 'replace',
+              'css_class': 'pm-anonymize',
+              'replace_new_content': 'Data were hidden',
+              'replace_new_css_class': 'pm-anonymized',
+              'powerobservers': ['powerobservers']}, ))
+        self._setPowerObserverStates(
+            cfg=cfg2, observer_type='restrictedpowerobservers', states=('itemcreated', ))
+        self._addPrincipalToGroup(
+            'restrictedpowerobserver1', '{0}_restrictedpowerobservers'.format(cfg2_id))
+        self.setMeetingConfig(cfg2_id)
+        self.changeUser('pmCreator1')
+        item_cfg2 = self.create('MeetingItem')
+        item_cfg2.setDecision('<p>Visible <span class="pm-anonymize">Cfgsecret</span></p>')
+        item_cfg2.reindexObject()
+        self.changeUser('restrictedpowerobserver1')
+        self.assertFalse(may_see_anonymized_text())
+        self.assertFalse(may_see_anonymized_text(cfg_ids=[cfg_id]))
+        self.assertTrue(may_see_anonymized_text(cfg_ids=[cfg2_id]))
+        # query restricted to cfg2, anonymized content of cfg2 is found
+        self.assertTrue(self.catalog(SearchableText='Cfgsecret', portal_type=cfg2.getItemTypeName()))
+        self.assertTrue(self.catalog(SearchableText='cfgsec*', getConfigId=cfg2_id))
+        # global query or query also on cfg, anonymized content of cfg2 is not found
+        self.assertFalse(self.catalog(SearchableText='Cfgsecret'))
+        self.assertFalse(self.catalog(
+            SearchableText='Cfgsecret',
+            portal_type=[cfg.getItemTypeName(), cfg2.getItemTypeName()]))
+        self.assertFalse(self.catalog(
+            SearchableText='Cfgsecret', portal_type={'not': cfg.getItemTypeName()}))
+        # visible content is found in every cases
+        self.assertTrue(self.catalog(SearchableText='Visible', portal_type=cfg2.getItemTypeName()))
+        self.assertTrue(self.catalog(
+            SearchableText='Visible', portal_type=[cfg.getItemTypeName(), cfg2.getItemTypeName()]))
+        # restricted to cfg2, a query containing a term beginning with "_" returns nothing
+        self.assertFalse(self.catalog(
+            SearchableText='__anonymized_text_prefix_cfgsecret', portal_type=cfg2.getItemTypeName()))
 
     def test_pm_HideNotViewableLinkedItemsTo(self):
         """Linked items (manually or automatically) may be hidden

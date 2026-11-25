@@ -20,6 +20,7 @@ from collective.excelexport.exportables.dexterityfields import get_exportable_fo
 from collective.iconifiedcategory.interfaces import IIconifiedInfos
 from collective.iconifiedcategory.utils import get_config_root
 from collective.iconifiedcategory.utils import get_group
+from contextlib import contextmanager
 from datetime import datetime
 from datetime import timedelta
 from DateTime import DateTime
@@ -37,6 +38,7 @@ from imio.helpers.content import richtextval
 from imio.helpers.security import fplog
 from imio.helpers.workflow import get_final_states
 from imio.helpers.workflow import get_state_infos
+from imio.helpers.xhtml import _turnToLxmlTree
 from imio.helpers.xhtml import addClassToContent
 from imio.helpers.xhtml import addClassToLastChildren
 from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
@@ -54,6 +56,7 @@ from imio.history.utils import getLastAction
 from imio.history.utils import getLastWFAction
 from imio.history.utils import getPreviousEvent
 from imio.pyutils.utils import safe_encode
+from lxml.cssselect import CSSSelector
 from plone import api
 from plone.app.textfield import RichText
 from plone.app.textfield.value import RichTextValue
@@ -83,6 +86,7 @@ from Products.PloneMeeting.config import AddAnnex
 from Products.PloneMeeting.config import AddAnnexDecision
 from Products.PloneMeeting.config import ADVICE_STATES_ENDED
 from Products.PloneMeeting.config import ADVICE_STATES_MAPPING
+from Products.PloneMeeting.config import ANONYMIZED_TEXT_PREFIX
 from Products.PloneMeeting.config import PloneMeetingError
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import REINDEX_NEEDED_MARKER
@@ -105,6 +109,7 @@ from Products.PloneMeeting.interfaces import IMeetingGroupCustom
 from Products.PloneMeeting.interfaces import IMeetingItemCustom
 from Products.PloneMeeting.interfaces import IMeetingLocalRolesUpdatedEvent
 from Products.PloneMeeting.interfaces import IToolPloneMeetingCustom
+from Products.ZCTextIndex.QueryParser import _tokenizer_unicode_regex
 from z3c.form.interfaces import DISPLAY_MODE
 from z3c.form.interfaces import IContextAware
 from z3c.form.interfaces import IFieldWidget
@@ -134,6 +139,7 @@ import os
 import os.path
 import re
 import socket
+import threading
 import unicodedata
 import unidecode
 import urlparse
@@ -2713,6 +2719,157 @@ def isPowerObserverForCfg(cfg, power_observer_types=[]):
             if groupId in user_plone_groups:
                 return True
     return False
+
+
+# words are found the same way as the catalog lexicon splitter
+WORD_REGEX = re.compile(r"\w+", re.UNICODE)
+GLOB_WORD_REGEX = re.compile(r"\w[\w*?]*", re.UNICODE)
+TEXT_QUERY_OPERATORS = (u"AND", u"OR", u"NOT", u"(", u")")
+
+
+def _anonymized_rows(cfg):
+    """MeetingConfig.cssTransforms rows anonymizing content for some power observers."""
+    return [row for row in cfg.getCssTransforms()
+            if row['action'] == 'replace' and row['powerobservers'] and row['css_class'].strip()]
+
+
+def get_anonymized_css_classes(cfg):
+    """CSS classes of content anonymized for some power observers,
+       defined in MeetingConfig.cssTransforms with action "replace"."""
+    return [row['css_class'].strip() for row in _anonymized_rows(cfg)]
+
+
+def _prefix_words(text, regex=WORD_REGEX):
+    """Prefix every word of p_text with ANONYMIZED_TEXT_PREFIX."""
+    if not text:
+        return text
+    text = unicodedata.normalize('NFKC', safe_unicode(text))
+    return regex.sub(lambda match: ANONYMIZED_TEXT_PREFIX + match.group(0), text)
+
+
+def prefix_anonymized_words(xhtml, css_classes):
+    """Prefix with ANONYMIZED_TEXT_PREFIX every word of the content of p_xhtml
+       using one of p_css_classes, used to index anonymized content so it is
+       only found by users that may see it, see anonymized_text_query."""
+    tree = _turnToLxmlTree(xhtml)
+    if not isinstance(tree, lxml.html.HtmlElement):
+        return xhtml
+    elements = []
+    for css_class in css_classes:
+        elements += CSSSelector("." + css_class)(tree)
+    for element in elements:
+        # nested anonymized content is managed by the parent anonymized element
+        if any(ancestor in elements for ancestor in element.iterancestors()):
+            continue
+        element.text = _prefix_words(element.text)
+        for descendant in element.iterdescendants():
+            descendant.text = _prefix_words(descendant.text)
+            descendant.tail = _prefix_words(descendant.tail)
+        # make sure anonymized words are not glued to surrounding words
+        element.text = u" " + (element.text or u"")
+        element.tail = u" " + (element.tail or u"")
+    return lxml.html.tostring(tree, encoding="unicode")
+
+
+# CSS classes of content anonymized for some power observers in the element
+# being indexed, see anonymized_text_indexing and monkey.convertTo
+_anonymized_indexing = threading.local()
+
+
+@contextmanager
+def anonymized_text_indexing(css_classes):
+    """While indexing an element, words of content using one of p_css_classes
+       are prefixed with ANONYMIZED_TEXT_PREFIX when HTML is converted to
+       text/plain, see monkey.convertTo.  This works for every
+       rich text field (Archetypes and Dexterity)."""
+    _anonymized_indexing.css_classes = css_classes
+    try:
+        yield
+    finally:
+        _anonymized_indexing.css_classes = None
+
+
+def get_anonymized_indexing_css_classes():
+    """CSS classes of anonymized content of the element being indexed."""
+    return getattr(_anonymized_indexing, 'css_classes', None)
+
+
+def may_see_anonymized_text(cfg_ids=None):
+    """May current user find content anonymized for some power observers
+       (see MeetingConfig.cssTransforms) of the MeetingConfigs which ids are
+       in p_cfg_ids or of every MeetingConfigs?  False if no content is
+       anonymized or if current user is a power observer that may not see it."""
+    site = getSite()
+    tool = site is not None and getattr(site, TOOL_ID, None) or None
+    if tool is None:
+        return False
+    res = False
+    for cfg in tool.objectValues('MeetingConfig'):
+        if cfg_ids is not None and cfg.getId() not in cfg_ids:
+            continue
+        for row in _anonymized_rows(cfg):
+            if isPowerObserverForCfg(cfg, power_observer_types=row['powerobservers']):
+                return False
+            res = True
+    return res
+
+
+def has_underscore_term(query, lexicon):
+    """Does text index p_query contain a term beginning with "_"?  Such a query
+       is not executed for anybody as words of anonymized content are indexed
+       prefixed by ANONYMIZED_TEXT_PREFIX that begins with "__", this is also
+       the case for globs as "_*" or "_?anonymized*".  Words are normalized
+       by p_lexicon so a fullwidth underscore is also managed."""
+    return any(safe_unicode(word).startswith(u"_") for word in lexicon.parseTerms(query))
+
+
+def _full_text_tokens(tokens, lexicon):
+    """Make query p_tokens, consecutive words (implicitly joined by AND),
+       also match the anonymized version of every word."""
+    positives = []
+    negatives = []
+    for token in tokens:
+        negative = token.startswith(u"-") and len(token) > 1
+        term = token[1:] if negative else token
+        # ignored by the query parser (only special characters)
+        if not lexicon.parseTerms(term):
+            continue
+        group = u"({0} OR {1})".format(term, _prefix_words(term, regex=GLOB_WORD_REGEX))
+        (negatives if negative else positives).append(group)
+    if not positives:
+        # let the query parser manage it
+        return u" ".join(tokens)
+    # the query parser does not accept a group after a word and needs
+    # a positive term first, so every term is joined by an explicit AND
+    return u"({0})".format(
+        u" AND ".join(positives + [u"NOT " + neg_group for neg_group in negatives]))
+
+
+def anonymized_text_query(query, lexicon):
+    """Make every word of text index p_query also match the anonymized version
+       of this word (prefixed by ANONYMIZED_TEXT_PREFIX), used when current user
+       may see content anonymized for some power observers, "john doe*" becomes
+       "((john OR __anonymized_text_prefix_john) AND (doe* OR __anonymized_text_prefix_doe*))".
+       Tokens are found the same way as the ZCTextIndex QueryParser."""
+    is_bytes = isinstance(query, bytes)
+    try:
+        uquery = query.decode('utf-8') if is_bytes else query
+    except UnicodeDecodeError:
+        return query
+    res = []
+    words = []
+    for token in _tokenizer_unicode_regex.findall(uquery):
+        if token.upper() in TEXT_QUERY_OPERATORS:
+            if words:
+                res.append(_full_text_tokens(words, lexicon))
+                words = []
+            res.append(token)
+        else:
+            words.append(token)
+    if words:
+        res.append(_full_text_tokens(words, lexicon))
+    res = u" ".join(res)
+    return res.encode('utf-8') if is_bytes else res
 
 
 def get_annexes_config(context, portal_type="annex", annex_group=False):

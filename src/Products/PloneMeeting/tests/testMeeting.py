@@ -4118,6 +4118,63 @@ class testMeetingType(PloneMeetingTestCase):
         self.assertEqual(meeting.Title(), u'13 june 2023 (15:00)')
         self.assertTrue("title='13/06/2023 (15:00)'" in meeting.get_pretty_link())
 
+    def test_pm_CssTransformsSearchableText(self):
+        """Content of meeting rich text fields anonymized for some power observers
+           (MeetingConfig.cssTransforms) is indexed with prefixed words so it is
+           only found by users that may see it."""
+        cfg = self.meetingConfig
+        meeting_type = cfg.getMeetingTypeName()
+        self._setPowerObserverStates(field_name='meeting_states', states=('created', ))
+        self._setPowerObserverStates(observer_type='restrictedpowerobservers',
+                                     field_name='meeting_states', states=('created', ))
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting')
+        meeting.observations = richtextval(
+            u'<p>Visible<span class="pm-anonymize">Meetingsecret Jean-Pierre</span>after</p>')
+        meeting.reindexObject(idxs=['SearchableText'])
+        # nothing anonymized, content is found by everybody
+        self.changeUser('restrictedpowerobserver1')
+        self.assertTrue(self.catalog(SearchableText='Meetingsecret', portal_type=meeting_type))
+
+        # anonymize content for restricted power observers,
+        # meetings text indexes are reindexed immediately
+        self.changeUser('siteadmin')
+        cfg.setCssTransforms(
+            ({'action': 'replace',
+              'css_class': 'pm-anonymize',
+              'replace_new_content': 'Data were hidden',
+              'replace_new_css_class': 'pm-anonymized',
+              'powerobservers': ['restrictedpowerobservers']}, ))
+        rid = self.catalog(UID=meeting.UID())[0].getRID()
+        words = self.catalog._catalog.getIndex('SearchableText').getEntryForObject(rid)
+        self.assertTrue('__anonymized_text_prefix_meetingsecret' in words)
+        self.assertTrue('__anonymized_text_prefix_jean' in words)
+        self.assertTrue('__anonymized_text_prefix_pierre' in words)
+        self.assertFalse('meetingsecret' in words)
+        # anonymized words are not glued to surrounding words
+        self.assertTrue('visible' in words)
+        self.assertTrue('after' in words)
+
+        # users that may see anonymized content find it
+        for user_id in ('pmManager', 'powerobserver1'):
+            self.changeUser(user_id)
+            self.assertTrue(self.catalog(SearchableText='Meetingsecret', portal_type=meeting_type))
+            self.assertTrue(self.catalog(SearchableText='meetingsec*', portal_type=meeting_type))
+            self.assertTrue(self.catalog(SearchableText='"Jean-Pierre"', portal_type=meeting_type))
+            self.assertTrue(self.catalog(SearchableText='Visible Meetingsecret', portal_type=meeting_type))
+        # restricted power observers do not find anonymized content
+        self.changeUser('restrictedpowerobserver1')
+        self.assertTrue(self.catalog(SearchableText='Visible', portal_type=meeting_type))
+        self.assertFalse(self.catalog(SearchableText='Meetingsecret', portal_type=meeting_type))
+        self.assertFalse(self.catalog(SearchableText='meetingsec*', portal_type=meeting_type))
+        self.assertFalse(self.catalog(SearchableText='Pierre', portal_type=meeting_type))
+        self.assertFalse(self.catalog(SearchableText='Meetingsecret'))
+        self.assertFalse(self.catalog(
+            SearchableText='__anonymized_text_prefix_meetingsecret', portal_type=meeting_type))
+        # the rich text field value is not changed
+        self.changeUser('pmManager')
+        self.assertTrue('Meetingsecret' in meeting.observations.output)
+
 
 def test_suite():
     from unittest import makeSuite

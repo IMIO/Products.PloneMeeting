@@ -192,6 +192,31 @@ Changelog
   the item export PDF popup is closed when clicking on it.
   Requires `imio.annex` with `download_export_pdf` button (2.29.0+).
   [gbastien]
+- Content anonymized for some power observers using `MeetingConfig.cssTransforms`
+  (action `replace`) is no more found by these power observers when searching.
+  Words of anonymized content of items and meetings are indexed prefixed by
+  `ANONYMIZED_TEXT_PREFIX` (`__anonymized_text_prefix_`) in the `SearchableText`
+  and `Description` indexes: while indexing (`utils.anonymized_text_indexing`),
+  `TransformTool.convertTo` is monkeypatched (`monkey.py`) to prefix these words
+  when HTML is converted to `text/plain`, without using the transforms cache.
+  For meetings, this is done by the `collective.dexteritytextindexer` rich text
+  field converter `content.meeting.MeetingRichTextIndexFieldConverter`.
+  `ZCTextIndex._apply_index` is monkeypatched (`monkey.py`): a query containing
+  a term beginning with `_` returns nothing for anybody (`utils.has_underscore_term`)
+  so prefixed words can never be searched, and queries of users that may see
+  anonymized content (`utils.may_see_anonymized_text`) are completed so every word
+  also matches its prefixed version (`utils.anonymized_text_query`), this works for
+  every way to search (dashboards, Plone search, REST API, ...).  When the query is
+  restricted to some MeetingConfigs (`getConfigId` or `portal_type` index), only
+  these MeetingConfigs are taken into account.
+  When anonymized CSS classes change in `MeetingConfig.cssTransforms`, text indexes
+  of items (items, item templates and recurring items) and meetings of the
+  MeetingConfig are reindexed immediately by the `MeetingConfig.setCssTransforms`
+  mutator, a warning about this was added to the field description.
+  Added upgrade step to 4217.5 to reindex text indexes of items and meetings of
+  MeetingConfigs anonymizing content.  Requires `imio.pm.locales` with completed
+  `css_transforms_descr` translation.  See #DLIBBDC-4243.
+  [gbastien]
 
 4.2.28.24 (2026-09-30)
 ----------------------
