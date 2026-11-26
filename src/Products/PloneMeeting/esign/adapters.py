@@ -16,6 +16,7 @@ from Products.PloneMeeting.browser.batchactions import pod_template_default
 from Products.PloneMeeting.config import ESIGNWATCHERS_GROUP_SUFFIX
 from Products.PloneMeeting.utils import _base_extra_expr_ctx
 from Products.PloneMeeting.utils import get_annexes
+from six import string_types
 from zope.i18n import translate
 
 
@@ -190,21 +191,39 @@ class PMSignersAdapter(SignableAdapter):
 
     def get_discriminators(self, annex, pod_template=None):
         """
-        Discriminate based on MeetingConfig.eSignDiscriminatorsTALExpr.
+        Discriminate based on MeetingConfig.eSignDiscriminatorsTALExpr
+        that must return a tuple or a list of strings, returned as a tuple
+        of strings as expected by imio.esign.
         """
         extra_expr_ctx = self._get_base_extra_expr_ctx(pod_template=pod_template)
         extra_expr_ctx.update(
             {'obj': self.context,
              'annex': annex})
-        # will return a list of strings
+        # will return a tuple or a list of strings
         discriminators = _evaluateExpression(
             self.context,
             expression=self.cfg.getESignDiscriminatorsTALExpr(),
             roles_bypassing_expression=[],
             extra_expr_ctx=extra_expr_ctx,
             empty_expr_is_true=False,
-            raise_on_error=True) or []
-        return u" - ".join(discriminators)
+            raise_on_error=True) or ()
+        # raise if not a tuple or a list of strings so the configuration
+        # is fixed instead of adding annexes to a wrong session
+        if not isinstance(discriminators, (tuple, list)) or \
+           not all(isinstance(discriminator, string_types) for discriminator in discriminators):
+            msg = translate(
+                msgid=u"The \"${field_title}\" of meeting configuration \"${cfg_title}\" must return a tuple or a list of strings, returned value is \"${value}\"!",
+                domain="PloneMeeting",
+                mapping={
+                    'field_title': translate(
+                        'PloneMeeting_label_eSignDiscriminatorsTALExpr',
+                        domain="PloneMeeting",
+                        context=self.request),
+                    'cfg_title': safe_unicode(self.cfg.Title()),
+                    'value': safe_unicode(repr(discriminators))},
+                context=self.request)
+            raise ValueError(msg)
+        return tuple(discriminators)
 
     def get_create_session_custom_data(self):
         """

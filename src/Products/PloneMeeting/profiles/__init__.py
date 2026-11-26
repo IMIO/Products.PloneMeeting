@@ -886,7 +886,7 @@ class MeetingConfigDescriptor(Descriptor):
 
         # Doc parameters -------------------------------------------------------
         self.meetingItemTemplatesToStoreAsAnnex = []
-        self.eSignDiscriminatorsTALExpr = 'python: [cfg.getId()]'
+        self.eSignDiscriminatorsTALExpr = 'python: (cfg.getId(), )'
 
         # content_category_groups parameters -----------------------------------
         self.category_group_activated_attrs = {}

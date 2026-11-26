@@ -26,6 +26,14 @@ Changelog
   the item export PDF popup is closed when clicking on it.
   Requires `imio.annex` with `download_export_pdf` button (2.29.0+).
   [gbastien]
+- `PMSignersAdapter.get_discriminators` returns a tuple of strings as expected
+  by `imio.esign` instead of the discriminators joined in a single string that was
+  compared as a set of characters, so different discriminators made of the same
+  characters (like UIDs) were using the same esign session.
+  A `ValueError` is raised when `MeetingConfig.eSignDiscriminatorsTALExpr`
+  does not return a tuple or a list of strings so the configuration is fixed,
+  a returned list is turned into a tuple, default value is now `python: (cfg.getId(), )`.
+  [gbastien]
 
 
 4.2.29rc18 (2026-11-20)

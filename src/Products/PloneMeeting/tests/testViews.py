@@ -4869,6 +4869,54 @@ class testViews(PloneMeetingTestCase):
         # @@parapheo specifies that signers are displayed in the signing order
         self.assertIn("Signers (signing order)", self.portal.restrictedTraverse('@@parapheo')())
 
+    def test_pm_EsignDiscriminators(self):
+        """Annexes are added to separate esign sessions when the discriminators
+           returned by MeetingConfig.eSignDiscriminatorsTALExpr are different.
+           Discriminators must be compared as a tuple of strings and not as a set
+           of characters, this is the case for example when discriminating on an UID
+           as different UIDs are often made of the same characters."""
+        cfg, annex_type, pod_template, pod_template_uid, item, meeting, held_pos1, held_pos2 = \
+            self._setup_esign()
+        cfg.setESignDiscriminatorsTALExpr('python: (obj.Title(), )')
+        item1, item2, item3 = meeting.get_items(ordered=True)[0:3]
+        # different discriminators made of the same characters
+        item1.setTitle('Item 12')
+        item2.setTitle('Item 21')
+        item3.setTitle('Item 12')
+
+        def _add_annex_to_sign_session(itm):
+            annex = self.addAnnex(itm, to_sign=True, annexFile=self.annexFilePDF)
+            sessions = _add_annexes_to_sign_session(
+                itm, [annex], cfg, pod_template, ISignable(itm).get_signers())
+            return [session_id for session_id, session in sessions]
+
+        self.assertEqual(_add_annex_to_sign_session(item1), [0])
+        # different discriminator, a new session is created
+        self.assertEqual(_add_annex_to_sign_session(item2), [1])
+        # same discriminator as item1, added to same session
+        self.assertEqual(_add_annex_to_sign_session(item3), [0])
+        sessions = get_session_annotation()['sessions']
+        self.assertEqual(len(sessions[0]['files']), 2)
+        self.assertEqual(len(sessions[1]['files']), 1)
+
+        # discriminators are a tuple of strings as expected by imio.esign
+        annex = self.addAnnex(item1, to_sign=True, annexFile=self.annexFilePDF)
+        self.assertEqual(ISignable(item1).get_discriminators(annex, pod_template), ('Item 12', ))
+        # the expression may return a list, turned into a tuple
+        cfg.setESignDiscriminatorsTALExpr('python: [obj.Title()]')
+        self.assertEqual(ISignable(item1).get_discriminators(annex, pod_template), ('Item 12', ))
+        cfg.setESignDiscriminatorsTALExpr('')
+        self.assertEqual(ISignable(item1).get_discriminators(annex, pod_template), ())
+        # the expression must return a tuple or a list of strings, an error is
+        # raised so the configuration is fixed instead of using a wrong session
+        for wrong_expr in ('python: obj.Title()',
+                           'python: (obj.Title(), 1)',
+                           'python: [obj.Title(), 1]'):
+            cfg.setESignDiscriminatorsTALExpr(wrong_expr)
+            self.assertRaises(ValueError, ISignable(item1).get_discriminators, annex, pod_template)
+            self.assertRaises(ValueError, _add_annexes_to_sign_session,
+                              item1, [annex], cfg, pod_template, ISignable(item1).get_signers())
+
     def test_pm_Parapheo_available(self):
         """@@parapheo is available to MeetingManagers, esign watchers and signers."""
         # create 2 sessions with different signers
