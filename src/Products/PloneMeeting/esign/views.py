@@ -11,14 +11,11 @@ from imio.esign.utils import get_session_info
 from imio.helpers.cache import get_current_user_id
 from imio.prettylink.interfaces import IPrettyLink
 from plone import api
-from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import ESIGNWATCHERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.esign.utils import esign_access_groups
 from Products.PloneMeeting.esign.utils import user_is_signer
 from zope.i18n import translate
-
-import html
 
 
 class PMSessionsListingView(SessionsListingView):
@@ -87,25 +84,31 @@ class PMSessionsListingView(SessionsListingView):
 
 class PMSessionFilesView(SessionFilesView):
 
-    def _get_item_reference(self, item):
-        """Display the item reference the same way it is displayed on the item view.
-           Item reference is not considered private so we do not check isPrivacyViewable."""
-        if not item.adapted().show_item_reference():
+    def _get_item_static_infos(self, item):
+        """Display the item labels and item reference using the @@static-infos view,
+           the same way it is displayed in the dashboards.
+           Labels are displayed if enabled and item is privacy viewable.
+           Item reference is displayed when it is displayed on the item view, it is not
+           considered private so we do not check isPrivacyViewable."""
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(item)
+        visible_columns = []
+        if 'labels' in cfg.getUsedItemAttributes() and item.adapted().isPrivacyViewable():
+            visible_columns.append('static_labels')
+        if item.adapted().show_item_reference():
+            visible_columns.append('static_item_reference')
+        if not visible_columns:
             return u""
-        item_reference = item.getItemReference()
-        if not item_reference:
-            return u""
-        return u"<span class='discreet itemReference'>{0}</span>".format(
-            html.escape(safe_unicode(item_reference)))
+        return item.restrictedTraverse('@@static-infos')(visibleColumns=visible_columns)
 
     def get_file_link(self, ctx, obj):
         if ctx.getTagName() == 'MeetingItem':
             pretty_link = ctx.getPrettyLink(
                 contentValue=ctx.Title(withItemNumber=True, withMeetingDate=True))
-            item_reference = self._get_item_reference(ctx)
+            item_infos = self._get_item_static_infos(ctx)
 
         elif ctx.getTagName() == 'Meeting':
-            item_reference = u""
+            item_infos = u""
             pretty_link = ctx.get_pretty_link(
                 prefixed=True, short=False, showContentIcon=True)
 
@@ -129,8 +132,8 @@ class PMSessionFilesView(SessionFilesView):
 
         descr = self._get_file_link_descr(ctx, obj)
 
-        # span.itemReference is displayed as block, no need for a <br>
-        return pretty_link + (item_reference or u"<br>") + u"<span class='file_link_file'>➔ " + \
+        # static infos are displayed as block, no need for a <br>
+        return pretty_link + (item_infos or u"<br>") + u"<span class='file_link_file'>➔ " + \
             IPrettyLink(obj).getLink() + signed_info + more_infos_link + "</span>" + descr
 
 

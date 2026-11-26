@@ -3,7 +3,7 @@
     <tal:labels condition="python: field_name == 'labels'">
       <div id="labeling-viewlet"
            tal:define="active_labels python: view.active_labels"
-           tal:condition="python: active_labels != ([], [])">
+           tal:condition="python: any(active_labels)">
         <ul class="activeLabels">
           <li tal:repeat="personal_label python: active_labels[0]">
             <span tal:attributes="class string:labelItem labelColor labelcolor-${personal_label/color}"

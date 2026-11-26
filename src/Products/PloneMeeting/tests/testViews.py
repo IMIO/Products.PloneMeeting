@@ -4701,12 +4701,28 @@ class testViews(PloneMeetingTestCase):
         self.assertTrue(
             result.index(stored_annex.absolute_url()) <
             result.index(annex2.absolute_url()))
-        # item reference is displayed like on the item view
+        # item reference is displayed by the @@static-infos view like in the dashboards
+        # when it is displayed on the item view
         self.assertTrue(item.adapted().show_item_reference())
-        self.assertTrue(item.getItemReference())
-        self.assertIn(
-            "<span class='discreet itemReference'>{0}</span>".format(
-                item.getItemReference()), result)
+        item_reference = '<p class="discreet">{0}</p>'.format(item.getItemReference())
+        self.assertIn(item_reference, result)
+        # labels are displayed between item title and item reference like in the dashboards
+        self._enable_ftw_labels(cfg)
+        self.changeUser('pmManager')
+        # compute labels access
+        item.update_local_roles()
+        # nothing displayed when no active label
+        self.assertNotIn("labeling-viewlet", view(0))
+        ILabeling(item).update(['label1'])
+        result = view(0)
+        self.assertIn("labelcolor-green", result)
+        self.assertTrue(
+            result.index(item.absolute_url()) <
+            result.index("labeling-viewlet") <
+            result.index(item_reference))
+        # not displayed when labels are not enabled
+        self._enableField('labels', enable=False)
+        self.assertNotIn("labeling-viewlet", view(0))
         # delete annex, session size is correct
         # depending on version of soffice, initial size of generated pod template can be different
         initial_size = get_session_annotation()['sessions'][0]['size']

@@ -1925,9 +1925,10 @@ div[id^="archetypes-fieldname-labelsConfig-"] div.value-1 {
 #content div#labeling-viewlet {
    padding-top: 0.3em;
 }
-/* labels displayed in the dashboards and linked items */
+/* labels displayed in the dashboards, linked items and esign session files */
 #content div#faceted-results div#labeling-viewlet ul,
-#content div#collapsible-linked-items div#labeling-viewlet ul {
+#content div#collapsible-linked-items div#labeling-viewlet ul,
+#content div[id^="collapsible-session-files_"] div#labeling-viewlet ul {
    display: inline-block;
 }
 

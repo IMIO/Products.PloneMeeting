@@ -34,6 +34,11 @@ Changelog
   does not return a tuple or a list of strings so the configuration is fixed,
   a returned list is turned into a tuple, default value is now `python: (cfg.getId(), )`.
   [gbastien]
+- Display item labels between item title and item reference in the `Files` column
+  of `@@parapheo` (`@@esign-session-files`) like in the dashboards, labels and
+  item reference are now rendered by the `@@static-infos` view.
+  Fixed `@@static-infos` rendering an empty labels block for items that never had labels.
+  [gbastien]
 
 
 4.2.29rc18 (2026-11-20)
