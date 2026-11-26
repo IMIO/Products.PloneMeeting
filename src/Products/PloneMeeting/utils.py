@@ -2756,7 +2756,10 @@ def prefix_anonymized_words(xhtml, css_classes):
         return xhtml
     elements = []
     for css_class in css_classes:
-        elements += CSSSelector("." + css_class)(tree)
+        for element in CSSSelector("." + css_class)(tree):
+            # an element using several of p_css_classes is managed only once
+            if element not in elements:
+                elements.append(element)
     for element in elements:
         # nested anonymized content is managed by the parent anonymized element
         if any(ancestor in elements for ancestor in element.iterancestors()):
