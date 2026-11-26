@@ -217,6 +217,10 @@ Changelog
   MeetingConfigs anonymizing content.  Requires `imio.pm.locales` with completed
   `css_transforms_descr` translation.  See #DLIBBDC-4243.
   [gbastien]
+- Content replacing anonymized content (`MeetingConfig.cssTransforms` action `replace`)
+  using the `pm-anonymized` CSS class is hidden in the black box and displayed when
+  hovering it, the cursor is a `help` cursor.
+  [gbastien]
 
 4.2.28.24 (2026-09-30)
 ----------------------
