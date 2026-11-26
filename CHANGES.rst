@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.2.29rc19 (unreleased)
+4.2.29rc19 (2026-11-26)
 -----------------------
 
 - Items updated by batch action `UpdateProposingGroupBatchActionForm`
