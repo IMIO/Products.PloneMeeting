@@ -203,9 +203,9 @@ function itemExportPDF() {
        closeselector: '[name="form.buttons.cancel"]',
        config: {
             onBeforeLoad : function(e) {
-                // close on Apply as we download a file
-                var apply_button = $("input#form-buttons-apply_export_pdf");
-                apply_button.click(function(e) {
+                // close on Download as we download a file
+                var download_button = $("input#form-buttons-download_export_pdf");
+                download_button.click(function(e) {
                     $('input#form-buttons-cancel').click();
                 });
                 // open in new tab so user see that download is on the way
