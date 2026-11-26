@@ -2,8 +2,8 @@ Changelog
 =========
 
 
-4.2.29rc110 (unreleased)
-------------------------
+4.2.29rc20 (unreleased)
+-----------------------
 
 - Nothing changed yet.
 
