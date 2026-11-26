@@ -60,4 +60,7 @@
     <adapter factory=".meeting.MeetingSearchableTextExtender"
              name="MeetingSearchableTextExtender" />
 
+    <!-- collective.dexteritytextindexer rich text converter managing anonymized content -->
+    <adapter factory=".meeting.MeetingRichTextIndexFieldConverter" />
+
 </configure>

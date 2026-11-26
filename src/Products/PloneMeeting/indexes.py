@@ -29,7 +29,9 @@ from Products.PloneMeeting.config import REINDEX_NEEDED_MARKER
 from Products.PloneMeeting.content.meeting import IMeeting
 from Products.PloneMeeting.interfaces import IMeetingContent
 from Products.PloneMeeting.interfaces import IMeetingItem
+from Products.PloneMeeting.utils import anonymized_text_indexing
 from Products.PloneMeeting.utils import get_annexes
+from Products.PloneMeeting.utils import get_anonymized_css_classes
 from Products.PloneMeeting.utils import get_datagridfield_column_value
 from Products.PluginIndexes.common.UnIndex import _marker
 
@@ -117,13 +119,24 @@ def pm_technical_index(obj):
     return res or _marker
 
 
+def _anonymized_css_classes(obj):
+    """CSS classes of content anonymized for some power observers
+       in the MeetingConfig of p_obj, see MeetingConfig.cssTransforms."""
+    tool = api.portal.get_tool('portal_plonemeeting')
+    cfg = tool.getMeetingConfig(obj)
+    return get_anonymized_css_classes(cfg) if cfg else []
+
+
 @indexer(IMeetingItem)
 def Description(obj):
     """
       Make sure to use 'text/plain' version of description field as it is normally
-      a TextField and that we store HTML data into it for MeetingItem
+      a TextField and that we store HTML data into it for MeetingItem.
+      Words of content anonymized for some power observers are prefixed,
+      see utils.anonymized_text_indexing.
     """
-    return obj.Description(mimetype='text/plain')
+    with anonymized_text_indexing(_anonymized_css_classes(obj)):
+        return obj.Description(mimetype='text/plain')
 
 
 @indexer(IMeetingItem)
@@ -242,9 +255,12 @@ def sentToInfos(obj):
 def SearchableText(obj):
     """
       Contained annex title and scan_id are indexed in the SearchableText.
+      Words of content anonymized for some power observers are prefixed,
+      see utils.anonymized_text_indexing.
     """
     res = []
-    res.append(obj.SearchableText())
+    with anonymized_text_indexing(_anonymized_css_classes(obj)):
+        res.append(obj.SearchableText())
     for annex in get_annexes(obj):
         res.append(annex.Title())
         scan_id = getattr(annex, "scan_id", None)

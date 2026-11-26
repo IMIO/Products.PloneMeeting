@@ -402,6 +402,13 @@ POD_TEMPLATE_TOKEN_SEPARATOR = '__'
 
 # name of marker specifyng that a reindex is required
 REINDEX_NEEDED_MARKER = "_catalog_reindex_needed"
+# prefix added to every word of content anonymized for some power observers
+# (see MeetingConfig.cssTransforms) when indexed in the ANONYMIZED_TEXT_INDEXES,
+# so it is only found by users that may see it, see utils.anonymized_text_query,
+# it begins with "__" as text queries containing a term beginning with "_" are
+# not executed, see utils.has_underscore_term
+ANONYMIZED_TEXT_PREFIX = "__anonymized_text_prefix_"
+ANONYMIZED_TEXT_INDEXES = ("SearchableText", "Description")
 # prefix used in pm_technical_index to store item initiators
 ITEM_INITIATOR_INDEX_PATTERN = "item_initiator_{0}"
 

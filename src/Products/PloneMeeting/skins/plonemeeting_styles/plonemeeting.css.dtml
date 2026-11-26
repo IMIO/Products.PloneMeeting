@@ -697,6 +697,12 @@ span.warningValue {
 }
 .pm-anonymized {
     background-color: black;
+    color: black;
+    cursor: help;
+}
+/* the replacing content (MeetingConfig.cssTransforms) is displayed when hovering */
+.pm-anonymized:hover {
+    color: white;
 }
 
 p.indent-firstline {text-indent: 40px;}

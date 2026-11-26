@@ -23,6 +23,7 @@ from Products.PloneMeeting.utils import escape
 from Products.PloneMeeting.utils import is_proposing_group_editor
 from Products.PloneMeeting.utils import isPowerObserverForCfg
 from Products.PloneMeeting.utils import org_id_to_uid
+from Products.PloneMeeting.utils import prefix_anonymized_words
 from Products.PloneMeeting.utils import sendMail
 from Products.PloneMeeting.utils import sendMailIfRelevant
 from Products.PloneMeeting.utils import set_dx_value
@@ -508,6 +509,16 @@ class testUtils(PloneMeetingTestCase):
         self.assertFalse(is_proposing_group_editor(None, cfg))
         self.assertFalse(is_proposing_group_editor('', cfg))
         self.assertFalse(is_proposing_group_editor([], cfg))
+
+    def test_pm_prefix_anonymized_words(self):
+        """Words of content using one of the given CSS classes are prefixed once,
+           even when an element uses several of these CSS classes or is nested."""
+        self.assertEqual(
+            prefix_anonymized_words(
+                u'<p>Visible<span class="anon1 anon2">Secret <b class="anon2">Nested</b></span>after</p>',
+                ['anon1', 'anon2']),
+            u'<special_tag><p>Visible<span class="anon1 anon2"> __anonymized_text_prefix_Secret '
+            u'<b class="anon2">__anonymized_text_prefix_Nested</b></span> after</p></special_tag>')
 
 
 def test_suite():
