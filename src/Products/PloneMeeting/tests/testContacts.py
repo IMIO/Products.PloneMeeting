@@ -592,6 +592,15 @@ class testContacts(PloneMeetingTestCase):
         meeting_item_signatories = meeting.get_item_signatories()
         self.assertTrue(item1_uid in meeting_item_signatories)
         self.assertFalse(item2_uid in meeting_item_signatories)
+        # Meeting.get_item_signatories may also return signatories of a single item
+        self.assertEqual(meeting.get_item_signatories(item_uid=item1_uid), {'2': hp_uid})
+        self.assertEqual(meeting.get_item_signatories(item_uid=item2_uid), {})
+        self.assertEqual(
+            meeting.get_item_signatories(item_uid=item1_uid, include_position_type=True),
+            meeting.get_item_signatories(include_position_type=True)[item1_uid])
+        self.assertEqual(
+            meeting.get_item_signatories(item_uid=item1_uid, include_position_type=True)['2'],
+            {'hp_uid': hp_uid, 'position_type': u'default'})
 
         # Meeting.get_item_signatories may also be used
         # to get every item signatories hp objects

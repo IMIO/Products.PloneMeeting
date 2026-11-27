@@ -1437,7 +1437,8 @@ class Meeting(Container):
     def get_item_signatories(self,
                              by_signatories=False,
                              include_position_type=False,
-                             by_signature_number=False):
+                             by_signature_number=False,
+                             item_uid=None):
         '''Return itemSignatories, by default the itemSignatories dict has the
            item UID as key and list of signatories as values, this is done to
            make data more easy to use.
@@ -1445,30 +1446,41 @@ class Meeting(Container):
            signatory as key and list of items as value.
            If p_by_signature_number, we return a dict with signature number as
            key and list of item signatories as values.
-           The parameters are mutually exclusive.'''
+           If p_item_uid is given, only the signatories of this item are returned,
+           so the value the default dict would have for this item.
+           The parameters p_by_signatories, p_by_signature_number and p_item_uid
+           are mutually exclusive.'''
         signatories = OrderedDict()
         if by_signatories:
-            for item_uid, signatories_infos in self.item_signatories.items():
+            for uid, signatories_infos in self.item_signatories.items():
                 for signature_number, signatory_infos in signatories_infos.items():
                     # do not keep 'position_type' from the stored itemSignatories
                     signatory_uid = signatory_infos['hp_uid']
                     if signatory_uid not in signatories:
                         signatories[signatory_uid] = []
-                    signatories[signatory_uid].append(item_uid)
+                    signatories[signatory_uid].append(uid)
         elif by_signature_number:
-            for item_uid, signatories_infos in self.item_signatories.items():
+            for signatories_infos in self.item_signatories.values():
                 for signature_number, signatory_infos in signatories_infos.items():
                     if signature_number not in signatories:
                         signatories[signature_number] = []
                     signatory = uuidToObject(signatory_infos['hp_uid'], unrestricted=True)
                     signatories[signature_number].append(signatory)
+        elif item_uid:
+            signatories = self._format_item_signatories(
+                self.item_signatories.data.get(item_uid, {}), include_position_type)
         else:
-            for item_uid, signatory_infos in self.item_signatories.data.items():
-                if include_position_type:
-                    signatories[item_uid] = signatory_infos.copy()
-                else:
-                    signatories[item_uid] = {k: v['hp_uid'] for k, v in signatory_infos.items()}
+            for uid, signatory_infos in self.item_signatories.data.items():
+                signatories[uid] = self._format_item_signatories(
+                    signatory_infos, include_position_type)
         return signatories
+
+    def _format_item_signatories(self, signatory_infos, include_position_type):
+        '''Format the stored p_signatory_infos of an item, with the position_type
+           if p_include_position_type, only the signatory UID otherwise.'''
+        if include_position_type:
+            return signatory_infos.copy()
+        return {k: v['hp_uid'] for k, v in signatory_infos.items()}
 
     def _get_item_redefined_positions(self):
         """ """
@@ -1496,8 +1508,8 @@ class Meeting(Container):
         """Return the signature position_type to use as label and signature_number
            for given p_item_uid and p_signatory_uid."""
         # check if signatory_uid is redefined on the item
-        data = self.get_item_signatories(by_signatories=False, include_position_type=True)
-        data = {k: v['position_type'] for k, v in data.get(item_uid, {}).items()
+        data = self.get_item_signatories(item_uid=item_uid, include_position_type=True)
+        data = {k: v['position_type'] for k, v in data.items()
                 if v['hp_uid'] == signatory_uid}
         hp = uuidToObject(signatory_uid, unrestricted=True)
         if data:

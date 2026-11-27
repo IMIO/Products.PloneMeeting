@@ -1454,12 +1454,10 @@ class BaseDGHV(object):
                 if self.context.hasMeeting():
                     # if we have redefined signatories, use the selected position_type
                     meeting = self.context.getMeeting()
-                    item_uid = self.context.UID()
-                    item_signatories = meeting.get_item_signatories(include_position_type=True)
-                    if item_uid in item_signatories:
-                        forced_position_type_values = {
-                            k: v['position_type'] for k, v in
-                            item_signatories[item_uid].items()}
+                    item_signatories = meeting.get_item_signatories(
+                        item_uid=self.context.UID(), include_position_type=True)
+                    forced_position_type_values = {
+                        k: v['position_type'] for k, v in item_signatories.items()}
 
         line = 0
         sorted_signatories = [(v, forced_position_type_values.get(k, None))

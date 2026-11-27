@@ -4705,7 +4705,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # reverse as keys were signatory UID, we want signature_number
             signatories = {v: k for k, v in signatories.items()}
 
-        item_signatories = meeting.get_item_signatories().get(self.UID(), {})
+        item_signatories = meeting.get_item_signatories(item_uid=self.UID())
         signatories.update(item_signatories)
 
         if the_objects:
@@ -4717,8 +4717,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         # finally if include_position_type=True, complete data
         if include_position_type:
-            item_signatories = meeting.get_item_signatories(include_position_type=True).get(
-                self.UID(), {})
+            item_signatories = meeting.get_item_signatories(
+                item_uid=self.UID(), include_position_type=True)
             for signature_number, uid_or_obj in signatories.items():
                 signatories[signature_number] = {
                     'hp': uid_or_obj,
@@ -8274,11 +8274,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return res
         meeting = self.getMeeting()
         attendees = meeting.get_attendees(the_objects=False)
-        item_absents = self.get_item_absents()
-        item_excused = self.get_item_excused()
-        item_non_attendees = self.get_item_non_attendees()
+        # order does not matter here, we only check if an attendee is not present
+        not_present = set(
+            self.get_item_absents(ordered=False) + self.get_item_excused(ordered=False) + self.get_item_non_attendees(ordered=False))
         attendees = [attendee for attendee in attendees
-                     if attendee not in item_absents + item_excused + item_non_attendees]
+                     if attendee not in not_present]
         # get really present attendees now
         if ordered:
             attendees = self._order_contacts(attendees)
@@ -8286,7 +8286,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return attendees
 
     def _order_contacts(self, uids):
-        """ """
+        """Return given p_uids ordered following the item attendees order."""
+        uids = set(uids)
         return [uid for uid in self.get_all_attendees(ordered=True)
                 if uid in uids]
 

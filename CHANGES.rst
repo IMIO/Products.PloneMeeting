@@ -44,6 +44,13 @@ Changelog
   sessions of the element files from the `imio.esign` `c_uids` and `uids` mappings
   instead of walking (and copying) every sessions.
   [gbastien]
+- Speed up getting item attendees and signatories, used for example to get
+  esign signers: added parameter `item_uid` to `Meeting.get_item_signatories`
+  to only get signatories of one item instead of computing it for every items,
+  `MeetingItem.get_attendees` and `MeetingItem._order_contacts` use a `set`
+  to check presence and `MeetingItem.get_attendees` does not order item absents,
+  excused and non attendees as it only checks if an attendee is not present.
+  [gbastien]
 
 
 4.2.29rc19 (2026-11-26)
