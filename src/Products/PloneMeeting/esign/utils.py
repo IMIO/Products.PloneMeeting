@@ -5,6 +5,7 @@
 
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.plonegroup.utils import get_person_from_userid
+from imio.esign import manage_session_perm
 from imio.esign.adapters import ISignable
 from imio.esign.utils import add_files_to_session
 from imio.esign.utils import get_session_annotation
@@ -83,6 +84,20 @@ def esign_access_groups():
     tool = api.portal.get_tool('portal_plonemeeting')
     return tool.get_filtered_plone_groups_for_user(
         suffixes=[MEETINGMANAGERS_GROUP_SUFFIX, ESIGNWATCHERS_GROUP_SUFFIX])
+
+
+def may_manage_session(session_id=None):
+    """Is current user able to manage (send, delete, recreate) sessions?
+       The "imio.esign: Manage Sessions" permission is given to MeetingManagers,
+       that are MeetingManager on portal_plonemeeting for every MeetingConfig,
+       so when a p_session_id is given, the permission is checked on the
+       MeetingConfig the session was created for (that does not acquire local roles)."""
+    tool = api.portal.get_tool('portal_plonemeeting')
+    obj = tool
+    if session_id is not None and str(session_id).isdigit():
+        session = get_session_annotation()["sessions"].get(int(session_id), {})
+        obj = tool.get(session.get("cfg_id", ""), tool)
+    return api.user.has_permission(manage_session_perm, obj=obj)
 
 
 def get_session_title(cfg, pod_template, obj, annex=None):

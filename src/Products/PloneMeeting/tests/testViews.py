@@ -5189,6 +5189,44 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(len(parapheo.get_sessions()), 1)
         self.assertEqual(parapheo.get_sessions()[0]["id"], 1)
 
+    def test_pm_EsignManageSessionOfMeetingConfig(self):
+        """MeetingManagers are MeetingManager on the tool for every MeetingConfig,
+           managing (send, delete, recreate) a session is only possible for the
+           MeetingManagers of the MeetingConfig the session was created for."""
+        cfg, annex_type, pod_template, pod_template_uid, item, meeting, held_pos1, held_pos2 = \
+            self._setup_esign()
+        annex = self.addAnnex(item, to_sign=True, annexFile=self.annexFilePDF)
+        session_id = _add_annexes_to_sign_session(
+            item, [annex], cfg, pod_template, ISignable(item).get_signers())[0][0]
+        delete_view = self.portal.restrictedTraverse('@@esign-session-delete')
+        send_view = self.portal.restrictedTraverse('@@external-esign-session-create')
+        recreate_views = [self.portal.restrictedTraverse('@@esign-session-recreate'),
+                          self.portal.restrictedTraverse('@@esign-session-recreate-form')]
+
+        def _may_manage():
+            return [delete_view.may_delete_session(),
+                    send_view.may_create_external_sessions()] + \
+                [view.may_recreate_session() for view in recreate_views]
+
+        # without session, permission is checked on the tool,
+        # this is used to display the buttons in the sessions listing
+        self.changeUser('pmManager2')
+        self.assertEqual(_may_manage(), [True, True, True, True])
+        # pmManager2 is not MeetingManager of cfg, the session MeetingConfig
+        self.assertFalse(self.tool.isManager(cfg))
+        self.request.form['esign_session_id'] = str(session_id)
+        self.request.form['session_id'] = str(session_id)
+        self.assertEqual(_may_manage(), [False, False, False, False])
+        self.assertRaises(Unauthorized, delete_view)
+        self.assertRaises(Unauthorized, send_view)
+        self.assertRaises(Unauthorized, recreate_views[0])
+        self.assertTrue(session_id in get_session_annotation()['sessions'])
+        # pmManager is MeetingManager of cfg
+        self.changeUser('pmManager')
+        self.assertEqual(_may_manage(), [True, True, True, True])
+        delete_view()
+        self.assertFalse(session_id in get_session_annotation()['sessions'])
+
     def test_pm_EsignSignersVocabulary(self):
         """The imio.esign.signers vocabulary is overrided and lists every
            held_position having the "signer" usage, term value is the held_position UID."""

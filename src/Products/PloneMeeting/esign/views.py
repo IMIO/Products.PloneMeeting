@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from imio.esign import manage_session_perm
 from imio.esign.browser.actions import RecreateSessionFormView
 from imio.esign.browser.actions import RecreateSessionView
 from imio.esign.browser.views import ExternalSessionCreateView
@@ -14,6 +13,7 @@ from plone import api
 from Products.PloneMeeting.config import ESIGNWATCHERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.esign.utils import esign_access_groups
+from Products.PloneMeeting.esign.utils import may_manage_session
 from Products.PloneMeeting.esign.utils import user_is_signer
 from zope.i18n import translate
 
@@ -140,31 +140,17 @@ class PMSessionFilesView(SessionFilesView):
 class PMSessionDeleteView(SessionDeleteView):
     """ """
 
-    def __init__(self, context, request):
-        super(PMSessionDeleteView, self).__init__(context, request)
-        self.context = context
-        self.request = request
-        self.tool = api.portal.get_tool('portal_plonemeeting')
-
     def may_delete_session(self):
-        """Check if the user may delete sessions, check on self.tool as
-           MeetingManagers are MeetingManagers on the tool."""
-        return api.user.has_permission(manage_session_perm, obj=self.tool)
+        """Check if the user may delete sessions, see may_manage_session."""
+        return may_manage_session(self.request.get("esign_session_id"))
 
 
 class PMExternalSessionCreateView(ExternalSessionCreateView):
     """ """
 
-    def __init__(self, context, request):
-        super(PMExternalSessionCreateView, self).__init__(context, request)
-        self.context = context
-        self.request = request
-        self.tool = api.portal.get_tool('portal_plonemeeting')
-
     def may_create_external_sessions(self):
-        """Check if the user may create external sessions.
-           Must be MeetingManager on tool."""
-        return api.user.has_permission(manage_session_perm, obj=self.tool)
+        """Check if the user may create external sessions, see may_manage_session."""
+        return may_manage_session(self.request.get("session_id"))
 
 
 class PMRecreateSessionView(RecreateSessionView):
@@ -173,10 +159,7 @@ class PMRecreateSessionView(RecreateSessionView):
     def may_recreate_session(self, state=None):
         if state in self.NON_RECREATABLE_STATES:
             return False
-        # permission is given to MeetingManager
-        # check if user MeetingManager on portal_plonemeeting
-        tool = api.portal.get_tool('portal_plonemeeting')
-        return api.user.has_permission(manage_session_perm, obj=tool)
+        return may_manage_session(self.request.form.get("esign_session_id"))
 
     def get_new_session_title(self, old, old_session_id):
         """Replace last part after "Session " by {sign_id} so it can be
@@ -193,7 +176,4 @@ class PMRecreateSessionFormView(RecreateSessionFormView):
     def may_recreate_session(self, state=None):
         if state in self.NON_RECREATABLE_STATES:
             return False
-        # permission is given to MeetingManager
-        # check if user MeetingManager on portal_plonemeeting
-        tool = api.portal.get_tool('portal_plonemeeting')
-        return api.user.has_permission(manage_session_perm, obj=tool)
+        return may_manage_session(self.request.form.get("esign_session_id"))

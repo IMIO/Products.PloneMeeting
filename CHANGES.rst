@@ -70,6 +70,12 @@ Changelog
     e-mail addresses, the given `template_uid` must also be a POD template;
   - when displaying the `@@store-pod-temlate-as-annex-form`.
   [gbastien]
+- Managing an esign session (send to external service, delete, recreate) is only
+  possible for the MeetingManagers of the `MeetingConfig` the session was created for,
+  the `imio.esign: Manage Sessions` permission was checked on `portal_plonemeeting`
+  where every MeetingManagers are `MeetingManager`, see new helper
+  `esign.utils.may_manage_session`.
+  [gbastien]
 
 
 4.2.29rc19 (2026-11-26)
