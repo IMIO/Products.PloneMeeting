@@ -150,7 +150,8 @@ def compute_signers(obj, pod_template):
             signers = ISignable(obj).get_signers()
         except ValueError as msg:
             signers_error_msg = msg
-    return signers, raw_signers, signers_error_msg, esign_enabled, uuidToObject(pod_template.store_as_annex)
+    return signers, raw_signers, signers_error_msg, esign_enabled, \
+        uuidToObject(pod_template.store_as_annex, unrestricted=True)
 
 
 @provider(IContextAwareDefaultFactory)

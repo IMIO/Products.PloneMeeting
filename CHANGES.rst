@@ -31,6 +31,11 @@ Changelog
 - When adding annexes to an esign session, only reindex the `scan_id` of an
   annex when a new `scan_id` is set, an existing `scan_id` is already indexed.
   [gbastien]
+- In `PMDocumentGenerationView.storePodTemplateAsAnnex` and
+  `batchactions.compute_signers`, get the annex type unrestrictedly using
+  `uuidToObject(unrestricted=True)` so it does not depend on the user being
+  able to view the annex type in the configuration.
+  [gbastien]
 
 
 4.2.29rc19 (2026-11-26)

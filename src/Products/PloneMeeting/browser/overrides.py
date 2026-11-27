@@ -1248,7 +1248,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
         # ConfigurablePodTemplate.store_as_annex and it could contain an annex_type
         # that does not correspond to the context the document is generated on
         plone_utils = api.portal.get_tool('plone_utils')
-        annex_type = api.content.find(UID=pod_template.store_as_annex)[0].getObject()
+        annex_type = uuidToObject(pod_template.store_as_annex, unrestricted=True)
         annex_type_group = annex_type.get_category_group()
         if self.context.portal_type not in \
            self._annexes_types_mapping()[annex_type_group.getId()]:
