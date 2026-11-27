@@ -5,7 +5,12 @@ Changelog
 4.2.29rc20 (unreleased)
 -----------------------
 
-- Nothing changed yet.
+- Added upgrade step to `4218.1` that runs upgrade steps `4217` to `4217.4`
+  and `Migrate_To_4218._configureExtraAllowedContentForCKeditor` for sites
+  migrated with the first version of the upgrade step to `4218` (`4217` to `4218`)
+  that did not run these steps added after.
+  Fixed upgrade step to `4217` that was calling `migrate_to_4216.migrate`.
+  [gbastien]
 
 
 4.2.29rc19 (2026-11-26)

@@ -263,7 +263,7 @@
       description="Go to PloneMeeting 4217"
       source="4216"
       destination="4217"
-      handler="Products.PloneMeeting.migrations.migrate_to_4216.migrate"
+      handler="Products.PloneMeeting.migrations.migrate_to_4217.migrate"
       profile="Products.PloneMeeting:default" />
 
   <genericsetup:upgradeStep
@@ -311,5 +311,13 @@
       description="This will manage esignsession ETag"
       import_steps="plone.app.registry" />
   </genericsetup:upgradeSteps>
+
+  <genericsetup:upgradeStep
+      title="Go to PloneMeeting 4218.1"
+      description="Go to PloneMeeting 4218.1"
+      source="4218"
+      destination="4218.1"
+      handler="Products.PloneMeeting.migrations.migrate_to_4218_1.migrate"
+      profile="Products.PloneMeeting:default" />
 
 </configure>
