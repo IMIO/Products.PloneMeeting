@@ -17,6 +17,7 @@ from imio.actionspanel.interfaces import IContentDeletable
 from imio.esign.adapters import ISignable
 from imio.esign.config import set_esign_registry_enabled
 from imio.esign.config import set_esign_registry_enforce_signers_order
+from imio.esign.config import set_esign_registry_seal_code
 from imio.esign.config import set_esign_registry_signers_order
 from imio.esign.utils import get_session_annotation
 from imio.helpers.cache import cleanRamCacheFor
@@ -46,6 +47,7 @@ from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import NO_COMMITTEE
 from Products.PloneMeeting.content.meeting import PLACE_OTHER
 from Products.PloneMeeting.esign.utils import _add_annexes_to_sign_session
+from Products.PloneMeeting.esign.utils import get_not_finalized_session_id
 from Products.PloneMeeting.etags import ConfigModified
 from Products.PloneMeeting.etags import ContextModified
 from Products.PloneMeeting.etags import LinkedMeetingModified
@@ -4782,6 +4784,9 @@ class testViews(PloneMeetingTestCase):
         annex_not_selected = self.addAnnex(item, annexType='overhead-analysis', annexFile=self.annexFilePDF)
         action_view = annex_not_selected.restrictedTraverse('@@iconified-signed')
         action_view.set_values({'to_sign': 'true'})
+        # the pod_template includes the seal, it is also used for the selected annexes
+        set_esign_registry_seal_code(u'SEAL_CODE')
+        pod_template.esign_include_seal = True
 
         # store annex for every items
         self.request['PUBLISHED'] = form
@@ -4802,6 +4807,10 @@ class testViews(PloneMeetingTestCase):
         stored_generated_pod_template = get_annexes(item)[-1]
         self.assertEqual(session_annot['c_uids'][item.UID()],
                          [stored_generated_pod_template.UID(), annex_pdf.UID()])
+        # generated pod template and selected annex are in the same session using the seal
+        session_id = session_annot['uids'][stored_generated_pod_template.UID()]
+        self.assertEqual(session_annot['uids'][annex_pdf.UID()], session_id)
+        self.assertEqual(session_annot['sessions'][session_id]['seal'], u'SEAL_CODE')
 
     def test_pm_RecreateEsignSession(self):
         """Test the @@recreate-session view especially custom data."""
@@ -4932,6 +4941,42 @@ class testViews(PloneMeetingTestCase):
             self.assertRaises(ValueError, ISignable(item1).get_discriminators, annex, pod_template)
             self.assertRaises(ValueError, _add_annexes_to_sign_session,
                               item1, [annex], cfg, pod_template, ISignable(item1).get_signers())
+
+    def test_pm_EsignAnnexInNotFinalizedSession(self):
+        """An annex that is in an esign session not in state "finalized" can not be
+           added to a session again and is disabled in the vocabulary used to select
+           the annexes to add to a session, see get_not_finalized_session_id."""
+        cfg, annex_type, pod_template, pod_template_uid, item, meeting, held_pos1, held_pos2 = \
+            self._setup_esign()
+        annex = self.addAnnex(item, to_sign=True, annexFile=self.annexFilePDF)
+        annex_uid = annex.UID()
+        signers = ISignable(item).get_signers()
+
+        def _annex_term_disabled():
+            vocab = get_vocab(
+                item, 'Products.PloneMeeting.vocabularies.contained_annexes_to_sign_vocabulary')
+            return vocab.getTerm(annex.getId()).disabled
+
+        # not in a session
+        self.assertIsNone(get_not_finalized_session_id(annex_uid))
+        self.assertIsNone(get_not_finalized_session_id('unknown_uid'))
+        self.assertFalse(_annex_term_disabled())
+        session_id, session = _add_annexes_to_sign_session(
+            item, [annex], cfg, pod_template, signers)[0]
+        self.assertEqual(get_not_finalized_session_id(annex_uid), session_id)
+        self.assertTrue(_annex_term_disabled())
+        # can not be added again while the session is not finalized
+        self.assertIsNone(_add_annexes_to_sign_session(item, [annex], cfg, pod_template, signers))
+        self.assertEqual(len(session['files']), 1)
+        # once the session is finalized, it can be added to a new session
+        session['state'] = 'finalized'
+        self.assertIsNone(get_not_finalized_session_id(annex_uid))
+        self.assertFalse(_annex_term_disabled())
+        new_session_id, new_session = _add_annexes_to_sign_session(
+            item, [annex], cfg, pod_template, signers)[0]
+        self.assertNotEqual(new_session_id, session_id)
+        self.assertEqual(get_not_finalized_session_id(annex_uid), new_session_id)
+        self.assertTrue(_annex_term_disabled())
 
     def test_pm_Parapheo_available(self):
         """@@parapheo is available to MeetingManagers, esign watchers and signers."""

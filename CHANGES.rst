@@ -11,6 +11,20 @@ Changelog
   that did not run these steps added after.
   Fixed upgrade step to `4217` that was calling `migrate_to_4216.migrate`.
   [gbastien]
+- Speed up the check that an annex is not already in an esign session not
+  in state `finalized` (when adding annexes to a session and in vocabulary
+  `contained_annexes_to_sign_vocabulary`) by getting the session of the annex
+  from the `imio.esign` `uids` mapping instead of walking (and copying) every
+  sessions, see new helper `esign.utils.get_not_finalized_session_id`.
+  [gbastien]
+- In `PMDocumentGenerationView.storePodTemplateAsAnnex`, add the stored generated
+  document and the selected annexes to the esign session at once, so session
+  infos are computed once and selected annexes use the same session infos as the
+  generated document, including the seal when `esign_include_seal` is enabled
+  on the POD template (selected annexes were added without the seal so they were
+  added to another session).  The session title and discriminators expressions
+  receive the first annex, the stored generated document when there is one.
+  [gbastien]
 
 
 4.2.29rc19 (2026-11-26)

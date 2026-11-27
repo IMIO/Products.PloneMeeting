@@ -1285,6 +1285,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
 
         # now check that an annex was not already stored using same pod_template
         # indeed we may not store the same generated pod_template several times
+        stored_annex = None
         if store_generated_document != '0':
             # manage when store_generated_document=='1', can not store if already stored
             # or when store_generated_document=='2', overwrite if exist
@@ -1370,29 +1371,21 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
                 annex_type,
                 annex_portal_type)
 
-            # add to eSign session if necessary
-            # now that signers and annex is correct, we can add it to session
-            if add_to_sign_session:
-                seal = get_esign_registry_seal_code() if pod_template.esign_include_seal else None
-                _add_annexes_to_sign_session(
-                    self.context,
-                    [stored_annex],
-                    self.cfg,
-                    pod_template,
-                    signers,
-                    seal=seal,
-                    show_msg=not return_portal_msg_code)
-
-        # add annexes to session if relevant
-        if add_to_sign_session and annex_ids_to_add_to_session:
-            annexes_to_sign = [self.context.get(annex_id) for annex_id in annex_ids_to_add_to_session]
+        # add to eSign session if necessary, the stored generated document first
+        # then the selected annexes, everything is added at once so it uses the
+        # same session infos (signers, seal, ...) defined by the pod_template
+        if add_to_sign_session:
+            annexes_to_sign = [stored_annex] if stored_annex is not None else []
+            annexes_to_sign += [self.context.get(annex_id) for annex_id in annex_ids_to_add_to_session or []]
             if annexes_to_sign:
+                seal = get_esign_registry_seal_code() if pod_template.esign_include_seal else None
                 _add_annexes_to_sign_session(
                     self.context,
                     annexes_to_sign,
                     self.cfg,
                     pod_template,
-                    signers=signers,
+                    signers,
+                    seal=seal,
                     show_msg=not return_portal_msg_code)
 
         if not return_portal_msg_code:

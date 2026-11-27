@@ -7,8 +7,7 @@ from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.plonegroup.utils import get_person_from_userid
 from imio.esign.adapters import ISignable
 from imio.esign.utils import add_files_to_session
-from imio.esign.utils import get_file_info
-from imio.esign.utils import get_sessions_for
+from imio.esign.utils import get_session_annotation
 from imio.helpers.cache import get_current_user_id
 from imio.helpers.utils import is_pdf
 from imio.zamqp.pm.utils import next_scan_id_pm
@@ -105,6 +104,18 @@ def get_session_title(cfg, pod_template, obj, annex=None):
     return _(ESIGN_SESSION_TITLE_PATTERN % safe_unicode(session_title))
 
 
+def get_not_finalized_session_id(annex_uid):
+    """Return the id of the esign session not in state "finalized" the annex
+       with p_annex_uid is in, None if it is not in such a session.
+       imio.esign stores the session id of every file in its "uids" mapping,
+       so we do not have to walk every sessions."""
+    annot = get_session_annotation()
+    session_id = annot["uids"].get(annex_uid)
+    session = annot["sessions"].get(session_id)
+    if session is not None and session["state"] != "finalized":
+        return session_id
+
+
 def _add_annexes_to_sign_session(
         obj,
         annexes,
@@ -115,7 +126,6 @@ def _add_annexes_to_sign_session(
         check_is_pdf=True,
         show_msg=False):
     """ """
-    context_uid = obj.UID()
     # check that file is PDF and that annex is not already in a esign session not in state "finalized"
     correct_annexes = []
     for annex in annexes:
@@ -130,26 +140,21 @@ def _add_annexes_to_sign_session(
                 type="warning",
                 request=obj.REQUEST)
             continue
-        already_in_draft_session = False
-        annex_uid = annex.UID()
-        for session_id, session in get_sessions_for(context_uid).items():
-            if session['state'] != "finalized" and \
-               get_file_info(session_id, annex_uid):
-                api.portal.show_message(
-                    translate(
-                        'annex_already_in_not_finalized_session_error',
-                        domain="PloneMeeting",
-                        mapping={'annex_title': safe_unicode(annex.Title()),
-                                 'session_id': session_id},
-                        default="Annex \"${annex_title}\" is already in session "
-                        "\"${session_id}\" that is not finalized!",
-                        context=obj.REQUEST),
-                    type="warning",
-                    request=obj.REQUEST)
-                already_in_draft_session = True
-                break
-        if not already_in_draft_session:
-            correct_annexes.append(annex)
+        not_finalized_session_id = get_not_finalized_session_id(annex.UID())
+        if not_finalized_session_id is not None:
+            api.portal.show_message(
+                translate(
+                    'annex_already_in_not_finalized_session_error',
+                    domain="PloneMeeting",
+                    mapping={'annex_title': safe_unicode(annex.Title()),
+                             'session_id': not_finalized_session_id},
+                    default="Annex \"${annex_title}\" is already in session "
+                    "\"${session_id}\" that is not finalized!",
+                    context=obj.REQUEST),
+                type="warning",
+                request=obj.REQUEST)
+            continue
+        correct_annexes.append(annex)
     annexes = correct_annexes
 
     if not annexes:
@@ -168,9 +173,11 @@ def _add_annexes_to_sign_session(
         for signer in signers]
     files_uids = [annex.UID() for annex in annexes]
 
-    # add files to session
-    title = get_session_title(cfg, pod_template, obj, annex)
-    discriminators = ISignable(obj).get_discriminators(annex, pod_template)
+    # add files to session, the session title and discriminators are computed
+    # with the first annex, the stored generated document when there is one
+    first_annex = annexes[0]
+    title = get_session_title(cfg, pod_template, obj, first_annex)
+    discriminators = ISignable(obj).get_discriminators(first_annex, pod_template)
     watchers = ISignable(obj).get_watchers()
     create_session_custom_data = ISignable(obj).get_create_session_custom_data()
     sessions = add_files_to_session(

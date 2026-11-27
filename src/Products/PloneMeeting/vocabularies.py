@@ -37,8 +37,6 @@ from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.annex.content.annex import IAnnex
 from imio.annex.vocabularies import ContainedAnnexesVocabulary
 from imio.annex.vocabularies import ExportPDFElementsVocabulary
-from imio.esign.utils import get_file_info
-from imio.esign.utils import get_sessions_for
 from imio.helpers import EMPTY_STRING
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_plone_groups_for_user
@@ -69,6 +67,7 @@ from Products.PloneMeeting.config import NO_COMMITTEE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import POD_TEMPLATE_TOKEN_SEPARATOR
+from Products.PloneMeeting.esign.utils import get_not_finalized_session_id
 from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
 from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
 from Products.PloneMeeting.interfaces import IMeetingConfig
@@ -3243,16 +3242,12 @@ class ContainedAnnexesToSignVocabulary(ContainedAnnexesVocabulary):
                 term.title += translate(' [PDF required]',
                                         domain='imio.annex',
                                         context=context.REQUEST)
-            # check not already in a "draft" esign session
-            else:
-                context_uid = context.UID()
-                for session_id, session in get_sessions_for(context_uid).items():
-                    if session['state'] != "finalized" and \
-                    get_file_info(session_id, annex_info['UID']):
-                        term.disabled = True
-                        term.title += translate(' [already_in_esign_session]',
-                                                domain='PloneMeeting',
-                                                context=context.REQUEST)
+            # check not already in an esign session not in state "finalized"
+            elif get_not_finalized_session_id(annex_info['UID']) is not None:
+                term.disabled = True
+                term.title += translate(' [already_in_esign_session]',
+                                        domain='PloneMeeting',
+                                        context=context.REQUEST)
 
 
 ContainedAnnexesToSignVocabularyFactory = ContainedAnnexesToSignVocabulary()
