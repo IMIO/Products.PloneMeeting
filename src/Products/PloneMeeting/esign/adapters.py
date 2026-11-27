@@ -179,15 +179,22 @@ class PMSignersAdapter(SignableAdapter):
 
     def get_watchers(self):
         """
-        MeetingManagers are watchers.
+        Members of the MeetingConfig "esignwatchers" group are watchers.
+        Cached in the REQUEST as it is called for every element added
+        to a session, by a batch action for example.
         """
         groupname = "{0}_{1}".format(
             self.cfg.getId(), ESIGNWATCHERS_GROUP_SUFFIX)
-        watcher_users = api.user.get_users(groupname=groupname)
-        watcher_emails = [
-            user.getProperty("email").strip() for user in watcher_users]
-        # manage duplicates
-        return list(set(watcher_emails))
+        cache_key = "esign_watchers__{0}".format(groupname)
+        watcher_emails = self.request.get(cache_key)
+        if watcher_emails is None:
+            watcher_users = api.user.get_users(groupname=groupname)
+            # manage duplicates
+            watcher_emails = list(set(
+                user.getProperty("email").strip() for user in watcher_users))
+            self.request.set(cache_key, watcher_emails)
+        # return a copy so the cached value can not be changed
+        return list(watcher_emails)
 
     def get_discriminators(self, annex, pod_template=None):
         """

@@ -25,6 +25,9 @@ Changelog
   added to another session).  The session title and discriminators expressions
   receive the first annex, the stored generated document when there is one.
   [gbastien]
+- Cache `PMSignersAdapter.get_watchers` in the `REQUEST` as it is called
+  for every element added to an esign session, by a batch action for example.
+  [gbastien]
 
 
 4.2.29rc19 (2026-11-26)

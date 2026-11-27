@@ -42,6 +42,7 @@ from Products.CMFPlone.utils import safe_unicode
 from Products.Five import zcml
 from Products.PloneMeeting.adapters import CAN_NOT_DELETE_ANNEX_IN_ESIGN_SESSION_ERROR
 from Products.PloneMeeting.browser.views import SEVERAL_SAME_BARCODE_ERROR
+from Products.PloneMeeting.config import ESIGNWATCHERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import ITEM_DEFAULT_TEMPLATE_ID
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import NO_COMMITTEE
@@ -4977,6 +4978,28 @@ class testViews(PloneMeetingTestCase):
         self.assertNotEqual(new_session_id, session_id)
         self.assertEqual(get_not_finalized_session_id(annex_uid), new_session_id)
         self.assertTrue(_annex_term_disabled())
+
+    def test_pm_EsignGetWatchers(self):
+        """PMSignersAdapter.get_watchers returns the emails of the members of the
+           MeetingConfig "esignwatchers" group, without duplicates, it is cached in
+           the REQUEST as it is called for every element added to a session."""
+        cfg, annex_type, pod_template, pod_template_uid, item, meeting, held_pos1, held_pos2 = \
+            self._setup_esign()
+        watchers_group_id = "{0}_{1}".format(cfg.getId(), ESIGNWATCHERS_GROUP_SUFFIX)
+        self._addPrincipalToGroup('pmCreator1', watchers_group_id)
+        self._addPrincipalToGroup('pmCreator1b', watchers_group_id)
+        # pmCreator2 uses same email as pmCreator1
+        api.user.get('pmCreator2').setMemberProperties({'email': 'pmcreator1@plonemeeting.org '})
+        self._addPrincipalToGroup('pmCreator2', watchers_group_id)
+        expected = ['pmcreator1@plonemeeting.org', 'pmcreator1b@plonemeeting.org']
+        watchers = ISignable(item).get_watchers()
+        self.assertEqual(sorted(watchers), expected)
+        # returned value is a copy, changing it does not change the cached value
+        watchers.append('other@plonemeeting.org')
+        self.assertEqual(sorted(ISignable(item).get_watchers()), expected)
+        # cached in the REQUEST, a member added during the same request is not returned
+        self._addPrincipalToGroup('pmReviewer1', watchers_group_id)
+        self.assertEqual(sorted(ISignable(item).get_watchers()), expected)
 
     def test_pm_Parapheo_available(self):
         """@@parapheo is available to MeetingManagers, esign watchers and signers."""
