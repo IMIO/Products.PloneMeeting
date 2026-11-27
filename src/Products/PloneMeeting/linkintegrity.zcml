@@ -1,0 +1,28 @@
+<configure xmlns="http://namespaces.zope.org/zope">
+
+  <!-- Link integrity is disabled globally (see setuphandlers), unconfigure the
+       plone.app.linkintegrity subscribers updating references to linked elements,
+       references only used to check link integrity when removing elements.
+       These subscribers parse every rich text field each time an element is created
+       or modified, including an item each time an annex is added.
+       plone.app.linkintegrity is included first so its subscribers are there to be
+       unconfigured, this works when every ZCML is loaded at once (Zope startup)
+       but not in test layers where Plone ZCML was loaded by a previous layer. -->
+  <include package="z3c.unconfigure" file="meta.zcml" />
+  <include package="plone.app.linkintegrity" />
+  <unconfigure package="plone.app.linkintegrity">
+    <subscriber
+      for="Products.Archetypes.interfaces.IBaseObject
+           OFS.interfaces.IObjectClonedEvent"
+      handler=".handlers.modifiedArchetype" />
+    <subscriber
+      for="Products.Archetypes.interfaces.IBaseObject
+           zope.lifecycleevent.interfaces.IObjectCreatedEvent"
+      handler=".handlers.modifiedArchetype" />
+    <subscriber
+      for="Products.Archetypes.interfaces.IBaseObject
+           zope.lifecycleevent.interfaces.IObjectModifiedEvent"
+      handler=".handlers.modifiedArchetype" />
+  </unconfigure>
+
+</configure>

@@ -517,6 +517,9 @@
         name="negative-personal-labels" />
   </unconfigure>
 
+  <!-- plone.app.linkintegrity, unconfigure subscribers updating references -->
+  <include file="linkintegrity.zcml" />
+
   <plone:behavior
       title="TALCondition"
       description="Add a TAL condition field useable to check if content should be available."

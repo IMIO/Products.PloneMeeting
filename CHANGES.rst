@@ -5,6 +5,11 @@ Changelog
 4.2.29rc20 (unreleased)
 -----------------------
 
+- Unconfigure the `plone.app.linkintegrity` subscribers updating references to
+  linked elements each time an `Archetypes` element is created, copied or modified
+  (see `linkintegrity.zcml`), as link integrity is disabled globally. It parsed
+  every rich text field of an item each time an annex was added to it.
+  [gbastien]
 - Disable link integrity checks globally (checks done when removing elements)
   when installing and in the upgrade step to `4218.1`.
   [gbastien]

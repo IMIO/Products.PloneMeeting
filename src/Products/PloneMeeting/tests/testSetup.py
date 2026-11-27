@@ -8,6 +8,8 @@
 from imio.helpers.content import object_values
 from pkgutil import iter_importers
 from plone import api
+from plone.app.linkintegrity.handlers import modifiedArchetype
+from plone.app.linkintegrity.handlers import referencedObjectRemoved
 from plone.app.linkintegrity.interfaces import ILinkIntegrityInfo
 from Products.GenericSetup.context import DirectoryImportContext
 from Products.PloneMeeting.config import HAS_SOLR
@@ -15,8 +17,14 @@ from Products.PloneMeeting.exportimport.content import ToolInitializer
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.utils import cleanMemoize
+from z3c.unconfigure.config import is_subscriber
+from z3c.unconfigure.config import real_subscriber_factory
+from zope.configuration import xmlconfig
+from zope.configuration.config import ConfigurationMachine
 
 import os
+import Products.Five
+import Products.PloneMeeting
 import random
 
 
@@ -232,9 +240,22 @@ class testSetup(PloneMeetingTestCase):
         self.assertEqual(sorted(portal_repository.getVersionableContentTypes()), versioned)
         self.assertEqual(sorted(portal_repository._version_policy_mapping.keys()), versioned)
 
-    def test_pm_LinkIntegrityChecksDisabled(self):
-        """Link integrity is not checked when removing elements."""
+    def test_pm_LinkIntegrityDisabled(self):
+        """Link integrity is not checked when removing elements and the
+           plone.app.linkintegrity subscribers updating references to linked
+           elements when an element is created or modified are unconfigured.
+           In tests, Plone ZCML is loaded by a previous layer so the unconfigure
+           has no effect, linkintegrity.zcml is loaded like when Zope starts."""
         self.assertFalse(ILinkIntegrityInfo(self.request).integrityCheckingEnabled())
+        context = ConfigurationMachine()
+        xmlconfig.registerCommonDirectives(context)
+        xmlconfig.file('meta.zcml', Products.Five, context=context, execute=False)
+        xmlconfig.file('linkintegrity.zcml', Products.PloneMeeting, context=context, execute=False)
+        subscribers = [real_subscriber_factory(**action)[0]
+                       for action in context.actions if is_subscriber(**action)]
+        self.assertNotIn(modifiedArchetype, subscribers)
+        # subscribers called when removing elements are kept
+        self.assertIn(referencedObjectRemoved, subscribers)
 
     def test_pm_EnsureSolrActivated(self):
         """ """
