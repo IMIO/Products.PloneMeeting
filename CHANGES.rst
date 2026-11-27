@@ -76,6 +76,9 @@ Changelog
   where every MeetingManagers are `MeetingManager`, see new helper
   `esign.utils.may_manage_session`.
   [gbastien]
+- When adding annexes to an esign session, reindex the new annex `scan_id` without
+  updating every metadata as `scan_id` is only an index.
+  [gbastien]
 
 
 4.2.29rc19 (2026-11-26)

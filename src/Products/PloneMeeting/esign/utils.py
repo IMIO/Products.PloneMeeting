@@ -180,8 +180,8 @@ def _add_annexes_to_sign_session(
     for annex in annexes:
         if not annex.scan_id:
             annex.scan_id = next_scan_id_pm()
-            # reindex scan_id and metadata
-            reindex_object(annex, idxs=['scan_id'], update_metadata=1)
+            # scan_id is only an index (not a metadata), do not update every metadata
+            reindex_object(annex, idxs=['scan_id'], update_metadata=0)
 
     # signers must be passed as a list of data with userid, email, name, label
     signers = [
