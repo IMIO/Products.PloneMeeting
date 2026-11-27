@@ -79,6 +79,10 @@ Changelog
 - When adding annexes to an esign session, reindex the new annex `scan_id` without
   updating every metadata as `scan_id` is only an index.
   [gbastien]
+- Added performance test storing a POD template as annex for 50 items and adding
+  it with an annex of each item to esign sessions, `_setup_esign` test helper was
+  moved to `tests/helpers.py` so it can be used by `testViews` and `testPerformances`.
+  [gbastien]
 
 
 4.2.29rc19 (2026-11-26)

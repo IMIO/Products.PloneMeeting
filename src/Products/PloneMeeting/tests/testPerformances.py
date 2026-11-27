@@ -5,26 +5,42 @@
 # GNU General Public License (GPL)
 #
 
+from collections import OrderedDict
 from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_plone_groups
+from collective.documentgenerator.browser.generation_view import DocumentGenerationView
 from collective.eeafaceted.batchactions.utils import listify_uids
 from datetime import datetime
 from datetime import timedelta
+from imio.esign.config import set_esign_registry_enabled
+from imio.esign.config import set_esign_registry_max_session_files
+from imio.esign.utils import create_session
+from imio.esign.utils import get_session_annotation
 from imio.helpers.cache import get_current_user_id
 from imio.helpers.cache import invalidate_cachekey_volatile_for
 from imio.helpers.content import get_user_fullname
+from persistent.list import PersistentList
+from persistent.mapping import PersistentMapping
 from plone import api
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.utils import _checkPermission
 from Products.CMFCore.utils import getToolByName
+from Products.PloneMeeting import events
+from Products.PloneMeeting.browser import overrides
+from Products.PloneMeeting.browser.overrides import PMDocumentGenerationView
+from Products.PloneMeeting.esign import utils as esign_utils
+from Products.PloneMeeting.esign.adapters import PMSignersAdapter
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.utils import down_or_up_wf
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import isPowerObserverForCfg
 from profilehooks import timecall
+from timeit import default_timer
 from zope.event import notify
+
+import transaction
 
 
 class testPerformances(PloneMeetingTestCase):
@@ -1026,6 +1042,123 @@ class testPerformances(PloneMeetingTestCase):
         ''' '''
         pm_logger.info('Save MeetingConfig')
         notify(ObjectEditedEvent(self.meetingConfig))
+
+    def _time_calls(self, timings, obj, name, key):
+        '''Replace the function p_name of p_obj (a module or a class) by a wrapper
+           storing in p_timings[p_key] the number of calls and the time spent,
+           the original function is set back at the end of the test.'''
+        original = obj.__dict__[name]
+        timings[key] = [0, 0.0]
+
+        def timed(*args, **kwargs):
+            start = default_timer()
+            try:
+                return original(*args, **kwargs)
+            finally:
+                timings[key][0] += 1
+                timings[key][1] += default_timer() - start
+        setattr(obj, name, timed)
+        self.addCleanup(setattr, obj, name, original)
+
+    def _create_finalized_esign_sessions(self, number_of_sessions, files_per_session=15):
+        '''Simulate an existing history of finalized esign sessions,
+           files are fake as they are only stored in the esign annotation.'''
+        annot = get_session_annotation()
+        signers = [('pmReviewer1', 'pmreviewer1@plonemeeting.org', u'Reviewer 1', u'Function 1')]
+        for i in range(number_of_sessions):
+            session_id, session = create_session(signers, None, annot=annot)
+            session['state'] = 'finalized'
+            context_uid = 'old_context_{0}'.format(i)
+            for j in range(files_per_session):
+                uid = 'old_file_{0}_{1}'.format(i, j)
+                session['files'].append(PersistentMapping(
+                    {'scan_id': '013999900000000', 'filename': 'file.pdf', 'title': 'File',
+                     'uid': uid, 'context_uid': context_uid, 'status': ''}))
+                annot['uids'][uid] = session_id
+                annot['c_uids'].setdefault(context_uid, PersistentList()).append(uid)
+
+    def _storeItemsPodTemplateAsAnnexWithEsign(self, number_of_items, number_of_existing_sessions=0):
+        '''Use the batch action to store a POD template as annex for p_number_of_items items
+           and add the generated document and an annex of each item to esign sessions
+           of 15 files, log the time spent to generate, store and add to sessions.'''
+        cfg, annex_type, pod_template, pod_template_uid, item, meeting, held_pos1, held_pos2 = \
+            self._setup_esign()
+        set_esign_registry_enabled(True)
+        set_esign_registry_max_session_files(15)
+        cfg.setMeetingItemTemplatesToStoreAsAnnex(['itemTemplate__output_format__pdf'])
+        # complete the meeting so it holds number_of_items items with an annex to sign
+        for i in range(number_of_items - len(meeting.get_items())):
+            self.presentItem(self.create('MeetingItem', title='Item number %d' % i))
+        items = meeting.get_items(ordered=True)
+        self.assertEqual(len(items), number_of_items)
+        annex_uids = [self.addAnnex(itm, to_sign=True, annexFile=self.annexFilePDF).UID()
+                      for itm in items]
+        self._create_finalized_esign_sessions(number_of_existing_sessions)
+        # serialize what was created so the savepoint done after the batch
+        # only serializes what the batch changed, like a commit would do
+        transaction.savepoint()
+
+        timings = OrderedDict()
+        for obj, name, key in (
+                (DocumentGenerationView, 'generate_and_download_doc',
+                 'Generate the PDF (appy + LibreOffice)'),
+                (PMDocumentGenerationView, '_store_pod_template_as_annex',
+                 'Store the PDF as annex'),
+                (events, 'notifyModifiedAndReindex',
+                 '- including parent reindex in annex events'),
+                (PMSignersAdapter, 'get_signers',
+                 'Get the signers'),
+                (overrides, '_add_annexes_to_sign_session',
+                 'Add annexes to esign sessions (PloneMeeting)'),
+                (esign_utils, 'next_scan_id_pm',
+                 '- including next_scan_id_pm for annexes without scan_id'),
+                (esign_utils, 'reindex_object',
+                 '- including reindex of annexes scan_id'),
+                (esign_utils, 'add_files_to_session',
+                 '- including imio.esign add_files_to_session')):
+            self._time_calls(timings, obj, name, key)
+
+        form = meeting.restrictedTraverse('@@store-items-template-as-annex-batch-action')
+        self.request['PUBLISHED'] = form
+        self.request.form['form.widgets.uids'] = u','.join([itm.UID() for itm in items])
+        self.request.form['form.widgets.pod_template'] = 'itemTemplate__output_format__pdf'
+        self.request.form['form.widgets.add_to_sign_session'] = ['selected']
+        self.request.form['form.widgets.store_generated_document'] = ['1']
+        self.request.form['form.widgets.annexes'] = annex_uids
+        start = default_timer()
+        form.update()
+        form_update = default_timer() - start
+        start = default_timer()
+        form.handleApply(form, None)
+        apply_time = default_timer() - start
+        # a savepoint serializes the changes (annexes, esign annotation, ...) like a commit
+        start = default_timer()
+        transaction.savepoint()
+        savepoint_time = default_timer() - start
+
+        # generated documents and annexes were dispatched in sessions of 15 files
+        sessions = get_session_annotation()['sessions']
+        new_sessions = [sessions[session_id] for session_id in sorted(sessions)
+                        if sessions[session_id]['state'] != 'finalized']
+        number_of_files = number_of_items * 2
+        self.assertEqual([len(session['files']) for session in new_sessions],
+                         [15] * (number_of_files // 15) + [number_of_files % 15])
+
+        pm_logger.info(
+            'Stored POD template as annex and added {0} files to {1} esign sessions for {2} items '
+            '({3} existing finalized sessions): form display {4:.2f}s, apply {5:.2f}s, '
+            'transaction savepoint {6:.2f}s'.format(
+                number_of_files, len(new_sessions), number_of_items, number_of_existing_sessions,
+                form_update, apply_time, savepoint_time))
+        for key, (calls, duration) in timings.items():
+            pm_logger.info('  {0}: {1} calls, {2:.2f}s'.format(key, calls, duration))
+
+    def test_pm_StoreItemsPodTemplateAsAnnexWithEsignAndExistingSessions(self):
+        '''Store a POD template as annex for 50 items and add it with an annex of each
+           item to esign sessions, with an history of 1000 finalized esign sessions
+           to also see the impact of the esign annotation size.'''
+        self._storeItemsPodTemplateAsAnnexWithEsign(
+            number_of_items=50, number_of_existing_sessions=1000)
 
 
 def test_suite():

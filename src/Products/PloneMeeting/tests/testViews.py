@@ -4539,61 +4539,6 @@ class testViews(PloneMeetingTestCase):
         form = searches_items.restrictedTraverse('@@add-advice-batch-action')
         self.assertFalse(form.available())
 
-    def _setup_esign(self):
-        """Setup for imio.esign tests."""
-        cfg = self.meetingConfig
-        cfg.setAnnexRestrictShownAndEditableAttributes(('signed_edit', ))
-        # setup signers
-        person1 = self.portal.contacts.person1
-        person1.userid = "pmReviewer1"
-        person1.reindexObject(idxs=['userid'])
-        held_pos1 = person1.held_pos1
-        held_pos1_uid = held_pos1.UID()
-        person2 = self.portal.contacts.person2
-        person2.userid = "pmReviewer2"
-        person2.reindexObject(idxs=['userid'])
-        held_pos2 = person2.held_pos2
-        held_pos2_uid = held_pos2.UID()
-        held_pos1.usages = ['signer']
-        held_pos2.usages = ['signer']
-        # setup certifiedSignatures
-        certified = [
-            {'signatureNumber': '1',
-             'name': '',
-             'function': 'Function1',
-             'held_position': held_pos1_uid,
-             'date_from': '',
-             'date_to': '',
-             },
-            {'signatureNumber': '2',
-             'name': 'Name2',
-             'function': '',
-             'held_position': held_pos2_uid,
-             'date_from': '',
-             'date_to': '',
-             },
-        ]
-        cfg.setCertifiedSignatures(certified)
-        # define correct config
-        default_annex_type = cfg.annexes_types.item_annexes.get('financial-analysis')
-        default_annex_type.aq_parent.signed_activated = True
-        annex_type = cfg.annexes_types.item_decision_annexes.get('decision-annex')
-        annex_type.to_sign = True
-        annex_type_uid = annex_type.UID()
-        pod_template = cfg.podtemplates.itemTemplate
-        pod_template.pod_formats = [u'odt', u'pdf']
-        pod_template_uid = pod_template.UID()
-        pod_template.store_as_annex = annex_type_uid
-        pod_template.esign_signers_expr = "python: utils.get_item_esign_signatories(context)"
-        self.request.form['template_uid'] = unicode(pod_template_uid)
-        self.request.form['output_format'] = u'odt'
-
-        # create meeting with items
-        self.changeUser('pmManager')
-        meeting = self._createMeetingWithItems()
-        item = meeting.get_items(ordered=True)[0]
-        return cfg, annex_type, pod_template, pod_template_uid, item, meeting, held_pos1, held_pos2
-
     def test_pm_PodTemplateStoreAsAnnexFormWithEsign(self):
         """Test the view that store a pod template as annex when using imio.esign."""
         cfg, annex_type, pod_template, pod_template_uid, item, meeting, held_pos1, held_pos2 = self._setup_esign()
