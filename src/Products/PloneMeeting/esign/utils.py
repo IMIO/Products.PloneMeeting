@@ -189,7 +189,8 @@ def _add_annexes_to_sign_session(
         discriminators=discriminators,
         watchers=watchers,
         create_session_custom_data=create_session_custom_data)
-    for annex in annexes:
+    # warnings here above are always shown, the confirmation only if p_show_msg
+    if show_msg:
         api.portal.show_message(
             translate(
                 'annex_added_to_sessions',

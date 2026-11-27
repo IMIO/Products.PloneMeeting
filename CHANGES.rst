@@ -56,6 +56,11 @@ Changelog
   copying it for every items, used by `MeetingItem.get_item_absents`,
   `MeetingItem.get_item_excused` and `MeetingItem.get_item_non_attendees`.
   [gbastien]
+- In `esign.utils._add_annexes_to_sign_session`, take into account parameter
+  `show_msg`, the "added to sessions" confirmation is shown once and only when
+  `show_msg=True` (so not by the store POD template as annex batch action),
+  warnings are always shown.
+  [gbastien]
 
 
 4.2.29rc19 (2026-11-26)

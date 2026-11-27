@@ -4988,6 +4988,29 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(get_not_finalized_session_id(annex_uid), new_session_id)
         self.assertTrue(_annex_term_disabled())
 
+    def test_pm_AddAnnexesToSignSessionMessages(self):
+        """_add_annexes_to_sign_session only shows the "added to sessions"
+           confirmation when p_show_msg is True, warnings are always shown."""
+        cfg, annex_type, pod_template, pod_template_uid, item, meeting, held_pos1, held_pos2 = \
+            self._setup_esign()
+        signers = ISignable(item).get_signers()
+        annex1 = self.addAnnex(item, to_sign=True, annexFile=self.annexFilePDF)
+        annex2 = self.addAnnex(item, to_sign=True, annexFile=self.annexFilePDF)
+        status_messages = IStatusMessage(self.request)
+        status_messages.show()
+        # no confirmation when show_msg=False
+        _add_annexes_to_sign_session(item, [annex1], cfg, pod_template, signers)
+        self.assertEqual(status_messages.show(), [])
+        # a warning is shown when annex is already in a session, even when show_msg=False
+        _add_annexes_to_sign_session(item, [annex1], cfg, pod_template, signers)
+        self.assertEqual([message.type for message in status_messages.show()], [u'warning'])
+        # confirmation shown when show_msg=True
+        session_id = _add_annexes_to_sign_session(
+            item, [annex2], cfg, pod_template, signers, show_msg=True)[0][0]
+        messages = status_messages.show()
+        self.assertEqual([message.type for message in messages], [u'info'])
+        self.assertIn(str(session_id), messages[0].message)
+
     def test_pm_GetItemEsignSignatories(self):
         """utils.get_item_esign_signatories passes extra parameters to
            MeetingItem.getCertifiedSignatures, like "from_group_in_charge"."""
