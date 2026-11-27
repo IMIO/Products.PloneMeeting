@@ -27,7 +27,7 @@ def get_item_esign_signatories(obj, listify=False, signature_numbers=['1', '2'],
     """Helper to get "item" signatories respecting the esign expected format."""
     if certified:
         # certified signatures
-        return obj.getCertifiedSignatures(listify=listify, signature_numbers=signature_numbers, *kwargs)
+        return obj.getCertifiedSignatures(listify=listify, signature_numbers=signature_numbers, **kwargs)
     else:
         # item meeting signatures
         signers = obj.get_item_signatories(the_objects=True)

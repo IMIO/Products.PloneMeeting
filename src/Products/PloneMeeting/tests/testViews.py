@@ -48,6 +48,7 @@ from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import NO_COMMITTEE
 from Products.PloneMeeting.content.meeting import PLACE_OTHER
 from Products.PloneMeeting.esign.utils import _add_annexes_to_sign_session
+from Products.PloneMeeting.esign.utils import get_item_esign_signatories
 from Products.PloneMeeting.esign.utils import get_not_finalized_session_id
 from Products.PloneMeeting.etags import ConfigModified
 from Products.PloneMeeting.etags import ContextModified
@@ -4983,6 +4984,34 @@ class testViews(PloneMeetingTestCase):
         self.assertNotEqual(new_session_id, session_id)
         self.assertEqual(get_not_finalized_session_id(annex_uid), new_session_id)
         self.assertTrue(_annex_term_disabled())
+
+    def test_pm_GetItemEsignSignatories(self):
+        """utils.get_item_esign_signatories passes extra parameters to
+           MeetingItem.getCertifiedSignatures, like "from_group_in_charge"."""
+        self.meetingConfig.setCertifiedSignatures(
+            [{'signatureNumber': '1',
+              'name': 'Name1',
+              'function': 'Function1',
+              'held_position': '_none_',
+              'date_from': '',
+              'date_to': '',
+              }])
+        # set vendors in charge of developers, with their own signatures
+        self.developers.groups_in_charge = (self.vendors_uid, )
+        self.vendors.certified_signatures = [
+            {'signatureNumber': '1',
+             'name': 'GroupInChargeName1',
+             'function': 'GroupInChargeFunction1',
+             'held_position': None,
+             'date_from': '',
+             'date_to': '',
+             }]
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.assertEqual(get_item_esign_signatories(item)['1']['name'], 'Name1')
+        self.assertEqual(
+            get_item_esign_signatories(item, from_group_in_charge=True)['1']['name'],
+            'GroupInChargeName1')
 
     def test_pm_EsignGetWatchers(self):
         """PMSignersAdapter.get_watchers returns the emails of the members of the

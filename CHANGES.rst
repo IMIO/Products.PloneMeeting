@@ -36,6 +36,10 @@ Changelog
   `uuidToObject(unrestricted=True)` so it does not depend on the user being
   able to view the annex type in the configuration.
   [gbastien]
+- Fixed `esign.utils.get_item_esign_signatories` that passed extra parameters
+  as positional arguments to `MeetingItem.getCertifiedSignatures`, so passing
+  `from_group_in_charge=True` was using the `MeetingConfig` certified signatures.
+  [gbastien]
 
 
 4.2.29rc19 (2026-11-26)
