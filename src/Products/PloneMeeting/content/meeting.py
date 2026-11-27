@@ -1399,38 +1399,46 @@ class Meeting(Container):
         return {replaced_uid: self.ordered_contacts[replaced_uid]['replacement']
                 for replaced_uid in replaced_uids}
 
-    def _get_item_not_present(self, attr, by_persons=False):
+    def _get_item_not_present(self, attr, by_persons=False, item_uid=None):
         '''Return item not present (item_absents, item_excused, ...)
            by default the attr dict has the item UID as key and list of not_present
            as values but if 'p_by_persons' is True, the informations are returned with
-           not_present held position as key and list of items as value.'''
+           not_present held position as key and list of items as value.
+           If p_item_uid is given, only the not_present of this item are returned,
+           so the value the default dict would have for this item.
+           The parameters p_by_persons and p_item_uid are mutually exclusive.'''
         if by_persons:
             # values are now keys, concatenate a list of lists and remove duplicates
             keys = tuple(set(list(itertools.chain.from_iterable(attr.values()))))
             data = {}
             for key in keys:
                 data[key] = [k for k, v in attr.items() if key in v]
+        elif item_uid:
+            data = attr.get(item_uid, [])
         else:
             data = attr.data.copy()
         return data
 
     security.declarePublic('get_item_absents')
 
-    def get_item_absents(self, by_persons=False):
+    def get_item_absents(self, by_persons=False, item_uid=None):
         ''' '''
-        return self._get_item_not_present(self.item_absents, by_persons=by_persons)
+        return self._get_item_not_present(
+            self.item_absents, by_persons=by_persons, item_uid=item_uid)
 
     security.declarePublic('get_item_excused')
 
-    def get_item_excused(self, by_persons=False):
+    def get_item_excused(self, by_persons=False, item_uid=None):
         ''' '''
-        return self._get_item_not_present(self.item_excused, by_persons=by_persons)
+        return self._get_item_not_present(
+            self.item_excused, by_persons=by_persons, item_uid=item_uid)
 
     security.declarePublic('get_item_non_attendees')
 
-    def get_item_non_attendees(self, by_persons=False):
+    def get_item_non_attendees(self, by_persons=False, item_uid=None):
         ''' '''
-        return self._get_item_not_present(self.item_non_attendees, by_persons=by_persons)
+        return self._get_item_not_present(
+            self.item_non_attendees, by_persons=by_persons, item_uid=item_uid)
 
     security.declarePublic('get_item_signatories')
 

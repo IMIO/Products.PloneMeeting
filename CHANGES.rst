@@ -51,6 +51,11 @@ Changelog
   to check presence and `MeetingItem.get_attendees` does not order item absents,
   excused and non attendees as it only checks if an attendee is not present.
   [gbastien]
+- Added parameter `item_uid` to `Meeting.get_item_absents`, `Meeting.get_item_excused`
+  and `Meeting.get_item_non_attendees` to only get not present of one item instead of
+  copying it for every items, used by `MeetingItem.get_item_absents`,
+  `MeetingItem.get_item_excused` and `MeetingItem.get_item_non_attendees`.
+  [gbastien]
 
 
 4.2.29rc19 (2026-11-26)

@@ -382,6 +382,11 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(
             sorted(meeting.get_item_non_attendees(by_persons=True)[hp3_uid]),
             sorted([item1_uid, item2_uid]))
+        # not present of a single item
+        self.assertEqual(list(meeting.get_item_absents(item_uid=item1_uid)), [hp1_uid])
+        self.assertEqual(list(meeting.get_item_excused(item_uid=item1_uid)), [hp2_uid])
+        self.assertEqual(list(meeting.get_item_excused(item_uid=item2_uid)), [])
+        self.assertEqual(list(meeting.get_item_non_attendees(item_uid=item2_uid)), [hp3_uid])
         # @@display-meeting-item-not-present
         # item and meeting results are the same
         item_view = item1.restrictedTraverse('@@display-meeting-item-not-present')

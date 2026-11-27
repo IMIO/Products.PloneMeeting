@@ -4628,7 +4628,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if not self.hasMeeting():
             return []
         meeting = self.getMeeting()
-        meeting_item_absents = meeting.get_item_absents().get(self.UID(), [])
+        meeting_item_absents = meeting.get_item_absents(item_uid=self.UID())
         if ordered:
             meeting_item_absents = self._order_contacts(meeting_item_absents)
         if the_objects:
@@ -4645,7 +4645,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if not self.hasMeeting():
             return []
         meeting = self.getMeeting()
-        meeting_item_excused = meeting.get_item_excused().get(self.UID(), [])
+        meeting_item_excused = meeting.get_item_excused(item_uid=self.UID())
         if ordered:
             meeting_item_excused = self._order_contacts(meeting_item_excused)
         if the_objects:
@@ -4662,7 +4662,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if not self.hasMeeting():
             return []
         meeting = self.getMeeting()
-        meeting_item_non_attendees = meeting.get_item_non_attendees().get(self.UID(), [])
+        meeting_item_non_attendees = meeting.get_item_non_attendees(item_uid=self.UID())
         if ordered:
             meeting_item_non_attendees = self._order_contacts(meeting_item_non_attendees)
         if the_objects:
