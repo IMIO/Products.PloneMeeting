@@ -5,6 +5,9 @@ Changelog
 4.2.29rc20 (unreleased)
 -----------------------
 
+- Disable link integrity checks globally (checks done when removing elements)
+  when installing and in the upgrade step to `4218.1`.
+  [gbastien]
 - Added upgrade step to `4218.1` that runs upgrade steps `4217` to `4217.4`
   and `Migrate_To_4218._configureExtraAllowedContentForCKeditor` for sites
   migrated with the first version of the upgrade step to `4218` (`4217` to `4218`)

@@ -8,6 +8,7 @@
 from imio.helpers.content import object_values
 from pkgutil import iter_importers
 from plone import api
+from plone.app.linkintegrity.interfaces import ILinkIntegrityInfo
 from Products.GenericSetup.context import DirectoryImportContext
 from Products.PloneMeeting.config import HAS_SOLR
 from Products.PloneMeeting.exportimport.content import ToolInitializer
@@ -230,6 +231,10 @@ class testSetup(PloneMeetingTestCase):
         versioned = [u'annex', u'annexDecision']
         self.assertEqual(sorted(portal_repository.getVersionableContentTypes()), versioned)
         self.assertEqual(sorted(portal_repository._version_policy_mapping.keys()), versioned)
+
+    def test_pm_LinkIntegrityChecksDisabled(self):
+        """Link integrity is not checked when removing elements."""
+        self.assertFalse(ILinkIntegrityInfo(self.request).integrityCheckingEnabled())
 
     def test_pm_EnsureSolrActivated(self):
         """ """

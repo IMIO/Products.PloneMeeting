@@ -18,6 +18,7 @@ from eea.facetednavigation.interfaces import ICriteria
 from imio.dashboard.setuphandlers import add_orgs_searches
 from imio.helpers.catalog import addOrUpdateColumns
 from imio.helpers.catalog import addOrUpdateIndexes
+from imio.helpers.content import disable_link_integrity_checks
 from imio.helpers.emailer import get_mail_host
 from imio.webspellchecker import config as wsc_config
 from plone import api
@@ -226,6 +227,9 @@ def postInstall(context):
         many_users=many_users)
     site.portal_properties.site_properties.manage_changeProperties(
         many_groups=True)
+
+    # Do not check link integrity when removing elements
+    disable_link_integrity_checks()
 
     # portal_quickinstaller removes some installed elements when reinstalling...
     # re-add them manually here...
