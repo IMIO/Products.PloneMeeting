@@ -4,7 +4,7 @@ from collective.iconifiedcategory.utils import _modified as iconified_modified
 from collective.messagesviewlet.utils import get_messages_to_show
 from DateTime import DateTime
 from imio.esign.config import get_esign_registry_enabled
-from imio.esign.utils import get_sessions_for
+from imio.esign.utils import get_session_annotation
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import get_plone_groups_for_user
 from plone import api
@@ -176,8 +176,8 @@ class MessagesViewlet(object):
 
 
 class EsignSession(object):
-    """The ``esignsession`` etag component, returning the last_modified
-       date of the session the element is belonging to.
+    """The ``esignsession`` etag component, returning the last_update
+       date of the sessions the element files are in.
     """
 
     implements(IETagValue)
@@ -190,8 +190,13 @@ class EsignSession(object):
     def __call__(self):
         if get_esign_registry_enabled():
             context = getContext(self.published)
-            sessions = get_sessions_for(context.UID())
-            if sessions:
-                return 'esignsession_' + str(float(DateTime(max(
-                    [session['last_update'] for session in sessions.values()]))))
+            annot = get_session_annotation()
+            # imio.esign stores the files of every element ("c_uids") and the
+            # session of every file ("uids"), so we do not have to walk every sessions
+            session_ids = set(annot["uids"].get(file_uid)
+                              for file_uid in annot["c_uids"].get(context.UID(), ()))
+            last_updates = [annot["sessions"][session_id]["last_update"]
+                            for session_id in session_ids if session_id in annot["sessions"]]
+            if last_updates:
+                return 'esignsession_' + str(float(DateTime(max(last_updates))))
         return 'esignsession_0'

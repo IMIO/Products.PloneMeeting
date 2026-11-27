@@ -40,6 +40,10 @@ Changelog
   as positional arguments to `MeetingItem.getCertifiedSignatures`, so passing
   `from_group_in_charge=True` was using the `MeetingConfig` certified signatures.
   [gbastien]
+- Speed up the `esignsession` etag computed on every item/meeting view, get the
+  sessions of the element files from the `imio.esign` `c_uids` and `uids` mappings
+  instead of walking (and copying) every sessions.
+  [gbastien]
 
 
 4.2.29rc19 (2026-11-26)

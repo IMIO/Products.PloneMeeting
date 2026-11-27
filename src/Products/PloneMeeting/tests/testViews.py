@@ -11,6 +11,7 @@ from collective.documentgenerator.interfaces import IGenerablePODTemplates
 from collective.eeafaceted.dashboard.interfaces import IDashboardGenerablePODTemplates
 from copy import deepcopy
 from datetime import datetime
+from DateTime import DateTime
 from ftw.labels.interfaces import ILabeling
 from ftw.labels.interfaces import ILabelJar
 from imio.actionspanel.interfaces import IContentDeletable
@@ -20,6 +21,7 @@ from imio.esign.config import set_esign_registry_enforce_signers_order
 from imio.esign.config import set_esign_registry_seal_code
 from imio.esign.config import set_esign_registry_signers_order
 from imio.esign.utils import get_session_annotation
+from imio.esign.utils import remove_files_from_session
 from imio.helpers.cache import cleanRamCacheFor
 from imio.helpers.content import get_vocab
 from imio.helpers.content import get_vocab_values
@@ -52,6 +54,7 @@ from Products.PloneMeeting.esign.utils import get_item_esign_signatories
 from Products.PloneMeeting.esign.utils import get_not_finalized_session_id
 from Products.PloneMeeting.etags import ConfigModified
 from Products.PloneMeeting.etags import ContextModified
+from Products.PloneMeeting.etags import EsignSession
 from Products.PloneMeeting.etags import LinkedMeetingModified
 from Products.PloneMeeting.etags import ToolModified
 from Products.PloneMeeting.ftw_labels.utils import get_labels
@@ -5012,6 +5015,33 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(
             get_item_esign_signatories(item, from_group_in_charge=True)['1']['name'],
             'GroupInChargeName1')
+
+    def test_pm_EsignSessionETag(self):
+        """The "esignsession" etag is the last_update of the sessions
+           the files of the element are in."""
+        cfg, annex_type, pod_template, pod_template_uid, item, meeting, held_pos1, held_pos2 = \
+            self._setup_esign()
+        item2 = meeting.get_items(ordered=True)[1]
+        self.assertEqual(EsignSession(item, self.request)(), 'esignsession_0')
+        annex = self.addAnnex(item, to_sign=True, annexFile=self.annexFilePDF)
+        session_id, session = _add_annexes_to_sign_session(
+            item, [annex], cfg, pod_template, ISignable(item).get_signers())[0]
+        self.assertEqual(EsignSession(item, self.request)(),
+                         'esignsession_' + str(float(DateTime(session['last_update']))))
+        # an element without file in a session is not impacted
+        self.assertEqual(EsignSession(item2, self.request)(), 'esignsession_0')
+        # changed when the session is updated
+        session['last_update'] = datetime(2030, 1, 1)
+        self.assertEqual(EsignSession(item, self.request)(),
+                         'esignsession_' + str(float(DateTime(datetime(2030, 1, 1)))))
+        # no more in a session
+        remove_files_from_session([annex.UID()])
+        self.assertEqual(EsignSession(item, self.request)(), 'esignsession_0')
+        # esign disabled
+        _add_annexes_to_sign_session(item, [annex], cfg, pod_template, ISignable(item).get_signers())
+        self.assertNotEqual(EsignSession(item, self.request)(), 'esignsession_0')
+        set_esign_registry_enabled(False)
+        self.assertEqual(EsignSession(item, self.request)(), 'esignsession_0')
 
     def test_pm_EsignGetWatchers(self):
         """PMSignersAdapter.get_watchers returns the emails of the members of the
