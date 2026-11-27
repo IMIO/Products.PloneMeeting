@@ -7059,8 +7059,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('createEsignWatchersGroup')
 
     def createEsignWatchersGroup(self, force_update_access=False, dry_run_return_group_ids=False):
-        '''Creates a Plone group that will be used to apply the 'MeetingManager'
-           local role on every plonemeeting folders of this MeetingConfig and on this MeetingConfig.'''
+        '''Creates the Plone group of eSign watchers of this MeetingConfig, no local role
+           is given to it.  Members of this group may access the eSign sessions of this
+           MeetingConfig (@@parapheo and searches) and their email is added as watcher
+           of the eSign sessions created for this MeetingConfig.'''
         groupIds = []
         groupId, wasCreated = self._createOrUpdatePloneGroup(
             groupSuffix=ESIGNWATCHERS_GROUP_SUFFIX,
