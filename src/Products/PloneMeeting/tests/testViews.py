@@ -4812,6 +4812,11 @@ class testViews(PloneMeetingTestCase):
         session_id = session_annot['uids'][stored_generated_pod_template.UID()]
         self.assertEqual(session_annot['uids'][annex_pdf.UID()], session_id)
         self.assertEqual(session_annot['sessions'][session_id]['seal'], u'SEAL_CODE')
+        # selected annex without scan_id received one, generated pod template already had one
+        for annex in (annex_pdf, stored_generated_pod_template):
+            self.assertTrue(annex.scan_id)
+            self.assertEqual(
+                [brain.UID for brain in self.catalog(scan_id=annex.scan_id)], [annex.UID()])
 
     def test_pm_RecreateEsignSession(self):
         """Test the @@recreate-session view especially custom data."""

@@ -28,6 +28,9 @@ Changelog
 - Cache `PMSignersAdapter.get_watchers` in the `REQUEST` as it is called
   for every element added to an esign session, by a batch action for example.
   [gbastien]
+- When adding annexes to an esign session, only reindex the `scan_id` of an
+  annex when a new `scan_id` is set, an existing `scan_id` is already indexed.
+  [gbastien]
 
 
 4.2.29rc19 (2026-11-26)

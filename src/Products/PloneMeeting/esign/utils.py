@@ -160,12 +160,13 @@ def _add_annexes_to_sign_session(
     if not annexes:
         return
 
-    # add a scan_id to each annex if not already the case
+    # add a scan_id to each annex if not already the case, an existing
+    # scan_id is already indexed so only reindex when setting a new one
     for annex in annexes:
         if not annex.scan_id:
             annex.scan_id = next_scan_id_pm()
-        # reindex scan_id and metadata
-        reindex_object(annex, idxs=['scan_id'], update_metadata=1)
+            # reindex scan_id and metadata
+            reindex_object(annex, idxs=['scan_id'], update_metadata=1)
 
     # signers must be passed as a list of data with userid, email, name, label
     signers = [
