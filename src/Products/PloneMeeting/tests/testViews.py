@@ -840,6 +840,27 @@ class testViews(PloneMeetingTestCase):
         messages = IStatusMessage(self.request).show()
         self.assertEqual(messages[-1].message, msg)
 
+    def test_pm_PODTemplateMailingLists(self):
+        """The @@available-mailing-lists view displays the recipients (e-mail addresses)
+           of the mailing lists of a POD template, it is only available when the POD
+           template can be generated on the context."""
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        template = self.meetingConfig.podtemplates.itemTemplate
+        template.mailing_lists = "list1;python:True;pmManager,pmReviewer1"
+        view = item.restrictedTraverse('@@available-mailing-lists')
+        # template can be generated, recipients are displayed
+        self.assertTrue(template.can_be_generated(item))
+        rendered = view(template_uid=template.UID(), output_format='odt')
+        self.assertIn('pmmanager@plonemeeting.org', rendered)
+        self.assertIn('pmreviewer1@plonemeeting.org', rendered)
+        # template can not be generated, recipients may not be displayed
+        template.tal_condition = u"python:tool.isManager(cfg)"
+        self.assertFalse(template.can_be_generated(item))
+        self.assertRaises(Unauthorized, view, template_uid=template.UID(), output_format='odt')
+        # not a POD template
+        self.assertRaises(Unauthorized, view, template_uid=item.UID(), output_format='odt')
+
     def test_pm_SendPodTemplateToMailingListRecipients(self):
         """Recipients may be defined using several ways :
            - python script;
@@ -941,6 +962,13 @@ class testViews(PloneMeetingTestCase):
         # set tal_condition and try again
         pod_template.tal_condition = u"python:tool.isManager(cfg)"
         self.assertRaises(Unauthorized, view)
+        # the document is not generated when storing an empty file or when not
+        # storing the generated document, the tal_condition is also checked
+        pod_template.store_as_annex_empty_file = True
+        self.assertRaises(Unauthorized, view)
+        pod_template.store_as_annex_empty_file = False
+        self.assertRaises(Unauthorized, view, store_generated_document='0')
+        self.assertEqual(len(get_annexes(item)), 1)
         self.changeUser('pmManager')
         self.deleteAsManager(get_annexes(item)[0].UID())
         self.assertFalse(get_annexes(item))
@@ -4765,6 +4793,32 @@ class testViews(PloneMeetingTestCase):
         # back to "draft", annex is deletable
         session['state'] = 'draft'
         self.assertTrue(IContentDeletable(stored_annex).mayDelete())
+
+    def test_pm_PodTemplateStoreAsAnnexFormWithEsignMayStore(self):
+        """A user able to view an item but not to generate the POD template may not use
+           the store as annex form, especially to add annexes to an esign session when
+           not storing the generated document (in this case it is not generated)."""
+        cfg, annex_type, pod_template, pod_template_uid, item, meeting, held_pos1, held_pos2 = \
+            self._setup_esign()
+        self.request['output_format'] = u'pdf'
+        item = [itm for itm in meeting.get_items(ordered=True)
+                if itm.getProposingGroup() == self.developers_uid][0]
+        annex = self.addAnnex(item, to_sign=True, annexFile=self.annexFilePDF)
+        pod_template.tal_condition = u"python:tool.isManager(cfg)"
+        self.changeUser('pmCreator1')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertFalse(pod_template.can_be_generated(item))
+        form = item.restrictedTraverse('@@store-pod-temlate-as-annex-form')
+        # the form is not displayed
+        self.assertRaises(Unauthorized, form.update)
+        # and it is not possible to add annexes to an esign session
+        data = {'template_uid': pod_template_uid,
+                'output_format': 'pdf',
+                'store_generated_document': '0',
+                'add_to_sign_session': True,
+                'annex_ids': [annex.getId()], }
+        self.assertRaises(Unauthorized, form.form_instance._do_store_as_annex, data)
+        self.assertFalse(get_session_annotation()['sessions'])
 
     def test_pm_MeetingStoreItemsPodTemplateAsAnnexBatchActionEsign(self):
         """This will store a POD template selected in

@@ -1158,8 +1158,21 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
            - or just generate the template."""
 
         return_portal_msg_code = kwargs.get('return_portal_msg_code', False)
-        if self.request.get('store_as_annex', '0') == '1' and \
-            pod_template.store_as_annex_empty_file is True:
+        store_as_annex = self.request.get('store_as_annex', '0') == '1'
+        # being able to store as annex (and to add annexes to an esign session) is managed
+        # by the fact that the pod_template can be generated, this is checked by the document
+        # generation but the document is not generated when storing an empty file or when not
+        # storing the generated document, so check it here for every store as annex
+        if store_as_annex and not pod_template.can_be_generated(self.context):
+            # while batch generating, return message if one element can not be generated
+            if return_portal_msg_code:
+                msg_code = 'store_podtemplate_as_annex_can_not_be_generated'
+                return msg_code, {
+                    'obj_url': self.context.absolute_url(),
+                    'pod_template_title': safe_unicode(pod_template.Title())}
+            raise Unauthorized('You are not allowed to generate this document.')
+
+        if store_as_annex and pod_template.store_as_annex_empty_file is True:
             generated_template = translate('empty_annex_file_content',
                                            domain='PloneMeeting',
                                            context=self.request)
@@ -1167,17 +1180,10 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
             # so it is applied on stored annex
             helper_view = self.get_generation_context_helper()
             helper_view.get_scan_id()
-        elif self.request.get('store_as_annex', '0') == '1' and \
-             kwargs.get('store_generated_document', '1') == '0':
+        elif store_as_annex and kwargs.get('store_generated_document', '1') == '0':
             # in case we do not store generated template, do not generate it
             generated_template = ''
         else:
-            # while batch generating, return message if one element can not be generated
-            if return_portal_msg_code and not pod_template.can_be_generated(self.context):
-                msg_code = 'store_podtemplate_as_annex_can_not_be_generated'
-                return msg_code, {
-                    'obj_url': self.context.absolute_url(),
-                    'pod_template_title': safe_unicode(pod_template.Title())}
             try:
                 generated_template = super(
                     PMDocumentGenerationView, self).generate_and_download_doc(
@@ -1196,7 +1202,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
         if self.request.get('mailinglist_name'):
             return self._sendPodTemplate(generated_template)
         # check if we need to store the generated document
-        elif self.request.get('store_as_annex', '0') == '1':
+        elif store_as_annex:
             add_to_sign_session = kwargs.get('add_to_sign_session', False)
             annex_ids_to_add_to_session = kwargs.get('annex_ids_to_add_to_session', False)
             store_generated_document = kwargs.get('store_generated_document', '1')

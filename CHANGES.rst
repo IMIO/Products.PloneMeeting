@@ -61,6 +61,15 @@ Changelog
   `show_msg=True` (so not by the store POD template as annex batch action),
   warnings are always shown.
   [gbastien]
+- Security: check that the POD template can be generated on the context:
+  - in `PMDocumentGenerationView.generate_and_download_doc` when storing as annex,
+    the document generation checks it but the document is not generated when storing
+    an empty file or when not storing the generated document, so a user able to view
+    an element could add annexes to an esign session using the store as annex form;
+  - in the `@@available-mailing-lists` view that displays the mailing lists recipients
+    e-mail addresses, the given `template_uid` must also be a POD template;
+  - when displaying the `@@store-pod-temlate-as-annex-form`.
+  [gbastien]
 
 
 4.2.29rc19 (2026-11-26)

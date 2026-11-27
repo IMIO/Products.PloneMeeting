@@ -10,6 +10,7 @@ from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_person_from_userid
 from collective.contact.plonegroup.utils import get_plone_groups
+from collective.documentgenerator.content.pod_template import IPODTemplate
 from collective.documentgenerator.helper.archetypes import ATDocumentGenerationHelperView
 from collective.documentgenerator.helper.dexterity import DXDocumentGenerationHelperView
 from eea.facetednavigation.interfaces import ICriteria
@@ -2604,12 +2605,17 @@ class PODTemplateMailingLists(BrowserView):
         """ """
         self.template_uid = template_uid
         self.output_format = output_format
+        # recipients (e-mail addresses) may only be displayed
+        # if the POD template can be generated on the context
+        self.pod_template = uuidToObject(
+            template_uid, query={'object_provides': IPODTemplate.__identifier__})
+        if self.pod_template is None or not self.pod_template.can_be_generated(self.context):
+            raise Unauthorized
         return self.index()
 
     def getAvailableMailingLists(self):
         '''Gets the names of the (currently active) mailing lists defined for template_uid.'''
-        pod_template = api.content.find(UID=self.template_uid)[0].getObject()
-        data = getAvailableMailingLists(self.context, pod_template, include_recipients=True)
+        data = getAvailableMailingLists(self.context, self.pod_template, include_recipients=True)
         res = []
         for name, recipients in data:
             res.append(

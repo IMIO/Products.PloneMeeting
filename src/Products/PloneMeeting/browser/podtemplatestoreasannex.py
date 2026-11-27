@@ -3,6 +3,8 @@
 # GNU General Public License (GPL)
 #
 
+from AccessControl import Unauthorized
+from collective.documentgenerator.content.pod_template import IPODTemplate
 from collective.eeafaceted.batchactions import _ as _CEBA
 from imio.annex.widgets.checkbox import OrderableCheckBoxFieldWidget
 from imio.helpers.content import get_vocab_values
@@ -157,7 +159,13 @@ class PodTemplateStoreAsAnnexForm(form.Form):
         super(PodTemplateStoreAsAnnexForm, self).update()
         # after calling parent's update, self.actions are available
         self.actions.get('cancel').addClass('standalone')
-        self.pod_template = uuidToObject(self.widgets['template_uid'].value)
+        # only available if the POD template can be generated on the context,
+        # storing as annex is also checked by the document generation view
+        self.pod_template = uuidToObject(
+            self.widgets['template_uid'].value,
+            query={'object_provides': IPODTemplate.__identifier__})
+        if self.pod_template is None or not self.pod_template.can_be_generated(self.context):
+            raise Unauthorized
         self.signers, self.raw_signers, self.signers_error_msg, self.esign_enabled, self.annex_type = \
             compute_signers(self.context, self.pod_template)
         self.output_format = self.widgets['output_format'].value
